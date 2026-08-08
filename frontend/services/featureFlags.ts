@@ -1,3 +1,6 @@
+// Homepage status banner — set to true to show the notice/maintenance banner on /
+export const SHOW_HOMEPAGE_STATUS_BANNER = false;
+
 // Booking maintenance — set BOOKING_MAINTENANCE_ENABLED to true to block bookings.
 export const BOOKING_MAINTENANCE_ENABLED = false;
 

@@ -1,6 +1,7 @@
 import {
   BOOKING_MAINTENANCE_MESSAGE,
   isBookingMaintenanceActive,
+  SHOW_HOMEPAGE_STATUS_BANNER,
 } from "@/services/featureFlags";
 
 const BannerSeparator = () => (
@@ -14,6 +15,10 @@ const BannerSeparator = () => (
 );
 
 export const MaintenanceBanner = () => {
+  if (!SHOW_HOMEPAGE_STATUS_BANNER) {
+    return null;
+  }
+
   const maintenanceActive = isBookingMaintenanceActive();
 
   return (

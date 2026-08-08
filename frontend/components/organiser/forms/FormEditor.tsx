@@ -38,6 +38,14 @@ export interface FormEditorParams {
 }
 
 const CREATE_FORM_ID = "create-form";
+const DEFAULT_FORMS_GALLERY = "/organiser/forms/gallery";
+const V2_FORMS_GALLERY = "/organiser/v2/forms/gallery";
+
+function getFormsGalleryPath(): string {
+  if (typeof window === "undefined") return DEFAULT_FORMS_GALLERY;
+  const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+  return returnTo === V2_FORMS_GALLERY ? V2_FORMS_GALLERY : DEFAULT_FORMS_GALLERY;
+}
 
 const FormEditor = ({ formId }: FormEditorParams) => {
   const router = useRouter();
@@ -143,7 +151,9 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         if (formId === CREATE_FORM_ID) {
           if (form.userId !== "") {
             const newFormId = await createForm(formToSave);
-            router.push(`/organiser/forms/${newFormId}/editor`);
+            const returnQuery =
+              getFormsGalleryPath() === V2_FORMS_GALLERY ? "?returnTo=/organiser/v2/forms/gallery" : "";
+            router.push(`/organiser/forms/${newFormId}/editor${returnQuery}`);
           }
         } else {
           await updateActiveForm(formToSave, formId);
@@ -170,12 +180,12 @@ const FormEditor = ({ formId }: FormEditorParams) => {
       setShowBackWarning(true);
       return;
     }
-    router.push(`/organiser/forms/gallery`);
+    router.push(getFormsGalleryPath());
   };
 
   const handleConfirmBack = () => {
     setShowBackWarning(false);
-    router.push(`/organiser/forms/gallery`);
+    router.push(getFormsGalleryPath());
   };
 
   const updateFormTitle = (newTitle: FormTitle) => {

@@ -23,13 +23,18 @@ interface FormResponsesTableProps {
   orderTicketsMap: Map<Order, Ticket[]>;
   showPurchaserColumn?: boolean;
   organiserEmail?: string;
+  /** Flush workbench shell — no bordered card frame; Honest Clubhouse tokens */
+  flush?: boolean;
 }
 
 type SortDirection = "asc" | "desc";
 
 type SortColumn = { kind: "purchaser" } | { kind: "submissionTime" } | { kind: "question"; questionId: string };
 
-const getAnswerDisplay = (section: FormSection | undefined): string | React.JSX.Element => {
+const getAnswerDisplay = (
+  section: FormSection | undefined,
+  flush: boolean,
+): string | React.JSX.Element => {
   if (!section) return "—";
 
   switch (section.type) {
@@ -53,7 +58,11 @@ const getAnswerDisplay = (section: FormSection | undefined): string | React.JSX.
           href={section.fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-800 underline hover:text-blue-900"
+          className={
+            flush
+              ? "text-foreground underline underline-offset-2 hover:text-foreground-secondary font-sans"
+              : "text-blue-800 underline hover:text-blue-900"
+          }
         >
           View File
         </a>
@@ -183,6 +192,7 @@ interface SortableHeaderCellProps {
   onSort: (column: SortColumn, direction: SortDirection) => void;
   headerTextClassName?: string;
   thClassName?: string;
+  flush?: boolean;
 }
 
 const SortableHeaderCell = ({
@@ -193,19 +203,25 @@ const SortableHeaderCell = ({
   onSort,
   headerTextClassName,
   thClassName = "",
+  flush = false,
 }: SortableHeaderCellProps) => {
   const isActive = sortColumnsEqual(column, activeColumn);
+  const borderClass = flush ? "border-r border-border" : "border-r border-core-outline";
 
   return (
     <th
-      className={["group relative px-3 py-2 border-r border-core-outline align-top", thClassName].filter(Boolean).join(" ")}
+      className={["group relative px-3 py-2 align-top", borderClass, thClassName].filter(Boolean).join(" ")}
     >
       <div className="flex items-start justify-between gap-2 min-h-[1.5rem]">
         <div className={headerTextClassName ?? "min-w-0 flex-1"}>{label}</div>
         <Menu as="div" className="relative shrink-0">
           <MenuButton
             type="button"
-            className="rounded p-0.5 text-gray-500 opacity-100 transition-opacity hover:bg-gray-200 hover:text-gray-800 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 aria-expanded:opacity-100"
+            className={
+              flush
+                ? "rounded-lg p-0.5 text-foreground-muted opacity-100 transition-opacity hover:bg-surface-hover hover:text-foreground md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus aria-expanded:opacity-100"
+                : "rounded p-0.5 text-gray-500 opacity-100 transition-opacity hover:bg-gray-200 hover:text-gray-800 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 aria-expanded:opacity-100"
+            }
             aria-label="Column options"
           >
             <EllipsisHorizontalIcon className="h-5 w-5" />
@@ -219,12 +235,26 @@ const SortableHeaderCell = ({
             leaveFrom="transform opacity-100 scale-100"
             leaveTo="transform opacity-0 scale-95"
           >
-            <MenuItems className="absolute right-0 z-50 mt-1 w-44 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+            <MenuItems
+              className={
+                flush
+                  ? "absolute right-0 z-50 mt-1 w-44 origin-top-right rounded-xl border border-border bg-background py-1 shadow-[0_8px_28px_rgba(10,10,10,0.12)] focus:outline-none font-sans"
+                  : "absolute right-0 z-50 mt-1 w-44 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none"
+              }
+            >
               <MenuItem>
                 {({ focus }) => (
                   <button
                     type="button"
-                    className={`flex w-full items-center px-3 py-2 text-left text-sm ${focus ? "bg-gray-100" : ""}`}
+                    className={`flex w-full items-center px-3 py-2 text-left text-sm ${
+                      flush
+                        ? focus
+                          ? "bg-surface-hover text-foreground"
+                          : "text-foreground"
+                        : focus
+                          ? "bg-gray-100"
+                          : ""
+                    }`}
                     onClick={() => onSort(column, "asc")}
                   >
                     {isActive && sortDirection === "asc" ? "✓ " : ""}
@@ -236,7 +266,15 @@ const SortableHeaderCell = ({
                 {({ focus }) => (
                   <button
                     type="button"
-                    className={`flex w-full items-center px-3 py-2 text-left text-sm ${focus ? "bg-gray-100" : ""}`}
+                    className={`flex w-full items-center px-3 py-2 text-left text-sm ${
+                      flush
+                        ? focus
+                          ? "bg-surface-hover text-foreground"
+                          : "text-foreground"
+                        : focus
+                          ? "bg-gray-100"
+                          : ""
+                    }`}
                     onClick={() => onSort(column, "desc")}
                   >
                     {isActive && sortDirection === "desc" ? "✓ " : ""}
@@ -260,6 +298,7 @@ export const FormResponsesTable = ({
   orderTicketsMap,
   showPurchaserColumn = true,
   organiserEmail = "",
+  flush = false,
 }: FormResponsesTableProps) => {
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -359,21 +398,49 @@ export const FormResponsesTable = ({
 
   const mergePurchaserCells = showPurchaserColumn && sortColumn.kind === "purchaser";
 
+  const cellBorder = flush ? "border-r border-border" : "border-r border-core-outline";
+  const rowBorder = flush ? "border-b border-border" : "border-b border-blue-gray-50";
+  const linkClass = flush
+    ? "underline underline-offset-2 text-foreground hover:text-foreground-secondary font-sans"
+    : "underline text-blue-800";
+  const headerBg = flush
+    ? "bg-surface text-foreground font-semibold text-sm border-b border-border sticky top-0 z-20 font-sans"
+    : "text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20";
+  const stickyHeaderBg = flush ? "bg-surface" : "bg-core-hover";
+  const stickyCellBg = flush ? "bg-background" : "bg-white";
+  const expandBtnClass = flush
+    ? "flex items-center justify-center w-6 h-6 rounded-lg hover:bg-surface-hover transition-colors text-foreground-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    : "flex items-center justify-center w-6 h-6 hover:bg-gray-200 rounded transition-colors";
+  const rowExpandBtnClass = flush
+    ? "flex items-center justify-center w-6 h-6 rounded-lg hover:bg-surface-hover transition-colors text-foreground-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+    : "flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors";
+
   if (sortedFormResponses.length === 0) {
     return (
-      <div className="border border-core-outline rounded-lg p-6 text-center">
-        <p className="text-gray-600">No form responses found</p>
+      <div
+        className={
+          flush
+            ? "py-10 text-center text-sm text-foreground-muted font-sans"
+            : "border border-core-outline rounded-lg p-6 text-center"
+        }
+      >
+        <p className={flush ? undefined : "text-gray-600"}>No form responses found</p>
       </div>
     );
   }
 
   return (
-    <div className="border border-core-outline rounded-lg max-h-[600px] overflow-x-auto overflow-y-auto w-full">
+    <div
+      className={
+        flush
+          ? "max-h-[min(70vh,600px)] overflow-x-auto overflow-y-auto w-full border border-border rounded-xl"
+          : "border border-core-outline rounded-lg max-h-[600px] overflow-x-auto overflow-y-auto w-full"
+      }
+    >
       <table className="table-auto text-left w-full">
-        {/* Header */}
-        <thead className="text-organiser-title-gray-text font-bold text-sm bg-core-hover border-b border-core-outline sticky top-0 z-20">
+        <thead className={headerBg}>
           <tr>
-            <th className="px-3 py-2 border-r border-core-outline w-[30px]">#</th>
+            <th className={`px-3 py-2 ${cellBorder} w-[30px]`}>#</th>
             {showPurchaserColumn && (
               <SortableHeaderCell
                 label="Purchaser Details"
@@ -382,6 +449,7 @@ export const FormResponsesTable = ({
                 sortDirection={sortDirection}
                 onSort={handleSort}
                 thClassName="min-w-[350px]"
+                flush={flush}
               />
             )}
             {sortedQuestions.map((question, i) => (
@@ -391,8 +459,8 @@ export const FormResponsesTable = ({
                   <span
                     className={
                       headersExpanded
-                        ? "break-words whitespace-pre-wrap font-bold"
-                        : "block max-w-full truncate font-bold"
+                        ? `break-words whitespace-pre-wrap ${flush ? "font-semibold" : "font-bold"}`
+                        : `block max-w-full truncate ${flush ? "font-semibold" : "font-bold"}`
                     }
                   >
                     {question}
@@ -406,6 +474,7 @@ export const FormResponsesTable = ({
                 headerTextClassName={
                   headersExpanded ? "min-w-0 flex-1 break-words whitespace-pre-wrap" : "min-w-0 flex-1 overflow-hidden"
                 }
+                flush={flush}
               />
             ))}
             <SortableHeaderCell
@@ -416,12 +485,18 @@ export const FormResponsesTable = ({
               onSort={handleSort}
               thClassName="w-[400px]"
               headerTextClassName="min-w-0 flex-1 whitespace-nowrap"
+              flush={flush}
             />
-            <th className="px-2 align-middle w-[30px] sticky right-0 bg-core-hover z-10">
+            <th
+              className={`px-2 align-middle w-[30px] ${
+                flush ? "" : `sticky right-0 ${stickyHeaderBg} z-10`
+              }`}
+            >
               <button
                 type="button"
                 onClick={() => setHeadersExpanded(!headersExpanded)}
-                className="flex items-center justify-center w-6 h-6 hover:bg-gray-200 rounded transition-colors"
+                className={expandBtnClass}
+                aria-label={headersExpanded ? "Collapse column headers" : "Expand column headers"}
               >
                 {headersExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
               </button>
@@ -429,11 +504,10 @@ export const FormResponsesTable = ({
           </tr>
         </thead>
 
-        {/* Body */}
-        <tbody className="text-sm">
+        <tbody className={flush ? "text-sm text-foreground font-sans" : "text-sm"}>
           {sortedFormResponses.map((response, idx) => {
             const isLast = idx === sortedFormResponses.length - 1;
-            const rowClasses = isLast ? "" : "border-b border-blue-gray-50";
+            const rowClasses = isLast ? "" : rowBorder;
             const questionMapping = createQuestionMappingForResponse(response.responseMap);
             const responseIdStr = String(response.formResponseId);
 
@@ -475,9 +549,9 @@ export const FormResponsesTable = ({
 
             return (
               <tr key={response.formResponseId} className={rowClasses}>
-                <td className="px-3 py-2 align-top border-r border-core-outline w-[30px]">
+                <td className={`px-3 py-2 align-top ${cellBorder} w-[30px]`}>
                   <Link
-                    className="underline text-blue-800"
+                    className={linkClass}
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
@@ -488,17 +562,37 @@ export const FormResponsesTable = ({
                 {showPurchaserDetails && (
                   <td
                     rowSpan={mergePurchaserCells && currentPurchaser ? rowspan : 1}
-                    className="px-3 py-2 min-w-[350px] align-top border-r border-core-outline"
+                    className={`px-3 py-2 min-w-[350px] align-top ${cellBorder}`}
                   >
                     {currentPurchaser ? (
                       <div className="flex flex-col gap-1">
-                        <div className="font-medium text-sm">{currentPurchaser.name}</div>
-                        <div className="text-xs text-gray-600 break-words">{currentPurchaser.email}</div>
+                        <div className={flush ? "font-medium text-sm text-foreground" : "font-medium text-sm"}>
+                          {currentPurchaser.name}
+                        </div>
+                        <div
+                          className={
+                            flush
+                              ? "text-xs text-foreground-muted break-words"
+                              : "text-xs text-gray-600 break-words"
+                          }
+                        >
+                          {currentPurchaser.email}
+                        </div>
                       </div>
                     ) : (
                       <div className="flex flex-col gap-1">
-                        <div className="text-xs text-gray-600">Manual Submission from</div>
-                        <div className="text-xs text-gray-600 break-words">{organiserEmail || "organiser"}</div>
+                        <div className={flush ? "text-xs text-foreground-muted" : "text-xs text-gray-600"}>
+                          Manual Submission from
+                        </div>
+                        <div
+                          className={
+                            flush
+                              ? "text-xs text-foreground-muted break-words"
+                              : "text-xs text-gray-600 break-words"
+                          }
+                        >
+                          {organiserEmail || "organiser"}
+                        </div>
                       </div>
                     )}
                   </td>
@@ -509,19 +603,19 @@ export const FormResponsesTable = ({
                   return (
                     <td
                       key={`cell-${response.formResponseId}-${j}`}
-                      className={`px-3 py-2 min-w-[100px] md:min-w-[150px] max-w-[300px] border-r border-core-outline ${
+                      className={`px-3 py-2 min-w-[100px] md:min-w-[150px] max-w-[300px] ${cellBorder} ${
                         isRowExpanded
                           ? "break-words whitespace-pre-wrap"
                           : "whitespace-nowrap overflow-x-hidden text-ellipsis"
                       }`}
                     >
-                      {getAnswerDisplay(section)}
+                      {getAnswerDisplay(section, flush)}
                     </td>
                   );
                 })}
-                <td className="px-3 py-2 w-[400px] whitespace-nowrap align-top border-r border-core-outline">
+                <td className={`px-3 py-2 w-[400px] whitespace-nowrap align-top ${cellBorder}`}>
                   <Link
-                    className="underline text-blue-800"
+                    className={linkClass}
                     target="_blank"
                     rel="noopener noreferrer"
                     href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
@@ -529,11 +623,18 @@ export const FormResponsesTable = ({
                     {formatTimestamp(response.submissionTime)}
                   </Link>
                 </td>
-                <td className="px-3 py-2 w-[30px] align-top sticky right-0 bg-white border-l border-core-outline">
+                <td
+                  className={`px-3 py-2 w-[30px] align-top ${
+                    flush
+                      ? "border-l border-border"
+                      : `sticky right-0 ${stickyCellBg} border-l border-core-outline`
+                  }`}
+                >
                   <button
                     type="button"
                     onClick={() => toggleRowExpansion(responseIdStr)}
-                    className="flex items-center justify-center w-4 h-4 hover:bg-gray-200 rounded transition-colors"
+                    className={rowExpandBtnClass}
+                    aria-label={expandedRows.has(responseIdStr) ? "Collapse row" : "Expand row"}
                   >
                     {expandedRows.has(responseIdStr) ? (
                       <ChevronUpIcon className="w-4 h-4" />

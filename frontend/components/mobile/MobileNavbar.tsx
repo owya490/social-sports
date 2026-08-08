@@ -35,12 +35,7 @@ export default function MobileNavbar() {
   }, [isNavbarHidden]);
 
   if (isNavbarHidden) {
-    return (
-      <div
-        className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-core-hover"
-        aria-hidden="true"
-      />
-    );
+    return null;
   }
 
   const handleSearchExpanded = () => {

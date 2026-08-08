@@ -2,6 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   SportsHub design tokens (app-wide)
+   Change values here — Tailwind semantic colours / radius read these variables.
+   ============================================================================= */
+:root {
+  /* Colour */
+  --color-background: #ffffff;
+  --color-surface: #f7f7f7;
+  --color-surface-muted: #ebebeb;
+  --color-surface-hover: #f0f0f0;
+  --color-border: #e0e0e0;
+  --color-foreground: #0a0a0a;
+  --color-foreground-secondary: #525252;
+  --color-foreground-muted: #8a8a8a;
+  --color-accent: #f2b705;
+  --color-accent-contrast: #0a0a0a;
+  --color-danger: #dc2626;
+  --color-focus: #f2b705;
+
+  /* Shape */
+  --radius: 0.75rem; /* unified — Tailwind rounded-xl */
+
+  /* Layout shell */
+  --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
+  --footer-height: 32px; /* Match h-8 (2rem = 32px) */
+  --organiser-sidebar-width-expanded: 200px;
+  --organiser-sidebar-width-collapsed: 52px;
+  --organiser-sidebar-width: var(--organiser-sidebar-width-expanded);
+  --organiser-mobile-header-height: 52px; /* Brand-led mobile top bar (lg:hidden) */
+}
+
 @layer components {
   .screen-width-primary {
     @apply w-screen px-3 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1200px];
@@ -9,10 +40,29 @@
   .screen-width-dashboard {
     @apply w-screen px-3 sm:mx-0 sm:w-[500px] md:w-[700px] lg:w-[1000px] xl:w-[1000px] 2xl:w-[1200px];
   }
+
+  /* Typography scale — reuse across the site */
+  .type-display {
+    @apply font-display text-4xl font-bold text-foreground;
+  }
+  .type-section {
+    @apply font-display text-2xl font-semibold text-foreground;
+  }
+  .type-body {
+    @apply font-sans text-lg font-semibold text-foreground;
+  }
+  .type-meta {
+    @apply font-sans text-sm font-normal text-foreground-muted;
+  }
 }
+
 @layer base {
   .list-style-circle {
     list-style: circle;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
   }
 }
 
@@ -29,11 +79,178 @@
       scrollbar-width: none; /* Firefox */
     }
   }
+
+  /* Image picker load states — Change photo panels (events / recurring / collections) */
+  .image-picker-shimmer {
+    transform: translateX(-100%);
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(255 255 255 / 0.7) 50%,
+      transparent 100%
+    );
+    animation: image-picker-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .image-picker-reveal {
+    animation: image-picker-reveal 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
 }
 
-:root {
-  --navbar-height: 56px; /* Match h-14 (3.5rem = 56px) */
-  --footer-height: 32px; /* Match h-8 (2rem = 32px) */
+@keyframes image-picker-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes image-picker-reveal {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes organiser-welcome-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.organiser-welcome-rise {
+  animation: organiser-welcome-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes organiser-welcome-line {
+  from {
+    opacity: 0;
+    transform: translateY(1.05em);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.organiser-welcome-line {
+  animation: organiser-welcome-line 820ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes organiser-welcome-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.organiser-welcome-stage {
+  animation: organiser-welcome-stage-in 780ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 480ms;
+}
+
+@keyframes organiser-welcome-handle-pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 14px rgba(10, 10, 10, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 4px 14px rgba(10, 10, 10, 0.18),
+      0 0 0 5px rgba(10, 10, 10, 0.08);
+  }
+}
+
+.organiser-welcome-handle:not([data-dragging="true"]) {
+  animation: organiser-welcome-handle-pulse 2.4s ease-in-out 1.6s 3;
+}
+
+.organiser-welcome-loader-spin {
+  animation: organiser-welcome-loader-spin 0.9s linear infinite;
+}
+
+@keyframes organiser-welcome-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.organiser-welcome-orbit {
+  animation: organiser-welcome-orbit 3.2s linear infinite;
+}
+
+.organiser-welcome-orbit-delayed {
+  animation: organiser-welcome-orbit 4.6s linear infinite reverse;
+}
+
+.organiser-welcome-orbit-dot {
+  animation: organiser-welcome-orbit 2.8s linear infinite;
+}
+
+@keyframes organiser-welcome-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.organiser-welcome-click-pulse {
+  animation: organiser-welcome-click-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes organiser-welcome-click-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+/* Hide SSR blackout once the tour controller marks itself active (or finishes). */
+html[data-welcome-tour="1"] .organiser-welcome-ssr-blackout,
+html[data-welcome-tour="0"] .organiser-welcome-ssr-blackout {
+  opacity: 0;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image-picker-shimmer {
+    animation: none;
+    transform: none;
+    opacity: 0.55;
+    background-image: none;
+  }
+
+  .image-picker-reveal {
+    animation: none;
+  }
+
+  .organiser-welcome-rise,
+  .organiser-welcome-line,
+  .organiser-welcome-stage,
+  .organiser-welcome-handle,
+  .organiser-welcome-loader-spin,
+  .organiser-welcome-orbit,
+  .organiser-welcome-orbit-delayed,
+  .organiser-welcome-orbit-dot,
+  .organiser-welcome-click-pulse {
+    animation: none;
+  }
 }
 
 html {

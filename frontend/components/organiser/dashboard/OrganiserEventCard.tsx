@@ -64,7 +64,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
       openInNewTab={props.openInNewTab}
       url={`/organiser/event/${props.eventId}`}
     >
-      <div className="bg-white rounded-lg text-left border-gray-300 border w-full hover:cursor-pointer">
+      <div className="bg-background rounded-xl text-left border-border border w-full hover:cursor-pointer hover:bg-surface-hover transition-colors">
         {props.loading ? (
           <div>
             <LoadingSkeletonOrganiserEventCard />
@@ -72,7 +72,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
         ) : (
           <>
             <div
-              className="h-36 w-full object-cover rounded-t-lg"
+              className="h-36 w-full object-cover rounded-t-xl"
               style={{
                 backgroundImage: `url(${props.image})`,
                 backgroundSize: "cover",
@@ -80,20 +80,24 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
               }}
             ></div>
             <div className="p-4">
-              <h4 className="font-bold text-gray-500 text-xs">{timestampToEventCardDateString(props.startTime)}</h4>
-              <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden">{props.name}</h2>
-              <div className="mt-4 mb-7 space-y-3">
-                <div className="flex items-center">
+              <h4 className="type-meta">{timestampToEventCardDateString(props.startTime)}</h4>
+              <h2 className="text-xl font-bold mb-1 mt-1 whitespace-nowrap overflow-hidden text-foreground font-sans">
+                {props.name}
+              </h2>
+              <div className="mt-4 mb-6 space-y-3">
+                <div className="flex items-center text-foreground-secondary">
                   <MapPinIcon className="w-5 shrink-0" />
-                  <p className="ml-1 font-light text-sm whitespace-nowrap overflow-hidden">{props.location}</p>
+                  <p className="ml-1 font-normal text-sm whitespace-nowrap overflow-hidden font-sans">
+                    {props.location}
+                  </p>
                 </div>
-                <div className="flex items-center">
+                <div className="flex items-center text-foreground-secondary">
                   <CurrencyDollarIcon className="w-5 shrink-0" />
-                  <p className="ml-1 font-light text-sm">{getEventPriceDisplay(props.price, true)}</p>
+                  <p className="ml-1 font-normal text-sm font-sans">{getEventPriceDisplay(props.price, true)}</p>
                 </div>
               </div>
               <div className="flex items-center">
-                <p className="text-sm font-light text-gray-500">{`${props.vacancy} spots left`}</p>
+                <p className="type-meta">{`${props.vacancy} spots left`}</p>
               </div>
             </div>
           </>

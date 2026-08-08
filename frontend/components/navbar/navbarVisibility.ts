@@ -8,12 +8,19 @@ export const HIDDEN_NAVBAR_ROUTES = [
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];
 
+/** Routes that use the organiser v2 sidebar shell (no global SPORTSHUB navbar). */
+export function usesOrganiserV2Shell(pathname: string): boolean {
+  return pathname.startsWith("/organiser/v2");
+}
+
 const HIDE_SPORTSHUB_NAVBAR_KEY = "hideSportshubNavbar";
 
+function pathnameHidesNavbar(pathname: string): boolean {
+  return usesOrganiserV2Shell(pathname) || HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
+}
+
 export function shouldHideNavbar(pathname: string): boolean {
-  if (HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname))) {
-    return true;
-  }
+  if (pathnameHidesNavbar(pathname)) return true;
   if (typeof window !== "undefined") {
     if (sessionStorage.getItem(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {
       return true;
@@ -35,7 +42,7 @@ export function useNavbarVisibility(): boolean {
   // Initial state must only use pathname/searchParams so server and client render the same
   // (avoids hydration mismatch). sessionStorage is synced in useEffect after mount.
   const [isNavbarHidden, setIsNavbarHidden] = useState<boolean>(() => {
-    if (HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname))) {
+    if (pathnameHidesNavbar(pathname)) {
       return true;
     }
     if (searchParams.get(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {

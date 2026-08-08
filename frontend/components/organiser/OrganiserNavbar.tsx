@@ -225,11 +225,7 @@ export default function OrganiserNavbar() {
         >
           <PencilSquareIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
-        <NavButton
-          href="/organiser/gallery"
-          isActive={currPage.startsWith("/organiser/gallery")}
-          tooltipContent="Gallery"
-        >
+        <NavButton href="/organiser/gallery" isActive={currPage === "/organiser/gallery"} tooltipContent="Gallery">
           <CameraIcon className="w-6 stroke-1 stroke-core-text" />
         </NavButton>
         <NavButton

@@ -11,7 +11,7 @@ export default function OrganiserCheckbox(props: OrganiserCheckboxProps) {
   return (
     <div className="flex items-center">
       <Checkbox
-        className="bg-organiser-light-gray checked:bg-highlight-yellow checked:hover:bg-highlight-yellow text-highlight-yellow focus:outline-none focus:ring-0 checked:border-0 checked:ring-0 focus:ring-offset-0"
+        className="bg-surface checked:bg-accent checked:hover:bg-accent text-accent-contrast focus:outline-none focus:ring-2 focus:ring-focus focus:ring-offset-0 checked:border-0 checked:ring-0"
         crossOrigin={undefined}
         checked={props.checked}
         onChange={props.onChange}
@@ -19,8 +19,8 @@ export default function OrganiserCheckbox(props: OrganiserCheckboxProps) {
       <Link href={props.link} className="">
         <p
           className={
-            "text-md sm:text-lg text-slate-900 font-normal hover:underline hover:cursor-pointer " +
-            (props.checked ? "line-through" : "")
+            "text-md sm:text-lg text-foreground font-normal font-sans hover:underline hover:cursor-pointer " +
+            (props.checked ? "line-through text-foreground-muted" : "")
           }
         >
           {props.label}

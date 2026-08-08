@@ -12,6 +12,8 @@ type ImageFormProps = AllImageData & {
   eventImageUrls: string[];
   setThumbnailUrls: (v: string[]) => void;
   setImageUrls: (v: string[]) => void;
+  /** Flush workbench — skip warning card frame */
+  flush?: boolean;
 };
 
 export function ImageForm({
@@ -23,6 +25,7 @@ export function ImageForm({
   eventImageUrls,
   setThumbnailUrls,
   setImageUrls,
+  flush = false,
 }: ImageFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -90,11 +93,16 @@ export function ImageForm({
   };
 
   return (
-    <div className="mb-16 space-y-8">
-      {/* Warning Message */}
-      <div className="bg-core-hover text-core-text p-2.5 rounded border border-core-outline text-xs">
-        ⚠️ If your image upload button isn&apos;t working, try closing and reopening the browser.
-      </div>
+    <div className={flush ? "space-y-8 pb-4" : "mb-16 space-y-8"}>
+      {!flush ? (
+        <div className="bg-core-hover text-core-text p-2.5 rounded border border-core-outline text-xs">
+          ⚠️ If your image upload button isn&apos;t working, try closing and reopening the browser.
+        </div>
+      ) : (
+        <p className="text-xs text-foreground-muted font-sans">
+          If upload stalls, close and reopen the browser, then try again.
+        </p>
+      )}
       <ImageSection
         type={ImageType.THUMBNAIL}
         imageUrls={eventThumbnailsUrls.slice(0, 5)}
