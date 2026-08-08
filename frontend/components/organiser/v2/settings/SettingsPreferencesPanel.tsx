@@ -60,14 +60,14 @@ export function SettingsPreferencesPanel() {
           onClick={() => {
             void updateSendOrganiserTicketEmail(!enabled);
           }}
-          className={`relative shrink-0 h-7 w-12 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
+          className={`relative shrink-0 h-5 w-9 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
             enabled ? "bg-accent" : "bg-surface-muted"
           }`}
         >
           <span
             aria-hidden
-            className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-background border border-border transition-transform ${
-              enabled ? "translate-x-5" : "translate-x-0"
+            className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
+              enabled ? "translate-x-4" : "translate-x-0"
             }`}
           />
         </button>
