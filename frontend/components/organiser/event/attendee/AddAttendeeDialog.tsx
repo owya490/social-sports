@@ -3,6 +3,7 @@ import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfac
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
+import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
@@ -65,6 +66,7 @@ const InviteAttendeeDialog = ({
         phone: attendeePhoneNumber,
         numTickets: parseInt(numTickets),
         price: 0, // price is free as it is being added manually
+        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
       });
       const now = Timestamp.now();
       const newOrder: Order = {

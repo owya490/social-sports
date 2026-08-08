@@ -338,7 +338,8 @@ public class StripeWebhookHandler {
                 sessionMetadata.getFulfilmentSessionId(),
                 sessionMetadata.getEndFulfilmentEntityId(),
                 paymentIntentId,
-                captureMethod
+                captureMethod,
+                sessionMetadata.getEventTicketTypeId()
             );
             
             return success;
@@ -423,7 +424,8 @@ public class StripeWebhookHandler {
                 checkoutSessionId,
                 sessionMetadata.getEventId(),
                 sessionMetadata.getIsPrivate(),
-                lineItems
+                lineItems,
+                sessionMetadata.getEventTicketTypeId()
             );
             
             return success;

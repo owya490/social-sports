@@ -149,7 +149,7 @@ We believe in **building in the open** and sharing what we learn. Our platform i
 ## 📞 Get in Touch
 
 - **Website**: [sportshub.net.au](https://www.sportshub.net.au)
-- **Blog**: [sportshub.net.au/blogs](https://www,sportshub.net.au/blogs)
+- **Blog**: [sportshub.net.au/blogs](https://www.sportshub.net.au/blogs)
 - **Email**: [Contact us](https://www.sportshub.net.au/contact)
 
 ---

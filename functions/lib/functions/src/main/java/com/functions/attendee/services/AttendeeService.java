@@ -13,7 +13,10 @@ import com.functions.attendee.models.requests.SetAttendeeTicketsRequest;
 import com.functions.attendee.models.responses.AddAttendeeResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -30,11 +33,11 @@ public class AttendeeService {
 
     /**
      * Adds an attendee by creating a new APPROVED Order with N APPROVED Tickets,
-     * and atomically decrementing the event vacancy.
+     * and atomically decrementing the requested ticket type vacancy.
      */
     public static AddAttendeeResponse addAttendee(AddAttendeeRequest request) throws Exception {
-        logger.info("Adding attendee for eventId: {}, email: {}, numTickets: {}",
-                request.eventId(), request.email(), request.numTickets());
+        logger.info("Adding attendee for eventId: {}, email: {}, numTickets: {}, eventTicketTypeId: {}",
+                request.eventId(), request.email(), request.numTickets(), request.eventTicketTypeId());
 
         return FirebaseService.createFirestoreTransaction(transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
@@ -43,11 +46,9 @@ public class AttendeeService {
             DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(request.eventId(),
                     transaction);
 
-            if (eventData.getVacancy() < request.numTickets()) {
-                throw new IllegalArgumentException(String.format(
-                        "Not enough vacancy. Requested %d tickets but only %d available.",
-                        request.numTickets(), eventData.getVacancy()));
-            }
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData,
+                    request.eventTicketTypeId());
+            EventTicketTypeService.validateAvailability(ticketType, request.numTickets());
 
             Timestamp now = Timestamp.now();
             String orderId = OrdersRepository.generateOrderId();
@@ -72,6 +73,7 @@ public class AttendeeService {
                 ticket.setPurchaseDate(now);
                 ticket.setStatus(OrderAndTicketStatus.APPROVED);
                 ticket.setType(OrderAndTicketType.MANUAL);
+                EventTicketTypeService.stampTicket(ticket, ticketType);
 
                 String ticketId = TicketsRepository.createTicket(ticket, transaction);
                 ticketIds.add(ticketId);
@@ -82,8 +84,7 @@ public class AttendeeService {
 
             DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
             transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(request.numTickets()));
-            EventsRepository.updateEventByReference(eventRef, "vacancy",
-                    eventData.getVacancy() - request.numTickets(), transaction);
+            EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, -request.numTickets());
 
             logger.info("Added attendee: orderId={}, ticketCount={}, eventId={}",
                     orderId, ticketIds.size(), request.eventId());
@@ -93,17 +94,10 @@ public class AttendeeService {
 
     /**
      * Adjusts the ticket count for an existing order.
-     * <ul>
-     * <li>numTickets == 0: REJECT the entire order, restore vacancy</li>
-     * <li>numTickets > current APPROVED count: create additional APPROVED tickets,
-     * decrement vacancy</li>
-     * <li>numTickets < current APPROVED count (but > 0): REJECT excess tickets,
-     * restore vacancy</li>
-     * </ul>
      */
     public static SetAttendeeTicketsResponse setAttendeeTickets(SetAttendeeTicketsRequest request) throws Exception {
-        logger.info("Setting attendee tickets for orderId: {}, eventId: {}, numTickets: {}",
-                request.orderId(), request.eventId(), request.numTickets());
+        logger.info("Setting attendee tickets for orderId: {}, eventId: {}, numTickets: {}, eventTicketTypeId: {}",
+                request.orderId(), request.eventId(), request.numTickets(), request.eventTicketTypeId());
 
         return FirebaseService.createFirestoreTransaction(transaction -> {
             EventData eventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction))
@@ -121,6 +115,9 @@ public class AttendeeService {
                     .filter(t -> t.getStatus() == OrderAndTicketStatus.APPROVED)
                     .collect(Collectors.toList());
 
+            String eventTicketTypeId = resolveEventTicketTypeIdForOrder(approvedTickets, request.eventTicketTypeId());
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
+
             int currentApproved = approvedTickets.size();
             int target = request.numTickets();
             int delta = target - currentApproved;
@@ -136,19 +133,14 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-currentApproved));
 
-                EventsRepository.updateEventByReference(eventRef, "vacancy",
-                        eventData.getVacancy() + currentApproved, transaction);
+                EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, currentApproved);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
                         String.format("Order %s rejected. Restored %d tickets to vacancy.", order.getOrderId(),
                                 currentApproved));
 
             } else if (delta > 0) {
-                if (eventData.getVacancy() < delta) {
-                    throw new IllegalArgumentException(String.format(
-                            "Not enough vacancy. Need %d more tickets but only %d available.", delta,
-                            eventData.getVacancy()));
-                }
+                EventTicketTypeService.validateAvailability(ticketType, delta);
 
                 Timestamp now = Timestamp.now();
                 long price = approvedTickets.isEmpty() ? 0 : approvedTickets.get(0).getPrice();
@@ -162,6 +154,7 @@ public class AttendeeService {
                     ticket.setPurchaseDate(now);
                     ticket.setStatus(OrderAndTicketStatus.APPROVED);
                     ticket.setType(OrderAndTicketType.MANUAL);
+                    EventTicketTypeService.stampTicket(ticket, ticketType);
 
                     String ticketId = TicketsRepository.createTicket(ticket, transaction);
                     newTicketIds.add(ticketId);
@@ -175,8 +168,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(delta));
 
-                EventsRepository.updateEventByReference(eventRef, "vacancy",
-                        eventData.getVacancy() - delta, transaction);
+                EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, -delta);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
                         String.format("Added %d tickets to order %s.", delta, order.getOrderId()));
@@ -193,8 +185,7 @@ public class AttendeeService {
                 DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(request.eventId());
                 transaction.update(metadataRef, "completeTicketCount", FieldValue.increment(-toReject));
 
-                EventsRepository.updateEventByReference(eventRef, "vacancy",
-                        eventData.getVacancy() + toReject, transaction);
+                EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, toReject);
 
                 return new SetAttendeeTicketsResponse(order.getOrderId(), true,
                         String.format("Rejected %d tickets from order %s.", toReject, order.getOrderId()));
@@ -204,5 +195,17 @@ public class AttendeeService {
                         "No change needed. Ticket count already matches.");
             }
         });
+    }
+
+    private static String resolveEventTicketTypeIdForOrder(List<Ticket> approvedTickets, String requestTicketTypeId) {
+        for (Ticket ticket : approvedTickets) {
+            if (ticket != null && ticket.getEventTicketTypeId() != null && !ticket.getEventTicketTypeId().isBlank()) {
+                return ticket.getEventTicketTypeId();
+            }
+        }
+        if (requestTicketTypeId == null || requestTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required when order has no stamped tickets");
+        }
+        return requestTicketTypeId;
     }
 }

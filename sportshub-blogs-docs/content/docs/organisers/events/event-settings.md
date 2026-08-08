@@ -2,7 +2,7 @@
 title: Event Settings
 weight: 5
 prev: /docs/organiser/events/event-collections
-next: /docs/organiser/events
+next: /docs/organiser/events/booking-approval
 ---
 
 ## Overview
@@ -56,3 +56,24 @@ Consider enabling this when:
 - You run regular events where participants like to see who else is coming
 
 You can toggle the setting on or off at any time, and the change takes effect immediately.
+
+## Enable Booking Approval
+
+This setting lets you require manual approval before a booking is confirmed. When enabled, players click **Request to Book** instead of **Book Now**, and their payment method is **not charged unless you accept them**.
+
+### How to Enable
+
+#### For Single Events
+
+1. Head to your **Organiser Hub** and open the event you want to update.
+2. Navigate to the **Settings** tab.
+3. Toggle **Enable Booking Approval** to on.
+
+#### For Recurring Events
+
+Enable this on the **recurring event template** under the **Settings** tab. All future events generated from that template will inherit the setting.
+
+> [!NOTE]
+> You have **48 hours** to approve or reject each request in the Organiser Hub. Unreviewed requests are automatically declined.
+
+For the full workflow — including how to review pending requests — see [Booking Approval](/docs/organisers/events/booking-approval).

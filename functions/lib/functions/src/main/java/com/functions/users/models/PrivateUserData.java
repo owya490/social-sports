@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.functions.users.models.AbstractUserData.ActiveBooking;
 import com.functions.users.models.AbstractUserData.ContactInformation;
+import com.google.cloud.Timestamp;
 
 import lombok.Data;
 
@@ -30,4 +31,9 @@ public class PrivateUserData {
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
 	private List<String> privateEventCollections = new ArrayList<>();
+	private String onboardingPersona;
+	private Timestamp onboardingCompletedAt;
+	private Timestamp stripeConnectSetupCompletedAt;
+	private Timestamp stripeConnectSetupSkippedAt;
+	private Timestamp onboardingSkippedAt;
 }

@@ -72,7 +72,7 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
         final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
         data.setNameTokens(EventsUtils.tokenizeText(safeName));
         data.setLocationTokens(EventsUtils.tokenizeText(safeLocation));
-        transaction.set(newEventDocRef, JavaUtils.toMap(data));
+        transaction.set(newEventDocRef, data);
         final String eventId = newEventDocRef.getId();
         createEventMetadata(transaction, eventId, data);
         EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);

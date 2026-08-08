@@ -16,10 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.emails.EmailService;
+import com.functions.utils.TimeUtils;
 import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -357,6 +361,14 @@ public class WebhookService {
         return resolvedMetadata;
     }
 
+    /**
+     * @deprecated purchaserMap is deprecated — orders/tickets are the source of truth
+     *     for ticket activity. This helper is retained only because frontend attendee
+     *     dialogs (AddAttendeeDialog, EditAttendeeTicketsDialog, RemoveAttendeeDialog,
+     *     ViewAttendeeFormResponsesDialog) still read purchaserMap; it is no longer
+     *     called from the checkout flow.
+     */
+    @Deprecated
     static EventMetadata applyAttendanceToEventMetadata(
             EventMetadata eventMetadata,
             String organiserId,
@@ -430,6 +442,12 @@ public class WebhookService {
         return resolvedMetadata;
     }
 
+    /**
+     * @deprecated purchaserMap is deprecated — orders/tickets are the source of truth
+     *     for ticket activity. This helper is retained only because frontend attendee
+     *     dialogs still read purchaserMap; it is no longer called from cancellation flow.
+     */
+    @Deprecated
     static EventMetadata rollbackAttendanceFromEventMetadata(
             EventMetadata eventMetadata,
             String organiserId,
@@ -553,7 +571,8 @@ public class WebhookService {
             Session.TotalDetails totalDetails,
             String fulfilmentSessionId,
             String paymentIntentId,
-            String captureMethod) throws Exception {
+            String captureMethod,
+            String eventTicketTypeId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -581,6 +600,9 @@ public class WebhookService {
             logger.error("Event data is null for eventId={}", eventId);
             return null;
         }
+        event.setEventId(eventId);
+
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, eventTicketTypeId);
         
         LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, false);
         if (item == null) {
@@ -617,16 +639,12 @@ public class WebhookService {
         
         // Resolve status based on capture method
         OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
-        eventMetadata = applyAttendanceToEventMetadata(
-                eventMetadata,
-                event.getOrganiserId(),
-                customerEmail,
-                fullName,
-                phoneNumber,
-                quantity.intValue(),
-                formResponseIds);
-        logger.info("Updated attendee list to reflect newly purchased tickets. email={}, name={}",
-                customerEmail, fullName);
+        // completeTicketCount is used by dashboards (EventDrilldownStatBanner, AttendeeService,
+        // ReservedSlotService) so it is kept up to date; purchaserMap is deprecated and no
+        // longer written.
+        eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + quantity.intValue());
+        logger.info("Incremented completeTicketCount for event {}. email={}, name={}",
+                eventId, customerEmail, fullName);
         
         List<String> ticketIds = new ArrayList<>();
         
@@ -647,6 +665,7 @@ public class WebhookService {
             ticket.setPurchaseDate(purchaseTime);
             ticket.setStatus(status);
             ticket.setFormResponseId(formResponseId);
+            EventTicketTypeService.stampTicket(ticket, ticketType);
             
             transaction.create(ticketRef, ticket);
             ticketIds.add(ticketRef.getId());
@@ -688,11 +707,24 @@ public class WebhookService {
         return totalDetails.getAmountDiscount();
     }
 
+    private static String resolveEventTicketTypeIdFromTickets(List<Ticket> tickets) {
+        if (tickets == null || tickets.isEmpty()) {
+            throw new IllegalArgumentException("Cannot resolve eventTicketTypeId from empty ticket list");
+        }
+        for (Ticket ticket : tickets) {
+            if (ticket != null && ticket.getEventTicketTypeId() != null && !ticket.getEventTicketTypeId().isBlank()) {
+                return ticket.getEventTicketTypeId();
+            }
+        }
+        throw new IllegalArgumentException("Tickets are missing eventTicketTypeId");
+    }
+
     private static void restockTickets(
             Transaction transaction,
             String eventId,
             boolean isPrivate,
-            int ticketCount) throws Exception {
+            int ticketCount,
+            String eventTicketTypeId) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -706,7 +738,18 @@ public class WebhookService {
             throw new IllegalStateException("Event does not exist for restock. eventId=" + eventId);
         }
 
-        transaction.update(eventRef, "vacancy", FieldValue.increment(ticketCount));
+        EventData eventData = eventSnapshot.toObject(EventData.class);
+        if (eventData == null) {
+            throw new IllegalStateException("Event data is null for restock. eventId=" + eventId);
+        }
+        eventData.setEventId(eventId);
+
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required for restock. eventId=" + eventId);
+        }
+
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, ticketCount);
     }
 
     private static void updateTicketsStatusToRejected(
@@ -757,14 +800,13 @@ public class WebhookService {
                     tickets.size()));
         }
 
-        eventMetadata = rollbackAttendanceFromEventMetadata(
-                eventMetadata,
-                organiserId,
-                order.getEmail(),
-                order.getFullName(),
-                tickets);
+        // purchaserMap is deprecated — only decrement completeTicketCount.
+        int canceledTicketCount = tickets.size();
+        int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
+        eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
-        restockTickets(transaction, eventId, isPrivate, tickets.size());
+        restockTickets(transaction, eventId, isPrivate, tickets.size(),
+                resolveEventTicketTypeIdFromTickets(tickets));
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
 
@@ -895,7 +937,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) throws Exception {
+            List<LineItem> lineItems,
+            String eventTicketTypeId) throws Exception {
         
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -917,6 +960,13 @@ public class WebhookService {
                         eventId, isPrivate);
             throw new IllegalStateException("Event does not exist: eventId=" + eventId);
         }
+
+        EventData eventData = eventSnapshot.toObject(EventData.class);
+        if (eventData == null) {
+            throw new IllegalStateException("Event data is null for expired checkout restock. eventId=" + eventId);
+        }
+        eventData.setEventId(eventId);
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
         
         // Firestore transactions require all reads to complete before the first write.
         EventMetadata eventMetadata = getOrInitializeEventMetadata(
@@ -925,8 +975,8 @@ public class WebhookService {
                 eventSnapshot.getString("organiserId"));
         appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
 
-        // Restock the tickets
-        transaction.update(eventRef, "vacancy", FieldValue.increment(quantity));
+        // Restock General Admission vacancy
+        EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, quantity);
         transaction.set(eventMetadataRef, eventMetadata);
     }
     
@@ -960,7 +1010,8 @@ public class WebhookService {
             String fulfilmentSessionId,
             String endFulfilmentEntityId,
             String paymentIntentId,
-            String captureMethod) {
+            String captureMethod,
+            String eventTicketTypeId) {
         
         try {
             // Run the fulfillment logic in a transaction
@@ -985,7 +1036,8 @@ public class WebhookService {
                         checkoutSession.getTotalDetails(),
                         fulfilmentSessionId,
                         paymentIntentId,
-                        captureMethod
+                        captureMethod,
+                        eventTicketTypeId
                     );
                     
                     if (orderIdResult == null) {
@@ -1027,8 +1079,8 @@ public class WebhookService {
                         fulfilmentSessionId, MAX_FULFILMENT_RETRIES);
             }
             
+            String visibility = isPrivate ? "Private" : "Public";
             if (shouldSendPurchaseEmailAfterCheckout(captureMethod)) {
-                String visibility = isPrivate ? "Private" : "Public";
                 boolean emailSuccess = sendPurchaseEmailWithRetries(
                         eventId,
                         visibility,
@@ -1039,6 +1091,33 @@ public class WebhookService {
                 if (!emailSuccess) {
                     logger.warn("Was unable to send purchase email after EmailClient retries. orderId={}, customer={}",
                             orderId, customerEmail);
+                }
+            } else if ("manual".equalsIgnoreCase(captureMethod)) {
+                // Booking-approval flow: buyer is pending organiser approval, so send the
+                // pending booking email rather than a purchase confirmation.
+                boolean pendingEmailSuccess = EmailService.sendBookingPendingEmail(
+                        eventId,
+                        visibility,
+                        customerEmail,
+                        fullName,
+                        orderId);
+                if (!pendingEmailSuccess) {
+                    logger.warn("Was unable to send pending booking email. orderId={}, customer={}",
+                            orderId, customerEmail);
+                }
+
+                // Also notify the organiser that a new booking request is awaiting approval.
+                try {
+                    boolean organiserEmailSuccess = EmailService.sendOrganiserPendingBookingEmail(
+                            eventId,
+                            visibility,
+                            fullName,
+                            orderId);
+                    if (!organiserEmailSuccess) {
+                        logger.warn("Was unable to send organiser pending booking notification. orderId={}", orderId);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to send organiser pending booking notification. orderId={}", orderId, e);
                 }
             }
             
@@ -1065,7 +1144,8 @@ public class WebhookService {
             String checkoutSessionId,
             String eventId,
             boolean isPrivate,
-            List<LineItem> lineItems) {
+            List<LineItem> lineItems,
+            String eventTicketTypeId) {
         
         try {
             Boolean result = FirebaseService.createFirestoreTransaction(transaction -> {
@@ -1078,7 +1158,8 @@ public class WebhookService {
                     }
                     
                     // Restock tickets
-                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems);
+                    restockTicketsAfterExpiredCheckout(transaction, checkoutSessionId, eventId, isPrivate, lineItems,
+                            eventTicketTypeId);
                     
                     return true;
                 } catch (Exception e) {
@@ -1204,18 +1285,27 @@ public class WebhookService {
 
             String email = order.getEmail();
             if (email != null && !email.isBlank()) {
-                boolean emailSent = EmailService.sendCancellationEmail(
+                String startDate = formatEventTimestampOrEmpty(eventSnapshot, "startDate");
+                String endDate = formatEventTimestampOrEmpty(eventSnapshot, "endDate");
+                String location = eventSnapshot.exists()
+                        ? Optional.ofNullable(eventSnapshot.getString("location")).orElse("")
+                        : "";
+                boolean emailSent = EmailService.sendRejectBookingEmail(
                         email,
                         order.getFullName(),
                         eventName,
+                        organiserId,
                         orderId,
-                        ticketIds.size());
+                        ticketIds.size(),
+                        startDate,
+                        endDate,
+                        location);
                 if (!emailSent) {
-                    logger.warn("Was unable to send cancellation email to {}. orderId={}",
+                    logger.warn("Was unable to send reject booking email to {}. orderId={}",
                             email, orderId);
                 }
             } else {
-                logger.warn("No email found in order to send cancellation email. orderId={}", orderId);
+                logger.warn("No email found in order to send reject booking email. orderId={}", orderId);
             }
 
             logger.info("Successfully handled payment_intent.canceled webhook event. paymentIntentId={}, orderId={}",
@@ -1226,5 +1316,16 @@ public class WebhookService {
                     paymentIntentId, e.getMessage(), e);
             return false;
         }
+    }
+
+    private static String formatEventTimestampOrEmpty(DocumentSnapshot eventSnapshot, String field) {
+        if (!eventSnapshot.exists()) {
+            return "";
+        }
+        com.google.cloud.Timestamp ts = eventSnapshot.getTimestamp(field);
+        if (ts == null) {
+            return "";
+        }
+        return TimeUtils.formatTimestampForEmail(ts);
     }
 }

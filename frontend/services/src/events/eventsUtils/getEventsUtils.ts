@@ -19,6 +19,7 @@ import { db } from "../../firebase";
 import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
+import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "./ticketLimits";
 
 // const router = useRouter();
@@ -95,11 +96,13 @@ export async function getAllEventsFromCollectionRef(
     for (const event of eventsDataWithoutOrganiser) {
       try {
         const organiser = await getPublicUserById(event.organiserId);
-        eventsData.push({
-          ...EmptyEventData, // initiate default values
-          ...event,
-          organiser: organiser,
-        });
+        eventsData.push(
+          applyGeneralAdmissionInventoryFields({
+            ...EmptyEventData, // initiate default values
+            ...event,
+            organiser: organiser,
+          })
+        );
       } catch {
         // this is a no op, we don't include this event in the eventsData list and don't display to frontend.
       }
@@ -115,9 +118,8 @@ export async function getAllEventsFromCollectionRef(
 
 function getEventsDataFromLocalStorage(): EventData[] {
   const eventsData: EventData[] = JSON.parse(localStorage.getItem(LocalStorageKeys.EventsData)!);
-  const eventsDataFinal: EventData[] = [];
-  eventsData.map((event) => {
-    eventsDataFinal.push({
+  return eventsData.map((event) =>
+    applyGeneralAdmissionInventoryFields({
       eventId: event.eventId,
       organiser: event.organiser as PublicUserData,
       startDate: new Timestamp(event.startDate.seconds, event.startDate.nanoseconds),
@@ -153,8 +155,8 @@ function getEventsDataFromLocalStorage(): EventData[] {
       waitlistEnabled: event.waitlistEnabled,
       bookingApprovalEnabled: event.bookingApprovalEnabled,
       showAttendeesOnEventPage: event.showAttendeesOnEventPage,
-      maxTicketsPerTransaction: event.maxTicketsPerTransaction
-    });
-  });
-  return eventsDataFinal;
+      maxTicketsPerTransaction: event.maxTicketsPerTransaction,
+      eventTicketTypes: event.eventTicketTypes,
+    })
+  );
 }

@@ -39,7 +39,7 @@ function StatusChip({ status }: { status: OrderAndTicketStatus }) {
     return <span className={`${base} border-gray-300 bg-gray-50 text-gray-800`}>Approved</span>;
   }
   if (status === OrderAndTicketStatus.PENDING) {
-    return <span className={`${base} border-gray-400 bg-gray-100 text-gray-800`}>Pending</span>;
+    return <span className={`${base} border-yellow-400 bg-yellow-50 text-yellow-800`}>Awaiting organiser approval</span>;
   }
   return <span className={`${base} border-gray-500 bg-gray-200 text-gray-900`}>Rejected</span>;
 }

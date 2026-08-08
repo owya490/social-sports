@@ -1,5 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
@@ -22,6 +23,7 @@ import { useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
+import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
 interface EventPaymentProps {
@@ -40,6 +42,8 @@ interface EventPaymentProps {
   organiserId: UserId;
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
+  bookingApprovalEnabled?: boolean;
+  eventTicketTypeId: EventTicketTypeId;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -70,6 +74,7 @@ export default function EventPayment(props: EventPaymentProps) {
 
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
+  const bookingMaintenanceActive = isBookingMaintenanceActive();
 
   return (
     <div className="md:border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
@@ -110,7 +115,12 @@ export default function EventPayment(props: EventPaymentProps) {
 
         {/* Booking Section */}
         <div className="w-full">
-          {eventRegistrationClosed ? (
+          {bookingMaintenanceActive ? (
+            <div className="text-center py-4">
+              <h3 className="font-semibold text-core-text mb-1">Booking Paused</h3>
+              <p className="text-sm text-gray-600">{BOOKING_MAINTENANCE_MESSAGE}</p>
+            </div>
+          ) : eventRegistrationClosed ? (
             <div className="text-center py-4">
               <h3 className="font-semibold text-core-text mb-1">Registration Closed</h3>
               <p className="text-sm text-gray-600">Please check with the organiser for more details.</p>
@@ -143,6 +153,7 @@ export default function EventPayment(props: EventPaymentProps) {
                   <JoinWaitlistButton
                     eventId={props.eventId}
                     ticketCount={waitlistAttendeeCount}
+                    eventTicketTypeId={props.eventTicketTypeId}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
@@ -176,9 +187,16 @@ export default function EventPayment(props: EventPaymentProps) {
                   <BookingButton
                     eventId={props.eventId}
                     ticketCount={attendeeCount}
+                    eventTicketTypeId={props.eventTicketTypeId}
                     setLoading={props.setLoading}
+                    bookingApprovalEnabled={props.bookingApprovalEnabled}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
+                  {props.bookingApprovalEnabled && (
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
+                    </p>
+                  )}
                   <p className="text-xs text-gray-600 mt-3 text-center">
                     Registration closes {timestampToTimeOfDay(registrationEndDate)},{" "}
                     {timestampToDateString(registrationEndDate)}

@@ -97,47 +97,8 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
             userId: userCredential.user.uid,
           });
 
-          const userData = await getTempUserData(userId);
-
-          if (userData !== null) {
-            try {
-              await createUser(userData, userId);
-              authServiceLogger.info("Temporary user data found and user created successfully.", {
-                userId: userCredential.user.uid,
-              });
-
-              // Proceed with deletion of temporary user data
-              await deleteTempUserData(userId);
-              authServiceLogger.info("Temporary user data deleted after successful creation.", {
-                userId: userCredential.user.uid,
-              });
-              return userId; // User created and temporary data deleted successfully
-            } catch {
-              authServiceLogger.error("Error during user creation. Attempting rollback.", {
-                userId: userCredential.user.uid,
-              });
-
-              // Rollback only if user creation succeeded and temporary data deletion failed
-              try {
-                await deleteUser(userId);
-                authServiceLogger.error("User creation rolled back successfully.", { userId: userCredential.user.uid });
-              } catch (rollbackError) {
-                const rollbackErrorMessage =
-                  rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
-                authServiceLogger.error("Failed to roll back user creation:", {
-                  error: rollbackErrorMessage,
-                  userId: userCredential.user.uid,
-                });
-              }
-
-              throw new Error("User creation failed, rolled back the changes.");
-            }
-          } else {
-            authServiceLogger.error("Temporary user data not found after email verification.", {
-              userId: userCredential.user.uid,
-            });
-            throw new Error("User data not found.");
-          }
+          await migrateTempUserToActiveUser(userId);
+          return userId; // User created and temporary data deleted successfully
         } else {
           throw error; // Re-throw if it's not a UserNotFoundError
         }
@@ -195,6 +156,48 @@ export async function getTempUserData(userId: UserId): Promise<UserData | null> 
 
 async function deleteTempUserData(userId: UserId) {
   await deleteDoc(doc(db, "TempUsers", userId));
+}
+
+/**
+ * Promotes a verified user's staged record in TempUsers to Users/Active and
+ * deletes the staged record. Rolls back the created user if migration fails.
+ * @returns the migrated user data
+ * @throws Error if no temp data exists or the migration fails
+ */
+export async function migrateTempUserToActiveUser(userId: UserId): Promise<UserData> {
+  const userData = await getTempUserData(userId);
+
+  if (userData === null) {
+    authServiceLogger.error("Temporary user data not found after email verification.", { userId });
+    throw new Error("User data not found.");
+  }
+
+  try {
+    await createUser(userData, userId);
+    authServiceLogger.info("Temporary user data found and user created successfully.", { userId });
+
+    // Proceed with deletion of temporary user data
+    await deleteTempUserData(userId);
+    authServiceLogger.info("Temporary user data deleted after successful creation.", { userId });
+    return userData;
+  } catch {
+    authServiceLogger.error("Error during user creation. Attempting rollback.", { userId });
+
+    // Rollback only if user creation succeeded and temporary data deletion failed
+    try {
+      await deleteUser(userId);
+      authServiceLogger.error("User creation rolled back successfully.", { userId });
+    } catch (rollbackError) {
+      const rollbackErrorMessage =
+        rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
+      authServiceLogger.error("Failed to roll back user creation:", {
+        error: rollbackErrorMessage,
+        userId,
+      });
+    }
+
+    throw new Error("User creation failed, rolled back the changes.");
+  }
 }
 
 export async function handleGoogleSignIn() {

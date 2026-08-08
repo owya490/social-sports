@@ -39,6 +39,8 @@ Complete the essential event details including:
 > [!TIP]
 > To create paid events, you'll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.
 
+In **Additional Settings**, you can also enable [Booking Approval](/docs/organisers/events/booking-approval) — this requires you to manually approve each booking before the player is charged.
+
 ### 3. Upload Event Images
 
 ![create-event-images](/images/docs/organisers/events/create-event-images.jpg)

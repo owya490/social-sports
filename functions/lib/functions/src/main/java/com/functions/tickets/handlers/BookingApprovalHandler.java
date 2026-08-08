@@ -32,22 +32,12 @@ public class BookingApprovalHandler implements Handler<BookingApprovalRequest, B
         logger.info("Handling booking approval request for eventId: {}, organiserId: {}, orderId: {}, operation: {}",
                 request.eventId(), request.organiserId(), request.orderId(), request.bookingApprovalOperation());
 
-        boolean success = BookingApprovalService.handleBookingApproval(request.eventId(),
+        BookingApprovalResponse response = BookingApprovalService.handleBookingApproval(request.eventId(),
                 request.organiserId(), request.orderId(), request.bookingApprovalOperation());
 
-        logger.info("[BookingApprovalHandler] Booking {} operation completed for orderId: {}",
-                request.bookingApprovalOperation(), request.orderId());
+        logger.info("[BookingApprovalHandler] Booking {} operation completed for orderId: {}, success: {}",
+                request.bookingApprovalOperation(), request.orderId(), response.success());
 
-        if (!success) {
-            throw new RuntimeException(String.format("Failed to execute %s operation for order %s",
-                    request.bookingApprovalOperation(), request.orderId()));
-        }
-
-        return new BookingApprovalResponse(
-                success,
-                request.orderId(),
-                request.bookingApprovalOperation(),
-                String.format("Successfully executed %s operation for order %s",
-                        request.bookingApprovalOperation(), request.orderId()));
+        return response;
     }
 }

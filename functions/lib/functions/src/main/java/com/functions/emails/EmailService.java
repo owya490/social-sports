@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
-import com.functions.global.handlers.Global;
 import com.functions.utils.TimeUtils;
 import com.functions.utils.UrlUtils;
 import com.google.cloud.Timestamp;
@@ -26,24 +25,17 @@ import com.google.cloud.firestore.Firestore;
  */
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
-    private static final String DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID = "cml0rm3t21e8s0ixa21rvcfnx";
-    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR =
-            "LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID";
 
     @FunctionalInterface
     interface PurchaseEmailSender {
         boolean send(EmailTemplateType templateType, String email, Map<String, String> variables);
     }
-    private static final String LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID =
-            resolveCancellationEmailTemplateId(Global.getEnv(LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR));
 
-    private static String resolveCancellationEmailTemplateId(String configuredTemplateId) {
-        if (configuredTemplateId == null || configuredTemplateId.isBlank()) {
-            return DEFAULT_LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID;
-        }
-        return configuredTemplateId;
+    @FunctionalInterface
+    private interface BookingApprovalEmailVariablesBuilder {
+        Map<String, String> build(Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName,
+                String orderId);
     }
-
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an
      * event.
@@ -127,7 +119,7 @@ public class EmailService {
                 return false;
             }
 
-            Map<String, String> variables = buildEmailVariables(eventSnapshot, orderSnapshot, firstName, orderId);
+            Map<String, String> variables = buildEmailVariables(db, eventSnapshot, orderSnapshot, firstName, orderId);
 
             boolean attendeeEmailSent = EmailClient.sendEmailWithLoopsWithRetries(
                     EmailTemplateType.PURCHASE,
@@ -185,13 +177,14 @@ public class EmailService {
                 .get();
     }
 
-    private static Map<String, String> buildEmailVariables(DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+    private static Map<String, String> buildEmailVariables(Firestore db, DocumentSnapshot event, DocumentSnapshot order,
+            String firstName, String orderId) {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
         Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
 
-        // Robustly extract price from Firestore, handling various numeric types
-        double priceInCents = extractPrice(event);
+        String eventTicketTypeId = resolveEventTicketTypeIdFromOrder(db, order);
+        double priceInCents = extractPriceByTicketTypeId(event, eventTicketTypeId);
 
         List<?> tickets = (List<?>) order.get("tickets");
         String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
@@ -206,6 +199,52 @@ public class EmailService {
                 TimeUtils.formatTimestampForEmail(startTimestamp),
                 TimeUtils.formatTimestampForEmail(endTimestamp),
                 event.getString("location"));
+    }
+
+    /**
+     * Variables for {@link EmailTemplateType#BOOKING_PENDING} (and organiser copy).
+     * Must match the Loops template: name, eventName, organiserId, orderId, datePurchased,
+     * quantity, price, startDate, endDate, location.
+     */
+    private static Map<String, String> buildBookingPendingEmailVariables(
+            Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+        Timestamp startTimestamp = getTimestampField(event, "startDate");
+        Timestamp endTimestamp = getTimestampField(event, "endDate");
+        Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
+
+        String eventTicketTypeId = resolveEventTicketTypeIdFromOrder(db, order);
+        double priceInCents = extractPriceByTicketTypeId(event, eventTicketTypeId);
+
+        List<?> tickets = (List<?>) order.get("tickets");
+        String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
+
+        return Map.of(
+                "name", defaultString(firstName),
+                "eventName", defaultString(event.getString("name")),
+                "organiserId", defaultString(event.getString("organiserId")),
+                "orderId", defaultString(orderId),
+                "datePurchased", TimeUtils.formatTimestampForEmail(purchasedTimestamp),
+                "quantity", quantity,
+                "price", centsToPurchaseEmailPrice(priceInCents),
+                "startDate", TimeUtils.formatTimestampForEmail(startTimestamp),
+                "endDate", TimeUtils.formatTimestampForEmail(endTimestamp),
+                "location", defaultString(event.getString("location")));
+    }
+
+    /**
+     * Variables for {@link EmailTemplateType#BOOKING_APPROVED}.
+     * Must match the Loops template: name, eventName, orderId, ticketCount.
+     */
+    private static Map<String, String> buildBookingApprovedEmailVariables(
+            Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+        List<?> tickets = (List<?>) order.get("tickets");
+        String ticketCount = tickets != null ? String.valueOf(tickets.size()) : "0";
+
+        return Map.of(
+                "name", defaultString(firstName),
+                "eventName", defaultString(event.getString("name")),
+                "orderId", defaultString(orderId),
+                "ticketCount", ticketCount);
     }
 
     private static Timestamp getTimestampField(DocumentSnapshot snapshot, String fieldName) {
@@ -226,40 +265,70 @@ public class EmailService {
     }
 
     /**
-     * Extracts price from a Firestore document, handling multiple possible types.
-     *
-     * @param event The event document snapshot
-     * @return The price in cents as a double, or 0.0 if not found or invalid
+     * Extracts price in cents from {@code eventTicketTypes} by ticket type ID.
      */
-    private static double extractPrice(DocumentSnapshot event) {
-        Long longPrice = event.getLong("price");
-        if (longPrice != null) {
-            return longPrice.doubleValue();
+    private static double extractPriceByTicketTypeId(DocumentSnapshot event, String eventTicketTypeId) {
+        Object ticketTypesObj = event.get("eventTicketTypes");
+        if (!(ticketTypesObj instanceof Map<?, ?> ticketTypes) || ticketTypes.isEmpty()) {
+            throw new IllegalStateException("Event " + event.getId() + " has no eventTicketTypes");
         }
 
-        Double doublePrice = event.getDouble("price");
-        if (doublePrice != null) {
-            return doublePrice;
+        Map<?, ?> ticketType = findTicketTypeMap(ticketTypes, eventTicketTypeId);
+        if (ticketType == null) {
+            throw new IllegalArgumentException(
+                    "Ticket type " + eventTicketTypeId + " not found for event " + event.getId());
         }
 
-        Object priceObj = event.get("price");
-
-        if (priceObj == null) {
-            return 0.0;
-        }
-
+        Object priceObj = ticketType.get("price");
         if (priceObj instanceof Number numericPrice) {
             return numericPrice.doubleValue();
-        } else if (priceObj instanceof String) {
-            try {
-                return Double.parseDouble((String) priceObj);
-            } catch (NumberFormatException e) {
-                logger.warn("Failed to parse price string '{}', defaulting to 0.0", priceObj);
-                return 0.0;
+        }
+        throw new IllegalStateException(
+                "Ticket type " + eventTicketTypeId + " on event " + event.getId() + " is missing price");
+    }
+
+    private static Map<?, ?> findTicketTypeMap(Map<?, ?> ticketTypes, String eventTicketTypeId) {
+        Object byKey = ticketTypes.get(eventTicketTypeId);
+        if (byKey instanceof Map<?, ?> ticketTypeMap) {
+            return ticketTypeMap;
+        }
+        for (Object value : ticketTypes.values()) {
+            if (value instanceof Map<?, ?> ticketTypeMap) {
+                Object id = ticketTypeMap.get("id");
+                if (eventTicketTypeId.equals(id)) {
+                    return ticketTypeMap;
+                }
             }
-        } else {
-            logger.warn("Unexpected price type '{}', defaulting to 0.0", priceObj.getClass().getName());
-            return 0.0;
+        }
+        return null;
+    }
+
+    private static String resolveEventTicketTypeIdFromOrder(Firestore db, DocumentSnapshot order) {
+        List<?> ticketIds = (List<?>) order.get("tickets");
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            throw new IllegalStateException("Order " + order.getId() + " has no tickets");
+        }
+        Object firstTicketId = ticketIds.get(0);
+        if (firstTicketId == null) {
+            throw new IllegalStateException("Order " + order.getId() + " has null first ticket id");
+        }
+        try {
+            DocumentSnapshot ticketSnapshot = fetchRootDocument(db, CollectionPaths.TICKETS,
+                    firstTicketId.toString());
+            if (!ticketSnapshot.exists()) {
+                throw new IllegalStateException(
+                        "Ticket " + firstTicketId + " not found for order " + order.getId());
+            }
+            String eventTicketTypeId = ticketSnapshot.getString("eventTicketTypeId");
+            if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+                throw new IllegalStateException("Ticket " + firstTicketId + " is missing eventTicketTypeId");
+            }
+            return eventTicketTypeId;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while loading ticket for order " + order.getId(), e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to load ticket for order " + order.getId(), e);
         }
     }
 
@@ -315,7 +384,7 @@ public class EmailService {
         return formatted.contains(".") ? formatted : formatted + ".0";
     }
 
-    private static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
+    static Optional<String> getOrganiserEmailForTicketEmail(Firestore db, String organiserId) throws ExecutionException, InterruptedException {
         DocumentSnapshot organiserSnapshot = fetchNestedDocument(
                 db,
                 CollectionPaths.USERS,
@@ -382,45 +451,197 @@ public class EmailService {
     }
 
     /**
-     * Sends a payment cancellation email after tickets/order are marked as REJECTED.
+     * Sends the pending-booking email to the buyer after checkout when organiser approval is required.
+     * Triggered on {@code checkout.session.completed} when the Stripe capture method is manual.
+     *
+     * @param eventId    The event ID
+     * @param visibility Either "Private" or "Public"
+     * @param email      The buyer's email address
+     * @param firstName  The buyer's first name
+     * @param orderId    The order ID
+     * @return true if the email was sent successfully, false otherwise
+     */
+    public static boolean sendBookingPendingEmail(String eventId, String visibility,
+            String email, String firstName, String orderId) {
+        return sendBookingApprovalEmailWithTemplate(
+                EmailTemplateType.BOOKING_PENDING.templateId,
+                eventId,
+                visibility,
+                email,
+                firstName,
+                orderId,
+                EmailService::buildBookingPendingEmailVariables);
+    }
+
+    /**
+     * Sends the booking-approved email to the buyer after an organiser approves
+     * a pending booking ({@link EmailTemplateType#BOOKING_APPROVED}).
+     *
+     * @param eventId    The event ID
+     * @param visibility Either "Private" or "Public"
+     * @param email      The buyer's email address
+     * @param firstName  The buyer's first name
+     * @param orderId    The order ID
+     * @return true if the email was sent successfully, false otherwise
+     */
+    public static boolean sendBookingApprovedEmail(String eventId, String visibility,
+            String email, String firstName, String orderId) {
+        return sendBookingApprovalEmailWithTemplate(
+                EmailTemplateType.BOOKING_APPROVED.templateId,
+                eventId,
+                visibility,
+                email,
+                firstName,
+                orderId,
+                EmailService::buildBookingApprovedEmailVariables);
+    }
+
+    /**
+     * Shared implementation for booking-approval flow emails.
+     * Fetches event and order data from Firestore, builds variables via {@code variablesBuilder}, and sends via Loops.
+     */
+    private static boolean sendBookingApprovalEmailWithTemplate(
+            String templateId,
+            String eventId,
+            String visibility,
+            String email,
+            String firstName,
+            String orderId,
+            BookingApprovalEmailVariablesBuilder variablesBuilder) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            DocumentSnapshot eventSnapshot = fetchNestedDocument(
+                    db, CollectionPaths.EVENTS, CollectionPaths.ACTIVE, visibility, eventId);
+            if (!eventSnapshot.exists()) {
+                logger.error("Unable to find event in datastore to send booking approval email. eventId={}", eventId);
+                return false;
+            }
+
+            DocumentSnapshot orderSnapshot = fetchRootDocument(db, CollectionPaths.ORDERS, orderId);
+            if (!orderSnapshot.exists()) {
+                logger.error("Unable to find order in datastore to send booking approval email. orderId={}", orderId);
+                return false;
+            }
+
+            Map<String, String> variables = variablesBuilder.build(
+                    db, eventSnapshot, orderSnapshot, firstName, orderId);
+            boolean sent = EmailClient.sendEmailWithLoopsWithRetries(templateId, email, variables);
+            if (!sent) {
+                logger.warn("Failed to send booking approval email (template={}) for order {} to {}",
+                        templateId, orderId, email);
+            }
+            return sent;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Booking approval email send interrupted for order {} to {}", orderId, email, e);
+            return false;
+        } catch (Exception e) {
+            logger.error("Failed to send booking approval email (template={}) for order {} to {}: {}",
+                    templateId, orderId, email, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Notifies the organiser of a new pending booking using the same Loops template and
+     * variables as the buyer pending email ({@link EmailTemplateType#BOOKING_PENDING}).
+     *
+     * <p>If the organiser has not opted in to ticket-related emails
+     * ({@code sendOrganiserTicketEmails == false}) the email is silently skipped (not an error).
+     *
+     * @param eventId      The event ID
+     * @param visibility   Either "Private" or "Public"
+     * @param attendeeName The buyer's name (used as {@code name} in the template, matching legacy Python)
+     * @param orderId      The order ID
+     * @return true unless an unexpected error occurred
+     */
+    public static boolean sendOrganiserPendingBookingEmail(String eventId, String visibility,
+            String attendeeName, String orderId) {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+
+            DocumentSnapshot eventSnapshot = fetchNestedDocument(
+                    db, CollectionPaths.EVENTS, CollectionPaths.ACTIVE, visibility, eventId);
+            if (!eventSnapshot.exists()) {
+                logger.error("Unable to find event for organiser pending booking email. eventId={}", eventId);
+                return false;
+            }
+
+            String organiserId = eventSnapshot.getString("organiserId");
+            if (organiserId == null || organiserId.isBlank()) {
+                logger.warn("Event {} has no organiserId. Skipping organiser notification. orderId={}", eventId, orderId);
+                return true;
+            }
+
+            Optional<String> organiserEmail = getOrganiserEmailForTicketEmail(db, organiserId);
+            if (organiserEmail.isEmpty()) {
+                logger.info("No organiser notification email configured. organiserId={}, orderId={}",
+                        organiserId, orderId);
+                return true;
+            }
+
+            return sendBookingApprovalEmailWithTemplate(
+                    EmailTemplateType.BOOKING_PENDING.templateId,
+                    eventId,
+                    visibility,
+                    organiserEmail.get(),
+                    attendeeName,
+                    orderId,
+                    EmailService::buildBookingPendingEmailVariables);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.warn("Organiser pending booking email send interrupted. orderId={}", orderId, e);
+            return false;
+        } catch (Exception e) {
+            logger.error("Failed to send organiser pending booking email. orderId={}: {}",
+                    orderId, e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Sends a reject-booking email after tickets/order are marked as REJECTED.
      *
      * @param email recipient email
      * @param fullName purchaser full name
      * @param eventName event name
+     * @param organiserId organiser ID
      * @param orderId order ID
-     * @param ticketCount number of canceled tickets
+     * @param ticketCount number of rejected tickets
+     * @param startDate formatted event start date
+     * @param endDate formatted event end date
+     * @param location event location
      * @return true if email was sent successfully, false otherwise
      */
-    public static boolean sendCancellationEmail(String email, String fullName, String eventName,
-                                                String orderId, int ticketCount) {
-        if (LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID == null
-                || LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID.isBlank()) {
-            logger.warn("{} not configured. Skipping cancellation email.",
-                    LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID_ENV_VAR);
-            return false;
-        }
-
+    public static boolean sendRejectBookingEmail(String email, String fullName, String eventName,
+                                                 String organiserId, String orderId, int ticketCount,
+                                                 String startDate, String endDate, String location) {
         Map<String, String> variables = Map.of(
                 "name", Optional.ofNullable(fullName).orElse(""),
                 "eventName", Optional.ofNullable(eventName).orElse("Event"),
+                "organiserId", Optional.ofNullable(organiserId).orElse(""),
                 "orderId", Optional.ofNullable(orderId).orElse(""),
-                "ticketCount", String.valueOf(ticketCount)
+                "ticketCount", String.valueOf(ticketCount),
+                "startDate", Optional.ofNullable(startDate).orElse(""),
+                "endDate", Optional.ofNullable(endDate).orElse(""),
+                "location", Optional.ofNullable(location).orElse("")
         );
 
         boolean sent;
         try {
             sent = EmailClient.sendEmailWithLoopsWithRetries(
-                    LOOPS_PAYMENT_CANCELLED_EMAIL_TEMPLATE_ID, email, variables);
+                    EmailTemplateType.BOOKING_REJECTED, email, variables);
         } catch (Exception e) {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email, e);
+            logger.warn("Failed to send reject booking email for order {} to {}", orderId, email, e);
             return false;
         }
 
         if (sent) {
-            logger.info("Successfully sent cancellation email for order {} to {}", orderId, email);
+            logger.info("Successfully sent reject booking email for order {} to {}", orderId, email);
         } else {
-            logger.warn("Failed to send cancellation email for order {} to {}", orderId, email);
-        }
+            logger.warn("Failed to send reject booking email for order {} to {}", orderId, email);
+            }
         return sent;
     }
 }
