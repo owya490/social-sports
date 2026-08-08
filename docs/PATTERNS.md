@@ -3,7 +3,7 @@
 ## General
 
 - Follow nearby code and tests before introducing new patterns.
-- Comments explain why a decision exists, not what the following code does.
+- Write comments only for non-obvious current constraints, intent, or tradeoffs that help a future reader understand why the code is structured that way. Do not restate the code or document historical changes, previous implementations, or removed code unless that history is necessary to understand the current behavior.
 - Keep secrets in environment or credential files that remain untracked.
 - Prefer focused changes; do not migrate adjacent legacy code unless it is required for correctness.
 

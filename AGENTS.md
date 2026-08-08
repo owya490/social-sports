@@ -58,6 +58,11 @@ The CI source of truth is `.github/workflows/branch_ci.yml`.
 
 See @docs/PATTERNS.md. It is **MUST READ** before changing authentication, payments, function endpoints, Firestore transactions, or shared frontend/backend contracts.
 
+## Code Comments
+
+- Write comments only for non-obvious current constraints, intent, or tradeoffs that help a future reader understand why the code is structured that way.
+- Do not restate the code or document historical changes, previous implementations, or removed code unless that history is necessary to understand the current behavior.
+
 ## Bash And Tool Safety
 
 - Avoid `&`, `$()`/backticks, brace expansion, and `\(` in jq format strings in agent Bash calls.
