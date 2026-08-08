@@ -1,16 +1,15 @@
 "use client";
+
 import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
 import { EventData } from "@/interfaces/EventTypes";
-import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
-import { Option, Select } from "@material-tailwind/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface CalendarEventCardProps {
@@ -18,162 +17,96 @@ interface CalendarEventCardProps {
 }
 
 export default function CalendarEventCard({ event }: CalendarEventCardProps) {
-  const router = useRouter();
   const [ticketCount, setTicketCount] = useState(1);
   const [loading, setLoading] = useState(false);
-
-  const handleTicketCountChange = (value: string | undefined) => {
-    if (value) {
-      setTicketCount(parseInt(value));
-    }
-  };
-
-  const renderTicketBooking = () => (
-    <div className="flex gap-3 items-center">
-      <div className="flex-shrink-0 md:min-w-64">
-        <Select value={ticketCount.toString()} onChange={handleTicketCountChange} label="Tickets" disabled={loading}>
-          {getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction).map((num) => (
-            <Option key={num} value={num.toString()}>
-              {num}
-            </Option>
-          ))}
-        </Select>
-      </div>
-
-      <BookingButton
-        eventId={event.eventId}
-        ticketCount={ticketCount}
-        eventTicketTypeId={resolveCheckoutTicketTypeId(event)}
-        setLoading={setLoading}
-        className="flex-1 font-semibold rounded-xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline py-2 transition-all duration-300"
-      />
-    </div>
-  );
+  const ticketOptions = getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction);
+  const priceLabel = getEventPriceDisplay(event.price);
+  const timeLabel = timestampToTimeOfDay(event.startDate);
 
   return (
-    <div className="p-4">
-      {/* Mobile Layout (below md) */}
-      <div className="md:hidden">
-        {/* Title */}
-        <h4
-          className="font-bold text-lg mb-3 cursor-pointer hover:underline overflow-x-hidden"
-          onClick={() => router.push(`/event/${event.eventId}`)}
-        >
-          {event.name}
-        </h4>
-
-        {/* Image and Metadata in line */}
-        <div className="flex gap-4">
-          {/* Event Thumbnail */}
-          <div className="flex-shrink-0">
-            <Image
-              src={event.thumbnail || event.image}
-              alt={event.name}
-              width={0}
-              height={0}
-              className="object-cover w-24 h-24 aspect-square rounded-lg"
-            />
+    <article className="rounded-xl border border-border bg-background overflow-hidden">
+      <div className="flex gap-4 p-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex items-baseline gap-3">
+            <p className="text-xs font-medium text-foreground-muted font-sans shrink-0">{timeLabel}</p>
+            <p className="text-xs font-medium text-foreground-secondary font-sans ml-auto shrink-0">{priceLabel}</p>
           </div>
 
-          {/* Metadata */}
-          <div className="flex-1 space-y-2 overflow-x-hidden">
-            <div className="flex items-center">
-              <p className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(event.startDate)}</p>
-              <p className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(event.price)}</p>
-            </div>
+          <Link
+            href={`/event/${event.eventId}`}
+            className="block text-base font-semibold text-foreground font-sans tracking-tight hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-sm"
+          >
+            {event.name}
+          </Link>
 
-            <div className="flex items-center">
-              <MapPinIcon className="w-4 shrink-0" />
-              <p className="ml-1 font-light text-xs whitespace-nowrap overflow-hidden">{event.location}</p>
-            </div>
-
-            <p className="text-xs text-gray-500">
-              {event.vacancy} {event.vacancy === 1 ? "spot" : "spots"} left
-            </p>
+          <div className="flex items-start gap-1.5 text-foreground-secondary">
+            <MapPinIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" aria-hidden />
+            <p className="text-xs font-sans line-clamp-1">{event.location}</p>
           </div>
+
+          <p className="text-xs text-foreground-muted font-sans">
+            {event.vacancy === 0
+              ? "Sold out"
+              : `${event.vacancy} ${event.vacancy === 1 ? "spot" : "spots"} left`}
+          </p>
         </div>
 
-        {/* Ticket Selection and Book Now */}
+        <Link
+          href={`/event/${event.eventId}`}
+          className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl bg-surface-muted"
+          aria-label={`View ${event.name}`}
+        >
+          <Image
+            src={event.thumbnail || event.image}
+            alt=""
+            fill
+            className="object-cover"
+            sizes="96px"
+          />
+        </Link>
+      </div>
+
+      <div className="border-t border-border px-4 py-3">
         {event.paymentsActive ? (
           event.vacancy === 0 ? (
-            <div className="mt-4">
-              <p className="text-xs text-gray-500">Event currently sold out. Please check back later.</p>
-            </div>
+            <p className="text-xs text-foreground-muted font-sans">Sold out — check back later.</p>
           ) : (
-            <div className="mt-4">{renderTicketBooking()}</div>
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+              <label className="sr-only" htmlFor={`tickets-${event.eventId}`}>
+                Number of tickets
+              </label>
+              <select
+                id={`tickets-${event.eventId}`}
+                value={ticketCount}
+                disabled={loading}
+                onChange={(e) => setTicketCount(parseInt(e.target.value, 10))}
+                className="w-full sm:w-28 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                {ticketOptions.map((num) => (
+                  <option key={num} value={num}>
+                    {num} {num === 1 ? "ticket" : "tickets"}
+                  </option>
+                ))}
+              </select>
+              <BookingButton
+                eventId={event.eventId}
+                ticketCount={ticketCount}
+                eventTicketTypeId={resolveCheckoutTicketTypeId(event)}
+                setLoading={setLoading}
+                className="flex-1 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+              />
+            </div>
           )
         ) : (
           <div className="flex justify-end">
             <ContactEventButton
               eventLink={event.eventLink}
               fallbackLink={`/event/${event.eventId}`}
-              className="border border-black"
+              className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             />
           </div>
         )}
       </div>
-
-      {/* Desktop Layout (above md) - Image spans all rows on left */}
-      <div className="hidden md:flex gap-4">
-        {/* Event Thumbnail - spans full height */}
-        <div className="flex-shrink-0">
-          <Image
-            src={event.thumbnail || event.image}
-            alt={event.name}
-            width={0}
-            height={0}
-            className="object-cover w-40 h-40 aspect-square rounded-lg"
-          />
-        </div>
-
-        {/* Right side - 3 rows */}
-        <div className="flex-1 flex flex-col gap-3">
-          <div>
-            <div className="flex items-center">
-              <p className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(event.startDate)}</p>
-              <p className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(event.price)}</p>
-            </div>
-            {/* Row 1: Title */}
-            <Link
-              href={`/event/${event.eventId}`}
-              className="font-bold text-lg hover:underline overflow-x-hidden focus:outline-none focus-visible:underline"
-            >
-              {event.name}
-            </Link>
-          </div>
-
-          {/* Row 2: Metadata */}
-          <div className="space-y-2 overflow-x-hidden mb-3">
-            <div className="flex items-center">
-              <MapPinIcon className="w-4 shrink-0" />
-              <p className="ml-1 font-light text-xs whitespace-nowrap overflow-hidden">{event.location}</p>
-            </div>
-
-            <p className="text-xs text-gray-500">
-              {event.vacancy} {event.vacancy === 1 ? "spot" : "spots"} left
-            </p>
-          </div>
-
-          {/* Row 3: Ticket Selection and Book Now */}
-          {event.paymentsActive ? (
-            event.vacancy === 0 ? (
-              <div className="mt-4">
-                <p className="text-xs text-gray-500">Event currently sold out. Please check back later.</p>
-              </div>
-            ) : (
-              <div className="mt-4">{renderTicketBooking()}</div>
-            )
-          ) : (
-            <div className="flex justify-end">
-              <ContactEventButton
-                eventLink={event.eventLink}
-                fallbackLink={`/event/${event.eventId}`}
-                className="border border-black"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    </article>
   );
 }

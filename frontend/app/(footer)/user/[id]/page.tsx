@@ -1,8 +1,9 @@
 "use client";
-import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
+
 import Loading from "@/components/loading/Loading";
 import EventCollectionCard from "@/components/organiser/event-collection/EventCollectionCard";
-import OrganiserCalendar from "@/components/users/profile/OrganiserCalendar";
+import OrganiserEventsBrowse from "@/components/users/profile/OrganiserEventsBrowse";
+import { UserProfileHeader } from "@/components/users/profile/UserProfileHeader";
 import { EventCollection } from "@/interfaces/EventCollectionTypes";
 import { EventData } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
@@ -12,11 +13,10 @@ import { getEventById } from "@/services/src/events/eventsService";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import { UserNotFoundError } from "@/services/src/users/userErrors";
 import { getPublicUserById, getUsernameMapping } from "@/services/src/users/usersService";
-import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
-import Tick from "@svgs/Verified_tick.png";
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+type ProfileTab = "events" | "collections";
 
 export default function UserProfilePage() {
   const params = useParams<{ id: string }>();
@@ -27,24 +27,18 @@ export default function UserProfilePage() {
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
   const [publicEventCollections, setPublicEventCollections] = useState<EventCollection[]>([]);
-  const [isBioExpanded, setIsBioExpanded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"events" | "collections">("events");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("events");
+
   useEffect(() => {
     const fetchEvents = async (user: PublicUserData) => {
-      const eventPromises = (user.publicUpcomingOrganiserEvents || []).map(
-        (eventId) => getEventById(eventId) // Get the event by its ID
-      );
-
-      // Wait for all promises to resolve
+      const eventPromises = (user.publicUpcomingOrganiserEvents || []).map((eventId) => getEventById(eventId));
       const events = await Promise.all(eventPromises);
-
-      // Update the state with the fetched events
       setUpcomingOrganiserEvents(events);
       return events;
     };
 
-    const fetchCollections = async (userId: UserId) => {
-      const collections = await getOrganiserPublicEventCollections(userId);
+    const fetchCollections = async (resolvedUserId: UserId) => {
+      const collections = await getOrganiserPublicEventCollections(resolvedUserId);
       setPublicEventCollections(collections);
       return collections;
     };
@@ -54,8 +48,6 @@ export default function UserProfilePage() {
         const userIdMapFromUsername = await getUsernameMapping(userId, true);
         const user = await getPublicUserById(userIdMapFromUsername.userId);
         setPublicUserProfile(user);
-
-        // Fetch both events and collections in parallel
         await Promise.all([fetchEvents(user), fetchCollections(userIdMapFromUsername.userId)]);
         setLoading(false);
       } catch (error) {
@@ -63,14 +55,12 @@ export default function UserProfilePage() {
           try {
             const userById = await getPublicUserById(userId, true);
             setPublicUserProfile(userById);
-
-            // Fetch both events and collections in parallel
             await Promise.all([fetchEvents(userById), fetchCollections(userId)]);
             setLoading(false);
             return;
-          } catch (error) {
-            logger.error(`Error fetching user profile: ${error}`);
-            if (error instanceof UserNotFoundError) {
+          } catch (innerError) {
+            logger.error(`Error fetching user profile: ${innerError}`);
+            if (innerError instanceof UserNotFoundError) {
               router.push("/not-found");
               return;
             }
@@ -79,114 +69,66 @@ export default function UserProfilePage() {
         router.push(getErrorUrl(error));
       }
     };
-    fetchUserProfile();
+    void fetchUserProfile();
   }, [userId, router]);
 
-  return loading ? (
-    <Loading />
-  ) : (
-    <div className="md:mt-6 w-full flex justify-center pb-24">
-      <div className="screen-width-primary">
-        <div className="md:flex gap-16">
-          <div id="col-1" className="pt-8 min-w-80">
-            <div className="px-8 py-6 border rounded-xl">
-              <div className="flex items-center gap-4">
-                <Image
-                  priority
-                  src={publicUserProfile.profilePicture}
-                  alt="DP"
-                  width={0}
-                  height={0}
-                  className="object-cover h-20 w-20 rounded-full overflow-hidden border-black border flex-shrink-0"
-                />
-                <div>
-                  <h2 className="text-2xl font-bold flex items-center">
-                    {`${publicUserProfile.firstName} ${publicUserProfile.surname}`}{" "}
-                    {publicUserProfile.isVerifiedOrganiser && (
-                      <div>
-                        <Image src={Tick} alt="Verified Organiser" className="h-6 w-6 ml-2" />
-                      </div>
-                    )}
-                  </h2>
-                  <p className="font-thin text-sm">{`${publicUserProfile.username}`}</p>
-                </div>
-              </div>
-              <div className="h-[1px] bg-core-outline my-4"></div>
-              <div className=" space-y-1">
-                <h3 className="text-lg">Contact Information</h3>
-                <span className="flex items-center gap-4">
-                  <EnvelopeIcon className="w-4 h-4" />
-                  <p className="text-xs font-light">
-                    {publicUserProfile.publicContactInformation?.email || "Not provided"}
-                  </p>
-                </span>
-                <span className="flex items-center gap-4">
-                  <PhoneIcon className="w-4 h-4" />
-                  <p className="text-xs font-light">
-                    {publicUserProfile.publicContactInformation?.mobile || "Not provided"}
-                  </p>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div id="col-2" className="pt-8">
-            <h1 className="hidden md:block text-3xl font-bold">{`About ${publicUserProfile.firstName} ${publicUserProfile.surname}`}</h1>
-            <div className="md:pt-8 pb-6">
-              <div className={`font-light ${isBioExpanded ? "" : "line-clamp-4"}`}>
-                <RichTextEditorContent description={publicUserProfile.bio || "No bio provided."} />
-              </div>
-              {publicUserProfile.bio && publicUserProfile.bio.length > 100 && (
+  if (loading) {
+    return <Loading />;
+  }
+
+  const tabs: { id: ProfileTab; label: string }[] = [
+    { id: "events", label: "Events" },
+    { id: "collections", label: "Collections" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-surface text-foreground pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6">
+        <UserProfileHeader user={publicUserProfile} />
+
+        <div>
+          <div
+            role="tablist"
+            aria-label="Profile sections"
+            className="flex items-center gap-1 border-b border-border"
+          >
+            {tabs.map((tab) => {
+              const active = activeTab === tab.id;
+              return (
                 <button
-                  onClick={() => setIsBioExpanded(!isBioExpanded)}
-                  className="text-sm text-core-text hover:underline mt-2 font-medium"
+                  key={tab.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-4 py-3 text-sm font-semibold font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                    active
+                      ? "text-foreground border-b-2 border-foreground -mb-px"
+                      : "text-foreground-muted hover:text-foreground"
+                  }`}
                 >
-                  {isBioExpanded ? "Read Less" : "Read More"}
+                  {tab.label}
                 </button>
-              )}
-            </div>
+              );
+            })}
           </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="pt-8 md:pt-12">
-          <div className="flex items-center gap-1 border-b border-gray-200 mb-6">
-            <button
-              type="button"
-              onClick={() => setActiveTab("events")}
-              className={`px-4 py-3 font-medium text-sm transition-colors ${
-                activeTab === "events" ? "text-core-text border-b-2 border-black" : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Events
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("collections")}
-              className={`px-4 py-3 font-medium text-sm transition-colors ${
-                activeTab === "collections"
-                  ? "text-core-text border-b-2 border-black"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              Collections
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Content */}
-        {activeTab === "events" ? (
-          <OrganiserCalendar events={upcomingOrganiserEvents} />
-        ) : (
-          <div className="px-4 md:px-0">
-            {publicEventCollections.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-600 text-lg">No public collections</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  This organiser hasn&apos;t created any public event collections yet
+          <div className="pt-6">
+            {activeTab === "events" ? (
+              <OrganiserEventsBrowse
+                events={upcomingOrganiserEvents}
+                emptyTitle="No upcoming events"
+                emptyDescription="This organiser hasn't published any upcoming events yet."
+              />
+            ) : publicEventCollections.length === 0 ? (
+              <div className="rounded-xl border border-border bg-background px-5 py-12 text-center">
+                <p className="text-sm font-semibold text-foreground font-sans">No public collections</p>
+                <p className="mt-1 text-xs text-foreground-muted font-sans">
+                  This organiser hasn&apos;t created any public event collections yet.
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {publicEventCollections.map((collection) => (
                   <EventCollectionCard
                     key={collection.eventCollectionId}
@@ -199,7 +141,7 @@ export default function UserProfilePage() {
               </div>
             )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 "use client";
+
 import { UserData } from "@/interfaces/UserTypes";
 import { CameraIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
@@ -13,46 +14,54 @@ interface ProfilePhotoPanelProps {
 
 export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <>
-      <div className="flex items-center border border-core-outline p-6 rounded-lg space-x-4">
-        <div
-          className="relative h-32 w-32 lg:h-44 lg:w-44 rounded-full overflow-hidden cursor-pointer group"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <button
+          type="button"
           onClick={() => setIsModalOpen(true)}
+          className="relative h-24 w-24 rounded-xl overflow-hidden border border-border group shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          aria-label="Change profile photo"
         >
           <Image
             src={user.profilePicture}
-            alt={`${user.firstName} ${user.surname}'s profile picture`}
-            width={176}
-            height={176}
-            className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+            alt=""
+            width={96}
+            height={96}
+            className="h-full w-full object-cover transition-transform group-hover:scale-105"
             priority
           />
+          <span className="absolute inset-0 flex flex-col items-center justify-center bg-foreground/0 group-hover:bg-foreground/50 transition-colors">
+            <CameraIcon className="h-6 w-6 text-background opacity-0 group-hover:opacity-100 transition-opacity" />
+            <span className="mt-1 text-[10px] font-semibold text-background opacity-0 group-hover:opacity-100 transition-opacity font-sans">
+              Change
+            </span>
+          </span>
+        </button>
 
-          <div
-            className={`absolute inset-0 flex items-center justify-center bg-black transition-opacity ${
-              isHovered ? "bg-opacity-50" : "bg-opacity-0"
-            }`}
-          >
-            {isHovered && (
-              <div className="flex flex-col items-center text-white">
-                <CameraIcon className="w-8 h-8 lg:w-10 lg:h-10 mb-2" />
-                <span className="text-sm font-medium">Change Photo</span>
-              </div>
-            )}
+        <div className="min-w-0 flex-1 space-y-2">
+          <div>
+            <p className="text-sm font-semibold text-foreground font-sans">Profile picture</p>
+            <p className="mt-0.5 text-xs text-foreground-muted font-sans">
+              JPG or PNG. Shown on your public profile and event pages.
+            </p>
           </div>
-        </div>
-
-        <div className="flex-1">
-          <p className="text-lg font-semibold text-core-text">{`${user.firstName} ${user.surname}`}</p>
-          {user.username && <p className="text-sm text-gray-600 mt-1">@{user.username}</p>}
-          <Link href={`/user/${user.userId}`} className="text-sm text-core-text hover:underline mt-2 inline-block">
-            View public profile →
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Upload
+            </button>
+            <Link
+              href={`/user/${user.userId}`}
+              className="text-xs font-semibold text-foreground-secondary hover:text-foreground font-sans"
+            >
+              View public profile →
+            </Link>
+          </div>
         </div>
       </div>
 
