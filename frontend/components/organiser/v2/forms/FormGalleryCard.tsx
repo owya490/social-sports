@@ -43,8 +43,8 @@ export function FormGalleryCard({ form }: FormGalleryCardProps) {
   const title = form.title?.trim() || "Untitled form";
   const updated = formatUpdated(form.lastUpdated);
   const showDescription = hasDescription(form.description);
-  const editorHref = `/organiser/forms/${form.formId}/editor?returnTo=/organiser/v2/forms/gallery`;
-  const previewHref = `/organiser/forms/${form.formId}/preview?returnTo=/organiser/v2/forms/gallery`;
+  const editorHref = `/organiser/v2/forms/${form.formId}/editor`;
+  const previewHref = `/organiser/v2/forms/${form.formId}/preview`;
   const expanded = hovered || locked;
   const previewLayoutWidth = PREVIEW_WIDTH_PX * PREVIEW_SCALE;
 
@@ -152,7 +152,7 @@ export function FormGalleryCard({ form }: FormGalleryCardProps) {
 export function FormGalleryCreateCard() {
   return (
     <Link
-      href="/organiser/forms/create-form/editor?returnTo=/organiser/v2/forms/gallery"
+      href="/organiser/v2/forms/create-form/editor"
       className="group flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-[0_1px_2px_rgba(10,10,10,0.04)] transition-[transform,box-shadow,border-color] duration-200 ease-out motion-reduce:transition-none hover:-translate-y-1 hover:border-foreground-muted/35 hover:shadow-[0_12px_28px_rgba(10,10,10,0.12)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <div className={`relative ${PREVIEW_ASPECT} overflow-hidden bg-surface`}>

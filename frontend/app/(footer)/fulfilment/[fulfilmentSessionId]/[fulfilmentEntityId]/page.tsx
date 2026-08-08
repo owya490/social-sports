@@ -319,6 +319,7 @@ const FulfilmentSessionEntityPage = () => {
               }}
               canEditForm={true}
               isPreview={false}
+              variant="compact"
               onReadyChange={handleFormReadyChange}
               onValidationChange={handleValidationChange}
               onSaveLoadingChange={handleSaveLoadingChange}

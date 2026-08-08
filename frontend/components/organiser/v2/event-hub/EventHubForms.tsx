@@ -373,6 +373,7 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
             canEditForm={true}
             isEmbedded={true}
             hideSaveButton={true}
+            variant="compact"
           />
         </div>
       </EventHubPanel>

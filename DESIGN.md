@@ -398,8 +398,8 @@ List-only Hub surfaces that share one shell: **Event collections**, **Custom lin
 Organiser forms index at `/organiser/v2/forms/gallery`. Google Forms / Docs craft bar: each form is a recognisable paper thumbnail of real questions, not a lifeless row. Same Clubhouse tokens; yellow only on Create (and Retry).
 
 - **Shell:** Catalogue header + responsive card grid on `bg-surface`—`grid-cols-1` → `sm:2` → `lg:3` → `xl:4`, gap `16px`–`20px` (`gap-4 sm:gap-5`). No divided list panel. No `EntityHoverPreview`.
-- **Blank create tile (`FormGalleryCreateCard`):** First cell when loaded (including empty state). White paper card, `4:3` `bg-surface` preview well with centered Plus (`40px`), footer “Blank form” / “Start from scratch”. Same rest whisper + hover lift as form cards. Links to create-form editor (`returnTo` gallery).
-- **Form paper card (`FormGalleryCard`):** Outlined white card (`rounded-xl border-border`), rest shadow `0 1px 2px rgba(10,10,10,0.04)`. Preview window `aspect-[4/3]` on `bg-surface` with padded scaled miniature (`scale-[0.42]`, `origin-top-left`, `FormMiniaturePreview` at `420px` paper width). Soft bottom fade (`from-surface`). **Primary click** on the preview (and title link) → form editor. **Preview** is overflow-menu only (Edit / Preview)—not hover dossier.
+- **Blank create tile (`FormGalleryCreateCard`):** First cell when loaded (including empty state). White paper card, `4:3` `bg-surface` preview well with centered Plus (`40px`), footer “Blank form” / “Start from scratch”. Same rest whisper + hover lift as form cards. Links to `/organiser/v2/forms/create-form/editor`.
+- **Form paper card (`FormGalleryCard`):** Outlined white card (`rounded-xl border-border`), rest shadow `0 1px 2px rgba(10,10,10,0.04)`. Preview window `aspect-[4/3]` on `bg-surface` with padded scaled miniature (`scale-[0.42]`, `origin-top-left`, `FormMiniaturePreview` at `420px` paper width). Soft bottom fade (`from-surface`). **Primary click** on the preview (and title link) → `/organiser/v2/forms/[formId]/editor`. **Preview** via expanding footer Edit / Preview → V2 preview route—not hover dossier.
 - **Metadata footer:** Hairline `border-t`; leading document icon; title `text-sm font-semibold` (truncate); meta `text-xs text-foreground-muted` (“Updated {en-AU date}” or “Not updated yet”; `· Inactive` when inactive). Kebab always visible on phone; on `sm+` fades in on card hover/focus.
 - **Hover / focus-within:** Card lifts `-translate-y-1`, border toward `foreground-muted/35`, shadow to paper-gallery hover; miniature drifts up (`-translate-y-8`) over `500ms` with `cubic-bezier(0.16, 1, 0.3, 1)`. Respect `prefers-reduced-motion`. Duration for card frame `200ms ease-out`.
 - **Miniature (`FormMiniaturePreview`):** Non-interactive paper of real sections (default max 5)—title band, then field silhouettes by type (text underline, radio/checkbox options, dropdown, date, file upload dashed, image block). Required mark uses danger red. Empty questions: “No questions yet.” Decorative only (`pointer-events-none` in the card window).
@@ -407,6 +407,23 @@ Organiser forms index at `/organiser/v2/forms/gallery`. Google Forms / Docs craf
 - **Loading / error:** Eight paper-card skeletons in the same grid; error uses the dashboard-style outlined Retry card under the header.
 
 **The Paper Gallery Rule.** Forms are recognised by live question miniatures in a paper grid. Do not revert Forms to divided catalogue rows or `EntityHoverPreview`. Do not put yellow on paper cards—Create (and Retry) only.
+
+### Forms editor / preview / response (Organiser V2)
+
+Operate surfaces under `/organiser/v2/forms/[formId]/…`. Parallel to V1 (`/organiser/forms/…`)—do not restyle V1 in place. Stay inside the Organiser V2 shell (sidebar + `bg-surface`).
+
+- **Editor (`FormEditor` in `organiser/v2/forms/editor`):** Catalogue-style header (breadcrumbs Forms › title, Preview ghost, yellow Save). Compact paper sections (`rounded-xl border-border`, `p-4`, `gap-3`)—not large grey cards with blue focus. Title is a borderless underline input; description is a dashed add/edit well. Desktop sticky icon rail + mobile fixed bottom bar for add-section tools; yellow only on Save. Required toggle uses accent yellow (same grammar as Settings preferences).
+- **Preview (`FormPreviewView`):** Same header rhythm; body is the compact Form Responder (`variant="compact"`) so organisers see the player-facing layout.
+- **Response viewer (`FormResponseViewer`):** Read-only compact responder under Forms › Response. Event hub flush table links here when `flush`.
+- **V1 untouched:** `/organiser/forms/[formId]/editor|preview|…` keep the legacy chrome for Hub V1.
+
+**The Compact Paper Rule.** Form editor sections are tight paper cards on surface—no oversized padding, no blue/green legacy controls, no floating back button fighting the sidebar.
+
+### Form answerer (public + embedded)
+
+Player-facing fill-out uses `FormResponder` with `variant="compact"`: one narrow paper (`max-w-lg`), question-as-label + native controls, sticky Save on phone. Used by submit-form, public response view, fulfilment, V2 preview/viewer, and Event Hub Add answers. Default variant stays for Organiser Hub V1.
+
+**The Thumb-Reach Rule.** On phone, required fields and Save stay within easy reach—no stacked `p-8` cards or huge vertical gaps between questions.
 
 ### Entity hover preview
 
@@ -556,7 +573,9 @@ Image gallery library (thumbnails + event images) inside one outlined panel. Eve
 - **Do** use Linear, Stripe, Airbnb, and Luma (event hub) as craft references per the Reference Points section—Airbnb simplicity is the default tone; Linear and Stripe sharpen operate and payments; Luma shapes session overview + panel grammar.
 - **Do** let content (event imagery, session details, metrics) lead—shell stays flat and quiet, Airbnb-style.
 - **Do** reuse the catalogue header + divided list panel (or gallery upload grid) for row-style organiser list surfaces—collections, custom links, Settings; Image gallery keeps the media upload grid.
-- **Do** build the Forms index as the Docs/Forms paper gallery—blank create tile first, live question miniatures, metadata footer, hover lift + preview drift, primary click → editor; Preview via overflow menu only.
+- **Do** build the Forms index as the Docs/Forms paper gallery—blank create tile first, live question miniatures, metadata footer, hover lift + preview drift, primary click → V2 editor; Preview via expanding footer.
+- **Do** keep Form Editor / Preview / Response Viewer on `/organiser/v2/forms/…` with compact paper sections and the Organiser sidebar—leave Hub V1 form chrome on `/organiser/forms/…`.
+- **Do** use `FormResponder variant="compact"` for public answerer, fulfilment, V2 preview/viewer, and Event Hub Add answers.
 - **Do** treat preference switches as checked controls: accent yellow when on, `surface-muted` when off.
 - **Do** use the cover-led hover dossier (`EntityHoverPreview` + `HoverMetrics`) on catalogue rows that need a glanceable open decision—events, series, collections (not forms).
 - **Do** build event hub Details as an overview-led card with Edit details / Change photo opening `EventHubPanel`; build Registrations as expand-in-place rows (order/ticket IDs) with Form responses / Edit tickets opening the panel; Forms as a flush response table on stage (Change form + Add answers open the panel).
@@ -575,6 +594,8 @@ Image gallery library (thumbnails + event images) inside one outlined panel. Eve
 - **Don't** fabricate social proof, benchmarks, or analytics the product cannot source.
 - **Don't** add kickers/eyebrows above catalogue page titles, or turn Event collections / Custom links / Settings into multi-card preview dashboards.
 - **Don't** revert Forms to divided catalogue rows or `EntityHoverPreview`—keep the paper-grid miniature gallery.
+- **Don't** restyle Hub V1 form editor/preview in place—ship parallel V2 components under `organiser/v2/forms`.
+- **Don't** ship the public answerer as stacked oversized cards with huge gutters—keep compact question-as-label density.
 - **Don't** invent a second settings visual language—stacked outlined panels with header strip + body only (account Settings). Event hub Settings uses flush preference rows on the stage instead—do not mix the two shells on one surface.
 - **Don't** duplicate the list row inside the hover card, or add hover dossiers to custom links / top-events / Forms gallery cards.
 - **Don't** put nested bordered panels or fetch-on-hover data inside the mini-dossier—cover, three KPIs, short prose, middot flags only.
