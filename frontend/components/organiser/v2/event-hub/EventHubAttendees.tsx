@@ -10,6 +10,7 @@ import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
+import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getForm, getFormResponse } from "@/services/src/forms/formsServices";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
@@ -232,6 +233,7 @@ function AttendeeEditTicketsPanel({
         eventId,
         orderId: order.orderId,
         numTickets: parseInt(newNumTickets, 10),
+        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
       });
       const updatedOrder = await getOrderById(order.orderId);
       const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
@@ -466,6 +468,7 @@ export function EventHubAttendees({
         phone: addPhone,
         numTickets: qty,
         price: 0,
+        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
       });
       const now = Timestamp.now();
       const newOrder: Order = {

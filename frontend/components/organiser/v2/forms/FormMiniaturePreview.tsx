@@ -114,12 +114,8 @@ function MiniatureField({ section }: { section: FormSection }) {
       );
     }
     default: {
-      const question = section.question?.trim() || "Untitled question";
-      return (
-        <div>
-          <p className="text-sm font-semibold text-foreground leading-snug">{question}</p>
-        </div>
-      );
+      const _exhaustive: never = section;
+      return _exhaustive;
     }
   }
 }
