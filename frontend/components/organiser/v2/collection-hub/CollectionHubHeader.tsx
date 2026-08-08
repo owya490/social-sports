@@ -32,7 +32,7 @@ export function CollectionHubHeader({
   useOrganiserBreadcrumbTitle(loading ? null : name);
 
   return (
-    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3 max-lg:pl-14">
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3">
       <OrganiserBreadcrumbs />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">

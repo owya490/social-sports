@@ -14,11 +14,18 @@ import { usePathname } from "next/navigation";
 type OrganiserBreadcrumbContextValue = {
   pageTitle: string | null;
   setPageTitle: (title: string | null) => void;
+  openMobileNav: () => void;
 };
 
 const OrganiserBreadcrumbContext = createContext<OrganiserBreadcrumbContextValue | null>(null);
 
-export function OrganiserBreadcrumbProvider({ children }: { children: ReactNode }) {
+export function OrganiserBreadcrumbProvider({
+  children,
+  openMobileNav,
+}: {
+  children: ReactNode;
+  openMobileNav: () => void;
+}) {
   const pathname = usePathname();
   const [pageTitleState, setPageTitleState] = useState<{ path: string; title: string } | null>(null);
 
@@ -31,7 +38,10 @@ export function OrganiserBreadcrumbProvider({ children }: { children: ReactNode 
   );
 
   const pageTitle = pageTitleState?.path === pathname ? pageTitleState.title : null;
-  const value = useMemo(() => ({ pageTitle, setPageTitle }), [pageTitle, setPageTitle]);
+  const value = useMemo(
+    () => ({ pageTitle, setPageTitle, openMobileNav }),
+    [pageTitle, setPageTitle, openMobileNav]
+  );
 
   return (
     <OrganiserBreadcrumbContext.Provider value={value}>{children}</OrganiserBreadcrumbContext.Provider>
@@ -51,4 +61,8 @@ export function useOrganiserBreadcrumbTitle(title: string | null | undefined) {
 
 export function useOrganiserPageTitle(): string | null {
   return useContext(OrganiserBreadcrumbContext)?.pageTitle ?? null;
+}
+
+export function useOpenOrganiserMobileNav(): (() => void) | null {
+  return useContext(OrganiserBreadcrumbContext)?.openMobileNav ?? null;
 }

@@ -165,7 +165,7 @@ export function EventHubListing({
                     className="flex h-11 w-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border text-center"
                     aria-hidden
                   >
-                    <span className="bg-accent text-accent-contrast flex items-center justify-center leading-none">
+                    <span className="bg-[#FF3B30] text-white flex items-center justify-center leading-none">
                       <span className="text-xs font-semibold tracking-wide scale-75 origin-center">{monthShort}</span>
                     </span>
                     <span className="flex-1 flex items-center justify-center bg-background text-base font-bold text-foreground tabular-nums leading-none">

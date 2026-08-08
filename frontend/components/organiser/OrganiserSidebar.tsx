@@ -29,7 +29,6 @@ import {
   HomeIcon,
   MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { IconLayoutSidebar } from "@tabler/icons-react";
 import Image from "next/image";
@@ -500,7 +499,7 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-foreground/20 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           aria-label="Close menu"
           onClick={() => onMobileOpenChange(false)}
         />
@@ -514,14 +513,6 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
         aria-hidden={!mobileOpen}
         data-tour="organiser-sidebar"
       >
-        <button
-          type="button"
-          className="absolute top-3 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-foreground-secondary transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          onClick={() => onMobileOpenChange(false)}
-          aria-label="Close menu"
-        >
-          <XMarkIcon className="h-5 w-5" aria-hidden />
-        </button>
         <SidebarContent
           pathname={pathname}
           onNavigate={() => onMobileOpenChange(false)}

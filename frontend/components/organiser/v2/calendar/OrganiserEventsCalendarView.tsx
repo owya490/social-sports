@@ -70,7 +70,7 @@ export function OrganiserEventsCalendarView() {
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-8">
-      <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 max-lg:pl-14 sm:px-6 sm:pt-7 lg:px-8">
+      <header className="mx-auto max-w-6xl px-4 pb-4 pt-5 sm:px-6 sm:pt-7 lg:px-8">
         <OrganiserBreadcrumbs />
         <div className="min-w-0">
           <h1 className="font-sans text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">

@@ -18,7 +18,7 @@ export function CustomLinksHeader({ linkCount, loading, username, onAdd }: Custo
       : `${linkCount} custom link${linkCount === 1 ? "" : "s"} · /event/${username || "you"}/…`;
 
   return (
-    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 max-lg:pl-14 pb-4">
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-4">
       <OrganiserBreadcrumbs />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">

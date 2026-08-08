@@ -164,14 +164,14 @@ export function EventHubPreferenceRow({
         aria-label={title}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative shrink-0 h-7 w-12 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
+        className={`relative shrink-0 h-5 w-9 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
           checked ? "bg-accent" : "bg-surface-muted"
         }`}
       >
         <span
           aria-hidden
-          className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
-            checked ? "translate-x-5" : "translate-x-0"
+          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
+            checked ? "translate-x-4" : "translate-x-0"
           }`}
         />
       </button>
@@ -246,7 +246,7 @@ export function EventHubSettingTile({
       title={description}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`flex min-w-[9.5rem] flex-1 items-center gap-3 rounded-xl border px-3 py-3 text-left transition-[border-color,background-color,opacity] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`flex min-w-[7.5rem] flex-1 items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-[border-color,background-color,opacity] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 ${
         checked
           ? `bg-background ${toneStyles.onBorder} hover:bg-surface-hover`
           : "border-border bg-surface text-foreground-muted hover:bg-surface-hover"
@@ -254,15 +254,15 @@ export function EventHubSettingTile({
     >
       <span
         aria-hidden
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors duration-200 ease-out ${
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors duration-200 ease-out ${
           checked ? `${toneStyles.onWell} ${toneStyles.onIcon}` : "bg-surface-muted text-foreground-muted"
         }`}
       >
-        <span className="[&>svg]:h-5 [&>svg]:w-5">{icon}</span>
+        <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{icon}</span>
       </span>
       <span className="min-w-0">
         <span
-          className={`block truncate text-sm font-semibold font-sans leading-tight ${
+          className={`block truncate text-xs font-semibold font-sans leading-tight ${
             checked ? "text-foreground" : "text-foreground-secondary"
           }`}
         >

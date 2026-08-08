@@ -46,7 +46,7 @@ export function EventHubHeader({
     : [timestampToEventCardDateString(startDate), location].filter(Boolean).join(" · ");
 
   return (
-    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3 max-lg:pl-14">
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3">
       <OrganiserBreadcrumbs />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -62,7 +62,7 @@ export function EventHubHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-0.5 shrink-0">
+        <div className="hidden sm:flex items-center gap-0.5 shrink-0">
           <Link
             href={`/event/${eventId}`}
             target="_blank"
@@ -83,7 +83,7 @@ export function EventHubHeader({
             ) : (
               <PauseCircleIcon className="h-3.5 w-3.5" aria-hidden />
             )}
-            <span className="hidden sm:inline">{paused ? "Resume" : "Pause"}</span>
+            <span>{paused ? "Resume" : "Pause"}</span>
           </button>
         </div>
       </div>
