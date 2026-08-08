@@ -10,12 +10,21 @@ import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtil
 import { Timestamp } from "firebase/firestore";
 
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60;
-const WEEK_SECONDS = 7 * 24 * 60 * 60;
 
-export type WeeklyTicketBucket = {
-  label: string;
+export type DailyTicketEventBreakdown = {
+  eventId: EventId;
+  eventName: string;
+  tickets: number;
+};
+
+/** One calendar day of approved ticket sales for the dashboard charts. */
+export type DailyTicketBucket = {
+  dateKey: string;
+  weekdayLabel: string;
+  dateLabel: string;
   tickets: number;
   isCurrent: boolean;
+  events: DailyTicketEventBreakdown[];
 };
 
 export type TopEventRow = {
@@ -39,7 +48,10 @@ export type OrganiserDashboardMetrics = {
   ticketsSold30d: number;
   totalPageViews: number;
   conversionRate: number;
-  weeklyTickets: WeeklyTicketBucket[];
+  /** Rolling last 7 local days, ending today. */
+  weekTickets: DailyTicketBucket[];
+  /** Rolling last 30 local days, ending today. */
+  monthTickets: DailyTicketBucket[];
   topEvents: TopEventRow[];
   recentActivity: ActivityFeedItem[];
   events: EventData[];
@@ -64,23 +76,102 @@ function buildOrderTicketsMap(orders: Order[], tickets: Ticket[]): Map<Order, Ti
   return map;
 }
 
-function buildWeeklyTicketBuckets(nowSeconds: number, tickets: Ticket[]): WeeklyTicketBucket[] {
-  const approvedTickets = tickets.filter(isApprovedTicket);
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
 
-  return Array.from({ length: 4 }, (_, index) => {
-    const weeksAgo = 3 - index;
-    const weekEnd = nowSeconds - weeksAgo * WEEK_SECONDS;
-    const weekStart = weekEnd - WEEK_SECONDS;
-    const ticketsInWeek = approvedTickets.filter(
-      (ticket) => ticket.purchaseDate.seconds > weekStart && ticket.purchaseDate.seconds <= weekEnd
-    );
+function toLocalDateKey(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
+function toLocalDateKeyFromSeconds(seconds: number): string {
+  return toLocalDateKey(new Date(seconds * 1000));
+}
+
+function formatWeekdayLabel(date: Date): string {
+  return date.toLocaleDateString("en-AU", { weekday: "short" });
+}
+
+function formatDateLabel(date: Date): string {
+  const day = date.getDate();
+  const month = date.toLocaleDateString("en-AU", { month: "short" });
+  return `${day} ${month}`;
+}
+
+function buildEventBreakdown(
+  dayTickets: Ticket[],
+  eventById: Map<EventId, EventData>,
+): DailyTicketEventBreakdown[] {
+  const counts = new Map<EventId, number>();
+  dayTickets.forEach((ticket) => {
+    counts.set(ticket.eventId, (counts.get(ticket.eventId) ?? 0) + 1);
+  });
+
+  return [...counts.entries()]
+    .map(([eventId, ticketCount]) => ({
+      eventId,
+      eventName: eventById.get(eventId)?.name ?? "Event",
+      tickets: ticketCount,
+    }))
+    .sort((a, b) => b.tickets - a.tickets);
+}
+
+function buildDailyBucketsForDays(
+  days: Date[],
+  tickets: Ticket[],
+  events: EventData[],
+): DailyTicketBucket[] {
+  const eventById = new Map(events.map((event) => [event.eventId, event]));
+  const todayKey = toLocalDateKey(startOfLocalDay(new Date()));
+  const ticketsByDay = new Map<string, Ticket[]>();
+
+  tickets.filter(isApprovedTicket).forEach((ticket) => {
+    const key = toLocalDateKeyFromSeconds(ticket.purchaseDate.seconds);
+    const existing = ticketsByDay.get(key);
+    if (existing) {
+      existing.push(ticket);
+    } else {
+      ticketsByDay.set(key, [ticket]);
+    }
+  });
+
+  return days.map((day) => {
+    const dateKey = toLocalDateKey(day);
+    const dayTickets = ticketsByDay.get(dateKey) ?? [];
     return {
-      label: `W${index + 1}`,
-      tickets: ticketsInWeek.length,
-      isCurrent: weeksAgo === 0,
+      dateKey,
+      weekdayLabel: formatWeekdayLabel(day),
+      dateLabel: formatDateLabel(day),
+      tickets: dayTickets.length,
+      isCurrent: dateKey === todayKey,
+      events: buildEventBreakdown(dayTickets, eventById),
     };
   });
+}
+
+/** Rolling 7 local days ending today (oldest → today). */
+function buildWeekTicketBuckets(tickets: Ticket[], events: EventData[]): DailyTicketBucket[] {
+  const today = startOfLocalDay(new Date());
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(today);
+    day.setDate(today.getDate() - (6 - index));
+    return day;
+  });
+  return buildDailyBucketsForDays(days, tickets, events);
+}
+
+/** Rolling 30 local days ending today (oldest → today). */
+function buildMonthTicketBuckets(tickets: Ticket[], events: EventData[]): DailyTicketBucket[] {
+  const today = startOfLocalDay(new Date());
+  const days = Array.from({ length: 30 }, (_, index) => {
+    const day = new Date(today);
+    day.setDate(today.getDate() - (29 - index));
+    return day;
+  });
+  return buildDailyBucketsForDays(days, tickets, events);
 }
 
 function buildRecentActivity(
@@ -173,7 +264,8 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
     ticketsSold30d: recentTickets.length,
     totalPageViews,
     conversionRate,
-    weeklyTickets: buildWeeklyTicketBuckets(nowSeconds, approvedTickets),
+    weekTickets: buildWeekTicketBuckets(approvedTickets, events),
+    monthTickets: buildMonthTicketBuckets(approvedTickets, events),
     topEvents: buildTopEvents(events, metadataByEventId),
     recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
     events,

@@ -1,17 +1,19 @@
 "use client";
 
-import { useUser } from "@/components/utility/UserContext";
 import { OrganiserCommandSearch } from "@/components/organiser/OrganiserCommandSearch";
+import { OrganiserNotificationsPanel } from "@/components/organiser/OrganiserNotificationsPanel";
 import {
+  isEventsNavGroupPath,
   ORGANISER_MAIN_NAV,
   ORGANISER_SECONDARY_NAV,
   type OrganiserNavItem,
 } from "@/components/organiser/organiserNav";
 import {
   isWelcomeFlowPath,
-  welcomeAwareHref,
   WELCOME_OPEN_MENU_EVENT,
+  welcomeAwareHref,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
+import { useUser } from "@/components/utility/UserContext";
 import Logo from "@/public/images/BlackLogo.svg";
 import { handleSignOut } from "@/services/src/auth/authService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
@@ -19,9 +21,9 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
-  ArrowLeftIcon,
   ArrowLeftStartOnRectangleIcon,
-  ArrowRightIcon,
+  BellIcon,
+  ChevronDownIcon,
   ChevronUpDownIcon,
   Cog6ToothIcon,
   HomeIcon,
@@ -29,6 +31,7 @@ import {
   QuestionMarkCircleIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { IconLayoutSidebar } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -65,11 +68,13 @@ function NavLink({
   pathname,
   onNavigate,
   collapsed,
+  nested,
 }: {
   item: OrganiserNavItem;
   pathname: string;
   onNavigate?: () => void;
   collapsed?: boolean;
+  nested?: boolean;
 }) {
   const active = item.isActive(pathname);
   const Icon = item.icon;
@@ -81,7 +86,7 @@ function NavLink({
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       data-tour={item.tourId}
-      className={navItemClass(active, collapsed)}
+      className={`${navItemClass(active, collapsed)} ${nested && !collapsed ? "pl-8" : ""}`}
     >
       <Icon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
       {!collapsed && item.label}
@@ -89,13 +94,70 @@ function NavLink({
   );
 }
 
-function SidebarSearch({
+function NavGroup({
+  item,
+  pathname,
+  onNavigate,
   collapsed,
-  onOpen,
 }: {
+  item: OrganiserNavItem;
+  pathname: string;
+  onNavigate?: () => void;
   collapsed?: boolean;
-  onOpen: () => void;
 }) {
+  const children = item.children ?? [];
+  const inGroup =
+    item.isActive(pathname) ||
+    children.some((child) => child.isActive(pathname)) ||
+    (item.href.includes("/event/dashboard") && isEventsNavGroupPath(pathname));
+  const [expanded, setExpanded] = useState(inGroup);
+
+  useEffect(() => {
+    if (inGroup) setExpanded(true);
+  }, [inGroup]);
+
+  if (collapsed || children.length === 0) {
+    return <NavLink item={item} pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />;
+  }
+
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex items-center gap-0.5">
+        <Link
+          href={welcomeAwareHref(pathname, item.href)}
+          onClick={() => {
+            setExpanded(true);
+            onNavigate?.();
+          }}
+          data-tour={item.tourId}
+          className={`${navItemClass(item.isActive(pathname))} min-w-0 flex-1`}
+        >
+          <item.icon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+          {item.label}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setExpanded((prev) => !prev)}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          aria-label={expanded ? `Collapse ${item.label}` : `Expand ${item.label}`}
+          aria-expanded={expanded}
+        >
+          <ChevronDownIcon
+            className={`h-3.5 w-3.5 stroke-[1.5] transition-transform duration-150 ${expanded ? "rotate-0" : "-rotate-90"}`}
+            aria-hidden
+          />
+        </button>
+      </div>
+      {expanded
+        ? children.map((child) => (
+            <NavLink key={child.href} item={child} pathname={pathname} onNavigate={onNavigate} nested />
+          ))
+        : null}
+    </div>
+  );
+}
+
+function SidebarSearch({ collapsed, onOpen }: { collapsed?: boolean; onOpen: () => void }) {
   if (collapsed) {
     return (
       <button
@@ -114,12 +176,12 @@ function SidebarSearch({
     <button
       type="button"
       onClick={onOpen}
-      className="flex w-full items-center gap-2 rounded-xl border border-border bg-background px-2.5 py-1.5 text-left text-xs text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      className="flex w-full items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1 text-left text-xs text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
       aria-label="Search organiser hub"
     >
-      <MagnifyingGlassIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+      <MagnifyingGlassIcon className="h-3.5 w-3.5 shrink-0 stroke-[1.5]" aria-hidden />
       <span className="min-w-0 flex-1 truncate">Search…</span>
-      <kbd className="rounded-md border border-border bg-surface-muted px-1.5 py-0.5 text-xs font-medium text-foreground-muted">
+      <kbd className="rounded border border-border bg-surface-muted px-1 py-px text-xs font-medium leading-none text-foreground-muted">
         ⌘K
       </kbd>
     </button>
@@ -129,14 +191,15 @@ function SidebarSearch({
 function UserAccountMenu({
   onNavigate,
   collapsed = false,
+  onOpenNotifications,
 }: {
   onNavigate?: () => void;
   collapsed?: boolean;
+  onOpenNotifications: () => void;
 }) {
   const { user, userLoading, setUser } = useUser();
   const router = useRouter();
-  const displayName =
-    [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
+  const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
   const subtitle = user.isVerifiedOrganiser ? "Verified organiser" : "Organiser";
   const showProfilePhoto = hasCustomProfilePicture(user.profilePicture, userLoading);
 
@@ -195,6 +258,20 @@ function UserAccountMenu({
           <div className="my-1 border-t border-border" role="separator" aria-hidden />
           <MenuItem>
             {({ focus }) => (
+              <button
+                type="button"
+                onClick={onOpenNotifications}
+                className={`${
+                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
+              >
+                <BellIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+                Notifications
+              </button>
+            )}
+          </MenuItem>
+          <MenuItem>
+            {({ focus }) => (
               <Link
                 href="/"
                 onClick={onNavigate}
@@ -203,7 +280,7 @@ function UserAccountMenu({
                 } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
               >
                 <HomeIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
-                Back to Sport Hub
+                Back to SPORTSHUB
               </Link>
             )}
           </MenuItem>
@@ -234,6 +311,7 @@ function SidebarContent({
   onToggleCollapse,
   showCollapseToggle = false,
   onOpenSearch,
+  onOpenNotifications,
 }: {
   pathname: string;
   onNavigate?: () => void;
@@ -241,12 +319,13 @@ function SidebarContent({
   onToggleCollapse?: () => void;
   showCollapseToggle?: boolean;
   onOpenSearch: () => void;
+  onOpenNotifications: () => void;
 }) {
   return (
     <div className={`flex h-full flex-col py-3 transition-[padding] duration-200 ${collapsed ? "px-1.5" : "px-2.5"}`}>
-      <div className={collapsed ? "flex justify-center pb-3" : "border-b border-border pb-4"}>
+      <div className={collapsed ? "flex justify-center pb-3" : "pb-2"}>
         {!collapsed ? (
-          <div className="flex items-center gap-2.5 px-0.5">
+          <div className="flex items-center gap-2.5">
             <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
             <p className="font-sans text-md font-semibold leading-tight text-foreground">
               ORGANISER HUB
@@ -262,7 +341,7 @@ function SidebarContent({
         )}
       </div>
 
-      <div className="mt-3">
+      <div className="mt-2">
         <SidebarSearch collapsed={collapsed} onOpen={onOpenSearch} />
       </div>
 
@@ -271,9 +350,25 @@ function SidebarContent({
         aria-label="Organiser navigation"
         data-tour="organiser-nav"
       >
-        {ALL_NAV.map((item) => (
-          <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />
-        ))}
+        {ALL_NAV.map((item) =>
+          item.children?.length ? (
+            <NavGroup
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              onNavigate={onNavigate}
+              collapsed={collapsed}
+            />
+          ) : (
+            <NavLink
+              key={item.href}
+              item={item}
+              pathname={pathname}
+              onNavigate={onNavigate}
+              collapsed={collapsed}
+            />
+          )
+        )}
       </nav>
 
       <div className="mt-auto flex flex-col gap-0.5 pt-3">
@@ -312,16 +407,16 @@ function SidebarContent({
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               aria-expanded={!collapsed}
             >
-              {collapsed ? (
-                <ArrowRightIcon className="h-4 w-4 shrink-0" aria-hidden />
-              ) : (
-                <ArrowLeftIcon className="h-4 w-4 shrink-0" aria-hidden />
-              )}
+              <IconLayoutSidebar className="h-4 w-4 shrink-0" stroke={1.5} aria-hidden />
             </button>
           )}
         </div>
         <div className={`mt-1 border-t border-border pt-2 ${collapsed ? "mx-1.5" : "mx-0.5"}`}>
-          <UserAccountMenu onNavigate={onNavigate} collapsed={collapsed} />
+          <UserAccountMenu
+            onNavigate={onNavigate}
+            collapsed={collapsed}
+            onOpenNotifications={onOpenNotifications}
+          />
         </div>
       </div>
     </div>
@@ -337,6 +432,12 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const openNotifications = useCallback(() => {
+    onMobileOpenChange(false);
+    setNotificationsOpen(true);
+  }, [onMobileOpenChange]);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -425,6 +526,7 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
           pathname={pathname}
           onNavigate={() => onMobileOpenChange(false)}
           onOpenSearch={() => setSearchOpen(true)}
+          onOpenNotifications={openNotifications}
         />
       </aside>
 
@@ -440,10 +542,12 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
           onToggleCollapse={toggleCollapsed}
           showCollapseToggle
           onOpenSearch={() => setSearchOpen(true)}
+          onOpenNotifications={openNotifications}
         />
       </aside>
 
       <OrganiserCommandSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
+      <OrganiserNotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </>
   );
 }

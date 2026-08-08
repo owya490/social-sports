@@ -5,7 +5,7 @@ import { DashboardHeader } from "@/components/organiser/v2/dashboard/DashboardHe
 import { DashboardKpiGrid } from "@/components/organiser/v2/dashboard/DashboardKpiGrid";
 import { DashboardSetupSection } from "@/components/organiser/v2/dashboard/DashboardSetupSection";
 import { UpcomingEventsSection } from "@/components/organiser/v2/dashboard/UpcomingEventsSection";
-import { WeeklyTicketsChart } from "@/components/organiser/v2/dashboard/WeeklyTicketsChart";
+import { TicketSalesChart } from "@/components/organiser/v2/dashboard/TicketSalesChart";
 import { splitEventsByTime } from "@/components/organiser/v2/dashboard/computeDashboardStats";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
@@ -23,7 +23,8 @@ const emptyMetrics: OrganiserDashboardMetrics = {
   ticketsSold30d: 0,
   totalPageViews: 0,
   conversionRate: 0,
-  weeklyTickets: [],
+  weekTickets: [],
+  monthTickets: [],
   topEvents: [],
   recentActivity: [],
   events: [],
@@ -105,7 +106,11 @@ export function OrganiserDashboardView() {
 
           <div className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-start">
             <div className="lg:col-span-8">
-              <WeeklyTicketsChart weeklyTickets={displayMetrics.weeklyTickets} loading={loading} />
+              <TicketSalesChart
+                weekTickets={displayMetrics.weekTickets}
+                monthTickets={displayMetrics.monthTickets}
+                loading={loading}
+              />
             </div>
             <div className="lg:col-span-4">
               <ActivityFeedSection activity={displayMetrics.recentActivity} loading={loading} />

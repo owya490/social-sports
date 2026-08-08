@@ -21,6 +21,7 @@ const crumbMutedClass =
 /**
  * Compact trail above a page title — integrated into page headers, not chrome.
  * Organiser Hub › section › entity (when nested).
+ * The leading "Organiser Hub" crumb is always static context — not a link.
  */
 export function OrganiserBreadcrumbs() {
   const pathname = usePathname();
@@ -29,24 +30,19 @@ export function OrganiserBreadcrumbs() {
 
   if (crumbs.length === 0) return null;
 
-  const hubHref = welcomeAwareHref(pathname, "/organiser/v2/dashboard");
   const onlyHub = crumbs.length === 1 && crumbs[0].label === "Organiser Hub";
 
   return (
     <nav className="mb-2.5" aria-label="Breadcrumb">
       <ol className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1">
         <li className="flex min-w-0 items-center gap-1.5">
-          {onlyHub ? (
-            <span className={crumbCurrentClass} aria-current="page">
-              <Image src={Logo} alt="" className="h-4 w-auto shrink-0" />
-              <span className="truncate">Organiser Hub</span>
-            </span>
-          ) : (
-            <Link href={hubHref} className={crumbLinkClass}>
-              <Image src={Logo} alt="" className="h-4 w-auto shrink-0" />
-              <span className="truncate">Organiser Hub</span>
-            </Link>
-          )}
+          <span
+            className={onlyHub ? crumbCurrentClass : crumbMutedClass}
+            aria-current={onlyHub ? "page" : undefined}
+          >
+            <Image src={Logo} alt="" className="h-4 w-auto shrink-0" />
+            <span className="truncate">Organiser Hub</span>
+          </span>
         </li>
 
         {!onlyHub &&

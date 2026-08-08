@@ -2,7 +2,7 @@
 
 import { ActivityFeedItem } from "@/services/src/organiser/organiserDashboardMetricsService";
 import { OrderAndTicketType } from "@/interfaces/OrderTypes";
-import { DASHBOARD_CHART_ROW_HEIGHT } from "@/components/organiser/v2/dashboard/WeeklyTicketsChart";
+import { DASHBOARD_CHART_ROW_HEIGHT } from "@/components/organiser/v2/dashboard/TicketSalesChart";
 import { SignalIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Skeleton from "react-loading-skeleton";

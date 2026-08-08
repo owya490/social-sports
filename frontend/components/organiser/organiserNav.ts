@@ -4,6 +4,7 @@ import {
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import {
   ArrowPathIcon,
+  CalendarDaysIcon,
   CalendarIcon,
   CameraIcon,
   Cog6ToothIcon,
@@ -21,6 +22,8 @@ export type OrganiserNavItem = {
   tourId?: string;
   /** Shown in command search */
   keywords?: string[];
+  /** Nested links shown when the parent group is expanded */
+  children?: OrganiserNavItem[];
 };
 
 export type OrganiserBreadcrumb = {
@@ -30,7 +33,13 @@ export type OrganiserBreadcrumb = {
   icon?: typeof Squares2X2Icon;
 };
 
-const EVENT_STATIC_ROUTES = new Set(["dashboard", "recurring-events", "event-collection", "custom-links"]);
+const EVENT_STATIC_ROUTES = new Set([
+  "dashboard",
+  "calendar",
+  "recurring-events",
+  "event-collection",
+  "custom-links",
+]);
 
 const crumb = (label: string, href?: string, icon?: typeof Squares2X2Icon): OrganiserBreadcrumb =>
   href ? { label, href, icon } : { label, icon };
@@ -40,6 +49,14 @@ export const isEventDetailPage = (pathname: string) => {
   if (!match) return false;
   return !EVENT_STATIC_ROUTES.has(match[1]);
 };
+
+/** Events nav group (catalogue, calendar, event hubs) — used to keep the group expanded. */
+export const isEventsNavGroupPath = (pathname: string) =>
+  pathname.startsWith("/organiser/v2/event/dashboard") ||
+  pathname.startsWith("/organiser/v2/event/calendar") ||
+  pathname.startsWith(`${WELCOME_PATH}/events`) ||
+  pathname.startsWith(`${WELCOME_PATH}/event/`) ||
+  isEventDetailPage(pathname);
 
 export const ORGANISER_MAIN_NAV: OrganiserNavItem[] = [
   {
@@ -63,6 +80,15 @@ export const ORGANISER_MAIN_NAV: OrganiserNavItem[] = [
       pathname.startsWith(`${WELCOME_PATH}/events`) ||
       pathname.startsWith(`${WELCOME_PATH}/event/`) ||
       isEventDetailPage(pathname),
+    children: [
+      {
+        href: "/organiser/v2/event/calendar",
+        label: "Calendar",
+        icon: CalendarDaysIcon,
+        keywords: ["month", "schedule", "dates"],
+        isActive: (pathname) => pathname.startsWith("/organiser/v2/event/calendar"),
+      },
+    ],
   },
   {
     href: "/organiser/v2/event/recurring-events",
@@ -104,8 +130,12 @@ export const ORGANISER_SECONDARY_NAV: OrganiserNavItem[] = [
   },
 ];
 
+function flattenNavItems(items: OrganiserNavItem[]): OrganiserNavItem[] {
+  return items.flatMap((item) => (item.children?.length ? [item, ...item.children] : [item]));
+}
+
 export const ORGANISER_SEARCH_DESTINATIONS: OrganiserNavItem[] = [
-  ...ORGANISER_MAIN_NAV,
+  ...flattenNavItems(ORGANISER_MAIN_NAV),
   ...ORGANISER_SECONDARY_NAV,
   {
     href: "/organiser/v2/settings",
@@ -177,6 +207,13 @@ export function resolveOrganiserBreadcrumbs(
       ];
     }
     return [crumb("Recurring events", undefined, ArrowPathIcon)];
+  }
+
+  if (pathname.startsWith("/organiser/v2/event/calendar")) {
+    return [
+      crumb("Events", "/organiser/v2/event/dashboard", CalendarIcon),
+      crumb("Calendar", undefined, CalendarDaysIcon),
+    ];
   }
 
   if (pathname.startsWith("/organiser/v2/event/dashboard")) {
