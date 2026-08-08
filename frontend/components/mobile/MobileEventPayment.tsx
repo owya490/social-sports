@@ -1,6 +1,7 @@
 "use client";
 
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
   formatMobileDifferentDayDateTime,
@@ -21,6 +22,7 @@ import { useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
 import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
+import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 
 interface MobileEventPaymentProps {
@@ -40,6 +42,7 @@ interface MobileEventPaymentProps {
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
+  eventTicketTypeId: EventTicketTypeId;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -71,6 +74,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
+  const bookingMaintenanceActive = isBookingMaintenanceActive();
 
   return (
     <div className="py-4 px-2">
@@ -107,7 +111,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
 
       {/* Booking Section */}
       <div className="w-full">
-        {eventRegistrationClosed ? (
+        {bookingMaintenanceActive ? (
+          <div className="text-center py-2">
+            <h3 className="font-semibold text-black mb-1">Booking Paused</h3>
+            <p className="text-sm text-gray-600">{BOOKING_MAINTENANCE_MESSAGE}</p>
+          </div>
+        ) : eventRegistrationClosed ? (
           <div className="text-center py-2">
             <h3 className="font-semibold text-black mb-1">Registration Closed</h3>
             <p className="text-sm text-gray-600">Please check with the organiser for more details.</p>
@@ -140,6 +149,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   <JoinWaitlistButton
                     eventId={props.eventId}
                     ticketCount={waitlistAttendeeCount}
+                    eventTicketTypeId={props.eventTicketTypeId}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
@@ -174,6 +184,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     <BookingButton
                       eventId={props.eventId}
                       ticketCount={attendeeCount}
+                      eventTicketTypeId={props.eventTicketTypeId}
                       setLoading={props.setLoading}
                       bookingApprovalEnabled={props.bookingApprovalEnabled}
                       className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"

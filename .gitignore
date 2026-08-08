@@ -20,9 +20,15 @@ functions/venv/pyvenv.cfg
 next-env.d.ts
 
 tsconfig.tsbuildinfo
+
 # Impeccable (local-only artifacts; PRODUCT.md / DESIGN.md stay tracked)
 .impeccable/
 **/.impeccable/
 .cursor/skills/impeccable/
 .cursor/agents/impeccable-*.md
 .cursor/hooks.json
+
+# Agent-local state
+.claude/settings.local.json
+.tmp/
+__pycache__/

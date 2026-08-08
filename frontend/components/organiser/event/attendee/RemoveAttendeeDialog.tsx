@@ -3,6 +3,7 @@ import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
+import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
@@ -49,6 +50,7 @@ const RemoveAttendeeDialog = ({
         eventId,
         orderId: order.orderId,
         numTickets: 0,
+        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
       });
       setOrderTicketsMap((prev) => {
         const next = new Map(prev);

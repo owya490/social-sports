@@ -19,6 +19,8 @@ public class SessionMetadata {
     private Boolean isPrivate;
     private String fulfilmentSessionId;
     private String endFulfilmentEntityId;
+    /** Required; identifies which ticket type was purchased for fulfill and restock. */
+    private String eventTicketTypeId;
 
     /**
      * Validates the session metadata.
@@ -37,6 +39,9 @@ public class SessionMetadata {
         }
         if (endFulfilmentEntityId == null || endFulfilmentEntityId.isBlank()) {
             throw new IllegalArgumentException("End Fulfilment Entity Id must be provided as a non-empty string.");
+        }
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("Event Ticket Type Id must be provided as a non-empty string.");
         }
     }
 
@@ -63,6 +68,7 @@ public class SessionMetadata {
             .isPrivate(isPrivate)
             .fulfilmentSessionId(normalizeBlankToNull(metadata.get("fulfilmentSessionId")))
             .endFulfilmentEntityId(normalizeBlankToNull(metadata.get("endFulfilmentEntityId")))
+            .eventTicketTypeId(normalizeBlankToNull(metadata.get("eventTicketTypeId")))
             .build();
         sessionMetadata.validate();
         return sessionMetadata;

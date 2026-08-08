@@ -9,7 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
@@ -97,7 +100,8 @@ public class CheckoutService {
                 checkoutTransactionResult.stripeAccountId());
     }
 
-    private static void validateEventForCheckout(EventData eventData, Integer quantity) throws Exception {
+    private static void validateEventForCheckout(EventData eventData, ResolvedEventTicketType ticketType,
+            Integer quantity) throws Exception {
         // Validate event timing and status
         EventsUtils.validateEventTiming(eventData);
         
@@ -106,15 +110,23 @@ public class CheckoutService {
             throw new RuntimeException("Event " + eventData.getEventId() + " does not have payments enabled");
         }
 
-        // Validate vacancy
-        Integer vacancy = eventData.getVacancy();
-        validateVacancy(eventData.getEventId(), vacancy, quantity);
+        validateMaxTicketsPerTransaction(eventData, quantity);
+        EventTicketTypeService.validateAvailability(ticketType, quantity);
 
         // Validate price
-        Integer price = eventData.getPrice();
+        Integer price = ticketType.getPrice();
         if (price == null || (price < StripeService.MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT && price != 0)) {
             logger.error("Event " + eventData.getEventId() + " invalid price: " + price);
             throw new RuntimeException("Event " + eventData.getEventId() + " invalid price: " + price);
+        }
+    }
+
+    private static void validateMaxTicketsPerTransaction(EventData eventData, Integer quantity) {
+        Integer maxTickets = eventData.getMaxTicketsPerTransaction();
+        if (maxTickets != null && quantity != null && quantity > maxTickets) {
+            throw new IllegalArgumentException(String.format(
+                    "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
+                    quantity, maxTickets, eventData.getEventId()));
         }
     }
 
@@ -127,7 +139,8 @@ public class CheckoutService {
      * @param privateUserData Private user data - contains organiser details
      */
     private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) throws Exception {
-        validateEventForCheckout(eventData, request.quantity());
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
+        validateEventForCheckout(eventData, ticketType, request.quantity());
 
         Firestore db = FirebaseService.getFirestore();
         String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
@@ -136,14 +149,14 @@ public class CheckoutService {
         DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
 
         boolean needsActivation = Boolean.FALSE.equals(privateUserData.getStripeAccountActive());
-        Integer currentVacancy = eventData.getVacancy();
+        Integer currentVacancy = ticketType.getVacancy();
 
-        // PHASE 2: WRITE - Reserve tickets and track session
+        // Reserve tickets on General Admission vacancy
         Integer newVacancy = currentVacancy - request.quantity();
-        transaction.update(eventRef, "vacancy", newVacancy);
-        eventData.setVacancy(newVacancy);
-        logger.info("Reserved {} tickets for event {} at {} cents (vacancy: {} -> {})",
-                request.quantity(), request.eventId(), eventData.getPrice(), currentVacancy, newVacancy);
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
+        logger.info("Reserved {} tickets for event {} type {} at {} cents (vacancy: {} -> {})",
+                request.quantity(), request.eventId(), ticketType.getId(), ticketType.getPrice(), currentVacancy,
+                newVacancy);
         
         // Activate Stripe account if needed
         if (needsActivation) {
@@ -166,12 +179,17 @@ public class CheckoutService {
                 DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
                 
                 if (eventSnapshot.exists()) {
-                    Long currentVacancy = eventSnapshot.getLong("vacancy");
-                    if (currentVacancy != null) {
-                        transaction.update(eventRef, "vacancy", currentVacancy + request.quantity());
-                        logger.info("Reverted reservation of {} tickets for event {} (vacancy: {} -> {})", 
-                                request.quantity(), request.eventId(), currentVacancy, currentVacancy + request.quantity());
+                    EventData eventData = eventSnapshot.toObject(EventData.class);
+                    if (eventData == null) {
+                        throw new RuntimeException(
+                                "Could not revert reservation: Event data null for " + request.eventId());
                     }
+                    eventData.setEventId(request.eventId());
+                    ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
+                    EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType,
+                            request.quantity());
+                    logger.info("Reverted reservation of {} tickets for event {} type {}",
+                            request.quantity(), request.eventId(), ticketType.getId());
                 } else {
                     logger.error("Could not revert reservation: Event {} not found", request.eventId());
                     throw new RuntimeException("Could not revert reservation: Event " + request.eventId() + " not found");
@@ -240,6 +258,9 @@ public class CheckoutService {
     private static StripeSessionResult createStripeSession(
             CreateStripeCheckoutSessionRequest request, EventData eventData, String stripeAccountId) throws StripeException {
         
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
+        long unitAmount = ticketType.getPrice() != null ? ticketType.getPrice().longValue() : 0L;
+
         // Build Stripe checkout session parameters
         SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
@@ -250,8 +271,9 @@ public class CheckoutService {
                                         .setName(eventData.getName() != null ? eventData.getName() : "")
                                         .putMetadata("eventId", eventData.getEventId())
                                         .putMetadata("isPrivate", request.isPrivate().toString())
+                                        .putMetadata("eventTicketTypeId", ticketType.getId())
                                         .build())
-                                .setUnitAmount((long) eventData.getPrice())
+                                .setUnitAmount(unitAmount)
                                 .build())
                         .setQuantity((long) request.quantity())
                         .build())
@@ -261,6 +283,7 @@ public class CheckoutService {
                         request.fulfilmentSessionId() != null ? request.fulfilmentSessionId() : "")
                 .putMetadata("endFulfilmentEntityId", 
                         request.endFulfilmentEntityId() != null ? request.endFulfilmentEntityId() : "")
+                .putMetadata("eventTicketTypeId", ticketType.getId())
                 .addCustomField(SessionCreateParams.CustomField.builder()
                         .setKey(StripeCustomFieldKeys.ATTENDEE_FULL_NAME)
                         .setLabel(SessionCreateParams.CustomField.Label.builder()
@@ -281,17 +304,17 @@ public class CheckoutService {
                 .setCancelUrl(request.cancelUrl())
                 .setExpiresAt(Instant.now().getEpochSecond() + StripeConfig.CHECKOUT_SESSION_EXPIRY_SECONDS)
                 .setPaymentIntentData(SessionCreateParams.PaymentIntentData.builder()
-                        .setApplicationFeeAmount(StripeConfig.calculateSportsHubFee((long) eventData.getPrice() * (long) request.quantity(), eventData.getOrganiserId()))
+                        .setApplicationFeeAmount(StripeConfig.calculateSportsHubFee(unitAmount * (long) request.quantity(), eventData.getOrganiserId()))
                         .setCaptureMethod(request.captureMethod())
                         .build());
 
         // Add Stripe fee if passed to customer
         Boolean stripeFeeToCustomer = eventData.getStripeFeeToCustomer();
-        if (stripeFeeToCustomer != null && Boolean.TRUE.equals(stripeFeeToCustomer) && eventData.getPrice() != 0) {
-            long totalOrderPrice = (long) eventData.getPrice() * (long) request.quantity();
+        if (stripeFeeToCustomer != null && Boolean.TRUE.equals(stripeFeeToCustomer) && unitAmount != 0) {
+            long totalOrderPrice = unitAmount * (long) request.quantity();
             long stripeFee = StripeConfig.calculateStripeFee(totalOrderPrice, eventData.getOrganiserId());
             logger.info("Stripe surcharge calculated: {} cents for event {} (price={}, quantity={})",
-                    stripeFee, eventData.getEventId(), eventData.getPrice(), request.quantity());
+                    stripeFee, eventData.getEventId(), unitAmount, request.quantity());
 
             paramsBuilder.addShippingOption(SessionCreateParams.ShippingOption.builder()
                     .setShippingRateData(SessionCreateParams.ShippingOption.ShippingRateData.builder()
@@ -322,27 +345,6 @@ public class CheckoutService {
         logger.info("Created Stripe checkout session {} for event {}", session.getId(), eventData.getEventId());
 
         return new StripeSessionResult(session.getId(), session.getUrl());
-    }
-
-    /**
-     * Validates that there are enough tickets available for the request.
-     */
-    private static void validateVacancy(String eventId, Integer vacancy, Integer quantity) throws CheckoutVacancyException {
-        if (quantity == null || quantity <= 0) {
-            logger.error("Event " + eventId + " invalid quantity: " + quantity);
-            throw new RuntimeException("Event " + eventId + " invalid quantity: " + quantity);
-        }
-        if (vacancy == null) {
-            logger.error("Event " + eventId + " missing vacancy field");
-            throw new RuntimeException("Event " + eventId + " missing vacancy field");
-        }
-        
-        if (vacancy < quantity) {
-            logger.warn("Event " + eventId + " insufficient tickets: " + 
-                    vacancy + " available, " + quantity + " requested");
-            throw new CheckoutVacancyException("Event " + eventId + " insufficient tickets: " + 
-                    vacancy + " available, " + quantity + " requested");
-        }
     }
 
     /**

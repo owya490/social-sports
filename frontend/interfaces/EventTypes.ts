@@ -30,6 +30,7 @@ interface AbstractEventData {
     lat: number;
     lng: number;
   };
+  // Prefer eventTicketTypes on read (see applyGeneralAdmissionInventoryFields); kept on writes for legacy compatibility.
   capacity: number;
   vacancy: number;
   price: number;
@@ -59,7 +60,7 @@ interface AbstractEventData {
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
   maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
-  /** Optional hanging ticket types map; top-level capacity/vacancy/price remain authoritative until migration consumes this. */
+  /** Source of truth for pricing and vacancy (General Admission). */
   eventTicketTypes?: EventTicketTypesMap;
 }
 

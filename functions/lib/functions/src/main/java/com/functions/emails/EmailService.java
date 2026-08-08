@@ -33,7 +33,8 @@ public class EmailService {
 
     @FunctionalInterface
     private interface BookingApprovalEmailVariablesBuilder {
-        Map<String, String> build(DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId);
+        Map<String, String> build(Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName,
+                String orderId);
     }
     /**
      * Sends an email confirmation to a user who has joined the waitlist for an
@@ -118,7 +119,7 @@ public class EmailService {
                 return false;
             }
 
-            Map<String, String> variables = buildEmailVariables(eventSnapshot, orderSnapshot, firstName, orderId);
+            Map<String, String> variables = buildEmailVariables(db, eventSnapshot, orderSnapshot, firstName, orderId);
 
             boolean attendeeEmailSent = EmailClient.sendEmailWithLoopsWithRetries(
                     EmailTemplateType.PURCHASE,
@@ -176,12 +177,14 @@ public class EmailService {
                 .get();
     }
 
-    private static Map<String, String> buildEmailVariables(DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+    private static Map<String, String> buildEmailVariables(Firestore db, DocumentSnapshot event, DocumentSnapshot order,
+            String firstName, String orderId) {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
         Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
 
-        double priceInCents = extractPrice(event);
+        String eventTicketTypeId = resolveEventTicketTypeIdFromOrder(db, order);
+        double priceInCents = extractPriceByTicketTypeId(event, eventTicketTypeId);
 
         List<?> tickets = (List<?>) order.get("tickets");
         String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
@@ -204,12 +207,13 @@ public class EmailService {
      * quantity, price, startDate, endDate, location.
      */
     private static Map<String, String> buildBookingPendingEmailVariables(
-            DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+            Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
         Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
 
-        double priceInCents = extractPrice(event);
+        String eventTicketTypeId = resolveEventTicketTypeIdFromOrder(db, order);
+        double priceInCents = extractPriceByTicketTypeId(event, eventTicketTypeId);
 
         List<?> tickets = (List<?>) order.get("tickets");
         String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
@@ -232,7 +236,7 @@ public class EmailService {
      * Must match the Loops template: name, eventName, orderId, ticketCount.
      */
     private static Map<String, String> buildBookingApprovedEmailVariables(
-            DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
+            Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
         List<?> tickets = (List<?>) order.get("tickets");
         String ticketCount = tickets != null ? String.valueOf(tickets.size()) : "0";
 
@@ -261,40 +265,70 @@ public class EmailService {
     }
 
     /**
-     * Extracts price from a Firestore document, handling multiple possible types.
-     *
-     * @param event The event document snapshot
-     * @return The price in cents as a double, or 0.0 if not found or invalid
+     * Extracts price in cents from {@code eventTicketTypes} by ticket type ID.
      */
-    private static double extractPrice(DocumentSnapshot event) {
-        Long longPrice = event.getLong("price");
-        if (longPrice != null) {
-            return longPrice.doubleValue();
+    private static double extractPriceByTicketTypeId(DocumentSnapshot event, String eventTicketTypeId) {
+        Object ticketTypesObj = event.get("eventTicketTypes");
+        if (!(ticketTypesObj instanceof Map<?, ?> ticketTypes) || ticketTypes.isEmpty()) {
+            throw new IllegalStateException("Event " + event.getId() + " has no eventTicketTypes");
         }
 
-        Double doublePrice = event.getDouble("price");
-        if (doublePrice != null) {
-            return doublePrice;
+        Map<?, ?> ticketType = findTicketTypeMap(ticketTypes, eventTicketTypeId);
+        if (ticketType == null) {
+            throw new IllegalArgumentException(
+                    "Ticket type " + eventTicketTypeId + " not found for event " + event.getId());
         }
 
-        Object priceObj = event.get("price");
-
-        if (priceObj == null) {
-            return 0.0;
-        }
-
+        Object priceObj = ticketType.get("price");
         if (priceObj instanceof Number numericPrice) {
             return numericPrice.doubleValue();
-        } else if (priceObj instanceof String) {
-            try {
-                return Double.parseDouble((String) priceObj);
-            } catch (NumberFormatException e) {
-                logger.warn("Failed to parse price string '{}', defaulting to 0.0", priceObj);
-                return 0.0;
+        }
+        throw new IllegalStateException(
+                "Ticket type " + eventTicketTypeId + " on event " + event.getId() + " is missing price");
+    }
+
+    private static Map<?, ?> findTicketTypeMap(Map<?, ?> ticketTypes, String eventTicketTypeId) {
+        Object byKey = ticketTypes.get(eventTicketTypeId);
+        if (byKey instanceof Map<?, ?> ticketTypeMap) {
+            return ticketTypeMap;
+        }
+        for (Object value : ticketTypes.values()) {
+            if (value instanceof Map<?, ?> ticketTypeMap) {
+                Object id = ticketTypeMap.get("id");
+                if (eventTicketTypeId.equals(id)) {
+                    return ticketTypeMap;
+                }
             }
-        } else {
-            logger.warn("Unexpected price type '{}', defaulting to 0.0", priceObj.getClass().getName());
-            return 0.0;
+        }
+        return null;
+    }
+
+    private static String resolveEventTicketTypeIdFromOrder(Firestore db, DocumentSnapshot order) {
+        List<?> ticketIds = (List<?>) order.get("tickets");
+        if (ticketIds == null || ticketIds.isEmpty()) {
+            throw new IllegalStateException("Order " + order.getId() + " has no tickets");
+        }
+        Object firstTicketId = ticketIds.get(0);
+        if (firstTicketId == null) {
+            throw new IllegalStateException("Order " + order.getId() + " has null first ticket id");
+        }
+        try {
+            DocumentSnapshot ticketSnapshot = fetchRootDocument(db, CollectionPaths.TICKETS,
+                    firstTicketId.toString());
+            if (!ticketSnapshot.exists()) {
+                throw new IllegalStateException(
+                        "Ticket " + firstTicketId + " not found for order " + order.getId());
+            }
+            String eventTicketTypeId = ticketSnapshot.getString("eventTicketTypeId");
+            if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+                throw new IllegalStateException("Ticket " + firstTicketId + " is missing eventTicketTypeId");
+            }
+            return eventTicketTypeId;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while loading ticket for order " + order.getId(), e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to load ticket for order " + order.getId(), e);
         }
     }
 
@@ -491,7 +525,7 @@ public class EmailService {
             }
 
             Map<String, String> variables = variablesBuilder.build(
-                    eventSnapshot, orderSnapshot, firstName, orderId);
+                    db, eventSnapshot, orderSnapshot, firstName, orderId);
             boolean sent = EmailClient.sendEmailWithLoopsWithRetries(templateId, email, variables);
             if (!sent) {
                 logger.warn("Failed to send booking approval email (template={}) for order {} to {}",

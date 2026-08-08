@@ -5,7 +5,11 @@ import {
 } from "@/services/featureFlags";
 
 const BannerSeparator = () => (
-  <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 hidden h-0.5 w-0.5 fill-current sm:inline">
+  <svg
+    viewBox="0 0 2 2"
+    aria-hidden="true"
+    className="mx-2 hidden h-0.5 w-0.5 fill-current sm:inline"
+  >
     <circle r={1} cx={1} cy={1} />
   </svg>
 );
