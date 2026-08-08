@@ -24,10 +24,12 @@ export type SpotlightRect = {
   height: number;
 };
 
-const PAD = 10;
+const PAD = 8;
 
 export function measureTourTarget(selector: string): SpotlightRect | null {
   const nodes = document.querySelectorAll(selector);
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
   for (const node of nodes) {
     if (!(node instanceof HTMLElement)) continue;
     if (node.getAttribute("aria-hidden") === "true") continue;
@@ -36,12 +38,18 @@ export function measureTourTarget(selector: string): SpotlightRect | null {
     const r = node.getBoundingClientRect();
     if (r.width < 4 || r.height < 4) continue;
     // Skip off-screen drawers (e.g. closed mobile sidebar).
-    if (r.right < 8 || r.bottom < 8 || r.left > window.innerWidth - 8) continue;
+    if (r.right < 8 || r.bottom < 8 || r.left > vw - 8) continue;
+    // Pad symmetrically around the target, then clip to the viewport.
+    // (Previously clamping left/top independently of width/height shifted the box off-center.)
+    const top = Math.max(0, r.top - PAD);
+    const left = Math.max(0, r.left - PAD);
+    const right = Math.min(vw, r.right + PAD);
+    const bottom = Math.min(vh, r.bottom + PAD);
     return {
-      top: Math.max(8, r.top - PAD),
-      left: Math.max(8, r.left - PAD),
-      width: Math.min(window.innerWidth - 16, r.width + PAD * 2),
-      height: Math.min(window.innerHeight - 16, r.height + PAD * 2),
+      top: Math.round(top),
+      left: Math.round(left),
+      width: Math.max(0, Math.round(right) - Math.round(left)),
+      height: Math.max(0, Math.round(bottom) - Math.round(top)),
     };
   }
   return null;
@@ -168,6 +176,18 @@ export function WelcomeSpotlight({
     ringSpot && typeof window !== "undefined" && ringSpot.top > window.innerHeight * 0.4
   );
 
+  const ringRadius = (() => {
+    if (!ringSpot || typeof window === "undefined") return 12;
+    const flushLeft = ringSpot.left <= 0;
+    const flushRight = ringSpot.left + ringSpot.width >= window.innerWidth;
+    const flushTop = ringSpot.top <= 0;
+    const flushBottom = ringSpot.top + ringSpot.height >= window.innerHeight;
+    if (flushLeft || flushRight || flushTop || flushBottom) {
+      return `${flushTop ? 0 : 12}px ${flushRight ? 0 : 12}px ${flushBottom ? 0 : 12}px ${flushLeft ? 0 : 12}px`;
+    }
+    return 12;
+  })();
+
   return (
     <motion.div
       className={`fixed inset-0 z-[80] ${clickThrough ? "pointer-events-none" : "pointer-events-auto"}`}
@@ -190,13 +210,14 @@ export function WelcomeSpotlight({
       {ringSpot && (
         <>
           <motion.div
-            className="pointer-events-none absolute rounded-xl border-2 border-background bg-transparent"
+            className="pointer-events-none absolute border-2 border-background bg-transparent"
             initial={false}
             animate={{
               top: ringSpot.top,
               left: ringSpot.left,
               width: ringSpot.width,
               height: ringSpot.height,
+              borderRadius: ringRadius,
             }}
             transition={{ duration: moveMs / 1000, ease: EASE }}
             style={{ boxShadow: DIM_SHADOW }}

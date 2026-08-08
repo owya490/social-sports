@@ -10,6 +10,7 @@ import {
 } from "@/components/organiser/organiserNav";
 import {
   isWelcomeFlowPath,
+  WELCOME_CLOSE_MENU_EVENT,
   WELCOME_OPEN_MENU_EVENT,
   welcomeAwareHref,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
@@ -461,8 +462,13 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
   useEffect(() => {
     if (!isWelcomeFlowPath(pathname)) return;
     const open = () => onMobileOpenChange(true);
+    const close = () => onMobileOpenChange(false);
     window.addEventListener(WELCOME_OPEN_MENU_EVENT, open);
-    return () => window.removeEventListener(WELCOME_OPEN_MENU_EVENT, open);
+    window.addEventListener(WELCOME_CLOSE_MENU_EVENT, close);
+    return () => {
+      window.removeEventListener(WELCOME_OPEN_MENU_EVENT, open);
+      window.removeEventListener(WELCOME_CLOSE_MENU_EVENT, close);
+    };
   }, [pathname, onMobileOpenChange]);
 
   useEffect(() => {

@@ -218,12 +218,19 @@ export function hasTourEvents(): boolean {
   return Boolean(document.querySelector("[data-event-id]"));
 }
 
-/** Ask the mobile organiser drawer to open so nav-events is reachable. */
+/** Ask the mobile organiser drawer to open so nav / Events is reachable. */
 export const WELCOME_OPEN_MENU_EVENT = "organiser-welcome-open-menu";
+/** Close the mobile drawer so dashboard tour steps aren’t covered. */
+export const WELCOME_CLOSE_MENU_EVENT = "organiser-welcome-close-menu";
 
 export function requestWelcomeMenuOpen(): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(WELCOME_OPEN_MENU_EVENT));
+}
+
+export function requestWelcomeMenuClose(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(WELCOME_CLOSE_MENU_EVENT));
 }
 
 export const LOADING_MS = 3200;

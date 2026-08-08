@@ -31,6 +31,7 @@ import {
   LOADING_MS_REDUCED,
   markWelcomeSeen,
   readTourSession,
+  requestWelcomeMenuClose,
   requestWelcomeMenuOpen,
   writeTourSession,
   type TourStep,
@@ -172,14 +173,21 @@ export function OrganiserWelcomeTour() {
                 ? EVENT_HUB_STEPS[eventHubIndex]
                 : null;
 
-  // Open mobile drawer when the sidebar (or Events nav) must be visible to spotlight.
+  // Mobile drawer: open only when spotlighting the sidebar / Events nav; otherwise close
+  // so dashboard steps (KPIs, create) aren’t covered by the open menu.
   useEffect(() => {
     const needsMenu =
       phase === "click-events-nav" || (phase === "hub" && hubIndex === 0);
-    if (!needsMenu) return;
-    requestWelcomeMenuOpen();
-    const retries = [200, 500, 900].map((ms) => window.setTimeout(requestWelcomeMenuOpen, ms));
-    return () => retries.forEach((id) => window.clearTimeout(id));
+    if (needsMenu) {
+      requestWelcomeMenuOpen();
+      const retries = [200, 500, 900].map((ms) =>
+        window.setTimeout(requestWelcomeMenuOpen, ms)
+      );
+      return () => retries.forEach((id) => window.clearTimeout(id));
+    }
+    if (phase === "hub" || phase === "modal" || phase === "loading") {
+      requestWelcomeMenuClose();
+    }
   }, [phase, hubIndex]);
 
   // Keep events intro above the fold — no scroll jump to the list.
@@ -235,7 +243,9 @@ export function OrganiserWelcomeTour() {
       setSpot(measureTourTarget(activeStep.target));
     };
     const start = window.setTimeout(sync, reduceMotion ? 40 : 280);
-    const retries = [500, 1000, 1800, 2800].map((ms) => window.setTimeout(sync, ms));
+    // Include a post-drawer-close beat (~300ms transition) so KPI/create spots
+    // remeasure after the mobile menu finishes closing.
+    const retries = [350, 500, 1000, 1800, 2800].map((ms) => window.setTimeout(sync, ms));
     window.addEventListener("resize", sync);
     window.addEventListener("scroll", sync, true);
     return () => {
