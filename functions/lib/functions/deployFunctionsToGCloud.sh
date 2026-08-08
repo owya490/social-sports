@@ -5,6 +5,7 @@
 # createRecurrenceTemplate
 # recurringEventsCron
 # cleanupOldFulfilmentSessionsCron
+# expirePendingBookingsCron
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
@@ -16,6 +17,7 @@ VALID_FUNCTIONS=(
     "createRecurrenceTemplate" 
     "recurringEventsCron"
     "cleanupOldFulfilmentSessionsCron"
+    "expirePendingBookingsCron"
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
@@ -26,6 +28,7 @@ VALID_ENDPOINTS=(
     "com.functions.events.controllers.CreateRecurrenceTemplateEndpoint" 
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
+    "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"

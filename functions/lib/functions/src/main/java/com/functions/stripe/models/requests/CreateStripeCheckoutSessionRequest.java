@@ -18,7 +18,8 @@ public record CreateStripeCheckoutSessionRequest(
         @JsonProperty("successUrl") String successUrl,
         @JsonProperty("fulfilmentSessionId") @Nonnull String fulfilmentSessionId,
         @JsonProperty("endFulfilmentEntityId") @Nonnull String endFulfilmentEntityId,
-        @JsonProperty("captureMethod") @Nonnull CaptureMethod captureMethod) {
+        @JsonProperty("captureMethod") @Nonnull CaptureMethod captureMethod,
+        @JsonProperty("eventTicketTypeId") String eventTicketTypeId) {
     /**
      * Compact constructor that validates all fields at creation time.
      * 
@@ -26,7 +27,7 @@ public record CreateStripeCheckoutSessionRequest(
      */
     public CreateStripeCheckoutSessionRequest {
         validate(eventId, isPrivate, quantity, cancelUrl, successUrl, fulfilmentSessionId,
-                endFulfilmentEntityId, captureMethod);
+                endFulfilmentEntityId, captureMethod, eventTicketTypeId);
     }
 
     /**
@@ -36,7 +37,8 @@ public record CreateStripeCheckoutSessionRequest(
      */
     private static void validate(String eventId, Boolean isPrivate, Integer quantity,
             String cancelUrl, String successUrl,
-            String fulfilmentSessionId, String endFulfilmentEntityId, CaptureMethod captureMethod) {
+            String fulfilmentSessionId, String endFulfilmentEntityId, CaptureMethod captureMethod,
+            String eventTicketTypeId) {
         if (eventId == null || eventId.isBlank()) {
             throw new IllegalArgumentException("Event ID must be provided as a non-empty string.");
         }
@@ -70,6 +72,9 @@ public record CreateStripeCheckoutSessionRequest(
         }
         if (captureMethod == null) {
             throw new IllegalArgumentException("Capture Method must be provided as a CaptureMethod enum but was null.");
+        }
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId must be provided as a non-empty string.");
         }
     }
 }

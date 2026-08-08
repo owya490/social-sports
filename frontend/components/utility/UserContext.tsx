@@ -3,7 +3,7 @@ import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
-import { getTempUserData } from "@/services/src/auth/authService";
+import { getTempUserData, migrateTempUserToActiveUser } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
@@ -30,7 +30,7 @@ export default function UserContext({ children }: { children: any }) {
   const pathname = usePathname();
   const [userLoading, setUserLoading] = useState(true);
 
-  const protectedRoutes = ["/organiser", "/profile", "/event/create"];
+  const protectedRoutes = ["/organiser", "/profile", "/event/create", "/onboarding"];
   const LoginRegisterRoutes = ["/register", "/login"];
 
   const refreshUser = async () => {
@@ -62,11 +62,12 @@ export default function UserContext({ children }: { children: any }) {
             setUser(userData);
           } catch {
             try {
-              const userData = await getTempUserData(uid as UserId);
-              if (!userData) {
-                router.push("/error");
-                return;
-              }
+              // The user is verified but their profile was never promoted out of
+              // TempUsers (e.g. they verified their email but never came back
+              // through the login form). Migrate them now so downstream features
+              // relying on Users/Active (e.g. Stripe onboarding) work correctly.
+              await migrateTempUserToActiveUser(uid as UserId);
+              const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
               setUser(userData);
             } catch {
               router.push("/error");

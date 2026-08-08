@@ -29,7 +29,7 @@ public class InitFulfilmentSessionHandler implements Handler<InitCheckoutFulfilm
                 request.eventId(), request.numTickets(), request);
 
         String fulfilmentSessionId = FulfilmentService.initFulfilmentSession(
-                request.eventId(), request.numTickets());
+                request.eventId(), request.numTickets(), request.eventTicketTypeId());
 
         logger.info("[InitFulfilmentSessionHandler] Fulfilment session successfully created: {}",
                 fulfilmentSessionId);

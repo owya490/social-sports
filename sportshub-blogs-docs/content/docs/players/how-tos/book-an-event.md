@@ -39,6 +39,24 @@ Booking sports events on SPORTSHUB is quick and secure with our integrated Strip
 
 ![booking-confirmation-email](/images/docs/players/how-tos/booking-confirmation-email.png)
 
+### Events That Require Organiser Approval
+
+Some events require the organiser to approve your booking before it's confirmed. Here's what to expect:
+
+1. **Find your event** and select your tickets as usual
+2. Click **Request to Book** instead of **Book Now**
+3. You'll see a message that organiser approval is required and that **your card won't be charged until you're approved**
+4. Complete checkout — your card details are collected, but you are not charged yet
+5. You'll receive an email confirming your request was submitted
+
+The organiser has **48 hours** to review your request. After that:
+
+- **If approved** — your card is charged and you'll receive a booking confirmation
+- **If rejected** — the hold on your card is released and you won't be charged
+
+> [!NOTE]
+> Not all events require approval. If you see **Book Now**, your booking is confirmed immediately after payment.
+
 ### Important Notes
 
 - **Registration Deadlines**: Pay attention to registration closing times

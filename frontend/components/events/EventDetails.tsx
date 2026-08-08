@@ -2,6 +2,7 @@ import EventDescription from "@/components/events/EventDescription";
 import { EventAttendees } from "@/components/events/EventAttendees";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
+import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
@@ -16,6 +17,7 @@ interface EventDetailsProps {
 
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading } = props;
+  const eventTicketTypeId = resolveCheckoutTicketTypeId(eventData);
 
   return (
     <div className="flex justify-center w-full px-2 md:px-0">
@@ -38,6 +40,8 @@ export function EventDetails(props: EventDetailsProps) {
               organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
+              bookingApprovalEnabled={eventData.bookingApprovalEnabled}
+              eventTicketTypeId={eventTicketTypeId}
             />
           </div>
 
@@ -71,6 +75,8 @@ export function EventDetails(props: EventDetailsProps) {
               organiserId={eventData.organiserId}
               waitlistEnabled={eventData.waitlistEnabled}
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
+              bookingApprovalEnabled={eventData.bookingApprovalEnabled}
+              eventTicketTypeId={eventTicketTypeId}
             />
           </div>
         </div>

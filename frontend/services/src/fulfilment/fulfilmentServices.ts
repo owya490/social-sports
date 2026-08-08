@@ -1,4 +1,5 @@
 import { EventId } from "@/interfaces/EventTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import {
   FulfilmentEntityId,
   FulfilmentSessionDataType,
@@ -63,7 +64,7 @@ export async function initFulfilmentSession(
   try {
     switch (fulfilmentSessionType.type) {
       case FulfilmentSessionType.CHECKOUT: {
-        const { eventId, numTickets } = fulfilmentSessionType;
+        const { eventId, numTickets, eventTicketTypeId } = fulfilmentSessionType;
 
         // Check for existing session in localStorage specific to this event and ticket count
         const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets);
@@ -94,7 +95,7 @@ export async function initFulfilmentSession(
         }
 
         // No valid existing session, create a new one
-        const response = await initCheckoutFulfilmentSession(eventId, numTickets);
+        const response = await initCheckoutFulfilmentSession(eventId, numTickets, eventTicketTypeId);
 
         // Store the new session ID in localStorage with event and ticket context
         storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets);
@@ -102,10 +103,9 @@ export async function initFulfilmentSession(
         return response;
       }
       case FulfilmentSessionType.WAITLIST: {
-        const { eventId, numTickets } = fulfilmentSessionType;
+        const { eventId, numTickets, eventTicketTypeId } = fulfilmentSessionType;
 
-        // No valid existing session, create a new one
-        const response = await initWaitlistFulfilmentSession(eventId, numTickets);
+        const response = await initWaitlistFulfilmentSession(eventId, numTickets, eventTicketTypeId);
 
         return response;
       }
@@ -121,7 +121,8 @@ export async function initFulfilmentSession(
  */
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
-  numTickets: number
+  numTickets: number,
+  eventTicketTypeId: EventTicketTypeId
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
@@ -133,6 +134,7 @@ async function initCheckoutFulfilmentSession(
     >(EndpointType.INIT_FULFILMENT_SESSION, {
       eventId,
       numTickets,
+      eventTicketTypeId,
     });
     return response;
   } catch (error) {
@@ -148,7 +150,8 @@ async function initCheckoutFulfilmentSession(
  */
 async function initWaitlistFulfilmentSession(
   eventId: EventId,
-  numTickets: number
+  numTickets: number,
+  eventTicketTypeId: EventTicketTypeId
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initWaitlistFulfilmentSession: Initializing waitlist fulfilment session for event ID: ${eventId}`
@@ -160,6 +163,7 @@ async function initWaitlistFulfilmentSession(
     >(EndpointType.INIT_FULFILMENT_SESSION, {
       eventId,
       numTickets,
+      eventTicketTypeId,
     });
     return response;
   } catch (error) {

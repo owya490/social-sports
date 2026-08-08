@@ -170,7 +170,7 @@ export const ApprovedAttendeeTab = ({
     ticketCount: getOrderTickets(order, approvedOrderTicketsMap).length,
     name: order.fullName,
     email: order.email,
-    phone: order.phone ? `${order.phone}` : "N/A",
+    phone: order.phone || null,
     order,
     tickets:
       getOrderTickets(order, approvedOrderTicketsMap)

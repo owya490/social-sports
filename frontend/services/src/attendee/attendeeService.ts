@@ -11,6 +11,7 @@ export interface AddAttendeeRequest {
   phone: string;
   numTickets: number;
   price: number; // in cents
+  eventTicketTypeId: string;
 }
 
 export interface AddAttendeeResponse {
@@ -39,6 +40,7 @@ export interface SetAttendeeTicketsRequest {
   eventId: string;
   orderId: string;
   numTickets: number;
+  eventTicketTypeId: string;
 }
 
 export interface SetAttendeeTicketsResponse {

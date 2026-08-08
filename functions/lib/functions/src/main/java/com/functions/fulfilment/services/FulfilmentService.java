@@ -12,7 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -194,13 +196,30 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    public static String initFulfilmentSession(String eventId, Integer numTickets) throws Exception {
+    public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId)
+            throws Exception {
         if (numTickets == null || numTickets <= 0) {
             logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
             throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
         }
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
+            throw new IllegalArgumentException("eventTicketTypeId is required");
+        }
 
-        FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventId);
+        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
+        if (maybeEventData.isEmpty()) {
+            logger.error("Failed to find event data for event ID: {}", eventId);
+            throw new Exception("Failed to find event data for event ID: " + eventId);
+        }
+        EventData eventDataForLimits = maybeEventData.get();
+        Integer maxTickets = eventDataForLimits.getMaxTicketsPerTransaction();
+        if (maxTickets != null && numTickets > maxTickets) {
+            throw new IllegalArgumentException(String.format(
+                    "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
+                    numTickets, maxTickets, eventId));
+        }
+
+        FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventId, eventTicketTypeId);
 
         String fulfilmentSessionId = UUID.randomUUID().toString();
 
@@ -209,13 +228,13 @@ public class FulfilmentService {
         switch (fulfilmentSessionType) {
             case CHECKOUT ->
                 fulfilmentSession = FulfilmentSessionType.CHECKOUT.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             case BOOKING_APPROVAL ->
                 fulfilmentSession = FulfilmentSessionType.BOOKING_APPROVAL.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             case WAITLIST ->
                 fulfilmentSession = FulfilmentSessionType.WAITLIST.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets);
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             default ->
                 throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
         }
@@ -249,16 +268,18 @@ public class FulfilmentService {
         return fulfilmentSessionId;
     }
 
-    private static FulfilmentSessionType classifyFulfilmentSessionType(String eventId) {
+    private static FulfilmentSessionType classifyFulfilmentSessionType(String eventId, String eventTicketTypeId) {
         Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
         if (maybeEventData.isEmpty()) {
             logger.error("Failed to find event data for event ID: {}", eventId);
             throw new RuntimeException("Failed to find event data for event ID: " + eventId);
         }
         EventData eventData = maybeEventData.get();
+        eventData.setEventId(eventId);
 
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && eventData.getVacancy() != null
-                && eventData.getVacancy() <= 0) {
+        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
+        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
+                && ticketType.getVacancy() <= 0) {
             return FulfilmentSessionType.WAITLIST;
         }
 
