@@ -1,6 +1,0 @@
-{
-  "approved": false,
-  "label": "Registrations guest panel",
-  "composition": "registrations + guest drawer",
-  "notes": "Registrations list with glance strip; click attendee opens Guest details drawer. Same panel grammar as Edit."
-}

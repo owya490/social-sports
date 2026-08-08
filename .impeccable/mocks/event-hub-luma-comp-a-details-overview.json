@@ -1,7 +1,0 @@
-{
-  "approved": true,
-  "label": "Details overview",
-  "composition": "luma-overview-led",
-  "notes": "Quiet header without cover; Details owns two-column preview + when/where; Hosts; read-only Visibility; Edit/Change photo as ghost actions.",
-  "steer": "build details overview look + drawer functionality for edit/change photo/guest"
-}

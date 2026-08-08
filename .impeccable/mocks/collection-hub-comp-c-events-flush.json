@@ -1,6 +1,0 @@
-{
-  "approved": false,
-  "label": "Events-stage priority",
-  "composition": "events-flush-priority",
-  "notes": "Same shell; Events flush list is the signature craft surface."
-}

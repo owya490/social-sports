@@ -1,6 +1,0 @@
-{
-  "approved": false,
-  "label": "Dense flush",
-  "composition": "Hero title + compact time inset + flush booking list rows",
-  "notes": "More fields visible without scrolling; booking reads like settings rows."
-}

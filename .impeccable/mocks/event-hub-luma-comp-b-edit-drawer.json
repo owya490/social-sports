@@ -1,6 +1,0 @@
-{
-  "approved": false,
-  "label": "Edit details drawer",
-  "composition": "luma-overview-led + right drawer",
-  "notes": "Signature interaction: Edit details slides from right on desktop; form sections + yellow Update event."
-}
