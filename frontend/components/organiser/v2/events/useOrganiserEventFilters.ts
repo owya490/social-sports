@@ -35,15 +35,19 @@ export function useOrganiserEventFilters(allEvents: EventData[]) {
   const [timeSegment, setTimeSegment] = useState<TimeSegment>("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const clearAll = useCallback(() => {
-    setSortBy(DEFAULT_SORT_BY_CATEGORY);
-    setSearch(DEFAULT_SEARCH);
+  const clearAdvancedFilters = useCallback(() => {
     setEventType(DEFAULT_EVENT_TYPE);
     setMinPrice(DEFAULT_MIN_PRICE);
     setMaxPrice(DEFAULT_MAX_PRICE);
     setDateRange(DEFAULT_DATE_RANGE);
-    setTimeSegment("all");
   }, []);
+
+  const clearAll = useCallback(() => {
+    setSortBy(DEFAULT_SORT_BY_CATEGORY);
+    setSearch(DEFAULT_SEARCH);
+    setTimeSegment("all");
+    clearAdvancedFilters();
+  }, [clearAdvancedFilters]);
 
   const filteredEvents = useMemo(() => {
     let list = [...allEvents];
@@ -90,15 +94,14 @@ export function useOrganiserEventFilters(allEvents: EventData[]) {
     sortBy,
   ]);
 
+  /** Counts only filters owned by the Filters side panel (not search / time / sort). */
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (search !== DEFAULT_SEARCH) count += 1;
-    if (timeSegment !== "all") count += 1;
     if (eventType !== DEFAULT_EVENT_TYPE) count += 1;
     if (minPrice !== DEFAULT_MIN_PRICE || maxPrice !== DEFAULT_MAX_PRICE) count += 1;
     if (dateRange.from && dateRange.to) count += 1;
     return count;
-  }, [search, timeSegment, eventType, minPrice, maxPrice, dateRange]);
+  }, [eventType, minPrice, maxPrice, dateRange]);
 
   const handleTimeSegmentChange = useCallback((segment: TimeSegment) => {
     setTimeSegment(segment);
@@ -123,6 +126,7 @@ export function useOrganiserEventFilters(allEvents: EventData[]) {
     setFiltersOpen,
     filteredEvents,
     activeFilterCount,
+    clearAdvancedFilters,
     clearAll,
   };
 }

@@ -187,6 +187,24 @@
   }
 }
 
+.organiser-welcome-orbit {
+  animation: organiser-welcome-orbit 3.2s linear infinite;
+}
+
+.organiser-welcome-orbit-delayed {
+  animation: organiser-welcome-orbit 4.6s linear infinite reverse;
+}
+
+.organiser-welcome-orbit-dot {
+  animation: organiser-welcome-orbit 2.8s linear infinite;
+}
+
+@keyframes organiser-welcome-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .organiser-welcome-click-pulse {
   animation: organiser-welcome-click-pulse 1.2s ease-in-out infinite;
 }
@@ -227,6 +245,9 @@ html[data-welcome-tour="0"] .organiser-welcome-ssr-blackout {
   .organiser-welcome-stage,
   .organiser-welcome-handle,
   .organiser-welcome-loader-spin,
+  .organiser-welcome-orbit,
+  .organiser-welcome-orbit-delayed,
+  .organiser-welcome-orbit-dot,
   .organiser-welcome-click-pulse {
     animation: none;
   }

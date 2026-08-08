@@ -1,5 +1,6 @@
 "use client";
 
+import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
 type CollectionsHeaderProps = {
@@ -22,7 +23,8 @@ export function CollectionsHeader({
       : `${collectionCount} collection${collectionCount === 1 ? "" : "s"} ready to share`;
 
   return (
-    <header className="px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-4 max-w-6xl mx-auto">
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 max-lg:pl-14 pb-4">
+      <OrganiserBreadcrumbs />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-sans text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">

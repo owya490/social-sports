@@ -5,6 +5,7 @@ import { EventsFilterPanel } from "@/components/organiser/v2/events/EventsFilter
 import { EventsGrid } from "@/components/organiser/v2/events/EventsGrid";
 import { EventsToolbar } from "@/components/organiser/v2/events/EventsToolbar";
 import { useOrganiserEventFilters } from "@/components/organiser/v2/events/useOrganiserEventFilters";
+import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
@@ -39,6 +40,7 @@ export function OrganiserEventsDashboardView() {
     setFiltersOpen,
     filteredEvents,
     activeFilterCount,
+    clearAdvancedFilters,
     clearAll,
   } = useOrganiserEventFilters(allEvents);
 
@@ -99,41 +101,67 @@ export function OrganiserEventsDashboardView() {
         </div>
       ) : (
         <div className="space-y-5 sm:space-y-6">
-          <EventsToolbar
-            search={search}
-            onSearchChange={setSearch}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            timeSegment={timeSegment}
-            onTimeSegmentChange={handleTimeSegmentChange}
-            filtersOpen={filtersOpen}
-            onToggleFilters={() => setFiltersOpen((open) => !open)}
-            activeFilterCount={activeFilterCount}
-            resultCount={filteredEvents.length}
-            loading={loading}
-            filtersPanel={
-              <EventsFilterPanel
-                open={filtersOpen}
-                eventType={eventType}
-                onEventTypeChange={setEventType}
-                minPrice={minPrice}
-                onMinPriceChange={setMinPrice}
-                maxPrice={maxPrice}
-                onMaxPriceChange={setMaxPrice}
-                dateRange={dateRange}
-                onDateRangeChange={setDateRange}
-                onClearAll={clearAll}
-              />
-            }
-          />
+          {loading || allEvents.length > 0 ? (
+            <EventsToolbar
+              search={search}
+              onSearchChange={setSearch}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              timeSegment={timeSegment}
+              onTimeSegmentChange={handleTimeSegmentChange}
+              filtersOpen={filtersOpen}
+              onToggleFilters={() => setFiltersOpen((open) => !open)}
+              activeFilterCount={activeFilterCount}
+              resultCount={filteredEvents.length}
+              loading={loading}
+            />
+          ) : null}
           <EventsGrid
             events={filteredEvents}
             loading={loading}
             hasAnyEvents={allEvents.length > 0}
+            hasActiveSearch={search.trim().length > 0}
             onClearFilters={clearAll}
           />
         </div>
       )}
+
+      <EventHubPanel
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title="Filters"
+        footer={
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFiltersOpen(false)}
+              className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Done
+            </button>
+            {activeFilterCount > 0 ? (
+              <button
+                type="button"
+                onClick={clearAdvancedFilters}
+                className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                Clear all
+              </button>
+            ) : null}
+          </div>
+        }
+      >
+        <EventsFilterPanel
+          eventType={eventType}
+          onEventTypeChange={setEventType}
+          minPrice={minPrice}
+          onMinPriceChange={setMinPrice}
+          maxPrice={maxPrice}
+          onMaxPriceChange={setMaxPrice}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+        />
+      </EventHubPanel>
     </div>
   );
 }

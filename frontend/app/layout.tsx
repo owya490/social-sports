@@ -2,6 +2,7 @@ import AccessibilitySkipNavigation from "@/components/accessibility/SkipNavigati
 import { AppMain } from "@/components/layout/AppMain";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
 import Navbar from "@/components/navbar/Navbar";
+import { NavbarSuspenseFallback } from "@/components/navbar/NavbarSuspenseFallback";
 import UserContext from "@/components/utility/UserContext";
 import GrafanaFaro from "@/observability/GrafanaFaro";
 import { Environment, getEnvironment } from "@/utilities/environment";
@@ -102,16 +103,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <body className="font-sans antialiased" suppressHydrationWarning>
             <AccessibilitySkipNavigation />
             <div className="md:hidden">
-              <Suspense
-                fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}
-              >
+              <Suspense fallback={<NavbarSuspenseFallback />}>
                 <MobileNavbar />
               </Suspense>
             </div>
             <div className="hidden md:block">
-              <Suspense
-                fallback={<div className="fixed top-0 left-0 right-0 h-[var(--navbar-height)] z-50 bg-white" />}
-              >
+              <Suspense fallback={<NavbarSuspenseFallback />}>
                 <Navbar />
               </Suspense>
             </div>

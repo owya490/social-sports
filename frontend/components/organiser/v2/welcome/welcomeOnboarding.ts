@@ -226,5 +226,13 @@ export function requestWelcomeMenuOpen(): void {
   window.dispatchEvent(new CustomEvent(WELCOME_OPEN_MENU_EVENT));
 }
 
-export const LOADING_MS = 2400;
-export const LOADING_MS_REDUCED = 400;
+export const LOADING_MS = 3200;
+export const LOADING_MS_REDUCED = 500;
+
+/** Spoken beats on the black learning stage — orient, don’t entertain. */
+export const LOADING_BEATS = [
+  "Learning your hub…",
+  "Mapping the sidebar…",
+  "Tuning the event desk…",
+  "Almost ready…",
+] as const;

@@ -1,5 +1,6 @@
 "use client";
 
+import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import Link from "next/link";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
@@ -19,7 +20,8 @@ export function DashboardHeader({ firstName, loading }: DashboardHeaderProps) {
   const name = firstName.trim();
 
   return (
-    <header className="px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-5 max-w-6xl mx-auto">
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 max-lg:pl-14 pb-5">
+      <OrganiserBreadcrumbs />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0">
           <h1 className="font-sans text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-tight">

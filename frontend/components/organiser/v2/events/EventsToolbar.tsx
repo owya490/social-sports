@@ -11,7 +11,7 @@ import {
 } from "@/components/Filter/OrganiserFilterDialog";
 import { Listbox, Transition } from "@headlessui/react";
 import { AdjustmentsHorizontalIcon, CheckIcon, ChevronUpDownIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Fragment, type ReactNode } from "react";
+import { Fragment } from "react";
 import { TimeSegment } from "./useOrganiserEventFilters";
 
 const SORT_OPTIONS = [
@@ -47,8 +47,6 @@ type EventsToolbarProps = {
   searchAriaLabel?: string;
   loadingLabel?: string;
   sectionAriaLabel?: string;
-  /** Advanced filters strip — rendered under search controls, above the result count. */
-  filtersPanel?: ReactNode;
 };
 
 export function EventsToolbar({
@@ -68,7 +66,6 @@ export function EventsToolbar({
   searchAriaLabel = "Search events",
   loadingLabel = "Loading events…",
   sectionAriaLabel = "Search and filter events",
-  filtersPanel,
 }: EventsToolbarProps) {
   const selectedSort = SORT_OPTIONS.find((option) => option.value === sortBy) ?? SORT_OPTIONS[0];
 
@@ -191,8 +188,6 @@ export function EventsToolbar({
           ) : null}
         </div>
       </div>
-
-      {filtersPanel}
 
       <p className="text-xs text-foreground-muted font-sans">
         {loading ? loadingLabel : `${resultCount} result${resultCount === 1 ? "" : "s"}`}

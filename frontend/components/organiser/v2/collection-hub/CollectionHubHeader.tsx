@@ -1,5 +1,7 @@
 "use client";
 
+import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
+import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -27,18 +29,11 @@ export function CollectionHubHeader({
   const itemsLabel =
     itemCount === 0 ? "No items yet" : `${itemCount} item${itemCount === 1 ? "" : "s"}`;
   const meta = loading ? "" : `${itemsLabel} · ${isPrivate ? "Private" : "Public"}`;
+  useOrganiserBreadcrumbTitle(loading ? null : name);
 
   return (
-    <header className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 max-w-6xl mx-auto">
-      <div className="mb-3">
-        <Link
-          href="/organiser/v2/event/event-collection"
-          className="text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
-        >
-          ← Collections
-        </Link>
-      </div>
-
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3 max-lg:pl-14">
+      <OrganiserBreadcrumbs />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {loading ? (

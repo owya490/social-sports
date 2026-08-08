@@ -1,114 +1,48 @@
 "use client";
 
 import { useUser } from "@/components/utility/UserContext";
+import { OrganiserCommandSearch } from "@/components/organiser/OrganiserCommandSearch";
+import {
+  ORGANISER_MAIN_NAV,
+  ORGANISER_SECONDARY_NAV,
+  type OrganiserNavItem,
+} from "@/components/organiser/organiserNav";
 import {
   isWelcomeFlowPath,
   welcomeAwareHref,
   WELCOME_OPEN_MENU_EVENT,
-  WELCOME_PATH,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import Logo from "@/public/images/BlackLogo.svg";
+import { handleSignOut } from "@/services/src/auth/authService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
+import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftIcon,
-  ArrowPathIcon,
+  ArrowLeftStartOnRectangleIcon,
   ArrowRightIcon,
-  CalendarIcon,
-  CameraIcon,
+  ChevronUpDownIcon,
   Cog6ToothIcon,
   HomeIcon,
-  LinkIcon,
-  PencilSquareIcon,
+  MagnifyingGlassIcon,
   QuestionMarkCircleIcon,
-  RectangleStackIcon,
-  Squares2X2Icon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Bars3Icon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ComponentType, SVGProps, useCallback, useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Fragment, useCallback, useEffect, useState } from "react";
 
 const SIDEBAR_COLLAPSED_KEY = "organiser-sidebar-collapsed";
+
+const ALL_NAV: OrganiserNavItem[] = [...ORGANISER_MAIN_NAV, ...ORGANISER_SECONDARY_NAV];
 
 /** Custom photo only — hide the generic/default asset and empty loading state. */
 function hasCustomProfilePicture(profilePicture: string | undefined, userLoading: boolean): boolean {
   if (userLoading || !profilePicture) return false;
   return profilePicture !== DEFAULT_USER_PROFILE_PICTURE;
 }
-
-type NavItem = {
-  href: string;
-  label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
-  isActive: (pathname: string) => boolean;
-  tourId?: string;
-};
-
-const EVENT_STATIC_ROUTES = new Set(["dashboard", "recurring-events", "event-collection", "custom-links"]);
-
-const isEventDetailPage = (pathname: string) => {
-  const match = pathname.match(/^\/organiser\/v2\/event\/([^/]+)/);
-  if (!match) return false;
-  return !EVENT_STATIC_ROUTES.has(match[1]);
-};
-
-const MAIN_NAV: NavItem[] = [
-  {
-    href: "/organiser/v2/dashboard",
-    label: "Dashboard",
-    icon: Squares2X2Icon,
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/dashboard") ||
-      pathname === WELCOME_PATH ||
-      pathname === `${WELCOME_PATH}/`,
-  },
-  {
-    href: "/organiser/v2/event/dashboard",
-    label: "Events",
-    icon: CalendarIcon,
-    tourId: "nav-events",
-    isActive: (pathname) =>
-      pathname.startsWith("/organiser/v2/event/dashboard") ||
-      pathname.startsWith(`${WELCOME_PATH}/events`) ||
-      pathname.startsWith(`${WELCOME_PATH}/event/`) ||
-      isEventDetailPage(pathname),
-  },
-  {
-    href: "/organiser/v2/event/recurring-events",
-    label: "Recurring events",
-    icon: ArrowPathIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/recurring-events"),
-  },
-  {
-    href: "/organiser/v2/event/event-collection",
-    label: "Event collections",
-    icon: RectangleStackIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/event-collection"),
-  },
-  {
-    href: "/organiser/v2/event/custom-links",
-    label: "Custom event links",
-    icon: LinkIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/custom-links"),
-  },
-];
-
-const BOTTOM_NAV: NavItem[] = [
-  {
-    href: "/organiser/v2/forms/gallery",
-    label: "Forms",
-    icon: PencilSquareIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/v2/forms"),
-  },
-  {
-    href: "/organiser/v2/gallery",
-    label: "Gallery",
-    icon: CameraIcon,
-    isActive: (pathname) => pathname.startsWith("/organiser/v2/gallery"),
-  },
-];
 
 function applySidebarWidth(collapsed: boolean) {
   document.documentElement.style.setProperty(
@@ -132,7 +66,7 @@ function NavLink({
   onNavigate,
   collapsed,
 }: {
-  item: NavItem;
+  item: OrganiserNavItem;
   pathname: string;
   onNavigate?: () => void;
   collapsed?: boolean;
@@ -155,45 +89,77 @@ function NavLink({
   );
 }
 
-function SidebarContent({
-  pathname,
+function SidebarSearch({
+  collapsed,
+  onOpen,
+}: {
+  collapsed?: boolean;
+  onOpen: () => void;
+}) {
+  if (collapsed) {
+    return (
+      <button
+        type="button"
+        onClick={onOpen}
+        title="Search"
+        className={navItemClass(false, true)}
+        aria-label="Search organiser hub"
+      >
+        <MagnifyingGlassIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+      </button>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex w-full items-center gap-2 rounded-xl border border-border bg-background px-2.5 py-1.5 text-left text-xs text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      aria-label="Search organiser hub"
+    >
+      <MagnifyingGlassIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">Search…</span>
+      <kbd className="rounded-md border border-border bg-surface-muted px-1.5 py-0.5 text-xs font-medium text-foreground-muted">
+        ⌘K
+      </kbd>
+    </button>
+  );
+}
+
+function UserAccountMenu({
   onNavigate,
   collapsed = false,
-  onToggleCollapse,
-  showCollapseToggle = false,
 }: {
-  pathname: string;
   onNavigate?: () => void;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
-  showCollapseToggle?: boolean;
 }) {
-  const { user, userLoading } = useUser();
-  const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
+  const { user, userLoading, setUser } = useUser();
+  const router = useRouter();
+  const displayName =
+    [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
   const subtitle = user.isVerifiedOrganiser ? "Verified organiser" : "Organiser";
   const showProfilePhoto = hasCustomProfilePicture(user.profilePicture, userLoading);
 
-  return (
-    <div className={`flex h-full flex-col py-3 transition-[padding] duration-200 ${collapsed ? "px-1.5" : "px-2.5"}`}>
-      <div className={collapsed ? "flex justify-center pb-3" : "border-b border-border pb-4"}>
-        {!collapsed ? (
-          <div className="flex items-center gap-2.5 px-0.5">
-            <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
-            <p className="font-sans text-md font-semibold leading-tight text-foreground">ORGANISER HUB</p>
-          </div>
-        ) : (
-          <div className="shrink-0 rounded-xl p-1.5" aria-hidden>
-            <Image src={Logo} alt="" className="h-7 w-auto" priority />
-          </div>
-        )}
-      </div>
+  const handleLogOut = async () => {
+    onNavigate?.();
+    try {
+      await handleSignOut(setUser);
+      bustEventsLocalStorageCache();
+      bustUserLocalStorageCache();
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      location.reload();
+    }
+  };
 
-      <Link
-        href="/profile"
-        onClick={onNavigate}
+  return (
+    <Menu as="div" className="relative">
+      <MenuButton
         title={collapsed ? displayName : undefined}
-        className={`mt-3.5 flex items-center rounded-xl transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-          collapsed ? "justify-center p-1.5" : "gap-2.5 p-1.5 -mx-1.5"
+        className={`flex w-full items-center rounded-xl transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus data-[open]:bg-surface-muted ${
+          collapsed ? "justify-center p-1.5" : "gap-2.5 p-1.5 -mx-0.5"
         }`}
       >
         <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-muted">
@@ -202,23 +168,110 @@ function SidebarContent({
           ) : null}
         </div>
         {!collapsed && (
-          <div className="min-w-0">
+          <>
+            <div className="min-w-0 flex-1 text-left">
+              <p className="truncate font-sans text-xs font-semibold text-foreground">{displayName}</p>
+              <p className="truncate text-xs font-normal text-foreground-muted">{subtitle}</p>
+            </div>
+            <ChevronUpDownIcon className="h-4 w-4 shrink-0 text-foreground-muted" aria-hidden />
+          </>
+        )}
+      </MenuButton>
+
+      <Transition
+        as={Fragment}
+        enter="transition ease-out duration-100"
+        enterFrom="transform opacity-0 scale-95"
+        enterTo="transform opacity-100 scale-100"
+        leave="transition ease-in duration-75"
+        leaveFrom="transform opacity-100 scale-100"
+        leaveTo="transform opacity-0 scale-95"
+      >
+        <MenuItems className="absolute bottom-full left-0 z-[60] mb-1.5 w-full min-w-[12rem] origin-bottom rounded-xl border border-border bg-background p-1 shadow-lg focus:outline-none">
+          <div className="px-2.5 py-2">
             <p className="truncate font-sans text-xs font-semibold text-foreground">{displayName}</p>
-            <p className="truncate text-xs font-normal text-foreground-muted">{subtitle}</p>
+            <p className="truncate text-xs text-foreground-muted">{subtitle}</p>
+          </div>
+          <div className="my-1 border-t border-border" role="separator" aria-hidden />
+          <MenuItem>
+            {({ focus }) => (
+              <Link
+                href="/"
+                onClick={onNavigate}
+                className={`${
+                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
+              >
+                <HomeIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+                Back to Sport Hub
+              </Link>
+            )}
+          </MenuItem>
+          <MenuItem>
+            {({ focus }) => (
+              <button
+                type="button"
+                onClick={handleLogOut}
+                className={`${
+                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
+              >
+                <ArrowLeftStartOnRectangleIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
+                Log out
+              </button>
+            )}
+          </MenuItem>
+        </MenuItems>
+      </Transition>
+    </Menu>
+  );
+}
+
+function SidebarContent({
+  pathname,
+  onNavigate,
+  collapsed = false,
+  onToggleCollapse,
+  showCollapseToggle = false,
+  onOpenSearch,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  showCollapseToggle?: boolean;
+  onOpenSearch: () => void;
+}) {
+  return (
+    <div className={`flex h-full flex-col py-3 transition-[padding] duration-200 ${collapsed ? "px-1.5" : "px-2.5"}`}>
+      <div className={collapsed ? "flex justify-center pb-3" : "border-b border-border pb-4"}>
+        {!collapsed ? (
+          <div className="flex items-center gap-2.5 px-0.5">
+            <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
+            <p className="font-sans text-md font-semibold leading-tight text-foreground">
+              ORGANISER HUB
+              <sup className="ml-0.5 align-super text-[0.55em] font-semibold tracking-wide text-foreground-muted">
+                V2
+              </sup>
+            </p>
+          </div>
+        ) : (
+          <div className="shrink-0 rounded-xl p-1.5" aria-hidden>
+            <Image src={Logo} alt="" className="h-7 w-auto" priority />
           </div>
         )}
-      </Link>
+      </div>
+
+      <div className="mt-3">
+        <SidebarSearch collapsed={collapsed} onOpen={onOpenSearch} />
+      </div>
 
       <nav
-        className="mt-4 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
+        className="mt-3 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto"
         aria-label="Organiser navigation"
+        data-tour="organiser-nav"
       >
-        <div data-tour="organiser-nav" className="flex flex-col gap-0.5">
-          {MAIN_NAV.map((item) => (
-            <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />
-          ))}
-        </div>
-        {BOTTOM_NAV.map((item) => (
+        {ALL_NAV.map((item) => (
           <NavLink key={item.href} item={item} pathname={pathname} onNavigate={onNavigate} collapsed={collapsed} />
         ))}
       </nav>
@@ -234,11 +287,6 @@ function SidebarContent({
           pathname={pathname}
           onNavigate={onNavigate}
           collapsed={collapsed}
-        />
-        <div
-          className={`my-1 border-t border-border ${collapsed ? "mx-1.5" : "mx-0.5"}`}
-          role="separator"
-          aria-hidden
         />
         <div className={collapsed ? "flex flex-col items-center gap-0.5" : "flex items-center gap-0.5"}>
           <div className={collapsed ? undefined : "min-w-0 flex-1"}>
@@ -272,64 +320,23 @@ function SidebarContent({
             </button>
           )}
         </div>
-        <Link
-          href="/"
-          onClick={onNavigate}
-          title={collapsed ? "Back to SPORTSHUB" : undefined}
-          className={`mt-1 rounded-xl text-xs font-normal text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-            collapsed ? "flex items-center justify-center px-2 py-2" : "px-2.5 py-1.5"
-          }`}
-          aria-label={collapsed ? "Back to SPORTSHUB" : undefined}
-        >
-          {collapsed ? <HomeIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden /> : "Back to SPORTSHUB"}
-        </Link>
+        <div className={`mt-1 border-t border-border pt-2 ${collapsed ? "mx-1.5" : "mx-0.5"}`}>
+          <UserAccountMenu onNavigate={onNavigate} collapsed={collapsed} />
+        </div>
       </div>
     </div>
   );
 }
 
-function MobileTopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
-  const { user, userLoading } = useUser();
-  const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
-  const showProfilePhoto = hasCustomProfilePicture(user.profilePicture, userLoading);
+type OrganiserSidebarProps = {
+  mobileOpen: boolean;
+  onMobileOpenChange: (open: boolean) => void;
+};
 
-  return (
-    <header
-      className="fixed inset-x-0 top-0 z-40 flex h-[var(--organiser-mobile-header-height)] items-center gap-2 border-b border-border bg-background px-3 lg:hidden"
-      aria-label="Organiser hub"
-    >
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <Image src={Logo} alt="" className="h-7 w-auto shrink-0" priority />
-        <p className="truncate font-sans text-sm font-semibold leading-none text-foreground">ORGANISER HUB</p>
-      </div>
-      <div className="flex shrink-0 items-center gap-0.5">
-        <button
-          type="button"
-          onClick={onOpenMenu}
-          data-tour="organiser-nav"
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-foreground transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          aria-label="Open organiser menu"
-        >
-          <Bars3Icon className="h-5 w-5" aria-hidden />
-        </button>
-        <Link
-          href="/profile"
-          className="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-muted transition-opacity hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          aria-label={`${displayName} profile`}
-        >
-          {showProfilePhoto ? (
-            <Image src={user.profilePicture} alt="" fill className="object-cover" sizes="32px" />
-          ) : null}
-        </Link>
-      </div>
-    </header>
-  );
-}
-
-export default function OrganiserSidebar() {
+export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: OrganiserSidebarProps) {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -348,20 +355,20 @@ export default function OrganiserSidebar() {
   }, []);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    onMobileOpenChange(false);
+  }, [pathname, onMobileOpenChange]);
 
   useEffect(() => {
     if (!isWelcomeFlowPath(pathname)) return;
-    const open = () => setMobileOpen(true);
+    const open = () => onMobileOpenChange(true);
     window.addEventListener(WELCOME_OPEN_MENU_EVENT, open);
     return () => window.removeEventListener(WELCOME_OPEN_MENU_EVENT, open);
-  }, [pathname]);
+  }, [pathname, onMobileOpenChange]);
 
   useEffect(() => {
     if (!mobileOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMobileOpen(false);
+      if (event.key === "Escape") onMobileOpenChange(false);
     };
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
@@ -369,24 +376,35 @@ export default function OrganiserSidebar() {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
     };
-  }, [mobileOpen]);
+  }, [mobileOpen, onMobileOpenChange]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || target?.isContentEditable) {
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   return (
     <>
-      {/* Brand-led mobile header — approved comp A */}
-      <MobileTopBar onOpenMenu={() => setMobileOpen(true)} />
-
-      {/* Mobile overlay */}
       {mobileOpen && (
         <button
           type="button"
           className="fixed inset-0 z-40 bg-foreground/20 lg:hidden"
           aria-label="Close menu"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => onMobileOpenChange(false)}
         />
       )}
 
-      {/* Mobile drawer — always expanded */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -398,15 +416,18 @@ export default function OrganiserSidebar() {
         <button
           type="button"
           className="absolute top-3 right-2.5 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-foreground-secondary transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          onClick={() => setMobileOpen(false)}
+          onClick={() => onMobileOpenChange(false)}
           aria-label="Close menu"
         >
           <XMarkIcon className="h-5 w-5" aria-hidden />
         </button>
-        <SidebarContent pathname={pathname} onNavigate={() => setMobileOpen(false)} />
+        <SidebarContent
+          pathname={pathname}
+          onNavigate={() => onMobileOpenChange(false)}
+          onOpenSearch={() => setSearchOpen(true)}
+        />
       </aside>
 
-      {/* Desktop sidebar */}
       <aside
         className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[var(--organiser-sidebar-width)] lg:flex-col lg:border-r lg:border-border lg:bg-background lg:transition-[width] lg:duration-200"
         aria-label="Organiser sidebar"
@@ -418,8 +439,11 @@ export default function OrganiserSidebar() {
           collapsed={collapsed}
           onToggleCollapse={toggleCollapsed}
           showCollapseToggle
+          onOpenSearch={() => setSearchOpen(true)}
         />
       </aside>
+
+      <OrganiserCommandSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }

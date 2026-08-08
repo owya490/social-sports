@@ -85,24 +85,27 @@ export default function OrganiserRecurringEventsV2Page() {
           </div>
         ) : (
           <div className="space-y-5 sm:space-y-6">
-            <EventsToolbar
-              search={search}
-              onSearchChange={setSearch}
-              sortBy={sortBy}
-              onSortChange={setSortBy}
-              timeSegment={timeSegment}
-              onTimeSegmentChange={handleTimeSegmentChange}
-              showFilters={false}
-              resultCount={filteredTemplates.length}
-              loading={loading}
-              searchAriaLabel="Search recurring templates"
-              loadingLabel="Loading templates…"
-              sectionAriaLabel="Search and sort recurring templates"
-            />
+            {loading || templates.length > 0 ? (
+              <EventsToolbar
+                search={search}
+                onSearchChange={setSearch}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+                timeSegment={timeSegment}
+                onTimeSegmentChange={handleTimeSegmentChange}
+                showFilters={false}
+                resultCount={filteredTemplates.length}
+                loading={loading}
+                searchAriaLabel="Search recurring templates"
+                loadingLabel="Loading templates…"
+                sectionAriaLabel="Search and sort recurring templates"
+              />
+            ) : null}
             <RecurringTemplatesList
               templates={filteredTemplates}
               loading={loading}
               hasAnyTemplates={templates.length > 0}
+              hasActiveSearch={search.trim().length > 0}
               onClearControls={clearAll}
             />
           </div>

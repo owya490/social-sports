@@ -1,6 +1,6 @@
 "use client";
 
-import LogoInvert from "@/public/images/BlackLogo-Invert.svg";
+import { LOADING_BEATS } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
@@ -12,6 +12,10 @@ export const WELCOME_DIM = "rgba(10, 10, 10, 0.62)";
 const DIM_SHADOW = `0 0 0 9999px ${WELCOME_DIM}`;
 const SPOT_MOVE_MS = 420;
 const TIP_DELAY_AFTER_MOVE_MS = 60;
+/** Sports yellow — matches DESIGN.md accent. */
+const ACCENT = "#F2B705";
+const ACCENT_SOFT = "rgba(242, 183, 5, 0.45)";
+const ACCENT_STRONG = "rgba(242, 183, 5, 0.85)";
 
 export type SpotlightRect = {
   top: number;
@@ -288,13 +292,18 @@ type WelcomeLoadingStageProps = {
   reduceMotion: boolean | null;
 };
 
-/** Simple black stage: SPORTSHUB logo + white loading bar. */
+/**
+ * Black learning stage: Wrapped-style spinning rings + beat copy + progress.
+ * First-use orientation — not a fake spinner.
+ */
 export function WelcomeLoadingStage({ durationMs, reduceMotion }: WelcomeLoadingStageProps) {
+  const [beat, setBeat] = useState(0);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (reduceMotion) {
       setProgress(1);
+      setBeat(LOADING_BEATS.length - 1);
       return;
     }
     const started = performance.now();
@@ -302,38 +311,135 @@ export function WelcomeLoadingStage({ durationMs, reduceMotion }: WelcomeLoading
     const tick = (now: number) => {
       const t = Math.min(1, (now - started) / durationMs);
       setProgress(t);
+      setBeat(Math.min(LOADING_BEATS.length - 1, Math.floor(t * LOADING_BEATS.length)));
       if (t < 1) frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
   }, [durationMs, reduceMotion]);
 
+  const spin = (duration: number, reverse = false) =>
+    reduceMotion
+      ? undefined
+      : {
+          animate: { rotate: reverse ? -360 : 360 },
+          transition: { duration, repeat: Infinity, ease: "linear" as const },
+        };
+
   return (
     <motion.div
       key="loading"
-      className="fixed inset-0 z-[81] flex flex-col items-center justify-center bg-foreground"
+      className="fixed inset-0 z-[81] flex flex-col items-center justify-center bg-foreground px-6"
       initial={false}
-      exit={{ opacity: 0 }}
-      transition={{ duration: reduceMotion ? 0.15 : 0.4, ease: EASE }}
+      exit={
+        reduceMotion
+          ? { opacity: 0 }
+          : { opacity: 0, scale: 1.03, filter: "blur(6px)" }
+      }
+      transition={{ duration: reduceMotion ? 0.15 : 0.42, ease: EASE }}
       aria-busy="true"
       aria-label="Loading Organiser Hub v2"
     >
-      <Image
-        src={LogoInvert}
-        alt="SPORTSHUB"
-        className="h-10 w-auto sm:h-12"
-        priority
-      />
+      <motion.div
+        className="relative mx-auto h-32 w-32 sm:h-36 sm:w-36"
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.55, ease: EASE }}
+        aria-hidden
+      >
+        {/* Outer spinning ring */}
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-background/20"
+          {...spin(3)}
+        />
+
+        {/* Middle spinning ring — yellow accent */}
+        <motion.div
+          className="absolute inset-2 rounded-full border-2 border-transparent"
+          style={{
+            borderTopColor: ACCENT_STRONG,
+            borderRightColor: ACCENT_SOFT,
+          }}
+          {...spin(2, true)}
+        />
+
+        {/* Inner spinning ring */}
+        <motion.div
+          className="absolute inset-4 rounded-full border-2 border-transparent"
+          style={{
+            borderTopColor: "rgba(255, 255, 255, 0.8)",
+            borderLeftColor: "rgba(255, 255, 255, 0.3)",
+          }}
+          {...spin(1.5)}
+        />
+
+        {/* Orbiting dots */}
+        <motion.div className="absolute inset-0" {...spin(4)}>
+          <div
+            className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1 rounded-full shadow-lg"
+            style={{ backgroundColor: ACCENT, boxShadow: `0 0 14px ${ACCENT_SOFT}` }}
+          />
+        </motion.div>
+
+        <motion.div className="absolute inset-0" {...spin(3, true)}>
+          <div className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 translate-y-1 rounded-full bg-background shadow-[0_0_10px_rgba(255,255,255,0.35)]" />
+        </motion.div>
+
+        {/* Center SPORTSHUB logo with pulse */}
+        <motion.div
+          className="absolute inset-6 flex items-center justify-center"
+          animate={reduceMotion ? undefined : { scale: [1, 1.1, 1] }}
+          transition={
+            reduceMotion
+              ? undefined
+              : { duration: 2, repeat: Infinity, ease: "easeInOut" }
+          }
+        >
+          <Image
+            src="/icons/Icon_white.svg"
+            alt=""
+            width={56}
+            height={56}
+            className="h-12 w-12 drop-shadow-[0_0_18px_rgba(255,255,255,0.35)] sm:h-14 sm:w-14"
+            priority
+          />
+        </motion.div>
+      </motion.div>
+
+      <motion.p
+        className="mt-8 font-sans text-base font-bold tracking-tight text-background sm:text-lg"
+        initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: reduceMotion ? 0 : 0.12, ease: EASE }}
+      >
+        Organiser Hub v2
+      </motion.p>
+
+      <div className="mt-2.5 flex h-5 items-center justify-center overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={LOADING_BEATS[beat]}
+            className="font-sans text-xs font-medium tracking-wide text-background/70 sm:text-sm"
+            initial={reduceMotion ? false : { y: 12, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={reduceMotion ? undefined : { y: -10, opacity: 0 }}
+            transition={{ duration: 0.32, ease: EASE }}
+          >
+            {LOADING_BEATS[beat]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
+
       <div
-        className="mt-10 h-0.5 w-44 overflow-hidden rounded-full bg-background/20 sm:w-52"
+        className="mt-9 h-0.5 w-44 overflow-hidden rounded-full bg-background/15 sm:w-52"
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(progress * 100)}
       >
         <div
-          className="h-full origin-left rounded-full bg-background transition-none"
-          style={{ transform: `scaleX(${progress})` }}
+          className="h-full origin-left rounded-full transition-none"
+          style={{ transform: `scaleX(${progress})`, backgroundColor: ACCENT }}
         />
       </div>
     </motion.div>

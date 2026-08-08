@@ -13,7 +13,6 @@ import {
   WelcomeSpotlight,
   type SpotlightRect,
 } from "@/components/organiser/v2/welcome/WelcomeTourChrome";
-import { GeminiStarIcon } from "@/components/organiser/v2/welcome/GeminiStarIcon";
 import {
   CLICK_EVENT_STEP,
   CLICK_EVENTS_NAV_STEP,
@@ -36,6 +35,7 @@ import {
   writeTourSession,
   type TourStep,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
@@ -376,28 +376,58 @@ export function OrganiserWelcomeTour() {
             >
               <motion.div
                 className="pointer-events-auto relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-border bg-background shadow-[0_18px_50px_rgba(10,10,10,0.28)]"
-                initial={reduceMotion ? false : { y: 28, opacity: 0, scale: 0.96 }}
-                animate={{ y: 0, opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, y: 12 }}
-                transition={{ duration: 0.45, ease: EASE }}
+                initial={
+                  reduceMotion
+                    ? false
+                    : { y: 36, opacity: 0, scale: 0.94, filter: "blur(8px)" }
+                }
+                animate={{ y: 0, opacity: 1, scale: 1, filter: "blur(0px)" }}
+                exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.98 }}
+                transition={{ duration: 0.52, ease: EASE }}
               >
-                <div className="h-1 w-full bg-foreground" aria-hidden />
-                <div className="px-6 pb-6 pt-7 sm:px-7">
-                  <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-foreground text-background">
-                    <GeminiStarIcon solid className="h-5 w-5" />
-                  </div>
-                  <h2
-                    id="organiser-welcome-title"
-                    className="font-sans text-2xl font-bold tracking-tight text-foreground"
+                <div className="px-6 pb-7 pt-7 sm:px-8 sm:pb-8 sm:pt-8">
+                  <motion.div
+                    className="mb-5"
+                    initial={reduceMotion ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: reduceMotion ? 0 : 0.18, ease: EASE }}
                   >
-                    Welcome to Organiser Hub v2
-                  </h2>
-                  <p className="mt-3 font-sans text-sm leading-relaxed text-foreground-secondary">
-                    Fresh layout. Faster paths. Built for running sessions between games —
-                    clearer on your phone, sharper at your desk.
-                  </p>
-                  <div className="mt-7 flex flex-col gap-2.5 sm:flex-row-reverse sm:items-center">
-                    <WelcomePrimaryButton onClick={startHubTour} className="flex-1 sm:flex-none sm:px-5">
+                    <Image
+                      src="/icons/Icon_black.svg"
+                      alt=""
+                      width={40}
+                      height={40}
+                      className="h-10 w-10"
+                      priority
+                    />
+                  </motion.div>
+
+                  <motion.h2
+                    id="organiser-welcome-title"
+                    className="max-w-[16ch] font-sans text-3xl font-bold leading-[1.15] tracking-tight text-foreground text-balance"
+                    initial={reduceMotion ? false : { y: 14, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.42, delay: reduceMotion ? 0 : 0.26, ease: EASE }}
+                  >
+                    Here’s the new hub
+                  </motion.h2>
+
+                  <motion.p
+                    className="mt-3.5 max-w-[36ch] font-sans text-sm leading-relaxed text-foreground-secondary"
+                    initial={reduceMotion ? false : { y: 12, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.42, delay: reduceMotion ? 0 : 0.34, ease: EASE }}
+                  >
+                    Same work — clearer layout. Take a quick look around, or skip and get to it.
+                  </motion.p>
+
+                  <motion.div
+                    className="mt-8 flex flex-col gap-2.5 sm:flex-row-reverse sm:items-center"
+                    initial={reduceMotion ? false : { y: 14, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ duration: 0.42, delay: reduceMotion ? 0 : 0.42, ease: EASE }}
+                  >
+                    <WelcomePrimaryButton onClick={startHubTour} className="flex-1 sm:flex-none sm:px-6">
                       Take the tour
                     </WelcomePrimaryButton>
                     <button
@@ -407,7 +437,7 @@ export function OrganiserWelcomeTour() {
                     >
                       Skip for now
                     </button>
-                  </div>
+                  </motion.div>
                 </div>
               </motion.div>
             </div>

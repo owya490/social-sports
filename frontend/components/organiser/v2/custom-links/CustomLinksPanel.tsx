@@ -11,6 +11,10 @@ import {
 } from "@/services/src/events/customEventLinks/customEventLinksService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import {
+  EntityListEmptyPrimaryAction,
+  EntityListEmptyState,
+} from "@/components/organiser/v2/shared/EntityListEmptyState";
+import {
   CheckIcon,
   ChevronRightIcon,
   DocumentDuplicateIcon,
@@ -297,20 +301,14 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
       ) : null}
 
       {linkList.length === 0 ? (
-        <div className="rounded-xl border border-border bg-background px-6 py-12 text-center">
-          <LinkIcon className="mx-auto h-10 w-10 text-foreground-muted" aria-hidden />
-          <p className="mt-4 text-sm font-semibold text-foreground font-sans">No custom links yet</p>
-          <p className="mt-1 text-xs text-foreground-muted font-sans max-w-sm mx-auto">
-            Create a short URL that opens an upcoming event or active series.
-          </p>
-          <button
-            type="button"
-            onClick={handleAddLink}
-            className="mt-4 inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Add link
-          </button>
-        </div>
+        <EntityListEmptyState
+          variant="empty"
+          icon={LinkIcon}
+          title="No custom links yet"
+          description="Create a short URL that opens an upcoming event or active series."
+        >
+          <EntityListEmptyPrimaryAction onClick={handleAddLink}>Add link</EntityListEmptyPrimaryAction>
+        </EntityListEmptyState>
       ) : (
         <ul className="rounded-xl border border-border bg-background overflow-hidden divide-y divide-border">
           {linkList.map((link) => {

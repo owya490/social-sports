@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  EntityListEmptySecondaryAction,
+  EntityListEmptyState,
+} from "@/components/organiser/v2/shared/EntityListEmptyState";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -9,6 +13,8 @@ type RecurringTemplatesListProps = {
   templates: RecurrenceTemplate[];
   loading: boolean;
   hasAnyTemplates: boolean;
+  /** True when the search field has a non-empty query. */
+  hasActiveSearch: boolean;
   onClearControls: () => void;
 };
 
@@ -16,6 +22,7 @@ export function RecurringTemplatesList({
   templates,
   loading,
   hasAnyTemplates,
+  hasActiveSearch,
   onClearControls,
 }: RecurringTemplatesListProps) {
   return (
@@ -29,37 +36,35 @@ export function RecurringTemplatesList({
           </div>
         </div>
       ) : templates.length === 0 ? (
-        <div className="rounded-xl border border-border bg-background px-6 py-12 text-center">
-          <ArrowPathIcon className="mx-auto h-10 w-10 text-foreground-muted" aria-hidden />
-          {hasAnyTemplates ? (
-            <>
-              <p className="mt-4 text-sm font-semibold text-foreground font-sans">No templates match</p>
-              <p className="mt-1 text-xs text-foreground-muted font-sans">
-                Try a different search or switch All / Upcoming / Past.
-              </p>
-              <button
-                type="button"
-                onClick={onClearControls}
-                className="mt-4 inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              >
-                Clear search
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="mt-4 text-sm font-semibold text-foreground font-sans">No recurring templates yet</p>
-              <p className="mt-1 text-xs text-foreground-muted font-sans max-w-sm mx-auto">
-                Create or edit an event and turn on recurrence to start a repeating schedule.
-              </p>
-              <Link
-                href="/event/create"
-                className="mt-4 inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              >
-                Create event
-              </Link>
-            </>
-          )}
-        </div>
+        hasAnyTemplates ? (
+          <EntityListEmptyState
+            variant="search"
+            title={hasActiveSearch ? "No templates match your search" : "No templates in this view"}
+            description={
+              hasActiveSearch
+                ? "Try a different name, location, or sport — or clear search to see everything."
+                : "Switch All / Upcoming / Past, or clear search to see everything."
+            }
+          >
+            <EntityListEmptySecondaryAction onClick={onClearControls}>
+              {hasActiveSearch ? "Clear search" : "Clear"}
+            </EntityListEmptySecondaryAction>
+          </EntityListEmptyState>
+        ) : (
+          <EntityListEmptyState
+            variant="empty"
+            icon={ArrowPathIcon}
+            title="No recurring templates yet"
+            description="Create or edit an event and turn on recurrence to start a repeating schedule."
+          >
+            <Link
+              href="/event/create"
+              className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Create event
+            </Link>
+          </EntityListEmptyState>
+        )
       ) : (
         <div className="rounded-xl border border-border bg-background overflow-hidden">
           <div className="divide-y divide-border">

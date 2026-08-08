@@ -26,7 +26,7 @@ Welcome chrome is black-and-white only (no yellow). Longer black learning stage 
 B/W learning stage + modal + interactive spotlight (click-through holes). Nested welcome routes keep the rest of the hub clean.
 
 ## Memorable moment
-Black learning animation → white welcome card → click Events → open a real event hub.
+Black learning animation → quiet white welcome card (SPORTSHUB mark, “Here’s the new hub”) → click Events → open a real event hub.
 
 ## Unresolved
 Replay entry from Settings/Help.

@@ -1,9 +1,10 @@
 "use client";
 
+import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
+import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import { Frequency } from "@/interfaces/RecurringEventTypes";
 import { PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
-import Link from "next/link";
 import Skeleton from "react-loading-skeleton";
 
 /**
@@ -57,18 +58,11 @@ export function RecurringHubHeader({
   const meta = loading
     ? ""
     : [frequencyLabel(frequency), nextOccurrenceLabel(startDate), location].filter(Boolean).join(" · ");
+  useOrganiserBreadcrumbTitle(loading ? null : name);
 
   return (
-    <header className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-3 max-w-6xl mx-auto">
-      <div className="mb-3">
-        <Link
-          href="/organiser/v2/event/recurring-events"
-          className="text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
-        >
-          ← Recurring
-        </Link>
-      </div>
-
+    <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3 max-lg:pl-14">
+      <OrganiserBreadcrumbs />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {loading ? (
