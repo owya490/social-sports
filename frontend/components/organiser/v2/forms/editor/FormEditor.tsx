@@ -443,8 +443,8 @@ export function FormEditor({ formId }: FormEditorProps) {
         }}
         imageType={ImageType.FORM}
         imageUrls={[]}
-        onLoadImages={async () => getUsersFormImagesUrls(user.userId)}
-        onUploadImage={async (file: File) => uploadFormImage(user.userId, file)}
+        onLoadImages={() => getUsersFormImagesUrls(user.userId)}
+        onUploadImage={(file: File) => uploadFormImage(user.userId, file)}
         title="Add Image Section"
         buttonText="Add Image Section"
       />
