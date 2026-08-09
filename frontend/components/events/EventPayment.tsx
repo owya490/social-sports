@@ -1,14 +1,15 @@
 "use client";
+import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
+import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
-import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
+import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   getBuyerMaxTicketsPerTransaction,
-  getBuyerTicketCountOptionsWithStoredSessions,
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import {
   CalendarDaysIcon,
@@ -22,9 +23,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
-import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
-import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
-import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import { useEventTicketTypeCheckout } from "./useEventTicketTypeCheckout";
 
 interface EventPaymentProps {
   startDate: Timestamp;
@@ -44,24 +43,44 @@ interface EventPaymentProps {
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
   eventTicketTypeId: EventTicketTypeId;
+  eventTicketTypes?: EventTicketTypesMap;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
   const { startDate, endDate, registrationEndDate, paused } = props;
-  const isFree = isFreeEvent(props.price);
 
+  const {
+    showTypeSelector,
+    activeTypes,
+    selectedTypeId,
+    setSelectedTypeId,
+    effectiveVacancy,
+    effectivePrice,
+    effectiveEventTicketTypeId,
+    allCounts,
+    attendeeCount,
+    setAttendeeCount,
+  } = useEventTicketTypeCheckout({
+    eventId: props.eventId,
+    eventTicketTypes: props.eventTicketTypes,
+    vacancy: props.vacancy,
+    price: props.price,
+    maxTicketsPerTransaction: props.maxTicketsPerTransaction,
+    fallbackEventTicketTypeId: props.eventTicketTypeId,
+  });
+
+  const isFree = isFreeEvent(effectivePrice);
   const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);
 
-  const allCounts = getBuyerTicketCountOptionsWithStoredSessions(
-    props.vacancy,
-    props.maxTicketsPerTransaction,
-    (ticketCount) => getStoredFulfilmentSessionId(props.eventId, ticketCount) !== null
-  );
-
-  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
+    }
+  };
+
+  const handleTicketTypeChange = (value?: string) => {
+    if (value) {
+      setSelectedTypeId(value as EventTicketTypeId);
     }
   };
 
@@ -75,11 +94,12 @@ export default function EventPayment(props: EventPaymentProps) {
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
   const bookingMaintenanceActive = isBookingMaintenanceActive();
+  const typeSoldOut = effectiveVacancy === 0 && allCounts.length === 0;
+  const eventFullySoldOut = props.vacancy === 0 && typeSoldOut;
 
   return (
     <div className="md:border border-gray-200 rounded-2xl shadow-sm bg-white overflow-hidden">
       <div className="p-6">
-        {/* Date and Time Section */}
         <div className="mb-6">
           {timestampToDateString(startDate) === timestampToDateString(endDate) ? (
             <SameDayEventDateTime startDate={startDate} endDate={endDate} />
@@ -88,7 +108,6 @@ export default function EventPayment(props: EventPaymentProps) {
           )}
         </div>
 
-        {/* Location Section */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-core-text mb-2">Location</h3>
           <a
@@ -102,18 +121,19 @@ export default function EventPayment(props: EventPaymentProps) {
           </a>
         </div>
 
-        {/* Price Section */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-core-text mb-2">Price</h3>
           <div className="flex items-center gap-2 text-gray-700">
             <CurrencyDollarIcon className="w-4 h-4 text-gray-500" />
-            <p className="text-sm font-medium">{getEventPriceDisplay(props.price, true)}</p>
+            <p className="text-sm font-medium">{getEventPriceDisplay(effectivePrice, true)}</p>
           </div>
+          {showTypeSelector && (
+            <p className="text-xs text-gray-500 mt-1">{effectiveVacancy} spots remaining for this type</p>
+          )}
         </div>
 
         <div className="border-t border-gray-200 my-6"></div>
 
-        {/* Booking Section */}
         <div className="w-full">
           {bookingMaintenanceActive ? (
             <div className="text-center py-4">
@@ -132,35 +152,56 @@ export default function EventPayment(props: EventPaymentProps) {
             </div>
           ) : props.isPaymentsActive ? (
             <div className="w-full">
-              {props.vacancy === 0 && allCounts.length === 0 ? (
+              {eventFullySoldOut ? (
                 props.waitlistEnabled && WAITLIST_ENABLED ? (
-                <>
-                  <div className="mb-4 !text-black">
-                    <Select
-                      className="text-black"
-                      label={isFree ? "Number of Bookings" : "Number of Attendees"}
-                      size="lg"
-                      value={`${waitlistAttendeeCount}`}
-                      onChange={handleWaitlistAttendeeCount}
-                    >
-                      {getTicketCountOptions(effectiveMax).map((count) => (
-                        <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Attendee${count > 1 ? "s" : ""}`}
-                        </Option>
-                      ))}
-                    </Select>
-                  </div>
-                  <JoinWaitlistButton
-                    eventId={props.eventId}
-                    ticketCount={waitlistAttendeeCount}
-                    eventTicketTypeId={props.eventTicketTypeId}
-                    setLoading={props.setLoading}
-                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
-                  />
-                  <p className="text-xs text-gray-600 mt-3 text-center">
-                    Join this event&apos;s waitlist to be notified if spots become available.
-                  </p>
-                </>
+                  <>
+                    {showTypeSelector && (
+                      <div className="mb-4 !text-black">
+                        <Select
+                          className="text-black"
+                          label="Ticket type"
+                          size="lg"
+                          value={selectedTypeId ?? ""}
+                          onChange={handleTicketTypeChange}
+                        >
+                          {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                            <Option key={eventTicketTypeId} value={eventTicketTypeId}>
+                              {eventTicketType.name}
+                              {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
+                              {!isFreeEvent(eventTicketType.price)
+                                ? ` — ${getEventPriceDisplay(eventTicketType.price, true)}`
+                                : ""}
+                            </Option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+                    <div className="mb-4 !text-black">
+                      <Select
+                        className="text-black"
+                        label={isFree ? "Number of Bookings" : "Number of Attendees"}
+                        size="lg"
+                        value={`${waitlistAttendeeCount}`}
+                        onChange={handleWaitlistAttendeeCount}
+                      >
+                        {getTicketCountOptions(effectiveMax).map((count) => (
+                          <Option key={`attendee-option-${count}`} value={`${count}`}>
+                            {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Attendee${count > 1 ? "s" : ""}`}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                    <JoinWaitlistButton
+                      eventId={props.eventId}
+                      ticketCount={waitlistAttendeeCount}
+                      eventTicketTypeId={effectiveEventTicketTypeId}
+                      setLoading={props.setLoading}
+                      className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
+                    />
+                    <p className="text-xs text-gray-600 mt-3 text-center">
+                      Join this event&apos;s waitlist to be notified if spots become available.
+                    </p>
+                  </>
                 ) : (
                   <div className="text-center py-4">
                     <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
@@ -169,38 +210,68 @@ export default function EventPayment(props: EventPaymentProps) {
                 )
               ) : (
                 <>
-                  <div className="mb-4 !text-black">
-                    <Select
-                      className="text-black"
-                      label={isFree ? "Number of bookings" : "Number of tickets"}
-                      size="lg"
-                      value={`${attendeeCount}`}
-                      onChange={handleAttendeeCount}
-                    >
-                      {allCounts.map((count) => (
-                        <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Ticket${count > 1 ? "s" : ""}`}
-                        </Option>
-                      ))}
-                    </Select>
-                  </div>
-                  <BookingButton
-                    eventId={props.eventId}
-                    ticketCount={attendeeCount}
-                    eventTicketTypeId={props.eventTicketTypeId}
-                    setLoading={props.setLoading}
-                    bookingApprovalEnabled={props.bookingApprovalEnabled}
-                    className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
-                  />
-                  {props.bookingApprovalEnabled && (
-                    <p className="text-xs text-gray-600 mt-2 text-center">
-                      Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
-                    </p>
+                  {showTypeSelector && (
+                    <div className="mb-4 !text-black">
+                      <Select
+                        className="text-black"
+                        label="Ticket type"
+                        size="lg"
+                        value={selectedTypeId ?? ""}
+                        onChange={handleTicketTypeChange}
+                      >
+                        {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                          <Option key={eventTicketTypeId} value={eventTicketTypeId}>
+                            {eventTicketType.name}
+                            {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
+                            {!isFreeEvent(eventTicketType.price)
+                              ? ` — ${getEventPriceDisplay(eventTicketType.price, true)}`
+                              : ` — ${eventTicketType.vacancy} left`}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
                   )}
-                  <p className="text-xs text-gray-600 mt-3 text-center">
-                    Registration closes {timestampToTimeOfDay(registrationEndDate)},{" "}
-                    {timestampToDateString(registrationEndDate)}
-                  </p>
+                  {typeSoldOut ? (
+                    <div className="text-center py-4">
+                      <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
+                      <p className="text-sm text-gray-600">This ticket type is sold out. Try another type.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-4 !text-black">
+                        <Select
+                          className="text-black"
+                          label={isFree ? "Number of bookings" : "Number of tickets"}
+                          size="lg"
+                          value={`${attendeeCount}`}
+                          onChange={handleAttendeeCount}
+                        >
+                          {allCounts.map((count) => (
+                            <Option key={`attendee-option-${count}`} value={`${count}`}>
+                              {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Ticket${count > 1 ? "s" : ""}`}
+                            </Option>
+                          ))}
+                        </Select>
+                      </div>
+                      <BookingButton
+                        eventId={props.eventId}
+                        ticketCount={attendeeCount}
+                        eventTicketTypeId={effectiveEventTicketTypeId}
+                        setLoading={props.setLoading}
+                        bookingApprovalEnabled={props.bookingApprovalEnabled}
+                        className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
+                      />
+                      {props.bookingApprovalEnabled && (
+                        <p className="text-xs text-gray-600 mt-2 text-center">
+                          Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-600 mt-3 text-center">
+                        Registration closes {timestampToTimeOfDay(registrationEndDate)},{" "}
+                        {timestampToDateString(registrationEndDate)}
+                      </p>
+                    </>
+                  )}
                 </>
               )}
             </div>

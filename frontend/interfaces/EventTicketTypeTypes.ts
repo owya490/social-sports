@@ -1,3 +1,4 @@
+import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 
 export type EventTicketTypeId = Branded<string, "EventTicketTypeId">;
@@ -8,6 +9,8 @@ export interface EventTicketType {
   price: number;
   capacity: number;
   vacancy: number;
+  /** Optional registration form for this ticket type. Falls back to event.formId when unset. */
+  formId?: FormId | null;
 }
 
 export type EventTicketTypesMap = Record<EventTicketTypeId, EventTicketType>;
@@ -18,6 +21,7 @@ export const EMPTY_EVENT_TICKET_TYPE: EventTicketType = {
   price: 0,
   capacity: 0,
   vacancy: 0,
+  formId: null,
 };
 
 export const EMPTY_EVENT_TICKET_TYPES: EventTicketTypesMap = {};

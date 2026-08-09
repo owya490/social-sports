@@ -1,5 +1,7 @@
 package com.functions.events.models;
 
+import javax.annotation.Nullable;
+
 import lombok.Data;
 
 /**
@@ -13,4 +15,7 @@ public class EventTicketType {
     private Integer price;
     private Integer capacity;
     private Integer vacancy;
+    /** Optional registration form for this ticket type. Falls back to event.formId when unset. */
+    @Nullable
+    private String formId;
 }

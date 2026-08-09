@@ -22,35 +22,34 @@ export function getCompleteFulfilmentSessionUrl(): string {
 export function purgeExpiredFulfilmentSessions(): void {
   const now = new Date();
 
-  const sessionsToRemove: { eventId: EventId; numTickets: number }[] = [];
+  const sessionsToRemove: { eventId: EventId; numTickets: number; eventTicketTypeId?: string | null }[] = [];
 
   // Find all fulfilment session ID keys
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith("fulfilmentSessionId#")) {
-      // Extract eventId and numTickets from key format: fulfilmentSessionId#<eventId>#<numTickets>
+      // Current: fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId|_>
+      // Legacy: fulfilmentSessionId#<eventId>#<numTickets>
       const parts = key.split("#");
-      if (parts.length === 3) {
+      if (parts.length === 3 || parts.length === 4) {
         const eventId = parts[1] as EventId;
         const numTickets = parseInt(parts[2]);
+        const eventTicketTypeId = parts.length === 4 && parts[3] !== "_" ? parts[3] : null;
 
         if (!isNaN(numTickets)) {
-          const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+          const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId);
           const storedTimestamp = localStorage.getItem(timestampKey);
 
           if (storedTimestamp === null) {
-            // No timestamp found, remove the orphaned session ID
-            sessionsToRemove.push({ eventId, numTickets });
+            sessionsToRemove.push({ eventId, numTickets, eventTicketTypeId });
           } else {
             const sessionTimestamp = new Date(storedTimestamp);
             if (isNaN(sessionTimestamp.valueOf())) {
-              // Invalid timestamp, remove session
-              sessionsToRemove.push({ eventId, numTickets });
+              sessionsToRemove.push({ eventId, numTickets, eventTicketTypeId });
             } else {
               const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
               if (timeDifference >= FULFILMENT_SESSION_CACHE_TTL_MILLIS) {
-                // Session expired, remove session
-                sessionsToRemove.push({ eventId, numTickets });
+                sessionsToRemove.push({ eventId, numTickets, eventTicketTypeId });
               }
             }
           }
@@ -60,7 +59,7 @@ export function purgeExpiredFulfilmentSessions(): void {
   }
 
   for (const session of sessionsToRemove) {
-    clearStoredFulfilmentSessionId(session.eventId, session.numTickets);
+    clearStoredFulfilmentSessionId(session.eventId, session.numTickets, session.eventTicketTypeId);
   }
 
   fulfilmentUtilsLogger.info(`Purged expired/invalid fulfilment sessions from localStorage`);
@@ -68,45 +67,45 @@ export function purgeExpiredFulfilmentSessions(): void {
 
 /**
  * Stores a fulfilment session ID in localStorage with the current timestamp.
- * Keys are specific to eventId and numTickets to prevent session reuse across different contexts.
- * Also purges any expired fulfilment sessions from localStorage.
+ * Keys are specific to eventId, numTickets, and optional ticket type.
  */
 export function storeFulfilmentSessionId(
   fulfilmentSessionId: FulfilmentSessionId,
   eventId: EventId,
-  numTickets: number
+  numTickets: number,
+  eventTicketTypeId?: string | null
 ): void {
-  // Purge expired sessions before storing new one
   purgeExpiredFulfilmentSessions();
 
   const now = new Date();
-  const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
-  const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+  const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets, eventTicketTypeId);
+  const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId);
 
   localStorage.setItem(sessionIdKey, fulfilmentSessionId);
   localStorage.setItem(timestampKey, now.toUTCString());
   fulfilmentUtilsLogger.info(
-    `Stored fulfilment session ID: ${fulfilmentSessionId} for eventId: ${eventId}, numTickets: ${numTickets}`
+    `Stored fulfilment session ID: ${fulfilmentSessionId} for eventId: ${eventId}, numTickets: ${numTickets}, eventTicketTypeId: ${eventTicketTypeId ?? "none"}`
   );
 }
 
 /**
- * Retrieves an existing fulfilment session ID from localStorage if it exists and is still valid
- * (within FULFILMENT_SESSION_CACHE_TTL_MILLIS, i.e. a few minutes before server-side expiry).
- * Returns null if no valid session exists.
- * Keys are specific to eventId and numTickets.
+ * Retrieves an existing fulfilment session ID from localStorage if it exists and is still valid.
  */
-export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: number): FulfilmentSessionId | null {
+export function getStoredFulfilmentSessionId(
+  eventId: EventId,
+  numTickets: number,
+  eventTicketTypeId?: string | null
+): FulfilmentSessionId | null {
   try {
-    const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
-    const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+    const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets, eventTicketTypeId);
+    const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId);
 
     const storedSessionId = localStorage.getItem(sessionIdKey);
     const storedTimestamp = localStorage.getItem(timestampKey);
 
     if (storedSessionId === null || storedTimestamp === null) {
       fulfilmentUtilsLogger.info(
-        `No stored fulfilment session found for eventId: ${eventId}, numTickets: ${numTickets}`
+        `No stored fulfilment session found for eventId: ${eventId}, numTickets: ${numTickets}, eventTicketTypeId: ${eventTicketTypeId ?? "none"}`
       );
       return null;
     }
@@ -117,7 +116,7 @@ export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: numbe
       fulfilmentUtilsLogger.info(
         `Invalid stored timestamp for eventId: ${eventId}, numTickets: ${numTickets}, clearing it`
       );
-      clearStoredFulfilmentSessionId(eventId, numTickets);
+      clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
       return null;
     }
     const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
@@ -126,31 +125,37 @@ export function getStoredFulfilmentSessionId(eventId: EventId, numTickets: numbe
       fulfilmentUtilsLogger.info(
         `Stored fulfilment session has expired for eventId: ${eventId}, numTickets: ${numTickets}, clearing it`
       );
-      clearStoredFulfilmentSessionId(eventId, numTickets);
+      clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
       return null;
     }
 
     fulfilmentUtilsLogger.info(
-      `Retrieved valid fulfilment session ID: ${storedSessionId} for eventId: ${eventId}, numTickets: ${numTickets}`
+      `Retrieved valid fulfilment session ID: ${storedSessionId} for eventId: ${eventId}, numTickets: ${numTickets}, eventTicketTypeId: ${eventTicketTypeId ?? "none"}`
     );
     return storedSessionId as FulfilmentSessionId;
   } catch (error) {
     fulfilmentUtilsLogger.error(
       `Error getting stored fulfilment session ID: ${error} for eventId: ${eventId}, numTickets: ${numTickets}`
     );
-    clearStoredFulfilmentSessionId(eventId, numTickets);
+    clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
     return null;
   }
 }
 
 /**
- * Clears the stored fulfilment session ID from localStorage for a specific eventId and numTickets.
+ * Clears the stored fulfilment session ID from localStorage for a specific event/ticket context.
  */
-export function clearStoredFulfilmentSessionId(eventId: EventId, numTickets: number): void {
-  const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets);
-  const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets);
+export function clearStoredFulfilmentSessionId(
+  eventId: EventId,
+  numTickets: number,
+  eventTicketTypeId?: string | null
+): void {
+  const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets, eventTicketTypeId);
+  const timestampKey = getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId);
 
   localStorage.removeItem(sessionIdKey);
   localStorage.removeItem(timestampKey);
-  fulfilmentUtilsLogger.info(`Cleared stored fulfilment session for eventId: ${eventId}, numTickets: ${numTickets}`);
+  fulfilmentUtilsLogger.info(
+    `Cleared stored fulfilment session for eventId: ${eventId}, numTickets: ${numTickets}, eventTicketTypeId: ${eventTicketTypeId ?? "none"}`
+  );
 }

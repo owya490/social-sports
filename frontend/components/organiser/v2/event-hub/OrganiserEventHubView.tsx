@@ -27,6 +27,7 @@ import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
@@ -83,6 +84,7 @@ export function OrganiserEventHubView() {
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
+  const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
 
   useEffect(() => {
@@ -121,6 +123,7 @@ export function OrganiserEventHubView() {
         setEventIsActive(event.isActive);
         setEventIsPrivate(event.isPrivate);
         setEventFormId(event.formId);
+        setEventTicketTypes(event.eventTicketTypes);
         setEventHideVacancy(event.hideVacancy);
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
@@ -303,6 +306,15 @@ export function OrganiserEventHubView() {
             setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
             eventCapacity={eventCapacity}
             eventPrice={eventPrice}
+            eventData={eventData}
+            eventTicketTypes={eventTicketTypes}
+            setEventTicketTypes={(types) => {
+              setEventTicketTypes(types);
+              setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+            }}
+            setEventCapacity={setEventCapacity}
+            setEventVacancy={setEventVacancy}
+            setEventPrice={setEventPrice}
           />
         )}
       </div>

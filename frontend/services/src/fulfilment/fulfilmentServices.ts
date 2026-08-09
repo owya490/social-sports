@@ -66,8 +66,8 @@ export async function initFulfilmentSession(
       case FulfilmentSessionType.CHECKOUT: {
         const { eventId, numTickets, eventTicketTypeId } = fulfilmentSessionType;
 
-        // Check for existing session in localStorage specific to this event and ticket count
-        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets);
+        // Check for existing session in localStorage specific to this event, ticket count, and type
+        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
 
         if (existingSessionId) {
           fulfilmentServiceLogger.info(
@@ -89,7 +89,7 @@ export async function initFulfilmentSession(
             fulfilmentServiceLogger.warn(
               `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
             );
-            clearStoredFulfilmentSessionId(eventId, numTickets);
+            clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
             // Session is invalid, continue to create a new one
           }
         }
@@ -98,7 +98,7 @@ export async function initFulfilmentSession(
         const response = await initCheckoutFulfilmentSession(eventId, numTickets, eventTicketTypeId);
 
         // Store the new session ID in localStorage with event and ticket context
-        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets);
+        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
 
         return response;
       }

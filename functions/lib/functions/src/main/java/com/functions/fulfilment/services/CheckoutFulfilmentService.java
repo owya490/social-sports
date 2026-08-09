@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.EventTicketType;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
@@ -105,7 +106,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
 
         // 1. FORMS entities - one for each ticket
         try {
-            Optional<String> formId = Optional.ofNullable(eventData.getFormId());
+            Optional<String> formId = resolveFormId(eventData, eventTicketTypeId);
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
                     tempEntities.add(
@@ -171,6 +172,28 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
         }
 
         return fulfilmentEntities;
+    }
+
+    /**
+     * Prefer the ticket type's formId when set; otherwise fall back to the event-level formId.
+     */
+    private static Optional<String> resolveFormId(EventData eventData, String eventTicketTypeId) {
+        if (eventTicketTypeId != null && !eventTicketTypeId.isBlank()
+                && eventData.getEventTicketTypes() != null) {
+            EventTicketType ticketType = eventData.getEventTicketTypes().get(eventTicketTypeId);
+            if (ticketType == null) {
+                for (EventTicketType candidate : eventData.getEventTicketTypes().values()) {
+                    if (candidate != null && eventTicketTypeId.equals(candidate.getId())) {
+                        ticketType = candidate;
+                        break;
+                    }
+                }
+            }
+            if (ticketType != null && ticketType.getFormId() != null && !ticketType.getFormId().isBlank()) {
+                return Optional.of(ticketType.getFormId());
+            }
+        }
+        return Optional.ofNullable(eventData.getFormId()).filter(formId -> !formId.isBlank());
     }
 
 }

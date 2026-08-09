@@ -1,4 +1,7 @@
 import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { FormId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 
 export const GENERAL_TICKET_TYPE_NAME = "General Admission";
 
@@ -9,6 +12,12 @@ type EventWithInventory = {
   price?: number;
   capacity?: number;
   vacancy?: number;
+  formId?: FormId | null;
+};
+
+export type SortedEventTicketType = {
+  eventTicketTypeId: EventTicketTypeId;
+  eventTicketType: EventTicketType;
 };
 
 export function createEventTicketTypeId(): EventTicketTypeId {
@@ -20,6 +29,7 @@ export function createEventTicketType(params: {
   price: number;
   capacity: number;
   vacancy?: number;
+  formId?: FormId | null;
 }): EventTicketType {
   const id = createEventTicketTypeId();
   return {
@@ -28,16 +38,49 @@ export function createEventTicketType(params: {
     price: params.price,
     capacity: params.capacity,
     vacancy: params.vacancy ?? params.capacity,
+    formId: params.formId ?? null,
   };
 }
 
+export function hasEventTicketTypes(event: EventWithInventory): boolean {
+  return event.eventTicketTypes != null && Object.keys(event.eventTicketTypes).length > 0;
+}
+
+/** Sorted list for organiser UI; General Admission first, then name. */
+export function getSortedEventTicketTypes(
+  eventTicketTypes: EventTicketTypesMap | null | undefined
+): SortedEventTicketType[] {
+  if (!eventTicketTypes) {
+    return [];
+  }
+  return Object.entries(eventTicketTypes)
+    .map(([eventTicketTypeId, eventTicketType]) => ({
+      eventTicketTypeId: (eventTicketType.id || eventTicketTypeId) as EventTicketTypeId,
+      eventTicketType: {
+        ...eventTicketType,
+        id: (eventTicketType.id || eventTicketTypeId) as EventTicketTypeId,
+        formId: eventTicketType.formId ?? null,
+      },
+    }))
+    .sort((a, b) => {
+      if (a.eventTicketType.name === GENERAL_TICKET_TYPE_NAME) return -1;
+      if (b.eventTicketType.name === GENERAL_TICKET_TYPE_NAME) return 1;
+      return a.eventTicketType.name.localeCompare(b.eventTicketType.name);
+    });
+}
+
 /** New events: write top-level fields and a matching General Admission ticket type. */
-export function buildNewEventInventory(price: number, capacity: number) {
+export function buildNewEventInventory(price: number, capacity: number, formId: FormId | null = null) {
   return {
     price,
     capacity,
     vacancy: capacity,
-    eventTicketTypes: buildEventTicketTypesFromLegacyEvent({ price, capacity, vacancy: capacity }),
+    eventTicketTypes: buildEventTicketTypesFromLegacyEvent({
+      price,
+      capacity,
+      vacancy: capacity,
+      formId,
+    }),
   };
 }
 
@@ -45,6 +88,7 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
   price: number;
   capacity: number;
   vacancy: number;
+  formId?: FormId | null;
   name?: string;
 }): EventTicketTypesMap {
   const eventTicketType = createEventTicketType({
@@ -52,6 +96,7 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
     price: params.price,
     capacity: params.capacity,
     vacancy: params.vacancy,
+    formId: params.formId ?? null,
   });
   return { [eventTicketType.id]: eventTicketType };
 }
@@ -102,8 +147,71 @@ export function resolveGeneralAdmissionInventory(event: EventWithInventory) {
 
 /** Copies resolved inventory onto top-level fields for UI components. */
 export function applyGeneralAdmissionInventoryFields<T extends object>(event: T): T {
-  const { price, capacity, vacancy } = resolveGeneralAdmissionInventory(event as EventWithInventory);
+  const withInventory = event as EventWithInventory;
+  if (hasEventTicketTypes(withInventory) && Object.keys(withInventory.eventTicketTypes!).length > 1) {
+    return { ...event, ...syncEventAggregatesFromTicketTypes(withInventory.eventTicketTypes!) };
+  }
+  const { price, capacity, vacancy } = resolveGeneralAdmissionInventory(withInventory);
   return { ...event, price, capacity, vacancy };
+}
+
+/**
+ * Top-level listing aggregates when multiple ticket types exist:
+ * price = minimum across types, capacity/vacancy = sums.
+ */
+export function syncEventAggregatesFromTicketTypes(eventTicketTypes: EventTicketTypesMap): {
+  price: number;
+  capacity: number;
+  vacancy: number;
+} {
+  const types = Object.values(eventTicketTypes);
+  if (types.length === 0) {
+    return { price: 0, capacity: 0, vacancy: 0 };
+  }
+  return {
+    price: Math.min(...types.map((t) => t.price)),
+    capacity: types.reduce((sum, t) => sum + t.capacity, 0),
+    vacancy: types.reduce((sum, t) => sum + t.vacancy, 0),
+  };
+}
+
+/** When increasing/decreasing capacity, preserve sold count via vacancy math. */
+export function applyCapacityChange(current: EventTicketType, newCapacity: number): EventTicketType {
+  const sold = Math.max(0, current.capacity - current.vacancy);
+  if (newCapacity < sold) {
+    throw new Error(`Capacity cannot be lower than tickets already sold (${sold}).`);
+  }
+  return {
+    ...current,
+    capacity: newCapacity,
+    vacancy: newCapacity - sold,
+  };
+}
+
+export function countSoldTicketsForType(
+  orderTicketsMap: Map<Order, Ticket[]>,
+  eventTicketTypeId: EventTicketTypeId
+): number {
+  let count = 0;
+  orderTicketsMap.forEach((tickets) => {
+    tickets.forEach((ticket) => {
+      if (ticket.eventTicketTypeId === eventTicketTypeId) {
+        count += 1;
+      }
+    });
+  });
+  return count;
+}
+
+/** Form for a ticket type, falling back to the event-level formId. */
+export function resolveFormIdForTicketType(
+  event: EventWithInventory,
+  eventTicketTypeId: EventTicketTypeId | null | undefined
+): FormId | null {
+  if (eventTicketTypeId && event.eventTicketTypes?.[eventTicketTypeId]?.formId) {
+    return event.eventTicketTypes[eventTicketTypeId].formId as FormId;
+  }
+  return (event.formId as FormId | null | undefined) ?? null;
 }
 
 /** Firestore updates: nested when eventTicketTypes exists, otherwise top-level. */

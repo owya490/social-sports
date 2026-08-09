@@ -3,13 +3,19 @@ import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfac
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import {
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+  resolveCheckoutTicketTypeId,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import { Alert, Input } from "@material-tailwind/react";
+import { Alert, Input, Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 
 interface InviteAttendeeDialogProps {
   eventData: EventData;
@@ -35,6 +41,21 @@ const InviteAttendeeDialog = ({
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
   const [numTickets, setNumTickets] = useState<string>("1");
+  const ticketTypes = useMemo(() => getSortedEventTicketTypes(eventData.eventTicketTypes), [eventData.eventTicketTypes]);
+  const showTypeSelector = hasEventTicketTypes(eventData) && ticketTypes.length > 1;
+  const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<EventTicketTypeId | null>(null);
+
+  useEffect(() => {
+    if (!showTypeSelector) {
+      setSelectedTicketTypeId(null);
+      return;
+    }
+    setSelectedTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
+  }, [showTypeSelector, ticketTypes]);
+
+  const selectedVacancy = showTypeSelector
+    ? ticketTypes.find((t) => t.eventTicketTypeId === selectedTicketTypeId)?.eventTicketType.vacancy ?? eventData.vacancy
+    : eventData.vacancy;
 
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
@@ -66,7 +87,9 @@ const InviteAttendeeDialog = ({
         phone: attendeePhoneNumber,
         numTickets: parseInt(numTickets),
         price: 0, // price is free as it is being added manually
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId: showTypeSelector && selectedTicketTypeId
+          ? selectedTicketTypeId
+          : resolveCheckoutTicketTypeId(eventData),
       });
       const now = Timestamp.now();
       const newOrder: Order = {
@@ -215,6 +238,23 @@ const InviteAttendeeDialog = ({
                           onChange={(e) => setAttendeePhoneNumber(e.target.value)}
                           crossOrigin={undefined}
                         />
+                        {showTypeSelector && (
+                          <Select
+                            className="text-black"
+                            label="Ticket type"
+                            value={selectedTicketTypeId ?? ""}
+                            onChange={(value) => {
+                              if (value) setSelectedTicketTypeId(value as EventTicketTypeId);
+                            }}
+                          >
+                            {ticketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                              <Option key={eventTicketTypeId} value={eventTicketTypeId}>
+                                {eventTicketType.name} — {getEventPriceDisplay(eventTicketType.price)} ·{" "}
+                                {eventTicketType.vacancy} left
+                              </Option>
+                            ))}
+                          </Select>
+                        )}
                         <Input
                           label="Number of tickets"
                           crossOrigin={undefined}
@@ -222,11 +262,11 @@ const InviteAttendeeDialog = ({
                           value={numTickets}
                           type="number"
                           min={1}
-                          max={eventData.vacancy}
+                          max={selectedVacancy}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (!isNaN(value)) {
-                              const capped = clampTicketQuantity(value, 1, eventData.vacancy);
+                              const capped = clampTicketQuantity(value, 1, selectedVacancy);
                               setNumTickets(capped.toString());
                             } else {
                               setNumTickets("1");

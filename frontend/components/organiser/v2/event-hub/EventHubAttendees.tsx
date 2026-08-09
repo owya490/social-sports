@@ -10,13 +10,18 @@ import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import {
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+  resolveCheckoutTicketTypeId,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getForm, getFormResponse } from "@/services/src/forms/formsServices";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import {
   ArrowPathIcon,
   CheckIcon,
@@ -29,6 +34,7 @@ import { Timestamp } from "firebase/firestore";
 import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventHubPanel } from "./EventHubPanel";
 import {
   EventHubEmpty,
@@ -233,7 +239,8 @@ function AttendeeEditTicketsPanel({
         eventId,
         orderId: order.orderId,
         numTickets: parseInt(newNumTickets, 10),
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId:
+          tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
       const updatedOrder = await getOrderById(order.orderId);
       const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
@@ -319,6 +326,25 @@ export function EventHubAttendees({
   const [addTickets, setAddTickets] = useState("1");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const ticketTypes = useMemo(
+    () => getSortedEventTicketTypes(eventData.eventTicketTypes),
+    [eventData.eventTicketTypes]
+  );
+  const showTypeSelector = hasEventTicketTypes(eventData) && ticketTypes.length > 1;
+  const [addTicketTypeId, setAddTicketTypeId] = useState<EventTicketTypeId | null>(null);
+
+  useEffect(() => {
+    if (!showTypeSelector) {
+      setAddTicketTypeId(null);
+      return;
+    }
+    setAddTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
+  }, [showTypeSelector, ticketTypes]);
+
+  const addTypeVacancy = showTypeSelector
+    ? ticketTypes.find((t) => t.eventTicketTypeId === addTicketTypeId)?.eventTicketType.vacancy ??
+      eventData.vacancy
+    : eventData.vacancy;
   const [activeTab, setActiveTab] = useState<TabType>("approved");
   const [approvedMap, setApprovedMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [pendingMap, setPendingMap] = useState<Map<Order, Ticket[]>>(new Map());
@@ -443,6 +469,9 @@ export function EventHubAttendees({
     setAddPhone("");
     setAddTickets("1");
     setAddError(null);
+    if (showTypeSelector) {
+      setAddTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
+    }
   };
 
   const closeAddPanel = () => {
@@ -468,7 +497,10 @@ export function EventHubAttendees({
         phone: addPhone,
         numTickets: qty,
         price: 0,
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId:
+          showTypeSelector && addTicketTypeId
+            ? addTicketTypeId
+            : resolveCheckoutTicketTypeId(eventData),
       });
       const now = Timestamp.now();
       const newOrder: Order = {
@@ -840,18 +872,36 @@ export function EventHubAttendees({
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             />
           </label>
+          {showTypeSelector && (
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-foreground-muted font-sans">Ticket type</span>
+              <select
+                required
+                value={addTicketTypeId ?? ""}
+                onChange={(e) => setAddTicketTypeId(e.target.value as EventTicketTypeId)}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                {ticketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                  <option key={eventTicketTypeId} value={eventTicketTypeId}>
+                    {eventTicketType.name} — {getEventPriceDisplay(eventTicketType.price)} ·{" "}
+                    {eventTicketType.vacancy} left
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="block space-y-1.5">
             <span className="text-xs font-medium text-foreground-muted font-sans">Tickets</span>
             <input
               type="number"
               required
               min={1}
-              max={Math.max(1, eventData.vacancy)}
+              max={Math.max(1, addTypeVacancy)}
               value={addTickets}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);
                 if (!isNaN(value)) {
-                  setAddTickets(String(clampTicketQuantity(value, 1, eventData.vacancy)));
+                  setAddTickets(String(clampTicketQuantity(value, 1, addTypeVacancy)));
                 } else {
                   setAddTickets("1");
                 }
