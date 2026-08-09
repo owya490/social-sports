@@ -10,18 +10,19 @@ import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/inte
 import { FulfilmentEntityId, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { isFormAttachedToEvent } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import { getEventById } from "@/services/src/events/eventsService";
 import { FormResponsePaths } from "@/services/src/forms/formsConstants";
 import {
   formsServiceLogger,
   getForm,
-  getFormIdByEventId,
   getFormResponse,
   saveTempFormResponse,
   updateTempFormResponse,
+  updateFulfilmentEntityWithFormResponseId,
 } from "@/services/src/forms/formsServices";
 import { extractFormResponseFromForm } from "@/services/src/forms/formsUtils/createFormResponseUtils";
 import { findFormResponseDocRef } from "@/services/src/forms/formsUtils/formsUtils";
-import { updateFulfilmentEntityWithFormResponseId } from "@/services/src/forms/formsServices";
 import { getPublicUserById } from "@/services/src/users/usersService";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
@@ -171,9 +172,9 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             router.push("/error");
             return;
           }
-          // check the form is actually attached to the event as we are not in preview mode
-          const expectedFormId = await getFormIdByEventId(eventId);
-          if (expectedFormId !== formId) {
+          // Allow event.formId or any ticket-type formId (non-GA types use their own form).
+          const event = await getEventById(eventId);
+          if (!isFormAttachedToEvent(event, formId)) {
             router.push("/error");
             return;
           }

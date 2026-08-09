@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -60,6 +61,10 @@ public class JavaUtils {
 	public static final ObjectMapper objectMapper = new ObjectMapper();
 
     static {
+        // Fulfilment sessions embed EventData snapshots. New fields (e.g. EventTicketType.formId)
+        // can land in Firestore before every function revision is redeployed; ignoring unknowns
+        // keeps fromFirestore / convertValue working across staggered deploys.
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         SimpleModule module = new SimpleModule();
         module.addSerializer(Timestamp.class, new TimestampSerializer());
         module.addDeserializer(Timestamp.class, new TimestampDeserializer());

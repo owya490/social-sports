@@ -17,18 +17,25 @@ import { RecurringHubRecurrence } from "@/components/organiser/v2/recurring-hub/
 import { RecurringHubSettings } from "@/components/organiser/v2/recurring-hub/RecurringHubSettings";
 import { RecurringHubSection } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
 import { useUser } from "@/components/utility/UserContext";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
   EventId,
 } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   Frequency,
   NewRecurrenceFormData,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
+import {
+  findGeneralAdmissionTicketType,
+  GENERAL_TICKET_TYPE_NAME,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import {
   calculateRecurrenceEnded,
   getRecurrenceTemplate,
@@ -42,6 +49,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const logger = new Logger("RecurringHubV2Page");
+const EMPTY_ORDER_TICKETS_MAP = new Map<Order, Ticket[]>();
 
 export default function OrganiserRecurringHubV2Page() {
   const params = useParams<{ id: string }>();
@@ -80,6 +88,7 @@ export default function OrganiserRecurringHubV2Page() {
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
+  const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
   const [pastEvents, setPastEvents] = useState<Record<string, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState(false);
@@ -114,7 +123,7 @@ export default function OrganiserRecurringHubV2Page() {
         setEventCapacity(eventData.capacity);
         setEventIsActive(eventData.isActive);
         setEventRegistrationDeadline(eventData.registrationDeadline);
-        setEventEventLink(eventData.eventLink);
+        setEventEventLink(eventData.eventLink ?? "");
         setEventPaused(eventData.paused);
         setEventPaymentsActive(eventData.paymentsActive);
         setEventStripeFeeToCustomer(eventData.stripeFeeToCustomer);
@@ -124,6 +133,7 @@ export default function OrganiserRecurringHubV2Page() {
         setEventBookingApprovalEnabled(eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(eventData.showAttendeesOnEventPage);
         setEventIsPrivate(eventData.isPrivate);
+        setEventTicketTypes(eventData.eventTicketTypes);
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
             eventData.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
@@ -241,6 +251,24 @@ export default function OrganiserRecurringHubV2Page() {
             eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
             isPrivate={eventIsPrivate}
+            eventTicketTypes={eventTicketTypes}
+            orderTicketsMap={EMPTY_ORDER_TICKETS_MAP}
+            setEventTicketTypes={setEventTicketTypes}
+            setEventCapacity={setEventCapacity}
+            setEventVacancy={setEventVacancy}
+            setEventPrice={setEventPrice}
+            onPersistTicketTypes={async (nextTypes) => {
+              const general = findGeneralAdmissionTicketType(nextTypes);
+              const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
+                eventTicketTypes: nextTypes,
+                ...(general?.name === GENERAL_TICKET_TYPE_NAME
+                  ? { formId: general.formId ?? null }
+                  : {}),
+              });
+              if (!success) {
+                throw new Error("Failed to update ticket types");
+              }
+            }}
             mode="template"
             updateData={async (id, data) => {
               await updateRecurrenceTemplateEventData(id as unknown as RecurrenceTemplateId, data);
@@ -256,10 +284,11 @@ export default function OrganiserRecurringHubV2Page() {
               if (data.registrationDeadline !== undefined) {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
-              if (data.eventLink !== undefined) setEventEventLink(data.eventLink);
+              if (data.eventLink !== undefined) setEventEventLink(data.eventLink ?? "");
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);
+              if (data.eventTicketTypes !== undefined) setEventTicketTypes(data.eventTicketTypes);
             }}
           />
         )}

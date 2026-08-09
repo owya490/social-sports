@@ -60,6 +60,7 @@ type EventHubListingProps = {
   setEventCapacity?: (capacity: number) => void;
   setEventVacancy?: (vacancy: number) => void;
   setEventPrice?: (price: number) => void;
+  onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
   mode?: "event" | "template";
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
@@ -89,6 +90,7 @@ export function EventHubListing({
   setEventCapacity,
   setEventVacancy,
   setEventPrice,
+  onPersistTicketTypes,
   mode = "event",
   updateData,
 }: EventHubListingProps) {
@@ -380,6 +382,8 @@ export function EventHubListing({
             setEventCapacity={setEventCapacity}
             setEventVacancy={setEventVacancy}
             setEventPrice={setEventPrice}
+            onPersistTicketTypes={onPersistTicketTypes}
+            hideTicketTypeFormSelector={!isTemplate}
             updateData={updateData}
             onSaved={() => setEditOpen(false)}
             onSavingChange={setSavingEdit}

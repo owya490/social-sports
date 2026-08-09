@@ -246,6 +246,41 @@ export function resolveFormIdForTicketType(
   return null;
 }
 
+/** True if formId is the event-level form or any ticket type's form. */
+export function isFormAttachedToEvent(event: EventWithInventory, formId: FormId): boolean {
+  if (event.formId === formId) {
+    return true;
+  }
+
+  const ticketTypes = event.eventTicketTypes;
+  if (!ticketTypes) {
+    return false;
+  }
+
+  return Object.values(ticketTypes).some((ticketType) => ticketType?.formId === formId);
+}
+
+/** All formIds attached at event level or on any ticket type (deduped). */
+export function getAttachedFormIdsForEvent(event: EventWithInventory): FormId[] {
+  const ids: FormId[] = [];
+  const seen = new Set<string>();
+  const add = (formId: FormId | null | undefined) => {
+    if (!formId || seen.has(formId)) {
+      return;
+    }
+    seen.add(formId);
+    ids.push(formId);
+  };
+
+  add((event.formId as FormId | null | undefined) ?? null);
+  if (event.eventTicketTypes) {
+    for (const ticketType of Object.values(event.eventTicketTypes)) {
+      add((ticketType?.formId as FormId | null | undefined) ?? null);
+    }
+  }
+  return ids;
+}
+
 /** Firestore updates: nested when eventTicketTypes exists, otherwise top-level. */
 export function buildGeneralAdmissionInventoryUpdates(
   eventTicketTypes: EventTicketTypesMap | null | undefined,

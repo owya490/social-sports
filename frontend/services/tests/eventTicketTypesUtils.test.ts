@@ -8,6 +8,8 @@ import {
   GENERAL_TICKET_TYPE_NAME,
   getSortedEventTicketTypes,
   hasEventTicketTypes,
+  isFormAttachedToEvent,
+  getAttachedFormIdsForEvent,
   resolveFormIdForTicketType,
   syncEventAggregatesFromTicketTypes,
 } from "../src/events/eventsUtils/eventTicketTypesUtils";
@@ -85,6 +87,38 @@ describe("eventTicketTypesUtils", () => {
         nonGa.id as EventTicketTypeId
       )
     ).toBe("type-form");
+  });
+
+  it("treats event and ticket-type formIds as attached to the event", () => {
+    const nonGa = createEventTicketType({
+      name: "Men's",
+      price: 0,
+      capacity: 5,
+      formId: "type-form" as FormId,
+    });
+    const event = {
+      formId: "event-form" as FormId,
+      eventTicketTypes: { [nonGa.id]: nonGa },
+    };
+
+    expect(isFormAttachedToEvent(event, "event-form" as FormId)).toBe(true);
+    expect(isFormAttachedToEvent(event, "type-form" as FormId)).toBe(true);
+    expect(isFormAttachedToEvent(event, "other-form" as FormId)).toBe(false);
+  });
+
+  it("collects attached form ids from event and ticket types", () => {
+    const type = createEventTicketType({
+      name: "VIP",
+      price: 0,
+      capacity: 5,
+      formId: "type-form" as FormId,
+    });
+    expect(
+      getAttachedFormIdsForEvent({
+        formId: "event-form" as FormId,
+        eventTicketTypes: { [type.id]: type },
+      })
+    ).toEqual(["event-form", "type-form"]);
   });
 
   it("builds legacy inventory map with General Admission", () => {

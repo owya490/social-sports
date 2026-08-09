@@ -5,8 +5,11 @@ import { Order, OrderAndTicketStatus, OrderAndTicketType } from "../../interface
 import { Ticket } from "../../interfaces/TicketTypes";
 import { GENERAL_TICKET_TYPE_NAME } from "../src/events/eventsUtils/eventTicketTypesUtils";
 import {
+  collectAttendeeFormResponseLookups,
+  filterAttendeeFormResponseLookupsByTicketType,
   filterFormResponsesForApprovedOrders,
   filterFormResponsesForTicketType,
+  filterOrderTicketsMapByTicketType,
 } from "../src/forms/formsUtils/formsUtils";
 
 jest.mock("../src/firebase", () => ({ db: {} }));
@@ -200,5 +203,139 @@ describe("filterFormResponsesForApprovedOrders", () => {
     );
 
     expect(filtered.map((r) => r.formResponseId).sort()).toEqual(["r-approved", "r-manual"]);
+  });
+});
+
+describe("filterOrderTicketsMapByTicketType", () => {
+  it("keeps orders that include the selected ticket type", () => {
+    const vipOrder = makeOrder("order-vip");
+    const gaOrder = makeOrder("order-ga");
+    const map = new Map<Order, Ticket[]>([
+      [
+        vipOrder,
+        [
+          makeTicket({
+            ticketId: "t-vip" as TicketId,
+            formResponseId: "r-vip" as FormResponseId,
+            eventTicketTypeId: vipTypeId,
+          }),
+        ],
+      ],
+      [
+        gaOrder,
+        [
+          makeTicket({
+            ticketId: "t-ga" as TicketId,
+            formResponseId: "r-ga" as FormResponseId,
+            eventTicketTypeId: gaTypeId,
+          }),
+        ],
+      ],
+    ]);
+
+    const filtered = filterOrderTicketsMapByTicketType(map, vipTypeId, "VIP");
+    expect(Array.from(filtered.keys()).map((o) => o.orderId)).toEqual(["order-vip"]);
+  });
+});
+
+describe("collectAttendeeFormResponseLookups", () => {
+  it("resolves formId from the ticket type, not only event.formId", () => {
+    const event = {
+      formId: "event-form" as FormId,
+      eventTicketTypes: {
+        [vipTypeId]: {
+          id: vipTypeId,
+          name: "VIP",
+          price: 0,
+          capacity: 10,
+          vacancy: 10,
+          formId: "vip-form" as FormId,
+        },
+      },
+    };
+    const lookups = collectAttendeeFormResponseLookups(event, [
+      makeTicket({
+        ticketId: "t1" as TicketId,
+        formResponseId: "r-vip" as FormResponseId,
+        eventTicketTypeId: vipTypeId,
+      }),
+    ]);
+
+    expect(lookups).toEqual([
+      {
+        formResponseId: "r-vip",
+        formId: "vip-form",
+        eventTicketTypeId: vipTypeId,
+        eventTicketTypeName: undefined,
+      },
+    ]);
+  });
+
+  it("includes legacy purchaserMap response ids under an attached form", () => {
+    const event = { formId: "event-form" as FormId };
+    const lookups = collectAttendeeFormResponseLookups(event, [], ["r-legacy"]);
+    expect(lookups).toEqual([
+      {
+        formResponseId: "r-legacy",
+        formId: "event-form",
+        eventTicketTypeId: null,
+      },
+    ]);
+  });
+
+  it("still creates a lookup when ticket type has no form by falling back to any attached form", () => {
+    const event = {
+      formId: null,
+      eventTicketTypes: {
+        [vipTypeId]: {
+          id: vipTypeId,
+          name: "VIP",
+          price: 0,
+          capacity: 10,
+          vacancy: 10,
+          formId: "vip-form" as FormId,
+        },
+        [gaTypeId]: {
+          id: gaTypeId,
+          name: GENERAL_TICKET_TYPE_NAME,
+          price: 0,
+          capacity: 10,
+          vacancy: 10,
+          formId: null,
+        },
+      },
+    };
+    const lookups = collectAttendeeFormResponseLookups(event, [
+      makeTicket({
+        ticketId: "t-orphan" as TicketId,
+        formResponseId: "r-orphan" as FormResponseId,
+        eventTicketTypeId: gaTypeId,
+      }),
+    ]);
+
+    expect(lookups).toHaveLength(1);
+    expect(lookups[0]?.formResponseId).toBe("r-orphan");
+    expect(lookups[0]?.formId).toBe("vip-form");
+  });
+});
+
+describe("filterAttendeeFormResponseLookupsByTicketType", () => {
+  it("filters lookups to the selected ticket type", () => {
+    const lookups = [
+      {
+        formResponseId: "r-vip" as FormResponseId,
+        formId: "vip-form" as FormId,
+        eventTicketTypeId: vipTypeId,
+      },
+      {
+        formResponseId: "r-ga" as FormResponseId,
+        formId: "event-form" as FormId,
+        eventTicketTypeId: gaTypeId,
+      },
+    ];
+
+    expect(
+      filterAttendeeFormResponseLookupsByTicketType(lookups, vipTypeId, "VIP").map((l) => l.formResponseId)
+    ).toEqual(["r-vip"]);
   });
 });

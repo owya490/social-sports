@@ -768,11 +768,11 @@ public class FulfilmentService {
                 return false;
             }
 
-            ((FormsFulfilmentEntity) entity).setFormResponseId(formResponseId);
-            fulfilmentEntityMap.put(fulfilmentEntityId, entity);
-            fulfilmentSession.setFulfilmentEntityMap(fulfilmentEntityMap);
-            FulfilmentSessionRepository.updateFulfilmentSession(fulfilmentSessionId,
-                    fulfilmentSession);
+            // Field-path update only — avoid rewriting the whole polymorphic session document,
+            // which can drop nested FormsFulfilmentEntity fields (including formResponseId)
+            // and leave tickets with a null formResponseId after Stripe fulfillment.
+            FulfilmentSessionRepository.updateFormsFulfilmentEntityFormResponseId(
+                    fulfilmentSessionId, fulfilmentEntityId, formResponseId);
             logger.info(
                     "Fulfilment session updated successfully for ID: {} with form response ID: {} for entity ID: {}",
                     fulfilmentSessionId, formResponseId, fulfilmentEntityId);

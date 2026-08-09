@@ -8,9 +8,124 @@ import { OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
-import { GENERAL_TICKET_TYPE_NAME } from "../../events/eventsUtils/eventTicketTypesUtils";
+import {
+  GENERAL_TICKET_TYPE_NAME,
+  getAttachedFormIdsForEvent,
+  resolveFormIdForTicketType,
+} from "../../events/eventsUtils/eventTicketTypesUtils";
 import { FormResponsePaths, FormTemplatePaths } from "../formsConstants";
 import { formsServiceLogger } from "../formsServices";
+
+type EventFormLookupSource = {
+  formId?: FormId | null;
+  eventTicketTypes?: Parameters<typeof resolveFormIdForTicketType>[0]["eventTicketTypes"];
+};
+
+/** Ticket belongs to the selected event ticket type (GA catch-all matches Forms filtering). */
+export function ticketMatchesEventTicketType(
+  ticket: Ticket,
+  eventTicketTypeId: EventTicketTypeId,
+  ticketTypeName?: string | null
+): boolean {
+  if (ticket.eventTicketTypeId === eventTicketTypeId) {
+    return true;
+  }
+  if (ticketTypeName !== GENERAL_TICKET_TYPE_NAME) {
+    return false;
+  }
+  return !ticket.eventTicketTypeId || ticket.eventTicketTypeName === GENERAL_TICKET_TYPE_NAME;
+}
+
+/**
+ * Orders that include at least one ticket of the selected type.
+ * Keeps the full ticket list for each matching order (approve/reject still needs the whole order).
+ */
+export function filterOrderTicketsMapByTicketType(
+  orderTicketsMap: Map<Order, Ticket[]>,
+  eventTicketTypeId: EventTicketTypeId,
+  ticketTypeName?: string | null
+): Map<Order, Ticket[]> {
+  const filtered = new Map<Order, Ticket[]>();
+  orderTicketsMap.forEach((tickets, order) => {
+    if (tickets.some((ticket) => ticketMatchesEventTicketType(ticket, eventTicketTypeId, ticketTypeName))) {
+      filtered.set(order, tickets);
+    }
+  });
+  return filtered;
+}
+
+export type AttendeeFormResponseLookup = {
+  formResponseId: FormResponseId;
+  formId: FormId;
+  eventTicketTypeId: EventTicketTypeId | null;
+  eventTicketTypeName?: string;
+};
+
+/**
+ * Map each ticket (and legacy purchaserMap) form response to a preferred formId hint.
+ * Prefer per-ticket-type resolution; if unknown, fall back to any form attached to the event
+ * so the fetch layer can still locate Temp/Submitted answers.
+ */
+export function collectAttendeeFormResponseLookups(
+  event: EventFormLookupSource,
+  tickets: Ticket[],
+  legacyFormResponseIds: Iterable<FormResponseId | string> = []
+): AttendeeFormResponseLookup[] {
+  const lookups: AttendeeFormResponseLookup[] = [];
+  const seen = new Set<FormResponseId>();
+  const attachedFormIds = getAttachedFormIdsForEvent(event);
+  const fallbackFormId = attachedFormIds[0] ?? null;
+
+  for (const ticket of tickets) {
+    if (!ticket.formResponseId || seen.has(ticket.formResponseId)) {
+      continue;
+    }
+    const formId = resolveFormIdForTicketType(event, ticket.eventTicketTypeId) ?? fallbackFormId;
+    if (!formId) {
+      continue;
+    }
+    seen.add(ticket.formResponseId);
+    lookups.push({
+      formResponseId: ticket.formResponseId,
+      formId,
+      eventTicketTypeId: ticket.eventTicketTypeId ?? null,
+      eventTicketTypeName: ticket.eventTicketTypeName,
+    });
+  }
+
+  for (const rawId of legacyFormResponseIds) {
+    const formResponseId = rawId as FormResponseId;
+    if (!fallbackFormId || seen.has(formResponseId)) {
+      continue;
+    }
+    seen.add(formResponseId);
+    lookups.push({
+      formResponseId,
+      formId: fallbackFormId,
+      eventTicketTypeId: null,
+    });
+  }
+
+  return lookups;
+}
+
+export function filterAttendeeFormResponseLookupsByTicketType(
+  lookups: AttendeeFormResponseLookup[],
+  eventTicketTypeId: EventTicketTypeId,
+  ticketTypeName?: string | null
+): AttendeeFormResponseLookup[] {
+  const includeCatchAll = ticketTypeName === GENERAL_TICKET_TYPE_NAME;
+  return lookups.filter((lookup) => {
+    if (lookup.eventTicketTypeId === eventTicketTypeId) {
+      return true;
+    }
+    if (!includeCatchAll) {
+      return false;
+    }
+    // Legacy responses with no ticket type surface under General Admission.
+    return !lookup.eventTicketTypeId || lookup.eventTicketTypeName === GENERAL_TICKET_TYPE_NAME;
+  });
+}
 
 /** Find form doc from within the sub collections in the Forms table */
 export async function findFormDocRef(formId: FormId): Promise<DocumentReference<DocumentData, DocumentData>> {

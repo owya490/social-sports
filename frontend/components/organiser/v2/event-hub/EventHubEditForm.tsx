@@ -57,6 +57,8 @@ type EventHubEditFormProps = {
   setEventCapacity?: (capacity: number) => void;
   setEventVacancy?: (vacancy: number) => void;
   setEventPrice?: (price: number) => void;
+  onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
+  hideTicketTypeFormSelector?: boolean;
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
   onSaved: () => void;
   onSavingChange?: (saving: boolean) => void;
@@ -79,6 +81,8 @@ export function EventHubEditForm({
   setEventCapacity,
   setEventVacancy,
   setEventPrice,
+  onPersistTicketTypes,
+  hideTicketTypeFormSelector = true,
   updateData,
   onSaved,
   onSavingChange,
@@ -103,7 +107,7 @@ export function EventHubEditForm({
   const [locationError, setLocationError] = useState("");
 
   const [sport, setSport] = useState(eventSport);
-  const [eventLink, setEventLink] = useState(eventEventLink);
+  const [eventLink, setEventLink] = useState(eventEventLink ?? "");
 
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
@@ -130,7 +134,7 @@ export function EventHubEditForm({
     setSelectionMade(true);
     setLocationError("");
     setSport(eventSport);
-    setEventLink(eventEventLink);
+    setEventLink(eventEventLink ?? "");
   }, [
     eventName,
     eventDescription,
@@ -359,6 +363,8 @@ export function EventHubEditForm({
             setEventCapacity={setEventCapacity!}
             setEventVacancy={setEventVacancy!}
             setEventPrice={setEventPrice!}
+            onPersistTicketTypes={onPersistTicketTypes}
+            hideFormSelector={hideTicketTypeFormSelector}
           />
         </Section>
       ) : null}
@@ -401,7 +407,7 @@ export function EventHubEditForm({
             <span className="text-xs font-medium text-foreground-muted font-sans">Event link</span>
             <FieldWithIcon icon={<LinkIcon className="h-4 w-4" aria-hidden />}>
               <input
-                value={eventLink}
+                value={eventLink ?? ""}
                 onChange={(e) => setEventLink(e.target.value)}
                 placeholder="https://"
                 className={fieldClass}

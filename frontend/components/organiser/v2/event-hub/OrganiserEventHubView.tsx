@@ -27,7 +27,7 @@ import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
-import { Order } from "@/interfaces/OrderTypes";
+import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
@@ -39,7 +39,7 @@ import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtil
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Shared event hub body — production route + welcome twin.
@@ -52,6 +52,7 @@ export function OrganiserEventHubView() {
 
   const [section, setSection] = useState<EventHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
+  const hasAppliedPendingLandingRef = useRef(false);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState(true);
   const [pauseUpdating, setPauseUpdating] = useState(false);
@@ -89,6 +90,8 @@ export function OrganiserEventHubView() {
     if (!user.userId) return;
 
     let isActive = true;
+    hasAppliedPendingLandingRef.current = false;
+    setSection("Details");
 
     const fetchEvent = async () => {
       try {
@@ -115,7 +118,7 @@ export function OrganiserEventHubView() {
         setEventPaused(event.paused);
         setEventPaymentsActive(event.paymentsActive);
         setEventRegistrationDeadline(event.registrationDeadline);
-        setEventEventLink(event.eventLink);
+        setEventEventLink(event.eventLink ?? "");
         setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
@@ -147,6 +150,16 @@ export function OrganiserEventHubView() {
         });
         if (!isActive) return;
         setOrderTicketsMap(nextOrderTicketsMap);
+
+        if (!hasAppliedPendingLandingRef.current) {
+          hasAppliedPendingLandingRef.current = true;
+          const hasPendingBooking = allOrders.some(
+            (order) => order.status === OrderAndTicketStatus.PENDING
+          );
+          if (hasPendingBooking) {
+            setSection("Registrations");
+          }
+        }
 
         try {
           await calculateNetSales(nextOrderTicketsMap);
@@ -260,7 +273,7 @@ export function OrganiserEventHubView() {
               if (data.registrationDeadline !== undefined) {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
-              if (data.eventLink !== undefined) setEventEventLink(data.eventLink);
+              if (data.eventLink !== undefined) setEventEventLink(data.eventLink ?? "");
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);

@@ -11,12 +11,18 @@ import { Logger } from "@/observability/logger";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
+  getAttachedFormIdsForEvent,
   getSortedEventTicketTypes,
   hasEventTicketTypes,
   resolveCheckoutTicketTypeId,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getForm, getFormResponse } from "@/services/src/forms/formsServices";
+import { getForm, loadAttendeeFormResponse } from "@/services/src/forms/formsServices";
+import {
+  collectAttendeeFormResponseLookups,
+  filterOrderTicketsMapByTicketType,
+  ticketMatchesEventTicketType,
+} from "@/services/src/forms/formsUtils/formsUtils";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
@@ -28,6 +34,7 @@ import {
   ChevronDownIcon,
   ExclamationCircleIcon,
   PlusIcon,
+  TicketIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
@@ -47,6 +54,26 @@ import {
 
 type TabType = "approved" | "pending" | "declined";
 type DeepPanel = "formResponses" | "editTickets" | null;
+
+function countTicketsInOrderMap(
+  orderTicketsMap: Map<Order, Ticket[]>,
+  eventTicketTypeId?: EventTicketTypeId | null,
+  ticketTypeName?: string | null
+): number {
+  let count = 0;
+  orderTicketsMap.forEach((tickets) => {
+    for (const ticket of tickets) {
+      if (
+        eventTicketTypeId &&
+        !ticketMatchesEventTicketType(ticket, eventTicketTypeId, ticketTypeName)
+      ) {
+        continue;
+      }
+      count += 1;
+    }
+  });
+  return count;
+}
 
 type EventHubAttendeesProps = {
   eventMetadata: EventMetadata;
@@ -97,30 +124,34 @@ function AttendeeFormResponsesPanel({
   const logger = useMemo(() => new Logger("AttendeeFormResponsesPanel"), []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
-  const [formId, setFormId] = useState<FormId | null>(null);
-  const [form, setForm] = useState<Form | null>(null);
+  const [groups, setGroups] = useState<
+    { formId: FormId; form: Form; formResponses: FormResponse[] }[]
+  >([]);
 
   const scopedMap = useMemo(() => {
     const entry = getEntryFromOrderTicketsMapByOrderId(orderTicketsMap, order.orderId);
     return entry ? new Map([entry]) : new Map<Order, Ticket[]>();
   }, [order.orderId, orderTicketsMap]);
 
-  const orderFormResponseIds = useMemo(() => {
-    const ids = new Set<FormResponseId>();
+  const lookups = useMemo(() => {
+    const collected: ReturnType<typeof collectAttendeeFormResponseLookups> = [];
+    const seen = new Set<FormResponseId>();
     scopedMap.forEach((tickets, scopedOrder) => {
-      tickets
-        .map((ticket) => ticket.formResponseId)
-        .filter((formResponseId): formResponseId is FormResponseId => formResponseId !== null)
-        .forEach((formResponseId) => ids.add(formResponseId));
-
       const legacyAttendee =
-        eventMetadata.purchaserMap?.[getPurchaserEmailHash(scopedOrder.email)]?.attendees?.[scopedOrder.fullName];
-      const legacyFormResponseIds = legacyAttendee?.formResponseIds ?? [];
-      legacyFormResponseIds.forEach((formResponseId: string) => ids.add(formResponseId as FormResponseId));
+        eventMetadata.purchaserMap?.[getPurchaserEmailHash(scopedOrder.email)]?.attendees?.[
+          scopedOrder.fullName
+        ];
+      const legacyIds = legacyAttendee?.formResponseIds ?? [];
+      for (const lookup of collectAttendeeFormResponseLookups(eventData, tickets, legacyIds)) {
+        if (seen.has(lookup.formResponseId)) {
+          continue;
+        }
+        seen.add(lookup.formResponseId);
+        collected.push(lookup);
+      }
     });
-    return ids;
-  }, [eventMetadata.purchaserMap, scopedMap]);
+    return collected;
+  }, [eventData, eventMetadata.purchaserMap, scopedMap]);
 
   useEffect(() => {
     const fetchFormResponses = async () => {
@@ -128,24 +159,34 @@ function AttendeeFormResponsesPanel({
         setLoading(true);
         setError(null);
 
-        if (!eventData.formId) {
-          setFormId(null);
-          setForm(null);
-          setFormResponses([]);
+        if (lookups.length === 0) {
+          setGroups([]);
           setLoading(false);
           return;
         }
 
-        setFormId(eventData.formId);
-        const loadedForm = await getForm(eventData.formId);
-        setForm(loadedForm);
-
-        const fetchedFormResponses = await Promise.all(
-          Array.from(orderFormResponseIds).map((formResponseId) =>
-            getFormResponse(eventData.formId as FormId, eventData.eventId, formResponseId)
+        const loaded = await Promise.all(
+          lookups.map((lookup) =>
+            loadAttendeeFormResponse(eventData, eventData.eventId, lookup.formResponseId, lookup.formId)
           )
         );
-        setFormResponses(fetchedFormResponses);
+
+        const byFormId = new Map<FormId, FormResponse[]>();
+        for (const item of loaded) {
+          if (!item) {
+            continue;
+          }
+          const existing = byFormId.get(item.formId) ?? [];
+          existing.push(item.formResponse);
+          byFormId.set(item.formId, existing);
+        }
+
+        const nextGroups: { formId: FormId; form: Form; formResponses: FormResponse[] }[] = [];
+        for (const [formId, formResponses] of byFormId) {
+          const form = await getForm(formId);
+          nextGroups.push({ formId, form, formResponses });
+        }
+        setGroups(nextGroups);
       } catch (err) {
         logger.error(`Failed to load form responses: ${err}`);
         setError("Failed to load form responses");
@@ -155,7 +196,9 @@ function AttendeeFormResponsesPanel({
     };
 
     void fetchFormResponses();
-  }, [eventData.eventId, eventData.formId, logger, orderFormResponseIds]);
+  }, [eventData, lookups, logger]);
+
+  const hasAnyAttachedForm = getAttachedFormIdsForEvent(eventData).length > 0;
 
   if (loading) {
     return <p className="text-sm text-foreground-muted font-sans py-8 text-center">Loading form responses…</p>;
@@ -163,40 +206,38 @@ function AttendeeFormResponsesPanel({
   if (error) {
     return <p className="text-sm text-danger font-sans py-8 text-center">{error}</p>;
   }
-  if (!formId) {
-    return <p className="text-sm text-foreground-muted font-sans py-8 text-center">No form is attached to this event.</p>;
-  }
-  if (!form) {
-    return (
-      <div className="py-8 text-center space-y-1">
-        <p className="text-sm text-foreground-muted font-sans">No form found for this event.</p>
-        <p className="text-xs text-foreground-muted font-sans">Please contact SPORTSHUB support.</p>
-      </div>
-    );
-  }
-  if (formResponses.length === 0) {
+
+  if (groups.length === 0) {
     return (
       <p className="text-sm text-foreground-muted font-sans py-8 text-center">
-        No form responses found for this attendee.
+        {lookups.length === 0
+          ? hasAnyAttachedForm
+            ? "No form responses found for this attendee."
+            : "No form is attached to this event."
+          : "No form responses found for this attendee."}
       </p>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-foreground-muted font-sans">
-        {order.fullName || "Attendee"}
-        {form.title ? ` · ${form.title}` : ""}
-      </p>
-      <FormResponsesTable
-        formResponses={formResponses}
-        formId={formId}
-        form={form}
-        eventId={eventData.eventId}
-        orderTicketsMap={scopedMap}
-        showPurchaserColumn={false}
-        flush
-      />
+    <div className="space-y-6">
+      <p className="text-xs text-foreground-muted font-sans">{order.fullName || "Attendee"}</p>
+      {groups.map((group) => (
+        <div key={group.formId} className="space-y-2">
+          {group.form.title ? (
+            <p className="text-xs text-foreground-muted font-sans">Form: {group.form.title}</p>
+          ) : null}
+          <FormResponsesTable
+            formResponses={group.formResponses}
+            formId={group.formId}
+            form={group.form}
+            eventId={eventData.eventId}
+            orderTicketsMap={scopedMap}
+            showPurchaserColumn={false}
+            flush
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -330,8 +371,12 @@ export function EventHubAttendees({
     () => getSortedEventTicketTypes(eventData.eventTicketTypes),
     [eventData.eventTicketTypes]
   );
-  const showTypeSelector = hasEventTicketTypes(eventData) && ticketTypes.length > 1;
+  const usesTicketTypes = hasEventTicketTypes(eventData);
+  const showTypeSelector = usesTicketTypes && ticketTypes.length > 1;
+  const showListTypeFilter = usesTicketTypes && ticketTypes.length > 1;
   const [addTicketTypeId, setAddTicketTypeId] = useState<EventTicketTypeId | null>(null);
+  /** null = All ticket types */
+  const [listTicketTypeId, setListTicketTypeId] = useState<EventTicketTypeId | null>(null);
 
   useEffect(() => {
     if (!showTypeSelector) {
@@ -341,11 +386,22 @@ export function EventHubAttendees({
     setAddTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
   }, [showTypeSelector, ticketTypes]);
 
+  useEffect(() => {
+    if (!listTicketTypeId) {
+      return;
+    }
+    if (!ticketTypes.some((t) => t.eventTicketTypeId === listTicketTypeId)) {
+      setListTicketTypeId(null);
+    }
+  }, [listTicketTypeId, ticketTypes]);
+
+  const selectedListTicketType = ticketTypes.find((t) => t.eventTicketTypeId === listTicketTypeId);
+
   const addTypeVacancy = showTypeSelector
     ? ticketTypes.find((t) => t.eventTicketTypeId === addTicketTypeId)?.eventTicketType.vacancy ??
       eventData.vacancy
     : eventData.vacancy;
-  const [activeTab, setActiveTab] = useState<TabType>("approved");
+  const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [approvedMap, setApprovedMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [pendingMap, setPendingMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [declinedMap, setDeclinedMap] = useState<Map<Order, Ticket[]>>(new Map());
@@ -538,8 +594,39 @@ export function EventHubAttendees({
     }
   };
 
+  const filteredApprovedMap = useMemo(() => {
+    if (!usesTicketTypes || !listTicketTypeId) return approvedMap;
+    return filterOrderTicketsMapByTicketType(
+      approvedMap,
+      listTicketTypeId,
+      selectedListTicketType?.eventTicketType.name
+    );
+  }, [approvedMap, listTicketTypeId, selectedListTicketType, usesTicketTypes]);
+
+  const filteredPendingMap = useMemo(() => {
+    if (!usesTicketTypes || !listTicketTypeId) return pendingMap;
+    return filterOrderTicketsMapByTicketType(
+      pendingMap,
+      listTicketTypeId,
+      selectedListTicketType?.eventTicketType.name
+    );
+  }, [listTicketTypeId, pendingMap, selectedListTicketType, usesTicketTypes]);
+
+  const filteredDeclinedMap = useMemo(() => {
+    if (!usesTicketTypes || !listTicketTypeId) return declinedMap;
+    return filterOrderTicketsMapByTicketType(
+      declinedMap,
+      listTicketTypeId,
+      selectedListTicketType?.eventTicketType.name
+    );
+  }, [declinedMap, listTicketTypeId, selectedListTicketType, usesTicketTypes]);
+
   const activeMap =
-    activeTab === "approved" ? approvedMap : activeTab === "pending" ? pendingMap : declinedMap;
+    activeTab === "approved"
+      ? filteredApprovedMap
+      : activeTab === "pending"
+        ? filteredPendingMap
+        : filteredDeclinedMap;
 
   const orders = useMemo(() => {
     return Array.from(activeMap.keys()).sort((a, b) => a.fullName.localeCompare(b.fullName));
@@ -551,8 +638,39 @@ export function EventHubAttendees({
       []
     : [];
 
-  const capacity = eventData.capacity || 0;
-  const goingCount = approvedMap.size;
+  const approvedTicketCount = useMemo(
+    () =>
+      countTicketsInOrderMap(
+        filteredApprovedMap,
+        listTicketTypeId,
+        selectedListTicketType?.eventTicketType.name
+      ),
+    [filteredApprovedMap, listTicketTypeId, selectedListTicketType]
+  );
+  const pendingTicketCount = useMemo(
+    () =>
+      countTicketsInOrderMap(
+        filteredPendingMap,
+        listTicketTypeId,
+        selectedListTicketType?.eventTicketType.name
+      ),
+    [filteredPendingMap, listTicketTypeId, selectedListTicketType]
+  );
+  const declinedTicketCount = useMemo(
+    () =>
+      countTicketsInOrderMap(
+        filteredDeclinedMap,
+        listTicketTypeId,
+        selectedListTicketType?.eventTicketType.name
+      ),
+    [filteredDeclinedMap, listTicketTypeId, selectedListTicketType]
+  );
+
+  const capacity = selectedListTicketType
+    ? selectedListTicketType.eventTicketType.capacity
+    : eventData.capacity || 0;
+  // Match the Approved tab — capacity−vacancy also counts pending holds and can drift across types.
+  const goingCount = approvedTicketCount;
   const fillPercent = capacity > 0 ? Math.min(100, Math.round((goingCount / capacity) * 100)) : 0;
   const statusLabel =
     activeTab === "approved" ? "Going" : activeTab === "pending" ? "Pending" : "Declined";
@@ -576,7 +694,11 @@ export function EventHubAttendees({
         <p className="text-sm font-semibold text-foreground font-sans tabular-nums">
           {goingCount} Going
           {capacity > 0 ? (
-            <span className="text-foreground-muted font-normal"> · {capacity} capacity</span>
+            <span className="text-foreground-muted font-normal">
+              {" "}
+              · {capacity} capacity
+              {selectedListTicketType ? ` · ${selectedListTicketType.eventTicketType.name}` : ""}
+            </span>
           ) : null}
         </p>
         <div
@@ -601,15 +723,42 @@ export function EventHubAttendees({
           setExpandedOrderId(null);
         }}
         tabs={[
-          { id: "approved", label: "Approved", count: approvedMap.size },
-          { id: "pending", label: "Pending", count: pendingMap.size },
-          { id: "declined", label: "Declined", count: declinedMap.size },
+          { id: "approved", label: "Approved", count: approvedTicketCount },
+          { id: "pending", label: "Pending", count: pendingTicketCount },
+          { id: "declined", label: "Declined", count: declinedTicketCount },
         ]}
         action={
-          <EventHubPrimaryButton onClick={() => setIsAddOpen(true)}>
-            <PlusIcon className="h-4 w-4" aria-hidden />
-            Add attendee
-          </EventHubPrimaryButton>
+          <div className="flex items-center gap-2">
+            {showListTypeFilter ? (
+              <label className="relative inline-flex items-center">
+                <span className="sr-only">Filter by ticket type</span>
+                <TicketIcon
+                  className="pointer-events-none absolute left-2.5 h-4 w-4 text-foreground-muted"
+                  aria-hidden
+                />
+                <select
+                  value={listTicketTypeId ?? ""}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setListTicketTypeId(next ? (next as EventTicketTypeId) : null);
+                    setExpandedOrderId(null);
+                  }}
+                  className="max-w-[10.5rem] appearance-none rounded-xl border border-border bg-background py-2 pl-8 pr-7 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                >
+                  <option value="">All</option>
+                  {ticketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                    <option key={eventTicketTypeId} value={eventTicketTypeId}>
+                      {eventTicketType.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <EventHubPrimaryButton onClick={() => setIsAddOpen(true)}>
+              <PlusIcon className="h-4 w-4" aria-hidden />
+              Add attendee
+            </EventHubPrimaryButton>
+          </div>
         }
       />
 
@@ -625,10 +774,16 @@ export function EventHubAttendees({
         ) : orders.length === 0 ? (
           <EventHubEmpty>
             {activeTab === "approved"
-              ? "No approved attendees yet. Add someone, or wait for bookings to come in."
+              ? selectedListTicketType
+                ? `No approved attendees for "${selectedListTicketType.eventTicketType.name}" yet.`
+                : "No approved attendees yet. Add someone, or wait for bookings to come in."
               : activeTab === "pending"
-                ? "No pending bookings. New requests that need approval will show up here."
-                : "No declined bookings."}
+                ? selectedListTicketType
+                  ? `No pending bookings for "${selectedListTicketType.eventTicketType.name}".`
+                  : "No pending bookings. New requests that need approval will show up here."
+                : selectedListTicketType
+                  ? `No declined bookings for "${selectedListTicketType.eventTicketType.name}".`
+                  : "No declined bookings."}
           </EventHubEmpty>
         ) : (
           <ul className="divide-y divide-border -mx-1">
@@ -693,7 +848,21 @@ export function EventHubAttendees({
                       <dl className="space-y-2">
                         <div className="min-w-0">
                           <dt className="text-xs font-medium text-foreground-muted font-sans">Order ID</dt>
-                          <dd className="mt-0.5 text-xs text-foreground font-mono break-all">{order.orderId}</dd>
+                          <dd className="mt-0.5 text-xs text-foreground font-mono break-all">
+                            {!order.orderId.startsWith("legacy-") && !order.orderId.startsWith("manual-") ? (
+                              <a
+                                href={`/order/${order.orderId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {order.orderId}
+                              </a>
+                            ) : (
+                              order.orderId
+                            )}
+                          </dd>
                         </div>
                         <div className="min-w-0">
                           <dt className="text-xs font-medium text-foreground-muted font-sans">

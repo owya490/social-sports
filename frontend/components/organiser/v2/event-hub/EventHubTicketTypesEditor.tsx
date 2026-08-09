@@ -7,6 +7,7 @@ import {
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
+import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
@@ -14,6 +15,7 @@ import {
   applyCapacityChange,
   countSoldTicketsForType,
   createEventTicketType,
+  GENERAL_TICKET_TYPE_NAME,
   getSortedEventTicketTypes,
   syncEventAggregatesFromTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
@@ -32,6 +34,10 @@ type EventHubTicketTypesEditorProps = {
   setEventCapacity: (capacity: number) => void;
   setEventVacancy: (vacancy: number) => void;
   setEventPrice: (price: number) => void;
+  /** When set (e.g. recurring templates), saves via this instead of updateEventById. */
+  onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
+  /** Hide form picker when forms are managed elsewhere (e.g. event hub Registration). */
+  hideFormSelector?: boolean;
 };
 
 export function EventHubTicketTypesEditor({
@@ -43,6 +49,8 @@ export function EventHubTicketTypesEditor({
   setEventCapacity,
   setEventVacancy,
   setEventPrice,
+  onPersistTicketTypes,
+  hideFormSelector = true,
 }: EventHubTicketTypesEditorProps) {
   const { user } = useUser();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -53,17 +61,25 @@ export function EventHubTicketTypesEditor({
   const sortedTypes = useMemo(() => getSortedEventTicketTypes(eventTicketTypes), [eventTicketTypes]);
   const editingType = editingId && eventTicketTypes ? eventTicketTypes[editingId] : undefined;
 
-  const persistTicketTypes = async (nextTypes: EventTicketTypesMap) => {
+  const persistTicketTypes = async (
+    nextTypes: EventTicketTypesMap,
+    options?: { syncEventFormId?: boolean; formId?: FormId | null }
+  ) => {
     setError(null);
     setSaving(true);
     try {
       const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
-      await updateEventById(eventId, {
-        eventTicketTypes: nextTypes,
-        price: aggregates.price,
-        capacity: aggregates.capacity,
-        vacancy: aggregates.vacancy,
-      });
+      if (onPersistTicketTypes) {
+        await onPersistTicketTypes(nextTypes);
+      } else {
+        await updateEventById(eventId, {
+          eventTicketTypes: nextTypes,
+          price: aggregates.price,
+          capacity: aggregates.capacity,
+          vacancy: aggregates.vacancy,
+          ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
+        });
+      }
       setEventTicketTypes(nextTypes);
       setEventPrice(aggregates.price);
       setEventCapacity(aggregates.capacity);
@@ -79,6 +95,7 @@ export function EventHubTicketTypesEditor({
   const handleSave = async (values: EventTicketTypeFormValues) => {
     const price = values.priceDollars <= 0 ? 0 : dollarsToCents(values.priceDollars);
     const current = eventTicketTypes ?? {};
+    const syncEventFormId = !hideFormSelector && values.name === GENERAL_TICKET_TYPE_NAME;
 
     if (editingId && current[editingId]) {
       const existing = current[editingId];
@@ -91,10 +108,13 @@ export function EventHubTicketTypesEditor({
         },
         values.capacity
       );
-      await persistTicketTypes({
-        ...current,
-        [editingId]: updatedType,
-      });
+      await persistTicketTypes(
+        {
+          ...current,
+          [editingId]: updatedType,
+        },
+        { syncEventFormId, formId: values.formId }
+      );
     } else {
       const eventTicketType = createEventTicketType({
         name: values.name,
@@ -102,10 +122,13 @@ export function EventHubTicketTypesEditor({
         capacity: values.capacity,
         formId: values.formId,
       });
-      await persistTicketTypes({
-        ...current,
-        [eventTicketType.id]: eventTicketType,
-      });
+      await persistTicketTypes(
+        {
+          ...current,
+          [eventTicketType.id]: eventTicketType,
+        },
+        { syncEventFormId, formId: values.formId }
+      );
     }
     setDialogOpen(false);
     setEditingId(null);
@@ -143,7 +166,9 @@ export function EventHubTicketTypesEditor({
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground font-sans">Ticket types</p>
             <p className="text-xs text-foreground-muted font-sans mt-0.5">
-              Set price and capacity per type. Attach forms under Forms.
+              {hideFormSelector
+                ? "Set price and capacity per type. Attach forms under Registration."
+                : "Set price, capacity, and forms per type."}
             </p>
           </div>
         </div>
@@ -217,7 +242,7 @@ export function EventHubTicketTypesEditor({
           setEditingId(null);
         }}
         title={editingId ? "Edit Ticket Type" : "Add Ticket Type"}
-        hideFormSelector
+        hideFormSelector={hideFormSelector}
         initialValues={
           editingType
             ? {

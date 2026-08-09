@@ -73,12 +73,14 @@ public class WebhookService {
     }
     
     /**
-     * Retrieves form response IDs from a fulfilment session on a best-effort basis.
-     * Returns an empty list if the session is not found or has no form entities.
-     * 
+     * Retrieves form response IDs from a fulfilment session.
+     * Reads the raw Firestore entity map so ticket attachment does not depend on full
+     * FulfilmentSession.fromFirestore success (which can fail on embedded EventData and
+     * would previously be swallowed, leaving ticket.formResponseId null).
+     *
      * @param transaction The Firestore transaction
      * @param fulfilmentSessionId The fulfilment session ID
-     * @return List of form response IDs
+     * @return List of form response IDs in fulfilment entity order
      */
     private static List<String> getFormResponseIdsFromFulfilmentSession(
             Transaction transaction, String fulfilmentSessionId) {
@@ -98,19 +100,31 @@ public class WebhookService {
                 logger.error("Fulfilment session not found: {}. Skipping form response IDs.", fulfilmentSessionId);
                 return new ArrayList<>();
             }
-            
-            FulfilmentSession fulfilmentSession = FulfilmentSession.fromFirestore(fulfilmentSessionSnapshot);
-            if (fulfilmentSession.getFulfilmentEntityMap() == null
-                    || fulfilmentSession.getFulfilmentEntityMap().isEmpty()) {
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> fulfilmentEntityMap =
+                    (Map<String, Object>) fulfilmentSessionSnapshot.get("fulfilmentEntityMap");
+            @SuppressWarnings("unchecked")
+            List<String> fulfilmentEntityIds =
+                    (List<String>) fulfilmentSessionSnapshot.get("fulfilmentEntityIds");
+
+            if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
                 logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
                 return new ArrayList<>();
             }
 
-            List<String> formResponseIds = extractFormResponseIds(fulfilmentSession);
+            List<String> formResponseIds = extractFormResponseIds(fulfilmentEntityMap, fulfilmentEntityIds);
             
             if (!formResponseIds.isEmpty()) {
                 logger.info("Retrieved {} form response IDs from fulfilment session {}: {}", 
                            formResponseIds.size(), fulfilmentSessionId, formResponseIds);
+            } else if (rawFulfilmentEntityMapHasFormsEntities(fulfilmentEntityMap, fulfilmentEntityIds)) {
+                // Buyer completed FORMS steps but entities still have null formResponseId —
+                // tickets would otherwise be created without a link to submitted responses.
+                logger.error(
+                        "Fulfilment session {} has FORMS entities but no formResponseId values. "
+                                + "Tickets will be created without formResponseId.",
+                        fulfilmentSessionId);
             } else {
                 logger.info("No form response IDs found in fulfilment session {}", fulfilmentSessionId);
             }
@@ -118,46 +132,106 @@ public class WebhookService {
             return formResponseIds;
             
         } catch (Exception e) {
-            logger.warn("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
-                       "Continuing without form responses.", fulfilmentSessionId, e.getMessage());
+            logger.error("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
+                       "Continuing without form responses.", fulfilmentSessionId, e.getMessage(), e);
             return new ArrayList<>();
         }
     }
 
+    /**
+     * Extracts form response IDs from a typed fulfilment session (tests / callers that
+     * already have a deserialized session).
+     */
     static List<String> extractFormResponseIds(FulfilmentSession fulfilmentSession) {
-
-        List<String> formResponseIds = new ArrayList<>();
         if (fulfilmentSession == null
                 || fulfilmentSession.getFulfilmentEntityMap() == null
                 || fulfilmentSession.getFulfilmentEntityMap().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Map<String, Object> rawEntityMap = new HashMap<>();
+        for (Map.Entry<String, FulfilmentEntity> entry : fulfilmentSession.getFulfilmentEntityMap().entrySet()) {
+            FulfilmentEntity entity = entry.getValue();
+            if (entity instanceof FormsFulfilmentEntity formsEntity) {
+                Map<String, Object> entityData = new HashMap<>();
+                entityData.put("type", "FORMS");
+                entityData.put("formResponseId", formsEntity.getFormResponseId());
+                rawEntityMap.put(entry.getKey(), entityData);
+            } else if (entity != null && entity.getType() != null) {
+                rawEntityMap.put(entry.getKey(), Map.of("type", entity.getType().name()));
+            }
+        }
+        return extractFormResponseIds(rawEntityMap, fulfilmentSession.getFulfilmentEntityIds());
+    }
+
+    /**
+     * Extracts formResponseIds from the raw Firestore fulfilmentEntityMap, preferring
+     * fulfilmentEntityIds order so tickets line up with the forms the buyer filled.
+     */
+    static List<String> extractFormResponseIds(
+            Map<String, Object> fulfilmentEntityMap,
+            List<String> fulfilmentEntityIds) {
+
+        List<String> formResponseIds = new ArrayList<>();
+        if (fulfilmentEntityMap == null || fulfilmentEntityMap.isEmpty()) {
             return formResponseIds;
         }
 
-        Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
-        List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
         if (fulfilmentEntityIds != null && !fulfilmentEntityIds.isEmpty()) {
             for (String fulfilmentEntityId : fulfilmentEntityIds) {
-                appendFormResponseId(formResponseIds, fulfilmentEntityMap.get(fulfilmentEntityId));
+                appendFormResponseIdFromRawEntity(formResponseIds, fulfilmentEntityMap.get(fulfilmentEntityId));
             }
             return formResponseIds;
         }
 
-        for (FulfilmentEntity fulfilmentEntity : fulfilmentEntityMap.values()) {
-            appendFormResponseId(formResponseIds, fulfilmentEntity);
+        for (Object entityValue : fulfilmentEntityMap.values()) {
+            appendFormResponseIdFromRawEntity(formResponseIds, entityValue);
         }
 
         return formResponseIds;
     }
 
-    private static void appendFormResponseId(List<String> formResponseIds, FulfilmentEntity fulfilmentEntity) {
-        if (!(fulfilmentEntity instanceof FormsFulfilmentEntity formsFulfilmentEntity)) {
+    private static void appendFormResponseIdFromRawEntity(List<String> formResponseIds, Object entityValue) {
+        if (!(entityValue instanceof Map<?, ?> entityData)) {
             return;
         }
 
-        String formResponseId = formsFulfilmentEntity.getFormResponseId();
-        if (formResponseId != null && !formResponseId.isEmpty()) {
-            formResponseIds.add(formResponseId);
+        Object type = entityData.get("type");
+        if (type == null || !"FORMS".equals(type.toString())) {
+            return;
         }
+
+        Object formResponseId = entityData.get("formResponseId");
+        if (formResponseId instanceof String formResponseIdString && !formResponseIdString.isEmpty()) {
+            formResponseIds.add(formResponseIdString);
+        }
+    }
+
+    private static boolean rawFulfilmentEntityMapHasFormsEntities(
+            Map<String, Object> fulfilmentEntityMap,
+            List<String> fulfilmentEntityIds) {
+        if (fulfilmentEntityIds != null && !fulfilmentEntityIds.isEmpty()) {
+            for (String fulfilmentEntityId : fulfilmentEntityIds) {
+                if (isRawFormsEntity(fulfilmentEntityMap.get(fulfilmentEntityId))) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        for (Object entityValue : fulfilmentEntityMap.values()) {
+            if (isRawFormsEntity(entityValue)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isRawFormsEntity(Object entityValue) {
+        if (!(entityValue instanceof Map<?, ?> entityData)) {
+            return false;
+        }
+        Object type = entityData.get("type");
+        return type != null && "FORMS".equals(type.toString());
     }
     
     /**
