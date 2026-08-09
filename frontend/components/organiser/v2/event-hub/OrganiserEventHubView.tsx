@@ -32,6 +32,7 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
@@ -107,14 +108,15 @@ export function OrganiserEventHubView() {
         setEventName(event.name);
         setEventStartDate(event.startDate);
         setEventEndDate(event.endDate);
-        setEventVacancy(event.vacancy);
+        const inventory = resolveEventInventory(event);
+        setEventVacancy(inventory.vacancy);
         setEventDescription(event.description);
         setEventLocation(event.location);
         setEventSport(event.sport);
-        setEventPrice(event.price);
+        setEventPrice(inventory.price);
         setEventImage(event.image);
         setEventThumbnail(event.thumbnail);
-        setEventCapacity(event.capacity);
+        setEventCapacity(inventory.capacity);
         setEventPaused(event.paused);
         setEventPaymentsActive(event.paymentsActive);
         setEventRegistrationDeadline(event.registrationDeadline);
@@ -131,7 +133,7 @@ export function OrganiserEventHubView() {
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
             event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
-            event.capacity
+            inventory.capacity
           )
         );
 
@@ -254,10 +256,11 @@ export function OrganiserEventHubView() {
             setEventTicketTypes={(types) => {
               setEventTicketTypes(types);
               setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+              const inventory = resolveEventInventory({ eventTicketTypes: types });
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
             }}
-            setEventCapacity={setEventCapacity}
-            setEventVacancy={setEventVacancy}
-            setEventPrice={setEventPrice}
             updateData={async (id, data) => {
               await updateEventById(id, data);
               bustEventsLocalStorageCache();
@@ -265,9 +268,6 @@ export function OrganiserEventHubView() {
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);
               if (data.sport !== undefined) setEventSport(data.sport);
-              if (data.price !== undefined) setEventPrice(data.price);
-              if (data.capacity !== undefined) setEventCapacity(data.capacity);
-              if (data.vacancy !== undefined) setEventVacancy(data.vacancy);
               if (data.startDate !== undefined) setEventStartDate(data.startDate);
               if (data.endDate !== undefined) setEventEndDate(data.endDate);
               if (data.registrationDeadline !== undefined) {
@@ -289,6 +289,14 @@ export function OrganiserEventHubView() {
             eventId={eventId}
             orderTicketsMap={orderTicketsMap}
             setEventVacancy={setEventVacancy}
+            onEventRefresh={(event) => {
+              setEventData(event);
+              setEventTicketTypes(event.eventTicketTypes);
+              const inventory = resolveEventInventory(event);
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
+            }}
             setOrderTicketsMap={setOrderTicketsMap}
           />
         )}
@@ -301,6 +309,10 @@ export function OrganiserEventHubView() {
             setEventTicketTypes={(types) => {
               setEventTicketTypes(types);
               setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+              const inventory = resolveEventInventory({ eventTicketTypes: types });
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
             }}
           />
         )}

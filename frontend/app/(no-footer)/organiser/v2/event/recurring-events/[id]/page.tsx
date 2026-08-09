@@ -35,6 +35,7 @@ import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils
 import {
   findGeneralAdmissionTicketType,
   GENERAL_TICKET_TYPE_NAME,
+  resolveEventInventory,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import {
   calculateRecurrenceEnded,
@@ -113,14 +114,15 @@ export default function OrganiserRecurringHubV2Page() {
         setEventName(eventData.name);
         setEventStartDate(eventData.startDate);
         setEventEndDate(eventData.endDate);
-        setEventVacancy(eventData.vacancy);
+        const inventory = resolveEventInventory(eventData);
+        setEventVacancy(inventory.vacancy);
         setEventDescription(eventData.description);
         setEventLocation(eventData.location);
         setEventSport(eventData.sport);
-        setEventPrice(eventData.price);
+        setEventPrice(inventory.price);
         setEventImage(eventData.image);
         setEventThumbnail(eventData.thumbnail);
-        setEventCapacity(eventData.capacity);
+        setEventCapacity(inventory.capacity);
         setEventIsActive(eventData.isActive);
         setEventRegistrationDeadline(eventData.registrationDeadline);
         setEventEventLink(eventData.eventLink ?? "");
@@ -137,7 +139,7 @@ export default function OrganiserRecurringHubV2Page() {
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
             eventData.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
-            eventData.capacity
+            inventory.capacity
           )
         );
 
@@ -253,10 +255,13 @@ export default function OrganiserRecurringHubV2Page() {
             isPrivate={eventIsPrivate}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={EMPTY_ORDER_TICKETS_MAP}
-            setEventTicketTypes={setEventTicketTypes}
-            setEventCapacity={setEventCapacity}
-            setEventVacancy={setEventVacancy}
-            setEventPrice={setEventPrice}
+            setEventTicketTypes={(types) => {
+              setEventTicketTypes(types);
+              const inventory = resolveEventInventory({ eventTicketTypes: types });
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
+            }}
             onPersistTicketTypes={async (nextTypes) => {
               const general = findGeneralAdmissionTicketType(nextTypes);
               const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, {
@@ -276,9 +281,6 @@ export default function OrganiserRecurringHubV2Page() {
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);
               if (data.sport !== undefined) setEventSport(data.sport);
-              if (data.price !== undefined) setEventPrice(data.price);
-              if (data.capacity !== undefined) setEventCapacity(data.capacity);
-              if (data.vacancy !== undefined) setEventVacancy(data.vacancy);
               if (data.startDate !== undefined) setEventStartDate(data.startDate);
               if (data.endDate !== undefined) setEventEndDate(data.endDate);
               if (data.registrationDeadline !== undefined) {
@@ -288,7 +290,13 @@ export default function OrganiserRecurringHubV2Page() {
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);
-              if (data.eventTicketTypes !== undefined) setEventTicketTypes(data.eventTicketTypes);
+              if (data.eventTicketTypes !== undefined) {
+                setEventTicketTypes(data.eventTicketTypes);
+                const inventory = resolveEventInventory({ eventTicketTypes: data.eventTicketTypes });
+                setEventCapacity(inventory.capacity);
+                setEventVacancy(inventory.vacancy);
+                setEventPrice(inventory.price);
+              }
             }}
           />
         )}

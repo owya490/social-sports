@@ -54,9 +54,6 @@ type EventHubEditFormProps = {
   eventTicketTypes?: EventTicketTypesMap;
   orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
-  setEventCapacity?: (capacity: number) => void;
-  setEventVacancy?: (vacancy: number) => void;
-  setEventPrice?: (price: number) => void;
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   hideTicketTypeFormSelector?: boolean;
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
@@ -78,9 +75,6 @@ export function EventHubEditForm({
   eventTicketTypes,
   orderTicketsMap,
   setEventTicketTypes,
-  setEventCapacity,
-  setEventVacancy,
-  setEventPrice,
   onPersistTicketTypes,
   hideTicketTypeFormSelector = true,
   updateData,
@@ -257,9 +251,7 @@ export function EventHubEditForm({
   };
 
   const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
-  const canEditTicketTypes = Boolean(
-    orderTicketsMap && setEventTicketTypes && setEventCapacity && setEventVacancy && setEventPrice
-  );
+  const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
 
   return (
     <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-8">
@@ -360,9 +352,6 @@ export function EventHubEditForm({
             orderTicketsMap={orderTicketsMap!}
             isActive={isActive}
             setEventTicketTypes={setEventTicketTypes!}
-            setEventCapacity={setEventCapacity!}
-            setEventVacancy={setEventVacancy!}
-            setEventPrice={setEventPrice!}
             onPersistTicketTypes={onPersistTicketTypes}
             hideFormSelector={hideTicketTypeFormSelector}
           />

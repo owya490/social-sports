@@ -17,7 +17,6 @@ import {
   createEventTicketType,
   GENERAL_TICKET_TYPE_NAME,
   getSortedEventTicketTypes,
-  syncEventAggregatesFromTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { centsToDollars, dollarsToCents, getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -31,9 +30,6 @@ type EventHubTicketTypesEditorProps = {
   orderTicketsMap: Map<Order, Ticket[]>;
   isActive: boolean;
   setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
-  setEventCapacity: (capacity: number) => void;
-  setEventVacancy: (vacancy: number) => void;
-  setEventPrice: (price: number) => void;
   /** When set (e.g. recurring templates), saves via this instead of updateEventById. */
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Hide form picker when forms are managed elsewhere (e.g. event hub Registration). */
@@ -46,9 +42,6 @@ export function EventHubTicketTypesEditor({
   orderTicketsMap,
   isActive,
   setEventTicketTypes,
-  setEventCapacity,
-  setEventVacancy,
-  setEventPrice,
   onPersistTicketTypes,
   hideFormSelector = true,
 }: EventHubTicketTypesEditorProps) {
@@ -68,22 +61,15 @@ export function EventHubTicketTypesEditor({
     setError(null);
     setSaving(true);
     try {
-      const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
       if (onPersistTicketTypes) {
         await onPersistTicketTypes(nextTypes);
       } else {
         await updateEventById(eventId, {
           eventTicketTypes: nextTypes,
-          price: aggregates.price,
-          capacity: aggregates.capacity,
-          vacancy: aggregates.vacancy,
           ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
         });
       }
       setEventTicketTypes(nextTypes);
-      setEventPrice(aggregates.price);
-      setEventCapacity(aggregates.capacity);
-      setEventVacancy(aggregates.vacancy);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to save ticket types");
       throw e;

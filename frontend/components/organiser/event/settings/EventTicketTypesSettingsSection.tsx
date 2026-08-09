@@ -15,6 +15,7 @@ import {
   GENERAL_TICKET_TYPE_NAME,
   getSortedEventTicketTypes,
   hasEventTicketTypes,
+  resolveEventInventory,
   resolveFormIdForTicketType,
   syncEventAggregatesFromTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
@@ -73,19 +74,17 @@ export function EventTicketTypesSettingsSection({
     onSavingChange?.(true);
     setError(null);
     try {
-      const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
       if (onPersistTicketTypes) {
         await onPersistTicketTypes(nextTypes);
       } else {
         await updateEventById(eventId, {
           eventTicketTypes: nextTypes,
-          price: aggregates.price,
-          capacity: aggregates.capacity,
-          vacancy: aggregates.vacancy,
           ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
         });
       }
       setEventTicketTypes(nextTypes);
+      // Local organiser UI still mirrors aggregates for legacy banners; ticket types are source of truth in Firestore.
+      const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
       setEventPrice(aggregates.price);
       setEventCapacity(aggregates.capacity);
       setEventVacancy(aggregates.vacancy);
@@ -173,6 +172,7 @@ export function EventTicketTypesSettingsSection({
   };
 
   if (!hasEventTicketTypes({ eventTicketTypes })) {
+    const inventory = resolveEventInventory(eventData);
     return (
       <div className="flex flex-col gap-3 border border-gray-200 rounded-xl p-4 bg-white">
         <div>
@@ -182,7 +182,7 @@ export function EventTicketTypesSettingsSection({
             if inventory looks wrong.
           </p>
           <p className="text-xs text-gray-500 mt-2">
-            Current inventory: {getEventPriceDisplay(eventData.price)} · {eventData.vacancy} of {eventData.capacity}{" "}
+            Current inventory: {getEventPriceDisplay(inventory.price)} · {inventory.vacancy} of {inventory.capacity}{" "}
             remaining
           </p>
         </div>

@@ -10,6 +10,7 @@ import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/date
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
+  resolveEventInventory,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -28,7 +29,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { ImagePickerReveal } from "../shared/ImagePickerLoading";
 import { EVENT_HUB_EDIT_FORM_ID, EventHubEditForm } from "./EventHubEditForm";
@@ -45,6 +46,7 @@ type EventHubListingProps = {
   eventDescription: string;
   eventLocation: string;
   eventSport: string;
+  /** Legacy-only fallbacks when the event has no ticket types. */
   eventCapacity: number;
   eventVacancy: number;
   eventPrice: number;
@@ -57,9 +59,6 @@ type EventHubListingProps = {
   eventTicketTypes?: EventTicketTypesMap;
   orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
-  setEventCapacity?: (capacity: number) => void;
-  setEventVacancy?: (vacancy: number) => void;
-  setEventPrice?: (price: number) => void;
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
   mode?: "event" | "template";
@@ -87,9 +86,6 @@ export function EventHubListing({
   eventTicketTypes,
   orderTicketsMap,
   setEventTicketTypes,
-  setEventCapacity,
-  setEventVacancy,
-  setEventPrice,
   onPersistTicketTypes,
   mode = "event",
   updateData,
@@ -107,9 +103,19 @@ export function EventHubListing({
   const hostEmail = user.contactInformation?.email || "";
   const monthShort = loading ? "" : eventStartDate.toDate().toLocaleString("en-AU", { month: "short" }).toUpperCase();
   const dayNum = loading ? "" : String(eventStartDate.toDate().getDate());
-  const filled = Math.max(0, eventCapacity - eventVacancy);
-  const priceLabel = getEventPriceDisplay(eventPrice, true);
-  const capacityLabel = eventCapacity > 0 ? `${filled} / ${eventCapacity} spots` : "Capacity not set";
+  const inventory = useMemo(
+    () =>
+      resolveEventInventory({
+        eventTicketTypes,
+        price: eventPrice,
+        capacity: eventCapacity,
+        vacancy: eventVacancy,
+      }),
+    [eventCapacity, eventPrice, eventTicketTypes, eventVacancy]
+  );
+  const filled = Math.max(0, inventory.capacity - inventory.vacancy);
+  const priceLabel = getEventPriceDisplay(inventory.price, true);
+  const capacityLabel = inventory.capacity > 0 ? `${filled} / ${inventory.capacity} spots` : "Capacity not set";
   const publicHost = publicUrl.replace(/^https?:\/\//, "");
   const showPriceRow = !(
     hasEventTicketTypes({ eventTicketTypes }) && getSortedEventTicketTypes(eventTicketTypes).length > 1
@@ -379,9 +385,6 @@ export function EventHubListing({
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={orderTicketsMap}
             setEventTicketTypes={setEventTicketTypes}
-            setEventCapacity={setEventCapacity}
-            setEventVacancy={setEventVacancy}
-            setEventPrice={setEventPrice}
             onPersistTicketTypes={onPersistTicketTypes}
             hideTicketTypeFormSelector={!isTemplate}
             updateData={updateData}

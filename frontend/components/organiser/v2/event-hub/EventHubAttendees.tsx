@@ -15,6 +15,7 @@ import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
   resolveCheckoutTicketTypeId,
+  resolveEventInventory,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getForm, loadAttendeeFormResponse } from "@/services/src/forms/formsServices";
@@ -81,6 +82,8 @@ type EventHubAttendeesProps = {
   eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
+  /** Refresh hub inventory after attendee mutations that reload the event. */
+  onEventRefresh?: (event: EventData) => void;
   orderTicketsMap: Map<Order, Ticket[]>;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
 };
@@ -249,6 +252,7 @@ function AttendeeEditTicketsPanel({
   eventData,
   setEventMetadata,
   setEventVacancy,
+  onEventRefresh,
   setOrderTicketsMap,
   onClose,
 }: {
@@ -258,6 +262,7 @@ function AttendeeEditTicketsPanel({
   eventData: EventData;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
+  onEventRefresh?: (event: EventData) => void;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
   onClose: () => void;
 }) {
@@ -293,7 +298,11 @@ function AttendeeEditTicketsPanel({
         return next;
       });
       const updatedEventData = await getEventById(eventId);
-      setEventVacancy(updatedEventData.vacancy);
+      if (onEventRefresh) {
+        onEventRefresh(updatedEventData);
+      } else {
+        setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
+      }
       setEventMetadata((prev) => ({
         ...prev,
         completeTicketCount: prev.completeTicketCount - numTickets + parseInt(newNumTickets, 10),
@@ -306,6 +315,8 @@ function AttendeeEditTicketsPanel({
       setSaving(false);
     }
   };
+
+  const inventoryVacancy = resolveEventInventory(eventData).vacancy;
 
   return (
     <form id="event-hub-edit-tickets" className="space-y-4" onSubmit={handleSubmit}>
@@ -330,12 +341,12 @@ function AttendeeEditTicketsPanel({
               type="number"
               required
               min={0}
-              max={numTickets + eventData.vacancy}
+              max={numTickets + inventoryVacancy}
               value={newNumTickets}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);
                 if (!isNaN(value)) {
-                  setNewNumTickets(String(clampTicketQuantity(value, 0, numTickets + eventData.vacancy)));
+                  setNewNumTickets(String(clampTicketQuantity(value, 0, numTickets + inventoryVacancy)));
                 } else {
                   setNewNumTickets("0");
                 }
@@ -356,6 +367,7 @@ export function EventHubAttendees({
   eventId,
   eventData,
   setEventVacancy,
+  onEventRefresh,
   orderTicketsMap,
   setOrderTicketsMap,
 }: EventHubAttendeesProps) {
@@ -371,6 +383,7 @@ export function EventHubAttendees({
     () => getSortedEventTicketTypes(eventData.eventTicketTypes),
     [eventData.eventTicketTypes]
   );
+  const eventInventory = useMemo(() => resolveEventInventory(eventData), [eventData]);
   const usesTicketTypes = hasEventTicketTypes(eventData);
   const showTypeSelector = usesTicketTypes && ticketTypes.length > 1;
   const showListTypeFilter = usesTicketTypes && ticketTypes.length > 1;
@@ -399,8 +412,8 @@ export function EventHubAttendees({
 
   const addTypeVacancy = showTypeSelector
     ? ticketTypes.find((t) => t.eventTicketTypeId === addTicketTypeId)?.eventTicketType.vacancy ??
-      eventData.vacancy
-    : eventData.vacancy;
+      eventInventory.vacancy
+    : eventInventory.vacancy;
   const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [approvedMap, setApprovedMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [pendingMap, setPendingMap] = useState<Map<Order, Ticket[]>>(new Map());
@@ -580,7 +593,7 @@ export function EventHubAttendees({
         type: OrderAndTicketType.MANUAL,
       }));
       setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
-      setEventVacancy(eventData.vacancy - qty);
+      setEventVacancy(eventInventory.vacancy - qty);
       setEventMetadata((prev) => ({
         ...prev,
         completeTicketCount: prev.completeTicketCount + qty,
@@ -668,7 +681,7 @@ export function EventHubAttendees({
 
   const capacity = selectedListTicketType
     ? selectedListTicketType.eventTicketType.capacity
-    : eventData.capacity || 0;
+    : eventInventory.capacity;
   // Match the Approved tab — capacity−vacancy also counts pending holds and can drift across types.
   const goingCount = approvedTicketCount;
   const fillPercent = capacity > 0 ? Math.min(100, Math.round((goingCount / capacity) * 100)) : 0;
@@ -989,6 +1002,7 @@ export function EventHubAttendees({
             eventData={eventData}
             setEventMetadata={setEventMetadata}
             setEventVacancy={setEventVacancy}
+            onEventRefresh={onEventRefresh}
             setOrderTicketsMap={setOrderTicketsMap}
             onClose={closeDeepPanel}
           />

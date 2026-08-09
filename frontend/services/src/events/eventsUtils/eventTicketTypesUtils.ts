@@ -145,14 +145,29 @@ export function resolveGeneralAdmissionInventory(event: EventWithInventory) {
   };
 }
 
+/**
+ * Listing / fill-bar inventory for an event.
+ * Ticket types are the source of truth; top-level price/capacity/vacancy are legacy-only.
+ */
+export function resolveEventInventory(event: EventWithInventory): {
+  price: number;
+  capacity: number;
+  vacancy: number;
+} {
+  if (hasEventTicketTypes(event)) {
+    return syncEventAggregatesFromTicketTypes(event.eventTicketTypes!);
+  }
+  return {
+    price: event.price ?? 0,
+    capacity: event.capacity ?? 0,
+    vacancy: event.vacancy ?? 0,
+  };
+}
+
 /** Copies resolved inventory onto top-level fields for UI components. */
 export function applyGeneralAdmissionInventoryFields<T extends object>(event: T): T {
   const withInventory = event as EventWithInventory;
-  if (hasEventTicketTypes(withInventory) && Object.keys(withInventory.eventTicketTypes!).length > 1) {
-    return { ...event, ...syncEventAggregatesFromTicketTypes(withInventory.eventTicketTypes!) };
-  }
-  const { price, capacity, vacancy } = resolveGeneralAdmissionInventory(withInventory);
-  return { ...event, price, capacity, vacancy };
+  return { ...event, ...resolveEventInventory(withInventory) };
 }
 
 /**
