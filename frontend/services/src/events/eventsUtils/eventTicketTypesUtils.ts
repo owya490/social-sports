@@ -1,6 +1,6 @@
 import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { FormId } from "@/interfaces/FormTypes";
-import { Order } from "@/interfaces/OrderTypes";
+import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 
 export const GENERAL_TICKET_TYPE_NAME = "General Admission";
@@ -203,19 +203,58 @@ export function applyCapacityChange(current: EventTicketType, newCapacity: numbe
   };
 }
 
+/**
+ * Approved tickets sold for a ticket type.
+ * General Admission also counts tickets with a null/missing type id, or a type id that
+ * does not match any current event ticket type (legacy / orphaned).
+ */
 export function countSoldTicketsForType(
   orderTicketsMap: Map<Order, Ticket[]>,
-  eventTicketTypeId: EventTicketTypeId
+  eventTicketTypeId: EventTicketTypeId,
+  eventTicketTypes?: EventTicketTypesMap | null
 ): number {
+  const ticketType = findEventTicketType(eventTicketTypes, eventTicketTypeId);
+  const isGeneralAdmission = ticketType?.name === GENERAL_TICKET_TYPE_NAME;
+  const knownTypeIds = isGeneralAdmission ? collectKnownEventTicketTypeIds(eventTicketTypes) : null;
+
   let count = 0;
-  orderTicketsMap.forEach((tickets) => {
+  orderTicketsMap.forEach((tickets, order) => {
+    if (order.status !== OrderAndTicketStatus.APPROVED) {
+      return;
+    }
     tickets.forEach((ticket) => {
+      if (ticket.status !== OrderAndTicketStatus.APPROVED) {
+        return;
+      }
       if (ticket.eventTicketTypeId === eventTicketTypeId) {
+        count += 1;
+        return;
+      }
+      if (!isGeneralAdmission || !knownTypeIds) {
+        return;
+      }
+      if (!ticket.eventTicketTypeId || !knownTypeIds.has(ticket.eventTicketTypeId)) {
         count += 1;
       }
     });
   });
   return count;
+}
+
+function collectKnownEventTicketTypeIds(
+  eventTicketTypes: EventTicketTypesMap | null | undefined
+): Set<string> {
+  const ids = new Set<string>();
+  if (!eventTicketTypes) {
+    return ids;
+  }
+  for (const [key, type] of Object.entries(eventTicketTypes)) {
+    ids.add(key);
+    if (type?.id) {
+      ids.add(type.id);
+    }
+  }
+  return ids;
 }
 
 function findEventTicketType(

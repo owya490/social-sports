@@ -19,7 +19,6 @@ import {
   resolveFormIdForTicketType,
   syncEventAggregatesFromTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
-import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { centsToDollars, dollarsToCents, getEventPriceDisplay } from "@/utilities/priceUtils";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
@@ -65,6 +64,7 @@ export function EventTicketTypesSettingsSection({
   const [error, setError] = useState<string | null>(null);
 
   const sortedTypes = useMemo(() => getSortedEventTicketTypes(eventTicketTypes), [eventTicketTypes]);
+  const canDeleteAnyTicketType = sortedTypes.length > 1;
   const editingType = editingId && eventTicketTypes ? eventTicketTypes[editingId] : undefined;
 
   const persistTicketTypes = async (
@@ -159,7 +159,7 @@ export function EventTicketTypesSettingsSection({
       setError("Events must have at least one ticket type.");
       return;
     }
-    const sold = countSoldTicketsForType(orderTicketsMap, id);
+    const sold = countSoldTicketsForType(orderTicketsMap, id, eventTicketTypes);
     if (sold > 0) {
       setError(`Cannot delete "${eventTicketTypes[id].name}" because ${sold} ticket(s) have already been sold.`);
       return;
@@ -205,11 +205,12 @@ export function EventTicketTypesSettingsSection({
 
       <div className="flex flex-col gap-3">
         {sortedTypes.map(({ eventTicketTypeId, eventTicketType }) => {
-          const sold = countSoldTicketsForType(orderTicketsMap, eventTicketTypeId);
+          const sold = countSoldTicketsForType(orderTicketsMap, eventTicketTypeId, eventTicketTypes);
+          const canDelete = canDeleteAnyTicketType && sold === 0;
           return (
             <div
               key={eventTicketTypeId}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 bg-white"
+              className="flex flex-row items-center justify-between gap-3 p-3 rounded-lg border border-gray-200 bg-white"
             >
               <div className="flex-1 min-w-0">
                 <span className="font-semibold">{eventTicketType.name}</span>
@@ -218,7 +219,7 @@ export function EventTicketTypesSettingsSection({
                   {eventTicketType.capacity}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   className="p-2 rounded-lg hover:bg-gray-100"
@@ -227,14 +228,16 @@ export function EventTicketTypesSettingsSection({
                 >
                   <PencilIcon className="w-5 h-5" />
                 </button>
-                <button
-                  type="button"
-                  className="p-2 rounded-lg hover:bg-red-50 text-red-600"
-                  onClick={() => void handleDelete(eventTicketTypeId)}
-                  aria-label={`Delete ${eventTicketType.name}`}
-                >
-                  <TrashIcon className="w-5 h-5" />
-                </button>
+                {canDelete ? (
+                  <button
+                    type="button"
+                    className="p-2 rounded-lg hover:bg-red-50 text-red-600"
+                    onClick={() => void handleDelete(eventTicketTypeId)}
+                    aria-label={`Delete ${eventTicketType.name}`}
+                  >
+                    <TrashIcon className="w-5 h-5" />
+                  </button>
+                ) : null}
               </div>
             </div>
           );
@@ -263,7 +266,7 @@ export function EventTicketTypesSettingsSection({
               }
             : {
                 name: "",
-                priceDollars: centsToDollars(MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS),
+                priceDollars: 1,
                 capacity: 20,
                 formId: null,
               }

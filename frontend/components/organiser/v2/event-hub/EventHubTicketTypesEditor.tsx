@@ -18,7 +18,6 @@ import {
   GENERAL_TICKET_TYPE_NAME,
   getSortedEventTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
-import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { centsToDollars, dollarsToCents, getEventPriceDisplay } from "@/utilities/priceUtils";
 import { PencilIcon, PlusIcon, TicketIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
@@ -52,6 +51,7 @@ export function EventHubTicketTypesEditor({
   const [saving, setSaving] = useState(false);
 
   const sortedTypes = useMemo(() => getSortedEventTicketTypes(eventTicketTypes), [eventTicketTypes]);
+  const canDeleteAnyTicketType = sortedTypes.length > 1;
   const editingType = editingId && eventTicketTypes ? eventTicketTypes[editingId] : undefined;
 
   const persistTicketTypes = async (
@@ -126,7 +126,7 @@ export function EventHubTicketTypesEditor({
       setError("Events must have at least one ticket type.");
       return;
     }
-    const sold = countSoldTicketsForType(orderTicketsMap, id);
+    const sold = countSoldTicketsForType(orderTicketsMap, id, eventTicketTypes);
     if (sold > 0) {
       setError(
         `Cannot delete "${eventTicketTypes[id].name}" because ${sold} ticket(s) have already been sold.`
@@ -179,11 +179,12 @@ export function EventHubTicketTypesEditor({
       ) : (
         <ul className="space-y-2">
           {sortedTypes.map(({ eventTicketTypeId, eventTicketType }) => {
-            const sold = countSoldTicketsForType(orderTicketsMap, eventTicketTypeId);
+            const sold = countSoldTicketsForType(orderTicketsMap, eventTicketTypeId, eventTicketTypes);
+            const canDelete = canDeleteAnyTicketType && sold === 0;
             return (
               <li
                 key={eventTicketTypeId}
-                className="rounded-xl border border-border bg-background px-3 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="rounded-xl border border-border bg-background px-3 py-3 flex flex-row items-center justify-between gap-3"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-foreground font-sans truncate">
@@ -194,24 +195,28 @@ export function EventHubTicketTypesEditor({
                     {eventTicketType.vacancy} remaining of {eventTicketType.capacity}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
                   <EventHubGhostButton
                     onClick={() => {
                       setEditingId(eventTicketTypeId);
                       setDialogOpen(true);
                     }}
                     disabled={!isActive || saving}
+                    className="whitespace-nowrap"
                   >
-                    <PencilIcon className="h-4 w-4" aria-hidden />
+                    <PencilIcon className="h-4 w-4 shrink-0" aria-hidden />
                     Edit
                   </EventHubGhostButton>
-                  <EventHubGhostButton
-                    onClick={() => void handleDelete(eventTicketTypeId)}
-                    disabled={!isActive || saving}
-                  >
-                    <TrashIcon className="h-4 w-4" aria-hidden />
-                    Delete
-                  </EventHubGhostButton>
+                  {canDelete ? (
+                    <EventHubGhostButton
+                      onClick={() => void handleDelete(eventTicketTypeId)}
+                      disabled={!isActive || saving}
+                      className="whitespace-nowrap"
+                    >
+                      <TrashIcon className="h-4 w-4 shrink-0" aria-hidden />
+                      Delete
+                    </EventHubGhostButton>
+                  ) : null}
                 </div>
               </li>
             );
@@ -239,7 +244,7 @@ export function EventHubTicketTypesEditor({
               }
             : {
                 name: "",
-                priceDollars: centsToDollars(MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS),
+                priceDollars: 1,
                 capacity: 20,
                 formId: null,
               }
