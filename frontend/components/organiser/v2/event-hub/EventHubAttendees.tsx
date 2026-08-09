@@ -628,6 +628,11 @@ export function EventHubAttendees({
                       <p className="text-sm font-semibold text-foreground font-sans truncate">
                         {order.fullName || "Attendee"}
                       </p>
+                      {order.type === OrderAndTicketType.MANUAL ? (
+                        <p className="text-[10px] text-foreground-muted font-sans leading-tight">
+                          Direct Addition
+                        </p>
+                      ) : null}
                       <p className="text-xs text-foreground-muted font-sans truncate">
                         {order.email || "—"}
                       </p>
