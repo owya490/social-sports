@@ -101,9 +101,10 @@ export function CollectionHubShareControl({ collectionId }: CollectionHubShareCo
 }
 
 function FacebookGlyph() {
+  // Classic Facebook square mark (filled square with “f” cut-out).
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current" aria-hidden>
-      <path d="M14 8h2.5V5.5H14c-1.9 0-3.5 1.6-3.5 3.5V11H8v2.5h2.5V19H13v-5.5h2.3L16 11h-3V9c0-.6.4-1 1-1z" />
+      <path d="M20.9 2H3.1A1.1 1.1 0 0 0 2 3.1v17.8A1.1 1.1 0 0 0 3.1 22h9.58V14.25h-2.6v-3h2.6V9.2c0-2.6 1.58-4.02 3.89-4.02 1.11 0 2.06.08 2.34.12v2.7h-1.6c-1.26 0-1.5.6-1.5 1.48v1.77h3l-.39 3h-2.61V22h5.1A1.1 1.1 0 0 0 22 20.9V3.1A1.1 1.1 0 0 0 20.9 2z" />
     </svg>
   );
 }
