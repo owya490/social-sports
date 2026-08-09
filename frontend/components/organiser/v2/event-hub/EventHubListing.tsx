@@ -2,9 +2,13 @@
 
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { useUser } from "@/components/utility/UserContext";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { FormId } from "@/interfaces/FormTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import {
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -47,7 +51,7 @@ type EventHubListingProps = {
   eventThumbnail: string;
   isActive: boolean;
   isPrivate: boolean;
-  eventFormId: FormId | null;
+  eventTicketTypes?: EventTicketTypesMap;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
   mode?: "event" | "template";
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
@@ -71,7 +75,7 @@ export function EventHubListing({
   eventThumbnail,
   isActive,
   isPrivate,
-  eventFormId,
+  eventTicketTypes,
   mode = "event",
   updateData,
 }: EventHubListingProps) {
@@ -92,6 +96,9 @@ export function EventHubListing({
   const priceLabel = getEventPriceDisplay(eventPrice, true);
   const capacityLabel = eventCapacity > 0 ? `${filled} / ${eventCapacity} spots` : "Capacity not set";
   const publicHost = publicUrl.replace(/^https?:\/\//, "");
+  const showPriceRow = !(
+    hasEventTicketTypes({ eventTicketTypes }) && getSortedEventTicketTypes(eventTicketTypes).length > 1
+  );
 
   useEffect(() => {
     if (isTemplate) {
@@ -214,18 +221,20 @@ export function EventHubListing({
                   </div>
                 </li>
 
-                <li className="flex gap-3 items-start">
-                  <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
-                    aria-hidden
-                  >
-                    <CurrencyDollarIcon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 pt-0.5">
-                    <p className="text-sm font-semibold text-foreground font-sans">Price</p>
-                    <p className="text-sm text-foreground-secondary font-sans">{priceLabel}</p>
-                  </div>
-                </li>
+                {showPriceRow ? (
+                  <li className="flex gap-3 items-start">
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
+                      aria-hidden
+                    >
+                      <CurrencyDollarIcon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 pt-0.5">
+                      <p className="text-sm font-semibold text-foreground font-sans">Price</p>
+                      <p className="text-sm text-foreground-secondary font-sans">{priceLabel}</p>
+                    </div>
+                  </li>
+                ) : null}
               </ul>
             )}
           </div>
@@ -328,12 +337,8 @@ export function EventHubListing({
             eventEndDate={eventEndDate}
             eventLocation={eventLocation}
             eventSport={eventSport}
-            eventCapacity={eventCapacity}
-            eventVacancy={eventVacancy}
-            eventPrice={eventPrice}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
-            eventFormId={eventFormId}
             isActive={isActive}
             updateData={updateData}
             onSaved={() => setEditOpen(false)}

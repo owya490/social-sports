@@ -21,7 +21,6 @@ import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
   EventId,
 } from "@/interfaces/EventTypes";
-import { FormId } from "@/interfaces/FormTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   Frequency,
@@ -81,7 +80,6 @@ export default function OrganiserRecurringHubV2Page() {
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
-  const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
   const [pastEvents, setPastEvents] = useState<Record<string, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState(false);
@@ -117,7 +115,6 @@ export default function OrganiserRecurringHubV2Page() {
         setEventIsActive(eventData.isActive);
         setEventRegistrationDeadline(eventData.registrationDeadline);
         setEventEventLink(eventData.eventLink);
-        setEventFormId(eventData.formId);
         setEventPaused(eventData.paused);
         setEventPaymentsActive(eventData.paymentsActive);
         setEventStripeFeeToCustomer(eventData.stripeFeeToCustomer);
@@ -244,7 +241,6 @@ export default function OrganiserRecurringHubV2Page() {
             eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
             isPrivate={eventIsPrivate}
-            eventFormId={eventFormId}
             mode="template"
             updateData={async (id, data) => {
               await updateRecurrenceTemplateEventData(id as unknown as RecurrenceTemplateId, data);
@@ -261,7 +257,6 @@ export default function OrganiserRecurringHubV2Page() {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
               if (data.eventLink !== undefined) setEventEventLink(data.eventLink);
-              if (data.formId !== undefined) setEventFormId(data.formId);
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);

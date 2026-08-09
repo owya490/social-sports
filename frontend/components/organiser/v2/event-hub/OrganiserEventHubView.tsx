@@ -26,7 +26,6 @@ import {
   EventMetadata,
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
-import { FormId } from "@/interfaces/FormTypes";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -83,7 +82,6 @@ export function OrganiserEventHubView() {
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
-  const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
 
@@ -122,7 +120,6 @@ export function OrganiserEventHubView() {
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
         setEventIsPrivate(event.isPrivate);
-        setEventFormId(event.formId);
         setEventTicketTypes(event.eventTicketTypes);
         setEventHideVacancy(event.hideVacancy);
         setEventWaitlistEnabled(event.waitlistEnabled);
@@ -239,7 +236,7 @@ export function OrganiserEventHubView() {
             eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
             isPrivate={eventIsPrivate}
-            eventFormId={eventFormId}
+            eventTicketTypes={eventTicketTypes}
             updateData={async (id, data) => {
               await updateEventById(id, data);
               bustEventsLocalStorageCache();
@@ -256,7 +253,6 @@ export function OrganiserEventHubView() {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
               if (data.eventLink !== undefined) setEventEventLink(data.eventLink);
-              if (data.formId !== undefined) setEventFormId(data.formId);
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);
