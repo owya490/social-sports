@@ -5,15 +5,22 @@ import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { useUser } from "@/components/utility/UserContext";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
+import {
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+  resolveFormIdForTicketType,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getForm, getFormResponsesForEvent, submitManualFormResponse } from "@/services/src/forms/formsServices";
 import {
   filterFormResponsesForApprovedOrders,
+  filterFormResponsesForTicketType,
   getApprovedOrderTicketsMap,
   getFormSectionAnswerDisplay,
 } from "@/services/src/forms/formsUtils/formsUtils";
@@ -62,9 +69,12 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
   const logger = useMemo(() => new Logger("EventHubForms"), []);
   const { user, userLoading } = useUser();
   const router = useRouter();
+  const [eventData, setEventData] = useState<EventData | null>(null);
+  const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(null);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
   const unfilteredFormResponsesRef = useRef<FormResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formId, setFormId] = useState<FormId | null>(null);
   const [form, setForm] = useState<Form | null>(null);
@@ -76,60 +86,169 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
   const [addError, setAddError] = useState<string | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
   const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
+  const usesTicketTypes = hasEventTicketTypes(eventData ?? {});
+  const sortedTicketTypes = useMemo(
+    () => getSortedEventTicketTypes(eventData?.eventTicketTypes),
+    [eventData?.eventTicketTypes]
+  );
+  const selectedTicketType = sortedTicketTypes.find((t) => t.eventTicketTypeId === selectedTypeId);
 
-  const applyApprovedOrderFilter = useCallback(() => {
-    setFormResponses(filterFormResponsesForApprovedOrders(unfilteredFormResponsesRef.current, orderTicketsMap));
-  }, [orderTicketsMap]);
+  const applyResponseFilter = useCallback(
+    (responses: FormResponse[]) => {
+      if (usesTicketTypes && selectedTypeId) {
+        return filterFormResponsesForTicketType(responses, orderTicketsMap, selectedTypeId);
+      }
+      return filterFormResponsesForApprovedOrders(responses, orderTicketsMap);
+    },
+    [usesTicketTypes, selectedTypeId, orderTicketsMap]
+  );
 
   useEffect(() => {
-    applyApprovedOrderFilter();
-  }, [applyApprovedOrderFilter]);
+    setFormResponses(applyResponseFilter(unfilteredFormResponsesRef.current));
+  }, [applyResponseFilter]);
 
-  const fetchResponses = useCallback(async () => {
+  const loadFormAndResponses = useCallback(
+    async (resolvedFormId: FormId | null, typeIdForFilter: EventTicketTypeId | null) => {
+      setFormId(resolvedFormId);
+      if (!resolvedFormId) {
+        setForm(null);
+        unfilteredFormResponsesRef.current = [];
+        setFormResponses([]);
+        return;
+      }
+
+      const nextForm = await getForm(resolvedFormId);
+      setForm(nextForm);
+      const fetched = await getFormResponsesForEvent(resolvedFormId, eventId);
+      unfilteredFormResponsesRef.current = fetched;
+      if (typeIdForFilter) {
+        setFormResponses(filterFormResponsesForTicketType(fetched, orderTicketsMap, typeIdForFilter));
+      } else {
+        setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
+      }
+    },
+    [eventId, orderTicketsMap]
+  );
+
+  const fetchEvent = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const eventData: EventData = await getEventById(eventId);
+      const loadedEventData: EventData = await getEventById(eventId);
+      setEventData(loadedEventData);
+
       if (userLoading || !user.userId) return;
 
-      const email = eventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
+      const email =
+        loadedEventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
       setOrganiserEmail(email);
 
-      if (eventData.organiserId !== user.userId) {
+      if (loadedEventData.organiserId !== user.userId) {
         setError("You are not authorised to view this event");
         router.push("/organiser/v2/dashboard");
         return;
       }
 
-      if (!eventData.formId) {
-        setFormId(null);
-        setForm(null);
-        setLoading(false);
+      if (hasEventTicketTypes(loadedEventData)) {
+        const types = getSortedEventTicketTypes(loadedEventData.eventTicketTypes);
+        setFormLoading(true);
+        setSelectedTypeId((prev) => prev ?? types[0]?.eventTicketTypeId ?? null);
         return;
       }
 
-      const currentFormId = eventData.formId as FormId;
-      setFormId(currentFormId);
-      const nextForm = await getForm(currentFormId);
-      setForm(nextForm);
-
-      const fetched = await getFormResponsesForEvent(currentFormId, eventId);
-      unfilteredFormResponsesRef.current = fetched;
-      setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
+      await loadFormAndResponses((loadedEventData.formId as FormId | null) ?? null, null);
     } catch (err) {
       logger.error(`Failed to load form responses: ${err}`);
       setError("Failed to load form responses");
     } finally {
       setLoading(false);
     }
-  }, [eventId, orderTicketsMap, user.userId, userLoading, router, logger]);
+  }, [eventId, user.userId, userLoading, router, loadFormAndResponses, logger]);
+
+  useEffect(() => {
+    void fetchEvent();
+  }, [fetchEvent]);
+
+  useEffect(() => {
+    if (!eventData || !usesTicketTypes || !selectedTypeId) return;
+
+    let cancelled = false;
+    setFormLoading(true);
+    void (async () => {
+      try {
+        const resolvedFormId = resolveFormIdForTicketType(eventData, selectedTypeId);
+        if (cancelled) return;
+        await loadFormAndResponses(resolvedFormId, selectedTypeId);
+      } catch (err) {
+        if (!cancelled) {
+          logger.error(`Failed to load type form responses: ${err}`);
+          setError("Failed to load form responses");
+        }
+      } finally {
+        if (!cancelled) setFormLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [eventData, usesTicketTypes, selectedTypeId, loadFormAndResponses, logger]);
+
+  const fetchResponses = useCallback(async () => {
+    if (!eventData) {
+      await fetchEvent();
+      return;
+    }
+
+    try {
+      if (usesTicketTypes && selectedTypeId) {
+        const resolvedFormId = resolveFormIdForTicketType(eventData, selectedTypeId);
+        await loadFormAndResponses(resolvedFormId, selectedTypeId);
+        return;
+      }
+      await loadFormAndResponses((eventData.formId as FormId | null) ?? null, null);
+    } catch (err) {
+      logger.error(`Failed to refresh form responses: ${err}`);
+      setError("Failed to load form responses");
+    }
+  }, [eventData, usesTicketTypes, selectedTypeId, loadFormAndResponses, fetchEvent, logger]);
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
       setAttachingForm(true);
       setError(null);
+
+      if (usesTicketTypes && selectedTypeId && eventData?.eventTicketTypes) {
+        const types = eventData.eventTicketTypes;
+        const existing = types[selectedTypeId];
+        if (!existing) {
+          throw new Error("Selected ticket type not found");
+        }
+
+        const nextTypes = {
+          ...types,
+          [selectedTypeId]: { ...existing, formId: selectedFormId },
+        };
+        const syncEventFormId = Object.keys(types).length === 1;
+        await updateEventById(eventId, {
+          eventTicketTypes: nextTypes,
+          ...(syncEventFormId ? { formId: selectedFormId } : {}),
+        });
+
+        const nextEventData: EventData = {
+          ...eventData,
+          eventTicketTypes: nextTypes,
+          ...(syncEventFormId ? { formId: selectedFormId } : {}),
+        };
+        setEventData(nextEventData);
+        await loadFormAndResponses(resolveFormIdForTicketType(nextEventData, selectedTypeId), selectedTypeId);
+        setIsChangeFormPanelOpen(false);
+        return;
+      }
+
       await updateEventById(eventId, { formId: selectedFormId });
+      setEventData((prev) => (prev ? { ...prev, formId: selectedFormId } : prev));
 
       if (!selectedFormId) {
         setFormId(null);
@@ -140,12 +259,7 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
         return;
       }
 
-      setFormId(selectedFormId);
-      const nextForm = await getForm(selectedFormId);
-      setForm(nextForm);
-      const fetched = await getFormResponsesForEvent(selectedFormId, eventId);
-      unfilteredFormResponsesRef.current = fetched;
-      setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
+      await loadFormAndResponses(selectedFormId, null);
       setIsChangeFormPanelOpen(false);
     } catch (err) {
       logger.error(`Failed to ${selectedFormId ? "attach" : "detach"} form: ${err}`);
@@ -154,10 +268,6 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
       setAttachingForm(false);
     }
   };
-
-  useEffect(() => {
-    void fetchResponses();
-  }, [fetchResponses]);
 
   const formResponseToPurchaser = createFormResponseMap(approvedOrderTicketsMap);
   const sortedFormResponses = [...formResponses].sort((a, b) => {
@@ -220,7 +330,30 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
     return row;
   });
 
-  if (loading) {
+  const renderTypeTabs = () =>
+    usesTicketTypes && sortedTicketTypes.length > 0 ? (
+      <div className="flex flex-wrap gap-2 pb-3 mb-1 border-b border-border">
+        {sortedTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => {
+          const selected = selectedTypeId === eventTicketTypeId;
+          return (
+            <button
+              key={eventTicketTypeId}
+              type="button"
+              onClick={() => setSelectedTypeId(eventTicketTypeId)}
+              className={`px-3 py-1.5 text-sm font-medium font-sans rounded-lg border border-border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                selected
+                  ? "bg-core-text text-white border-core-text"
+                  : "bg-background text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
+              }`}
+            >
+              {eventTicketType.name}
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
+
+  if (loading || (usesTicketTypes && formLoading && !formId && formResponses.length === 0 && !error)) {
     return (
       <EventHubStage>
         <EventHubToolbar meta="Forms" />
@@ -247,9 +380,18 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
   if (!formId) {
     return (
       <EventHubStage>
-        <EventHubToolbar meta="No form attached" />
+        {renderTypeTabs()}
+        <EventHubToolbar
+          meta={
+            usesTicketTypes && selectedTicketType
+              ? `No form · ${selectedTicketType.eventTicketType.name}`
+              : "No form attached"
+          }
+        />
         <EventHubEmpty>
-          Attach a registration form to collect answers with bookings. Pick one below.
+          {usesTicketTypes && selectedTicketType
+            ? `Attach a registration form for "${selectedTicketType.eventTicketType.name}" to collect answers with bookings.`
+            : "Attach a registration form to collect answers with bookings. Pick one below."}
         </EventHubEmpty>
         <div className="pt-2">
           {attachingForm ? (
@@ -264,12 +406,14 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
 
   return (
     <EventHubStage>
+      {renderTypeTabs()}
       <EventHubToolbar
         meta={
           <span className="block truncate">
             {formResponses.length} response{formResponses.length === 1 ? "" : "s"}
-            {form?.title ? (
-              <span className="text-foreground-muted"> · {form.title}</span>
+            {form?.title ? <span className="text-foreground-muted"> · {form.title}</span> : null}
+            {usesTicketTypes && selectedTicketType ? (
+              <span className="text-foreground-muted"> · {selectedTicketType.eventTicketType.name}</span>
             ) : null}
           </span>
         }
@@ -283,7 +427,7 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
               <DownloadCsvButton
                 data={csvData}
                 headers={csvHeaders}
-                filename={`FormResponses_${eventId}.csv`}
+                filename={`FormResponses_${eventId}${selectedTypeId ? `_${selectedTypeId}` : ""}.csv`}
                 className="!rounded-xl !bg-background !text-foreground border border-border hover:!bg-surface-hover !font-sans !font-medium px-3 py-2 focus-visible:!outline focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-focus focus-visible:!ring-0"
               />
             ) : null}
@@ -296,8 +440,17 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
         }
       />
 
-      {formResponses.length === 0 ? (
-        <EventHubEmpty>No responses yet. Answers from approved bookings will show here.</EventHubEmpty>
+      {formLoading ? (
+        <div className="space-y-3 pt-2">
+          <Skeleton height={52} />
+          <Skeleton height={52} />
+        </div>
+      ) : formResponses.length === 0 ? (
+        <EventHubEmpty>
+          {usesTicketTypes
+            ? "No responses yet for this ticket type. Answers from approved bookings will show here."
+            : "No responses yet. Answers from approved bookings will show here."}
+        </EventHubEmpty>
       ) : form ? (
         <FormResponsesTable
           formResponses={formResponses}
@@ -314,7 +467,11 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
       <EventHubPanel
         open={isChangeFormPanelOpen}
         onClose={() => setIsChangeFormPanelOpen(false)}
-        title="Change attached form"
+        title={
+          usesTicketTypes && selectedTicketType
+            ? `Change form · ${selectedTicketType.eventTicketType.name}`
+            : "Change attached form"
+        }
         wide
       >
         {attachingForm ? (
@@ -350,9 +507,7 @@ export function EventHubForms({ eventId, orderTicketsMap }: EventHubFormsProps) 
                 setIsAddFormResponseDialogOpen(false);
               } catch (err: unknown) {
                 logger.error(`Failed to save form response: ${err}`);
-                setAddError(
-                  `Failed to save. ${err instanceof Error ? err.message : "Please try again."}`
-                );
+                setAddError(`Failed to save. ${err instanceof Error ? err.message : "Please try again."}`);
               } finally {
                 setAddSaving(false);
               }
