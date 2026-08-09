@@ -5,12 +5,10 @@ import { OrganiserBreadcrumbProvider } from "@/components/organiser/OrganiserBre
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
 import { useUser } from "@/components/utility/UserContext";
-import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import {
-  DEFAULT_ORGANISER_ACCENT,
-  DEFAULT_ORGANISER_ACCENT_CONTRAST,
+  applyOrganiserAccentCssVars,
+  clearOrganiserAccentCssVars,
   readCachedOrganiserAccent,
-  resolveOrganiserAccentPalette,
 } from "@/utilities/organiserAccentColour";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -18,21 +16,9 @@ import { useCallback, useEffect, useState } from "react";
 /** Matches `--color-surface` — kept in sync for body overscroll / Safari chrome. */
 const ORGANISER_V2_CANVAS = "#f7f7f7";
 
-function applyAccentCssVars(target: HTMLElement, accent: string, contrast: string): void {
-  target.style.setProperty("--color-accent", accent);
-  target.style.setProperty("--color-accent-contrast", contrast);
-  target.style.setProperty("--color-focus", accent);
-}
-
-function clearAccentCssVars(target: HTMLElement): void {
-  target.style.removeProperty("--color-accent");
-  target.style.removeProperty("--color-accent-contrast");
-  target.style.removeProperty("--color-focus");
-}
-
 export default function OrganiserShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, userLoading } = useUser();
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const onMobileOpenChange = useCallback((open: boolean) => setMobileOpen(open), []);
   const openMobileNav = useCallback(() => setMobileOpen(true), []);
@@ -54,58 +40,15 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
     };
   }, [isV2Shell]);
 
-  // Derive hub accent from the organiser profile photo (cached 1 day in localStorage).
+  // Restore a cached hub accent immediately; the sidebar avatar samples on load if missing.
   useEffect(() => {
-    if (!isV2Shell) return;
-
-    const root = document.documentElement;
-    let cancelled = false;
-
-    const applyDefault = () => {
-      applyAccentCssVars(root, DEFAULT_ORGANISER_ACCENT, DEFAULT_ORGANISER_ACCENT_CONTRAST);
-    };
-
-    const hasCustomPhoto =
-      !userLoading &&
-      Boolean(user.profilePicture) &&
-      user.profilePicture !== DEFAULT_USER_PROFILE_PICTURE &&
-      Boolean(user.userId);
-
-    if (!hasCustomPhoto) {
-      applyDefault();
-      return () => {
-        clearAccentCssVars(root);
-      };
-    }
-
-    const imageUrl = user.profilePicture;
-    const userId = user.userId;
-
-    // Apply cache immediately so a refresh does not flash the default yellow.
-    const cached = readCachedOrganiserAccent(userId, imageUrl);
-    if (cached) {
-      applyAccentCssVars(root, cached.accent, cached.contrast);
-      return () => {
-        clearAccentCssVars(root);
-      };
-    }
-
-    void (async () => {
-      try {
-        const palette = await resolveOrganiserAccentPalette(userId, imageUrl);
-        if (cancelled) return;
-        applyAccentCssVars(root, palette.accent, palette.contrast);
-      } catch {
-        if (cancelled) return;
-        applyDefault();
-      }
-    })();
-
+    if (!isV2Shell || !user.userId || !user.profilePicture) return;
+    const cached = readCachedOrganiserAccent(user.userId, user.profilePicture);
+    if (cached) applyOrganiserAccentCssVars(cached);
     return () => {
-      cancelled = true;
-      clearAccentCssVars(root);
+      clearOrganiserAccentCssVars();
     };
-  }, [isV2Shell, user.profilePicture, user.userId, userLoading]);
+  }, [isV2Shell, user.profilePicture, user.userId]);
 
   if (isV2Shell) {
     return (

@@ -20,6 +20,10 @@ import { handleSignOut } from "@/services/src/auth/authService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
+import {
+  organiserHubAvatarSrc,
+  syncOrganiserAccentFromHubAvatar,
+} from "@/utilities/organiserAccentColour";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
@@ -227,7 +231,17 @@ function UserAccountMenu({
       >
         <div className="relative h-8 w-8 shrink-0 overflow-hidden rounded-full bg-surface-muted">
           {showProfilePhoto ? (
-            <Image src={user.profilePicture} alt="" fill className="object-cover" sizes="32px" />
+            // Same-origin proxy src so once this hub avatar loads we can sample its colour.
+            // eslint-disable-next-line @next/next/no-img-element -- need onLoad + readable pixels for accent
+            <img
+              src={organiserHubAvatarSrc(user.profilePicture)}
+              alt=""
+              className="h-full w-full object-cover"
+              onLoad={(event) => {
+                if (!user.userId) return;
+                syncOrganiserAccentFromHubAvatar(user.userId, user.profilePicture, event.currentTarget);
+              }}
+            />
           ) : null}
         </div>
         {!collapsed && (
