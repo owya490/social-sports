@@ -64,7 +64,7 @@ export const EditAttendeeTicketsDialog = ({
         eventId,
         orderId: order.orderId,
         numTickets: parseInt(newNumTickets),
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId: tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
       const updatedOrder = await getOrderById(order.orderId);
       const updatedTickets = await getTicketsByIds(updatedOrder.tickets);

@@ -26,6 +26,7 @@ import { getPrivateUserById } from "../users/usersService";
 import { FormPaths, FormResponsePaths, FormsRootPath, FormStatus, FormTemplatePaths } from "./formsConstants";
 import { appendFormIdForUser, rateLimitCreateForm } from "./formsUtils/createFormUtils";
 import { findFormDoc, findFormResponseDoc, findFormResponseDocRef } from "./formsUtils/formsUtils";
+import { getAttachedFormIdsForEvent } from "../events/eventsUtils/eventTicketTypesUtils";
 
 export const formsServiceLogger = new Logger("formsServiceLogger");
 
@@ -261,6 +262,46 @@ export async function getFormResponse(
     );
     throw error;
   }
+}
+
+/**
+ * Load a form response by trying the preferred formId first, then every form attached to the event.
+ * getFormResponse searches both Temp and Submitted paths.
+ */
+export async function loadAttendeeFormResponse(
+  event: {
+    formId?: FormId | null;
+    eventTicketTypes?: Parameters<typeof getAttachedFormIdsForEvent>[0]["eventTicketTypes"];
+  },
+  eventId: EventId,
+  formResponseId: FormResponseId,
+  preferredFormId?: FormId | null
+): Promise<{ formId: FormId; formResponse: FormResponse } | null> {
+  const candidates: FormId[] = [];
+  const seen = new Set<string>();
+  const add = (formId: FormId | null | undefined) => {
+    if (!formId || seen.has(formId)) {
+      return;
+    }
+    seen.add(formId);
+    candidates.push(formId);
+  };
+
+  add(preferredFormId);
+  for (const formId of getAttachedFormIdsForEvent(event)) {
+    add(formId);
+  }
+
+  for (const formId of candidates) {
+    try {
+      const formResponse = await getFormResponse(formId, eventId, formResponseId);
+      return { formId, formResponse };
+    } catch {
+      // Preferred formId can be wrong for multi-type events; try the rest.
+    }
+  }
+
+  return null;
 }
 
 export async function getFormResponsesForEvent(formId: FormId, eventId: EventId): Promise<FormResponse[]> {

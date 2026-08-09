@@ -1,8 +1,9 @@
 "use client";
 
+import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
 import { EventId } from "@/interfaces/EventTypes";
-import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { UserId } from "@/interfaces/UserTypes";
+import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import {
   formatMobileDifferentDayDateTime,
   formatMobileSameDayDateTime,
@@ -10,10 +11,9 @@ import {
 } from "@/services/src/datetimeUtils";
 import {
   getBuyerMaxTicketsPerTransaction,
-  getBuyerTicketCountOptionsWithStoredSessions,
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
+import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { Option, Select } from "@material-tailwind/react";
@@ -21,20 +21,17 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
-import JoinWaitlistButton from "../waitlist/JoinWaitlistButton";
-import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
-import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
+import TicketTypeSelect from "../events/TicketTypeSelect";
+import { EventTicketTypeCheckout } from "../events/useEventTicketTypeCheckout";
 
 interface MobileEventPaymentProps {
   location: string;
-  price: number;
   vacancy: number;
   startDate: Timestamp;
   endDate: Timestamp;
   registrationEndDate: Timestamp;
   eventId: EventId;
   isPaymentsActive: boolean;
-  isPrivate: boolean;
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
@@ -42,22 +39,27 @@ interface MobileEventPaymentProps {
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
-  eventTicketTypeId: EventTicketTypeId;
+  ticketCheckout: EventTicketTypeCheckout;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
-  const { startDate, endDate, registrationEndDate, paused } = props;
-  const isFree = isFreeEvent(props.price);
+  const { startDate, endDate, registrationEndDate, paused, ticketCheckout } = props;
 
+  const {
+    showTypeSelector,
+    activeTypes,
+    selectedTypeId,
+    handleTicketTypeChange,
+    effectivePrice,
+    effectiveEventTicketTypeId,
+    allCounts,
+    attendeeCount,
+    setAttendeeCount,
+    typeSoldOut,
+  } = ticketCheckout;
+
+  const isFree = isFreeEvent(effectivePrice);
   const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);
-
-  const allCounts = getBuyerTicketCountOptionsWithStoredSessions(
-    props.vacancy,
-    props.maxTicketsPerTransaction,
-    (ticketCount) => getStoredFulfilmentSessionId(props.eventId, ticketCount) !== null
-  );
-
-  const [attendeeCount, setAttendeeCount] = useState<number>(allCounts[0] ?? 1);
 
   const handleAttendeeCount = (value?: string) => {
     if (value) {
@@ -75,10 +77,10 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
   const bookingMaintenanceActive = isBookingMaintenanceActive();
+  const eventFullySoldOut = props.vacancy === 0 && typeSoldOut;
 
   return (
     <div className="py-4 px-2">
-      {/* Date and Time Section */}
       <div className="mb-3">
         <div className="flex gap-2.5 text-gray-700 items-center">
           <CalendarDaysIcon className="w-5 h-5 shrink-0 text-gray-500" />
@@ -90,7 +92,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         </div>
       </div>
 
-      {/* Location and Price Section */}
       <div className="mb-3 space-y-3 leading-5">
         <a
           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(props.location)}`}
@@ -103,13 +104,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
         </a>
         <div className="flex items-center gap-2.5 text-gray-700">
           <CurrencyDollarIcon className="w-5 h-5 text-gray-500" />
-          <p className="text-sm font-medium leading-5">{getEventPriceDisplay(props.price, true)}</p>
+          <p className="text-sm font-medium leading-5">{getEventPriceDisplay(effectivePrice, true)}</p>
         </div>
       </div>
 
       <div className="border-t border-gray-300 my-3"></div>
 
-      {/* Booking Section */}
       <div className="w-full">
         {bookingMaintenanceActive ? (
           <div className="text-center py-2">
@@ -128,9 +128,17 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
           </div>
         ) : props.isPaymentsActive ? (
           <div className="w-full">
-            {props.vacancy === 0 && allCounts.length === 0 ? (
-                props.waitlistEnabled && WAITLIST_ENABLED ? (
+            {eventFullySoldOut ? (
+              props.waitlistEnabled && WAITLIST_ENABLED ? (
                 <>
+                  {showTypeSelector && (
+                    <TicketTypeSelect
+                      activeTypes={activeTypes}
+                      selectedTypeId={selectedTypeId}
+                      onChange={handleTicketTypeChange}
+                      className="mb-3 !text-black"
+                    />
+                  )}
                   <div className="mb-4 !text-black">
                     <Select
                       className="text-black"
@@ -149,7 +157,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   <JoinWaitlistButton
                     eventId={props.eventId}
                     ticketCount={waitlistAttendeeCount}
-                    eventTicketTypeId={props.eventTicketTypeId}
+                    eventTicketTypeId={effectiveEventTicketTypeId}
                     setLoading={props.setLoading}
                     className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                   />
@@ -157,46 +165,63 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     Join this event&apos;s waitlist to be notified if spots become available.
                   </p>
                 </>
-                ) : (
+              ) : (
+                <div className="text-center py-4">
+                  <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
+                  <p className="text-sm text-gray-600">Please check back later.</p>
+                </div>
+              )
+            ) : (
+              <>
+                {showTypeSelector && (
+                  <TicketTypeSelect
+                    activeTypes={activeTypes}
+                    selectedTypeId={selectedTypeId}
+                    onChange={handleTicketTypeChange}
+                    className="mb-3 !text-black"
+                  />
+                )}
+                {typeSoldOut ? (
                   <div className="text-center py-4">
                     <h3 className="font-semibold text-core-text mb-1">Sold Out</h3>
-                    <p className="text-sm text-gray-600">Please check back later.</p>
+                    <p className="text-sm text-gray-600">This ticket type is sold out. Try another type.</p>
                   </div>
-                )
-              ) : (
-                <>
-                  <div className="flex gap-2">
-                    <div className="w-3/5 shrink-0">
-                      <Select
-                        className="text-black"
-                        label={isFree ? "Bookings" : "Tickets"}
-                        size="lg"
-                        value={`${attendeeCount}`}
-                        onChange={handleAttendeeCount}
-                      >
-                        {allCounts.map((count) => (
-                          <Option key={`attendee-option-${count}`} value={`${count}`}>
-                            {count}
-                          </Option>
-                        ))}
-                      </Select>
+                ) : (
+                  <>
+                    <div className="flex gap-2">
+                      <div className="w-3/5 shrink-0">
+                        <Select
+                          className="text-black"
+                          label={isFree ? "Bookings" : "Tickets"}
+                          size="lg"
+                          value={`${attendeeCount}`}
+                          onChange={handleAttendeeCount}
+                        >
+                          {allCounts.map((count) => (
+                            <Option key={`attendee-option-${count}`} value={`${count}`}>
+                              {count}
+                            </Option>
+                          ))}
+                        </Select>
+                      </div>
+                      <BookingButton
+                        eventId={props.eventId}
+                        ticketCount={attendeeCount}
+                        eventTicketTypeId={effectiveEventTicketTypeId}
+                        setLoading={props.setLoading}
+                        bookingApprovalEnabled={props.bookingApprovalEnabled}
+                        className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
+                      />
                     </div>
-                    <BookingButton
-                      eventId={props.eventId}
-                      ticketCount={attendeeCount}
-                      eventTicketTypeId={props.eventTicketTypeId}
-                      setLoading={props.setLoading}
-                      bookingApprovalEnabled={props.bookingApprovalEnabled}
-                      className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
-                    />
-                  </div>
-                  {props.bookingApprovalEnabled && (
-                    <p className="text-xs text-gray-600 mt-2 text-center">
-                      Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
-                    </p>
-                  )}
-                </>
-              )}
+                    {props.bookingApprovalEnabled && (
+                      <p className="text-xs text-gray-600 mt-2 text-center">
+                        Organiser approval required. Your card won&apos;t be charged until you&apos;re approved.
+                      </p>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </div>
         ) : (
           <ContactEventButton

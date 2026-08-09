@@ -271,14 +271,25 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
     }
 
     const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
-    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
-    const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
-      price,
-      capacity,
-      vacancy,
-    });
+    const { price, capacity, vacancy, eventTicketTypes, ...restUpdatedData } = updatedData;
 
-    await updateDoc(eventDocRef, { ...restUpdatedData, ...inventoryUpdates });
+    // Full ticket-type map writes own nested inventory; do not also patch GA nested fields.
+    if (eventTicketTypes !== undefined) {
+      await updateDoc(eventDocRef, {
+        ...restUpdatedData,
+        eventTicketTypes,
+        ...(price !== undefined ? { price } : {}),
+        ...(capacity !== undefined ? { capacity } : {}),
+        ...(vacancy !== undefined ? { vacancy } : {}),
+      });
+    } else {
+      const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
+        price,
+        capacity,
+        vacancy,
+      });
+      await updateDoc(eventDocRef, { ...restUpdatedData, ...inventoryUpdates });
+    }
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
