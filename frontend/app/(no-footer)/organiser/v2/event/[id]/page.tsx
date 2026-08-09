@@ -3,7 +3,7 @@
 /**
  * THESIS: Tabs guide the session; Details owns the event overview; deep work opens a right drawer / bottom sheet — refuses expand-in-place and cover-in-header.
  * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on primary panel CTAs.
- * STORY: Organiser lands on Details (preview, hosts, read-only visibility), edits via panels; Registrations and Forms use the same panel grammar.
+ * STORY: Organiser lands on Details (preview, hosts, read-only visibility), edits via panels; Attendees and Registration use the same panel grammar.
  * FIRST VIEWPORT: Quiet header (title + Event page) + peer tabs; Details two-column overview with Edit details / Change photo.
  * FORM: Luma overview-led canon; seed luma-overview-led; Comp A approved; drawers from steer.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md

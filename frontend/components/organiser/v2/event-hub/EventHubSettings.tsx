@@ -1,10 +1,8 @@
 "use client";
 
 import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventModal";
-import { EventTicketTypesSettingsSection } from "@/components/organiser/event/settings/EventTicketTypesSettingsSection";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
@@ -59,12 +57,6 @@ type EventHubSettingsProps = {
   setMaxTicketsPerTransaction: (n: number) => void;
   eventCapacity: number;
   eventPrice: number;
-  eventData: EventData;
-  eventTicketTypes: EventTicketTypesMap | undefined;
-  setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
-  setEventCapacity: (capacity: number) => void;
-  setEventVacancy: (vacancy: number) => void;
-  setEventPrice: (price: number) => void;
 };
 
 function SettingsGroup({
@@ -113,12 +105,6 @@ export function EventHubSettings({
   setMaxTicketsPerTransaction,
   eventCapacity,
   eventPrice,
-  eventData,
-  eventTicketTypes,
-  setEventTicketTypes,
-  setEventCapacity,
-  setEventVacancy,
-  setEventPrice,
 }: EventHubSettingsProps) {
   const router = useRouter();
   const { user, auth } = useUser();
@@ -179,22 +165,6 @@ export function EventHubSettings({
       ) : null}
 
       <div className="space-y-2">
-        <SettingsGroup title="Ticket types" flush>
-          <div className="pt-3">
-            <EventTicketTypesSettingsSection
-              eventId={eventId}
-              eventData={eventData}
-              orderTicketsMap={orderTicketsMap}
-              eventTicketTypes={eventTicketTypes}
-              setEventTicketTypes={setEventTicketTypes}
-              setEventCapacity={setEventCapacity}
-              setEventVacancy={setEventVacancy}
-              setEventPrice={setEventPrice}
-              onSavingChange={setSaving}
-            />
-          </div>
-        </SettingsGroup>
-
         <SettingsGroup title="Registration" flush>
           <EventHubSettingTileRow>
             <EventHubSettingTile

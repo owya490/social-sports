@@ -3,7 +3,7 @@
 /**
  * THESIS: Tabs guide the session; Details owns the event overview; deep work opens a right drawer / bottom sheet — refuses expand-in-place and cover-in-header.
  * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on primary panel CTAs.
- * STORY: Organiser lands on Details (preview, hosts, read-only visibility), edits via panels; Registrations and Forms use the same panel grammar.
+ * STORY: Organiser lands on Details (preview, hosts, read-only visibility), edits via panels; Attendees and Registration use the same panel grammar.
  * FIRST VIEWPORT: Quiet header (title + Event page) + peer tabs; Details two-column overview with Edit details / Change photo.
  * FORM: Luma overview-led canon; seed luma-overview-led; Comp A approved; drawers from steer.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
@@ -11,7 +11,7 @@
 
 import { EventHubAttendees } from "@/components/organiser/v2/event-hub/EventHubAttendees";
 import { EventHubHeader } from "@/components/organiser/v2/event-hub/EventHubHeader";
-import { EventHubForms } from "@/components/organiser/v2/event-hub/EventHubForms";
+import { EventHubRegistration } from "@/components/organiser/v2/event-hub/EventHubRegistration";
 import { EventHubListing } from "@/components/organiser/v2/event-hub/EventHubListing";
 import { EventHubNav } from "@/components/organiser/v2/event-hub/EventHubNav";
 import { EventHubSettings } from "@/components/organiser/v2/event-hub/EventHubSettings";
@@ -260,7 +260,7 @@ export function OrganiserEventHubView() {
           />
         )}
 
-        {section === "Registrations" && (
+        {section === "Attendees" && (
           <EventHubAttendees
             eventData={eventData}
             eventMetadata={eventMetadata}
@@ -272,8 +272,19 @@ export function OrganiserEventHubView() {
           />
         )}
 
-        {section === "Forms" && (
-          <EventHubForms eventId={eventId} orderTicketsMap={orderTicketsMap} />
+        {section === "Registration" && (
+          <EventHubRegistration
+            eventId={eventId}
+            orderTicketsMap={orderTicketsMap}
+            eventTicketTypes={eventTicketTypes}
+            setEventTicketTypes={(types) => {
+              setEventTicketTypes(types);
+              setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+            }}
+            setEventCapacity={setEventCapacity}
+            setEventVacancy={setEventVacancy}
+            setEventPrice={setEventPrice}
+          />
         )}
 
         {section === "Settings" && (
@@ -302,15 +313,6 @@ export function OrganiserEventHubView() {
             setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
             eventCapacity={eventCapacity}
             eventPrice={eventPrice}
-            eventData={eventData}
-            eventTicketTypes={eventTicketTypes}
-            setEventTicketTypes={(types) => {
-              setEventTicketTypes(types);
-              setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
-            }}
-            setEventCapacity={setEventCapacity}
-            setEventVacancy={setEventVacancy}
-            setEventPrice={setEventPrice}
           />
         )}
       </div>
