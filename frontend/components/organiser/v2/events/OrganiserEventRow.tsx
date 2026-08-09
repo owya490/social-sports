@@ -13,6 +13,7 @@ import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowTh
 import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
@@ -51,8 +52,9 @@ type OrganiserEventRowProps = {
 
 export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowProps) {
   const pathname = usePathname();
-  const filled = Math.max(0, event.capacity - event.vacancy);
-  const isSoldOut = event.capacity > 0 && filled >= event.capacity;
+  const inventory = resolveEventInventory(event);
+  const filled = Math.max(0, inventory.capacity - inventory.vacancy);
+  const isSoldOut = inventory.capacity > 0 && filled >= inventory.capacity;
   const thumbnailSrc = event.thumbnail || event.image;
   const href = welcomeAwareEventHref(pathname, event.eventId);
 
@@ -84,7 +86,7 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
                 <span className="text-xs font-medium text-foreground-muted font-sans">Sold out</span>
               ) : (
                 <span className="text-xs font-medium text-foreground-muted font-sans tabular-nums whitespace-nowrap">
-                  {getEventPriceDisplay(event.price, true)}
+                  {getEventPriceDisplay(inventory.price, true)}
                 </span>
               )}
             </div>
@@ -98,7 +100,7 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
             <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
             {event.location}
           </p>
-          <OrganiserEventFillBar filled={filled} capacity={event.capacity} />
+          <OrganiserEventFillBar filled={filled} capacity={inventory.capacity} />
         </div>
       </Link>
     </EntityHoverPreview>

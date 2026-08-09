@@ -50,7 +50,7 @@ const RemoveAttendeeDialog = ({
         eventId,
         orderId: order.orderId,
         numTickets: 0,
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId: tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
       setOrderTicketsMap((prev) => {
         const next = new Map(prev);

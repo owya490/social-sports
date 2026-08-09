@@ -1,11 +1,17 @@
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
+import {
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import { filterOrderTicketsMapByTicketType } from "@/services/src/forms/formsUtils/formsUtils";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
-import React, { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import InviteAttendeeDialog from "./AddAttendeeDialog";
 import { ViewAttendeeFormResponsesDialog } from "./ViewAttendeeFormResponsesDialog";
@@ -29,13 +35,7 @@ const showFailureToastWithRefresh = (message: string, toastId: string) => {
   toast.custom(
     (t) => (
       <div
-        className="flex flex-col gap-2 w-full pointer-events-auto rounded-lg bg-white text-[#363636] leading-snug"
-        style={{
-          fontSize: "16px",
-          maxWidth: "500px",
-          padding: "16px 20px",
-          boxShadow: "0 3px 10px rgba(0, 0, 0, 0.1), 0 3px 3px rgba(0, 0, 0, 0.05)",
-        }}
+        className="flex flex-col gap-2 w-full pointer-events-auto rounded-lg bg-white text-[#363636] leading-snug text-base max-w-[500px] p-4 shadow-md"
       >
         <div className="flex items-center gap-3">
           <div className="shrink-0 flex items-center justify-center w-5 h-5">
@@ -80,6 +80,26 @@ export const EventDrilldownManageAttendeesPage = ({
   const [loadingRejectedOrders, setLoadingRejectedOrders] = useState<boolean>(false);
   const [selectedOrderForFormResponses, setSelectedOrderForFormResponses] = useState<Order | null>(null);
   const hasInitializedTabRef = useRef<boolean>(false);
+  const usesTicketTypes = hasEventTicketTypes(eventData);
+  const sortedTicketTypes = useMemo(
+    () => getSortedEventTicketTypes(eventData.eventTicketTypes),
+    [eventData.eventTicketTypes]
+  );
+  const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(null);
+
+  useEffect(() => {
+    if (!usesTicketTypes || sortedTicketTypes.length === 0) {
+      setSelectedTypeId(null);
+      return;
+    }
+    setSelectedTypeId((prev) =>
+      prev && sortedTicketTypes.some((t) => t.eventTicketTypeId === prev)
+        ? prev
+        : sortedTicketTypes[0]?.eventTicketTypeId ?? null
+    );
+  }, [usesTicketTypes, sortedTicketTypes]);
+
+  const selectedTicketType = sortedTicketTypes.find((t) => t.eventTicketTypeId === selectedTypeId);
 
   function closeModal() {
     setIsFilterModalOpen(false);
@@ -267,7 +287,34 @@ export const EventDrilldownManageAttendeesPage = ({
     }
   };
 
-  const pendingOrdersCount = pendingOrderTicketsMap.size;
+  const filteredApprovedOrderTicketsMap = useMemo(() => {
+    if (!usesTicketTypes || !selectedTypeId) return approvedOrderTicketsMap;
+    return filterOrderTicketsMapByTicketType(
+      approvedOrderTicketsMap,
+      selectedTypeId,
+      selectedTicketType?.eventTicketType.name
+    );
+  }, [approvedOrderTicketsMap, selectedTicketType, selectedTypeId, usesTicketTypes]);
+
+  const filteredPendingOrderTicketsMap = useMemo(() => {
+    if (!usesTicketTypes || !selectedTypeId) return pendingOrderTicketsMap;
+    return filterOrderTicketsMapByTicketType(
+      pendingOrderTicketsMap,
+      selectedTypeId,
+      selectedTicketType?.eventTicketType.name
+    );
+  }, [pendingOrderTicketsMap, selectedTicketType, selectedTypeId, usesTicketTypes]);
+
+  const filteredRejectedOrderTicketsMap = useMemo(() => {
+    if (!usesTicketTypes || !selectedTypeId) return rejectedOrderTicketsMap;
+    return filterOrderTicketsMapByTicketType(
+      rejectedOrderTicketsMap,
+      selectedTypeId,
+      selectedTicketType?.eventTicketType.name
+    );
+  }, [rejectedOrderTicketsMap, selectedTicketType, selectedTypeId, usesTicketTypes]);
+
+  const filteredPendingOrdersCount = filteredPendingOrderTicketsMap.size;
 
   return (
     <div className="flex flex-col space-y-4 mb-20 w-full p-1 pt-3 md:p-0">
@@ -275,11 +322,7 @@ export const EventDrilldownManageAttendeesPage = ({
         position="bottom-left"
         toastOptions={{
           duration: 10000,
-          style: {
-            fontSize: "16px",
-            maxWidth: "500px",
-            padding: "16px 20px",
-          },
+          className: "text-base max-w-[500px] p-4",
         }}
       >
         {(toastItem) => (
@@ -293,6 +336,26 @@ export const EventDrilldownManageAttendeesPage = ({
           </ToastBar>
         )}
       </Toaster>
+
+      {usesTicketTypes && sortedTicketTypes.length > 0 ? (
+        <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+          {sortedTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+            <button
+              key={eventTicketTypeId}
+              type="button"
+              onClick={() => setSelectedTypeId(eventTicketTypeId)}
+              className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                selectedTypeId === eventTicketTypeId
+                  ? "bg-core-text text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              {eventTicketType.name}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {/* Tabs */}
       <div className="flex md:space-x-1 border-b border-gray-300">
         <button
@@ -314,9 +377,9 @@ export const EventDrilldownManageAttendeesPage = ({
           }`}
         >
           Pending
-          {pendingOrdersCount > 0 && (
-            <span className="ml-1 md:ml-2 inline-flex items-center justify-center w-4 h-4 md:w-5 md:h-5 text-[10px] md:text-xs font-bold text-white bg-black rounded-full">
-              {pendingOrdersCount}
+          {filteredPendingOrdersCount > 0 && (
+            <span className="ml-1 md:ml-2 inline-flex items-center justify-center w-4 h-4 md:w-5 md:h-5 text-xs font-bold text-white bg-black rounded-full">
+              {filteredPendingOrdersCount}
             </span>
           )}
         </button>
@@ -335,7 +398,7 @@ export const EventDrilldownManageAttendeesPage = ({
       {/* Attendees Tab Content */}
       {activeTab === "approved" && (
         <ApprovedAttendeeTab
-          approvedOrderTicketsMap={approvedOrderTicketsMap}
+          approvedOrderTicketsMap={filteredApprovedOrderTicketsMap}
           eventId={eventId}
           loadingApprovedOrders={loadingApprovedOrders}
           eventData={eventData}
@@ -349,7 +412,7 @@ export const EventDrilldownManageAttendeesPage = ({
 
       {activeTab === "pending" && (
         <PendingAttendeeTab
-          pendingOrderTicketsMap={pendingOrderTicketsMap}
+          pendingOrderTicketsMap={filteredPendingOrderTicketsMap}
           loadingPendingOrders={loadingPendingOrders}
           onApproveOrder={handleApproveOrder}
           onRejectOrder={handleRejectOrder}
@@ -359,7 +422,7 @@ export const EventDrilldownManageAttendeesPage = ({
 
       {activeTab === "rejected" && (
         <RejectedAttendeeTab
-          rejectedOrderTicketsMap={rejectedOrderTicketsMap}
+          rejectedOrderTicketsMap={filteredRejectedOrderTicketsMap}
           eventId={eventId}
           loadingRejectedOrders={loadingRejectedOrders}
           setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}

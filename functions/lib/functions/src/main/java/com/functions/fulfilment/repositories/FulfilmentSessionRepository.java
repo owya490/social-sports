@@ -73,6 +73,27 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    /**
+     * Sets formResponseId on a single FORMS fulfilment entity without rewriting the
+     * entire polymorphic session document.
+     */
+    public static void updateFormsFulfilmentEntityFormResponseId(
+            String sessionId, String fulfilmentEntityId, String formResponseId) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            String fieldPath = "fulfilmentEntityMap." + fulfilmentEntityId + ".formResponseId";
+            sessionDocRef.update(fieldPath, formResponseId).get();
+        } catch (Exception e) {
+            logger.error(
+                    "Failed to update formResponseId for sessionId: {}, fulfilmentEntityId: {}, formResponseId: {}",
+                    sessionId, fulfilmentEntityId, formResponseId, e);
+            throw new Exception(
+                    "Failed to update formResponseId for sessionId: " + sessionId
+                            + ", fulfilmentEntityId: " + fulfilmentEntityId,
+                    e);
+        }
+    }
+
     public static void deleteFulfilmentSession(String sessionId, Optional<Transaction> transaction)
             throws Exception {
         try {

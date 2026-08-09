@@ -30,7 +30,7 @@ interface AbstractEventData {
     lat: number;
     lng: number;
   };
-  // Prefer eventTicketTypes on read (see applyGeneralAdmissionInventoryFields); kept on writes for legacy compatibility.
+  // Prefer eventTicketTypes (see resolveEventInventory); top-level kept for legacy events without types.
   capacity: number;
   vacancy: number;
   price: number;

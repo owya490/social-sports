@@ -1,6 +1,7 @@
 package com.functions.events.services;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -142,6 +143,34 @@ public class EventTicketTypeService {
 
     public static boolean isGeneralAdmissionName(@Nullable String name) {
         return GENERAL_TICKET_TYPE_NAME.equals(name);
+    }
+
+    /**
+     * Prefer the ticket type's formId when set. Only General Admission falls back to the
+     * event-level formId when unset; other ticket types with a null/blank formId use no form.
+     */
+    public static Optional<String> resolveFormId(EventData eventData, @Nullable String eventTicketTypeId) {
+        if (eventData == null) {
+            return Optional.empty();
+        }
+        Optional<String> eventFormId = Optional.ofNullable(eventData.getFormId())
+                .filter(formId -> !formId.isBlank());
+        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()
+                || eventData.getEventTicketTypes() == null) {
+            return eventFormId;
+        }
+
+        EventTicketType ticketType = findById(eventData.getEventTicketTypes(), eventTicketTypeId);
+        if (ticketType == null) {
+            return eventFormId;
+        }
+        if (ticketType.getFormId() != null && !ticketType.getFormId().isBlank()) {
+            return Optional.of(ticketType.getFormId());
+        }
+        if (isGeneralAdmissionName(ticketType.getName())) {
+            return eventFormId;
+        }
+        return Optional.empty();
     }
 
     private static ResolvedEventTicketType toResolved(EventTicketType ticketType, boolean legacy) {
