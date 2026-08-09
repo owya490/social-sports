@@ -413,7 +413,7 @@ Organiser forms index at `/organiser/v2/forms/gallery`. Google Forms / Docs craf
 Operate surfaces under `/organiser/v2/forms/[formId]/…`. Parallel to V1 (`/organiser/forms/…`)—do not restyle V1 in place. Stay inside the Organiser V2 shell (sidebar + `bg-surface`).
 
 - **Editor (`FormEditor` in `organiser/v2/forms/editor`):** Catalogue-style header (breadcrumbs Forms › title, Preview ghost, yellow Save). Compact paper sections (`rounded-xl border-border`, `p-4`, `gap-3`)—not large grey cards with blue focus. Title is a borderless underline input; description is a dashed add/edit well. Desktop sticky icon rail + mobile fixed bottom bar for add-section tools; yellow only on Save. Required toggle uses accent yellow (same grammar as Settings preferences).
-- **Preview (`FormPreviewView`):** Same header rhythm; body is the compact Form Responder (`variant="compact"`) so organisers see the player-facing layout.
+- **Preview (`FormPreviewView`):** Same header rhythm; body is the compact Form Responder (`variant="compact"`, `max-w-3xl`) so organisers see the player-facing layout.
 - **Response viewer (`FormResponseViewer`):** Read-only compact responder under Forms › Response. Event hub flush table links here when `flush`.
 - **V1 untouched:** `/organiser/forms/[formId]/editor|preview|…` keep the legacy chrome for Hub V1.
 
@@ -421,9 +421,9 @@ Operate surfaces under `/organiser/v2/forms/[formId]/…`. Parallel to V1 (`/org
 
 ### Form answerer (public + embedded)
 
-Player-facing fill-out uses `FormResponder` with `variant="compact"`: one narrow paper (`max-w-lg`), question-as-label + native controls, sticky Save on phone. Used by submit-form, public response view, fulfilment, V2 preview/viewer, and Event Hub Add answers. Default variant stays for Organiser Hub V1.
+Player-facing fill-out uses `FormResponder` with `variant="compact"`: paper on `bg-surface` (`max-w-3xl` on desktop, full-bleed padding on phone), question-as-label + native controls. No Save / return-to-top chrome—parents that persist (fulfilment, Event Hub Add answers) call `ref.save()`. Used by submit-form, public response view, fulfilment, V2 preview/viewer, and Event Hub Add answers. Default variant stays for Organiser Hub V1.
 
-**The Thumb-Reach Rule.** On phone, required fields and Save stay within easy reach—no stacked `p-8` cards or huge vertical gaps between questions.
+**The Thumb-Reach Rule.** On phone, questions stay compact and reachable—no stacked `p-8` cards or huge vertical gaps between questions.
 
 ### Entity hover preview
 

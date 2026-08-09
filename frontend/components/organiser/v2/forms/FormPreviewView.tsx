@@ -34,7 +34,7 @@ export function FormPreviewView({ formId }: FormPreviewViewProps) {
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-10">
-      <header className="max-w-lg mx-auto px-4 sm:px-6 pt-5 sm:pt-7 pb-4">
+      <header className="max-w-3xl mx-auto px-4 sm:px-6 pt-5 sm:pt-7 pb-2">
         <OrganiserBreadcrumbs />
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">

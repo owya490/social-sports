@@ -433,15 +433,12 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
     );
 
     if (isCompact) {
-      const requiredFilled = areAllRequiredFieldsFilled();
-      const showSave = !hideSaveButton && canEdit;
-
       return (
-        <div className={isEmbedded ? "w-full" : "min-h-screen bg-surface text-foreground"}>
-          <div className={`mx-auto w-full ${isEmbedded ? "" : "max-w-lg px-4 py-6 sm:py-8"}`}>
+        <div className={isEmbedded ? "w-full" : "bg-surface text-foreground"}>
+          <div className={`mx-auto w-full ${isEmbedded ? "" : "max-w-3xl px-4 sm:px-6 py-6 sm:py-8"}`}>
             <div
               className={`rounded-xl border border-border bg-background ${
-                isEmbedded ? "border-0 bg-transparent" : "px-4 py-5 sm:px-5 sm:py-6 shadow-[0_1px_2px_rgba(10,10,10,0.04)]"
+                isEmbedded ? "border-0 bg-transparent" : "px-4 py-5 sm:px-6 sm:py-6"
               }`}
             >
               <div className="space-y-5">
@@ -453,39 +450,6 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
                 <div className="space-y-5">{renderCompactSections()}</div>
               </div>
             </div>
-
-            {showSave ? (
-              <div
-                className={`${
-                  isEmbedded
-                    ? "mt-4 flex gap-2"
-                    : "sticky bottom-0 z-10 -mx-4 mt-4 border-t border-border bg-surface/95 px-4 py-3 backdrop-blur-sm sm:static sm:mx-0 sm:mt-4 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none"
-                }`}
-              >
-                <button
-                  type="button"
-                  disabled={!requiredFilled || saveLoading}
-                  onClick={() => {
-                    void onSave();
-                  }}
-                  title={requiredFilled ? "Save answers" : "Fill required fields to save"}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-[filter,opacity] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                >
-                  <FloppyDiskIcon className="h-4 w-4" aria-hidden />
-                  Save
-                </button>
-                {!isEmbedded ? (
-                  <button
-                    type="button"
-                    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    aria-label="Return to top"
-                  >
-                    <ChevronUpIcon className="h-4 w-4" aria-hidden />
-                  </button>
-                ) : null}
-              </div>
-            ) : null}
           </div>
         </div>
       );

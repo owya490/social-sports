@@ -35,6 +35,16 @@ import { v4 as uuidv4 } from "uuid";
 
 const CREATE_FORM_ID = "create-form";
 const FORMS_GALLERY = "/organiser/v2/forms/gallery";
+const BLANK_FORM: Form = { ...EmptyForm, title: "Untitled Form" as FormTitle };
+
+function formEditFingerprint(form: Form): string {
+  return JSON.stringify({
+    title: form.title,
+    description: form.description,
+    sectionsOrder: form.sectionsOrder,
+    sectionsMap: form.sectionsMap,
+  });
+}
 
 export type FormEditorProps = {
   formId: FormId;
@@ -78,16 +88,15 @@ export function FormEditor({ formId }: FormEditorProps) {
   const router = useRouter();
   const { user } = useUser();
   const [isLoading, setIsLoading] = useState(true);
-  const initialForm = { ...EmptyForm, title: "Untitled Form" as FormTitle };
-  const [form, setForm] = useState<Form>(initialForm);
+  const [form, setForm] = useState<Form>(BLANK_FORM);
+  const [savedFingerprint, setSavedFingerprint] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isModalClosing, setIsModalClosing] = useState(false);
 
   const isCreate = formId === CREATE_FORM_ID;
-  const isFormModified =
-    form.title !== initialForm.title || form.description !== initialForm.description || form.sectionsOrder.length > 0;
+  const isFormModified = savedFingerprint !== null && formEditFingerprint(form) !== savedFingerprint;
 
   useOrganiserBreadcrumbTitle(isCreate ? "New form" : form.title?.trim() || "Edit form");
 
@@ -103,10 +112,13 @@ export function FormEditor({ formId }: FormEditorProps) {
     const fetchForm = async () => {
       if (user.userId !== "") {
         if (isCreate) {
-          setForm((prevForm) => ({ ...prevForm, userId: user.userId }));
+          const nextForm = { ...BLANK_FORM, userId: user.userId };
+          setForm(nextForm);
+          setSavedFingerprint(formEditFingerprint(nextForm));
         } else {
           const loaded = await getForm(formId);
           setForm(loaded);
+          setSavedFingerprint(formEditFingerprint(loaded));
         }
       }
       setIsLoading(false);
@@ -139,6 +151,8 @@ export function FormEditor({ formId }: FormEditorProps) {
           }
         } else {
           await updateActiveForm(formToSave, formId);
+          setForm(formToSave);
+          setSavedFingerprint(formEditFingerprint(formToSave));
         }
       }
       await sleep(1000);
@@ -289,7 +303,9 @@ export function FormEditor({ formId }: FormEditorProps) {
 
   const previewHref = isCreate ? null : `/organiser/v2/forms/${formId}/preview`;
   const subtitle = isCreate
-    ? "Start from a blank form"
+    ? isFormModified
+      ? "Unsaved changes"
+      : "Start from a blank form"
     : isFormModified
       ? "Unsaved changes"
       : "All changes saved";
