@@ -132,9 +132,15 @@ export function dominantColourFromImageData(data: Uint8ClampedArray): OrganiserA
   };
 }
 
+/** Same-origin proxy — Firebase Storage GETs omit CORS, so canvas sampling fails otherwise. */
+export function organiserAccentImageProxyUrl(imageUrl: string): string {
+  return `/api/organiser-accent-image?url=${encodeURIComponent(imageUrl)}`;
+}
+
 function loadImage(imageUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    // Proxied URL is same-origin; keep anonymous so the canvas stays readable.
     image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Failed to load profile picture for accent colour"));
@@ -143,7 +149,7 @@ function loadImage(imageUrl: string): Promise<HTMLImageElement> {
 }
 
 export async function extractOrganiserAccentFromImage(imageUrl: string): Promise<OrganiserAccentPalette> {
-  const image = await loadImage(imageUrl);
+  const image = await loadImage(organiserAccentImageProxyUrl(imageUrl));
   const size = 48;
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -153,7 +159,13 @@ export async function extractOrganiserAccentFromImage(imageUrl: string): Promise
     return { accent: DEFAULT_ORGANISER_ACCENT, contrast: DEFAULT_ORGANISER_ACCENT_CONTRAST };
   }
   ctx.drawImage(image, 0, 0, size, size);
-  const { data } = ctx.getImageData(0, 0, size, size);
+  let data: Uint8ClampedArray;
+  try {
+    data = ctx.getImageData(0, 0, size, size).data;
+  } catch {
+    // Tainted canvas / security — treat as extraction failure.
+    throw new Error("Could not read profile picture pixels for accent colour");
+  }
   return dominantColourFromImageData(data);
 }
 

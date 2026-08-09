@@ -3,6 +3,7 @@ import {
   dominantColourFromImageData,
   ORGANISER_ACCENT_CACHE_TTL_MS,
   ORGANISER_ACCENT_STORAGE_KEY,
+  organiserAccentImageProxyUrl,
   parseOrganiserAccentCache,
   readCachedOrganiserAccent,
   rgbToHex,
@@ -10,6 +11,13 @@ import {
 } from "./organiserAccentColour";
 
 describe("organiserAccentColour", () => {
+  it("builds a same-origin proxy url for profile pictures", () => {
+    const src = "https://firebasestorage.googleapis.com/v0/b/bucket/o/photo.jpg?alt=media";
+    expect(organiserAccentImageProxyUrl(src)).toBe(
+      `/api/organiser-accent-image?url=${encodeURIComponent(src)}`
+    );
+  });
+
   it("converts rgb to hex", () => {
     expect(rgbToHex(242, 183, 5)).toBe("#f2b705");
     expect(rgbToHex(0, 0, 0)).toBe("#000000");

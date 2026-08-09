@@ -9,6 +9,7 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 import {
   DEFAULT_ORGANISER_ACCENT,
   DEFAULT_ORGANISER_ACCENT_CONTRAST,
+  readCachedOrganiserAccent,
   resolveOrganiserAccentPalette,
 } from "@/utilities/organiserAccentColour";
 import { usePathname } from "next/navigation";
@@ -79,6 +80,15 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
 
     const imageUrl = user.profilePicture;
     const userId = user.userId;
+
+    // Apply cache immediately so a refresh does not flash the default yellow.
+    const cached = readCachedOrganiserAccent(userId, imageUrl);
+    if (cached) {
+      applyAccentCssVars(root, cached.accent, cached.contrast);
+      return () => {
+        clearAccentCssVars(root);
+      };
+    }
 
     void (async () => {
       try {
