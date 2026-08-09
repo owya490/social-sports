@@ -1,4 +1,5 @@
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import Link from "next/link";
 import { useState } from "react";
 
 export const OrganiserAnnouncementBanner = () => {
@@ -12,11 +13,17 @@ export const OrganiserAnnouncementBanner = () => {
     <div className="relative isolate flex items-center gap-x-6 overflow-hidden bg-surface px-6 py-2.5 sm:px-3.5 sm:before:flex-1 rounded-none">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <p className="text-sm leading-6 text-foreground font-sans">
-          <strong className="font-semibold">Booking approval is available</strong>
+          <strong className="font-semibold">Ticket types are here</strong>
           <svg viewBox="0 0 2 2" aria-hidden="true" className="mx-2 inline h-0.5 w-0.5 fill-current">
             <circle r={1} cx={1} cy={1} />
           </svg>
-          Enable it in event Settings to review requests before confirming.
+          Add multiple prices, capacities, and forms in event Settings.{" "}
+          <Link
+            href="/blogs/features/ticket-types"
+            className="font-semibold underline underline-offset-2 hover:text-foreground-secondary"
+          >
+            Learn more
+          </Link>
         </p>
       </div>
       <div className="flex flex-1 justify-end">

@@ -29,6 +29,7 @@ Complete the essential event details including:&lt;/p>
 &lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>To create paid events, you&amp;rsquo;ll need to have Stripe connected to your account. You can choose to absorb Stripe processing fees yourself or pass them on to participants by adjusting the settings in the Additional Settings during event creation.&lt;/p>&lt;/div>
 &lt;/div>
 &lt;/div>
+&lt;p>Events start with a single &lt;strong>General Admission&lt;/strong> ticket type from the price and capacity you set. After creation, you can add more &lt;a href="https://www.sportshub.net.au/docs/organisers/events/ticket-types/" >ticket types&lt;/a> from Organiser Hub &lt;strong>Settings&lt;/strong>.&lt;/p>
 &lt;p>In &lt;strong>Additional Settings&lt;/strong>, you can also enable &lt;a href="https://www.sportshub.net.au/docs/organisers/events/booking-approval/" >Booking Approval&lt;/a> — this requires you to manually approve each booking before the player is charged.&lt;/p>
 &lt;h3>3. Upload Event Images&lt;span class="hx:absolute hx:-mt-20" id="3-upload-event-images">&lt;/span>
 &lt;a href="#3-upload-event-images" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/events/create-event-images.jpg" alt="create-event-images" loading="lazy" />&lt;/p>
@@ -285,6 +286,15 @@ Complete the essential event details including:&lt;/p>
 &lt;li>You run regular events where participants like to see who else is coming&lt;/li>
 &lt;/ul>
 &lt;p>You can toggle the setting on or off at any time, and the change takes effect immediately.&lt;/p>
+&lt;h2>Ticket Types&lt;span class="hx:absolute hx:-mt-20" id="ticket-types">&lt;/span>
+&lt;a href="#ticket-types" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The &lt;strong>Ticket Types&lt;/strong> section in Settings lets you offer multiple booking options on one event. Each type has its own name, price, capacity, and optional registration form.&lt;/p>
+&lt;ol>
+&lt;li>Open the event in your Organiser Hub and go to the &lt;strong>Settings&lt;/strong> tab.&lt;/li>
+&lt;li>Under &lt;strong>Ticket Types&lt;/strong>, click &lt;strong>Add Type&lt;/strong> (or edit an existing type).&lt;/li>
+&lt;li>Set the name, price, capacity, and optional form, then save.&lt;/li>
+&lt;/ol>
+&lt;p>New events start with a single &lt;strong>General Admission&lt;/strong> type. Buyers only see a ticket type selector when more than one type exists.&lt;/p>
+&lt;p>For the full workflow — including forms per type, capacity rules, and deletion limits — see &lt;a href="https://www.sportshub.net.au/docs/organisers/events/ticket-types/" >Ticket Types&lt;/a>.&lt;/p>
 &lt;h2>Enable Booking Approval&lt;span class="hx:absolute hx:-mt-20" id="enable-booking-approval">&lt;/span>
 &lt;a href="#enable-booking-approval" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This setting lets you require manual approval before a booking is confirmed. When enabled, players click &lt;strong>Request to Book&lt;/strong> instead of &lt;strong>Book Now&lt;/strong>, and their payment method is &lt;strong>not charged unless you accept them&lt;/strong>.&lt;/p>
 &lt;h3>How to Enable&lt;span class="hx:absolute hx:-mt-20" id="how-to-enable-1">&lt;/span>
@@ -302,7 +312,70 @@ Complete the essential event details including:&lt;/p>
 &lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;p>You have &lt;strong>48 hours&lt;/strong> to approve or reject each request in the Organiser Hub. Unreviewed requests are automatically declined.&lt;/p>&lt;/div>
 &lt;/div>
 &lt;/div>
-&lt;p>For the full workflow — including how to review pending requests — see &lt;a href="https://www.sportshub.net.au/docs/organisers/events/booking-approval/" >Booking Approval&lt;/a>.&lt;/p></description></item><item><title>Booking Approval</title><link>https://www.sportshub.net.au/docs/organisers/events/booking-approval/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/booking-approval/</guid><description>
+&lt;p>For the full workflow — including how to review pending requests — see &lt;a href="https://www.sportshub.net.au/docs/organisers/events/booking-approval/" >Booking Approval&lt;/a>.&lt;/p></description></item><item><title>Ticket Types</title><link>https://www.sportshub.net.au/docs/organisers/events/ticket-types/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/ticket-types/</guid><description>
+&lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
+&lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Ticket Types let you offer more than one booking option on a single event. Each type has its own &lt;strong>name&lt;/strong>, &lt;strong>price&lt;/strong>, &lt;strong>capacity&lt;/strong>, and optional &lt;strong>registration form&lt;/strong>. Buyers select one type per checkout, and inventory is tracked separately for each option.&lt;/p>
+&lt;p>New events start with a single &lt;strong>General Admission&lt;/strong> ticket type. Add more types when you need different prices, separate capacities, or type-specific forms.&lt;/p>
+&lt;h2>Where to Manage Ticket Types&lt;span class="hx:absolute hx:-mt-20" id="where-to-manage-ticket-types">&lt;/span>
+&lt;a href="#where-to-manage-ticket-types" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>In &lt;strong>Organiser Hub (v1)&lt;/strong>, ticket types are managed from the event &lt;strong>Settings&lt;/strong> tab:&lt;/p>
+&lt;ol>
+&lt;li>Open your event in the &lt;a href="https://www.sportshub.net.au/organiser" target="_blank" rel="noopener">Organiser Hub&lt;/a>&lt;/li>
+&lt;li>Go to the &lt;strong>Settings&lt;/strong> tab&lt;/li>
+&lt;li>Find the &lt;strong>Ticket Types&lt;/strong> section&lt;/li>
+&lt;/ol>
+&lt;p>From there you can add, edit, and delete ticket types.&lt;/p>
+&lt;h2>Add a Ticket Type&lt;span class="hx:absolute hx:-mt-20" id="add-a-ticket-type">&lt;/span>
+&lt;a href="#add-a-ticket-type" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;li>In &lt;strong>Settings → Ticket Types&lt;/strong>, click &lt;strong>Add Type&lt;/strong>&lt;/li>
+&lt;li>Enter a &lt;strong>Name&lt;/strong> (for example, Early Bird, Member, or Women&amp;rsquo;s)&lt;/li>
+&lt;li>Set the &lt;strong>Price (AUD)&lt;/strong> — use &lt;code>0&lt;/code> for a free type&lt;/li>
+&lt;li>Set the &lt;strong>Capacity&lt;/strong> — how many tickets of this type can be sold&lt;/li>
+&lt;li>Optionally choose a &lt;strong>Registration Form&lt;/strong> for this type&lt;/li>
+&lt;li>Save&lt;/li>
+&lt;/ol>
+&lt;p>The new type appears on your public event page as soon as buyers open checkout (when more than one type exists).&lt;/p>
+&lt;h2>Edit a Ticket Type&lt;span class="hx:absolute hx:-mt-20" id="edit-a-ticket-type">&lt;/span>
+&lt;a href="#edit-a-ticket-type" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;li>Open &lt;strong>Settings → Ticket Types&lt;/strong>&lt;/li>
+&lt;li>Click the edit icon on the type you want to change&lt;/li>
+&lt;li>Update name, price, capacity, or form&lt;/li>
+&lt;li>Save&lt;/li>
+&lt;/ol>
+&lt;p>When you change capacity, SPORTSHUB preserves tickets already sold. Capacity cannot be set lower than the number of approved tickets already sold for that type.&lt;/p>
+&lt;h2>Delete a Ticket Type&lt;span class="hx:absolute hx:-mt-20" id="delete-a-ticket-type">&lt;/span>
+&lt;a href="#delete-a-ticket-type" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>You can delete a ticket type only when:&lt;/p>
+&lt;ul>
+&lt;li>The event still has &lt;strong>at least one&lt;/strong> other ticket type remaining&lt;/li>
+&lt;li>&lt;strong>No tickets&lt;/strong> have been sold for that type yet&lt;/li>
+&lt;/ul>
+&lt;p>If either condition fails, the delete action is blocked and a message explains why.&lt;/p>
+&lt;h2>Forms Per Ticket Type&lt;span class="hx:absolute hx:-mt-20" id="forms-per-ticket-type">&lt;/span>
+&lt;a href="#forms-per-ticket-type" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Each ticket type can have its own registration form:&lt;/p>
+&lt;ul>
+&lt;li>Prefer the form attached on the ticket type itself&lt;/li>
+&lt;li>For &lt;strong>General Admission&lt;/strong>, if no type-level form is set, SPORTSHUB falls back to the event-level form&lt;/li>
+&lt;li>Other ticket types with no form attached collect &lt;strong>no form&lt;/strong> at checkout&lt;/li>
+&lt;/ul>
+&lt;p>In Organiser Hub v1, use the &lt;strong>Forms&lt;/strong> tab to switch between ticket types, attach a form to the selected type, and review responses filtered to that type.&lt;/p>
+&lt;p>Learn more about building forms in &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/create-form/" >Creating a Form&lt;/a>.&lt;/p>
+&lt;h2>What Buyers See&lt;span class="hx:absolute hx:-mt-20" id="what-buyers-see">&lt;/span>
+&lt;a href="#what-buyers-see" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>If the event has &lt;strong>one&lt;/strong> ticket type, checkout behaves as before — no extra selector&lt;/li>
+&lt;li>If the event has &lt;strong>multiple&lt;/strong> ticket types, buyers choose a type and see its price and remaining spots&lt;/li>
+&lt;li>Sold-out types are labelled so buyers can pick another option&lt;/li>
+&lt;/ul>
+&lt;p>Listing cards still show aggregate inventory across types (minimum price, total capacity / vacancy).&lt;/p>
+&lt;h2>Recurring Events&lt;span class="hx:absolute hx:-mt-20" id="recurring-events">&lt;/span>
+&lt;a href="#recurring-events" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>For recurring event templates, manage ticket types from the template&amp;rsquo;s &lt;strong>Settings&lt;/strong> tab the same way. Future events generated from that template inherit the ticket type configuration.&lt;/p>
+&lt;h2>When to Use Multiple Ticket Types&lt;span class="hx:absolute hx:-mt-20" id="when-to-use-multiple-ticket-types">&lt;/span>
+&lt;a href="#when-to-use-multiple-ticket-types" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Consider adding more than one type when:&lt;/p>
+&lt;ul>
+&lt;li>You need separate prices (Early Bird vs Standard, Member vs Guest)&lt;/li>
+&lt;li>You need independent capacities (Men&amp;rsquo;s / Women&amp;rsquo;s, courtside vs general)&lt;/li>
+&lt;li>Different options need different registration forms&lt;/li>
+&lt;li>You want one public event page instead of splitting the session into multiple events&lt;/li>
+&lt;/ul>
+&lt;p>For simple one-price events, keep the default &lt;strong>General Admission&lt;/strong> type and you&amp;rsquo;re done.&lt;/p></description></item><item><title>Booking Approval</title><link>https://www.sportshub.net.au/docs/organisers/events/booking-approval/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/booking-approval/</guid><description>
 &lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
 &lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Booking Approval lets you review and approve attendees before their booking is confirmed. When enabled, players &lt;strong>request&lt;/strong> a spot instead of booking instantly — and &lt;strong>their payment method is not charged unless you accept them&lt;/strong>.&lt;/p>
 &lt;p>This is ideal for events where you need to verify skill level, check membership, or curate the right group of participants.&lt;/p>

@@ -1,8 +1,8 @@
 ---
 title: Booking Approval
-weight: 6
-prev: /docs/organiser/events/event-settings
-next: /docs/organiser/events
+weight: 7
+prev: /docs/organisers/events/ticket-types
+next: /docs/organisers/events
 description: Require manual approval for bookings before attendees are confirmed and charged.
 ---
 

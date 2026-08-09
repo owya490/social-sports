@@ -41,6 +41,7 @@ Once you select an event from the dashboard, you can:
 ### Event Settings
 
 - Configure registration settings
+- Manage [ticket types](/docs/organisers/events/ticket-types) (price, capacity, and forms per option)
 - Set up payment options and coupons
 - Manage communication preferences
 - Update cancellation policies
