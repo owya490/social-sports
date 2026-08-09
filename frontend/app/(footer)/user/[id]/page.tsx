@@ -83,10 +83,12 @@ export default function UserProfilePage() {
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 space-y-6">
-        <UserProfileHeader user={publicUserProfile} />
+      {/* White organiser identity band (Luma: hero + profile sit on white) */}
+      <UserProfileHeader user={publicUserProfile} />
 
-        <div>
+      {/* Grey stage for events / collections */}
+      <div className="border-t border-border">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-6">
           <div
             role="tablist"
             aria-label="Profile sections"
@@ -113,7 +115,7 @@ export default function UserProfilePage() {
             })}
           </div>
 
-          <div className="pt-6">
+          <div className="pt-5 sm:pt-6">
             {activeTab === "events" ? (
               <OrganiserEventsBrowse
                 events={upcomingOrganiserEvents}
