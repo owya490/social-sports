@@ -22,7 +22,6 @@ interface FormResponsesTableProps {
   eventId: EventId;
   orderTicketsMap: Map<Order, Ticket[]>;
   showPurchaserColumn?: boolean;
-  organiserEmail?: string;
   /** Flush workbench shell — no bordered card frame; Honest Clubhouse tokens */
   flush?: boolean;
 }
@@ -297,7 +296,6 @@ export const FormResponsesTable = ({
   eventId,
   orderTicketsMap,
   showPurchaserColumn = true,
-  organiserEmail = "",
   flush = false,
 }: FormResponsesTableProps) => {
   const [headersExpanded, setHeadersExpanded] = useState(false);
@@ -580,19 +578,8 @@ export const FormResponsesTable = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1">
-                        <div className={flush ? "text-xs text-foreground-muted" : "text-xs text-gray-600"}>
-                          Manual Submission from
-                        </div>
-                        <div
-                          className={
-                            flush
-                              ? "text-xs text-foreground-muted break-words"
-                              : "text-xs text-gray-600 break-words"
-                          }
-                        >
-                          {organiserEmail || "organiser"}
-                        </div>
+                      <div className={flush ? "text-xs text-foreground-muted" : "text-xs text-gray-600"}>
+                        Form submission
                       </div>
                     )}
                   </td>

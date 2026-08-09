@@ -1,3 +1,4 @@
+import { webcrypto } from "crypto";
 import { EventTicketTypeId } from "../../interfaces/EventTicketTypeTypes";
 import { FormId } from "../../interfaces/FormTypes";
 import {
@@ -10,6 +11,8 @@ import {
   resolveFormIdForTicketType,
   syncEventAggregatesFromTicketTypes,
 } from "../src/events/eventsUtils/eventTicketTypesUtils";
+
+Object.defineProperty(globalThis, "crypto", { value: webcrypto });
 
 describe("eventTicketTypesUtils", () => {
   it("creates a ticket type with id, vacancy, and optional formId", () => {
@@ -59,19 +62,27 @@ describe("eventTicketTypesUtils", () => {
     expect(() => applyCapacityChange(type, 6)).toThrow(/sold/i);
   });
 
-  it("resolves formId from ticket type with event.formId fallback", () => {
-    const type = createEventTicketType({ name: "A", price: 0, capacity: 5, formId: null });
+  it("resolves formId from ticket type; only General Admission falls back to event.formId", () => {
+    const nonGa = createEventTicketType({ name: "Men's", price: 0, capacity: 5, formId: null });
+    const ga = createEventTicketType({
+      name: GENERAL_TICKET_TYPE_NAME,
+      price: 0,
+      capacity: 5,
+      formId: null,
+    });
     const event = {
       formId: "event-form" as FormId,
-      eventTicketTypes: { [type.id]: type },
+      eventTicketTypes: { [nonGa.id]: nonGa, [ga.id]: ga },
     };
-    expect(resolveFormIdForTicketType(event, type.id)).toBe("event-form");
 
-    const withForm = { ...type, formId: "type-form" as FormId };
+    expect(resolveFormIdForTicketType(event, nonGa.id)).toBeNull();
+    expect(resolveFormIdForTicketType(event, ga.id)).toBe("event-form");
+
+    const withForm = { ...nonGa, formId: "type-form" as FormId };
     expect(
       resolveFormIdForTicketType(
-        { formId: "event-form" as FormId, eventTicketTypes: { [type.id]: withForm } },
-        type.id as EventTicketTypeId
+        { formId: "event-form" as FormId, eventTicketTypes: { [nonGa.id]: withForm } },
+        nonGa.id as EventTicketTypeId
       )
     ).toBe("type-form");
   });

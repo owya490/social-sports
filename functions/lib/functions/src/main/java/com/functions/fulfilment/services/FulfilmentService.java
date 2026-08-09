@@ -664,12 +664,18 @@ public class FulfilmentService {
             logger.info("Retrieved fulfilment entity info for ID: {} in session: {}; entity: {}",
                     fulfilmentEntityId, fulfilmentSessionId, entity);
 
+            // Prefer the Forms entity's formId (ticket-type resolved at session init),
+            // not eventData.formId — types can attach different forms.
+            String formId = null;
+            String formResponseId = null;
+            if (entity instanceof FormsFulfilmentEntity formsEntity) {
+                formId = formsEntity.getFormId();
+                formResponseId = formsEntity.getFormResponseId();
+            }
+
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
-                    getEntityUrl(entity), maybeFulfilmentSession.get().getEventData().getEventId(),
-                    maybeFulfilmentSession.get().getEventData().getFormId(),
-                    entity.getType() == FulfilmentEntityType.FORMS
-                            ? ((FormsFulfilmentEntity) entity).getFormResponseId()
-                            : null));
+                    getEntityUrl(entity), fulfilmentSession.getEventData().getEventId(),
+                    formId, formResponseId));
         } catch (Exception e) {
             logger.error(
                     "Failed to get fulfilment entity info for session ID: {} and entity ID: {}",

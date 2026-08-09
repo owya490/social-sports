@@ -1,6 +1,6 @@
 "use client";
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
-import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
@@ -23,18 +23,16 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
-import { useEventTicketTypeCheckout } from "./useEventTicketTypeCheckout";
+import { EventTicketTypeCheckout } from "./useEventTicketTypeCheckout";
 
 interface EventPaymentProps {
   startDate: Timestamp;
   endDate: Timestamp;
   registrationEndDate: Timestamp;
   location: string;
-  price: number;
   vacancy: number;
   isPaymentsActive: boolean;
   eventId: EventId;
-  isPrivate: boolean;
   paused: boolean;
   setLoading: (value: boolean) => void;
   eventLink: string;
@@ -42,12 +40,11 @@ interface EventPaymentProps {
   waitlistEnabled: boolean;
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
-  eventTicketTypeId: EventTicketTypeId;
-  eventTicketTypes?: EventTicketTypesMap;
+  ticketCheckout: EventTicketTypeCheckout;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
-  const { startDate, endDate, registrationEndDate, paused } = props;
+  const { startDate, endDate, registrationEndDate, paused, ticketCheckout } = props;
 
   const {
     showTypeSelector,
@@ -60,14 +57,7 @@ export default function EventPayment(props: EventPaymentProps) {
     allCounts,
     attendeeCount,
     setAttendeeCount,
-  } = useEventTicketTypeCheckout({
-    eventId: props.eventId,
-    eventTicketTypes: props.eventTicketTypes,
-    vacancy: props.vacancy,
-    price: props.price,
-    maxTicketsPerTransaction: props.maxTicketsPerTransaction,
-    fallbackEventTicketTypeId: props.eventTicketTypeId,
-  });
+  } = ticketCheckout;
 
   const isFree = isFreeEvent(effectivePrice);
   const effectiveMax = getBuyerMaxTicketsPerTransaction(props.maxTicketsPerTransaction);

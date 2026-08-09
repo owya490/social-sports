@@ -4,6 +4,8 @@ import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   getSortedEventTicketTypes,
@@ -21,6 +23,7 @@ import {
   MapPinIcon,
   PencilSquareIcon,
   PhotoIcon,
+  TicketIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
@@ -52,6 +55,11 @@ type EventHubListingProps = {
   isActive: boolean;
   isPrivate: boolean;
   eventTicketTypes?: EventTicketTypesMap;
+  orderTicketsMap?: Map<Order, Ticket[]>;
+  setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
+  setEventCapacity?: (capacity: number) => void;
+  setEventVacancy?: (vacancy: number) => void;
+  setEventPrice?: (price: number) => void;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
   mode?: "event" | "template";
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
@@ -76,6 +84,11 @@ export function EventHubListing({
   isActive,
   isPrivate,
   eventTicketTypes,
+  orderTicketsMap,
+  setEventTicketTypes,
+  setEventCapacity,
+  setEventVacancy,
+  setEventPrice,
   mode = "event",
   updateData,
 }: EventHubListingProps) {
@@ -99,6 +112,8 @@ export function EventHubListing({
   const showPriceRow = !(
     hasEventTicketTypes({ eventTicketTypes }) && getSortedEventTicketTypes(eventTicketTypes).length > 1
   );
+  const sortedTicketTypes = getSortedEventTicketTypes(eventTicketTypes);
+  const showTicketTypesRow = hasEventTicketTypes({ eventTicketTypes }) && sortedTicketTypes.length > 0;
 
   useEffect(() => {
     if (isTemplate) {
@@ -213,15 +228,34 @@ export function EventHubListing({
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
                     aria-hidden
                   >
-                    <UserGroupIcon className="h-5 w-5" />
+                    {showTicketTypesRow ? <TicketIcon className="h-5 w-5" /> : <UserGroupIcon className="h-5 w-5" />}
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className="text-sm font-semibold text-foreground font-sans">Capacity</p>
-                    <p className="text-sm text-foreground-secondary font-sans">{capacityLabel}</p>
+                    {showTicketTypesRow ? (
+                      <>
+                        <p className="text-sm font-semibold text-foreground font-sans">Ticket types</p>
+                        <ul className="mt-1 space-y-0.5">
+                          {sortedTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                            <li key={eventTicketTypeId} className="text-sm text-foreground-secondary font-sans">
+                              {eventTicketType.name}
+                              <span className="text-foreground-muted">
+                                {" "}
+                                · {getEventPriceDisplay(eventTicketType.price, true)} · {eventTicketType.capacity} spots
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-foreground font-sans">Capacity</p>
+                        <p className="text-sm text-foreground-secondary font-sans">{capacityLabel}</p>
+                      </>
+                    )}
                   </div>
                 </li>
 
-                {showPriceRow ? (
+                {!showTicketTypesRow && showPriceRow ? (
                   <li className="flex gap-3 items-start">
                     <span
                       className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
@@ -340,6 +374,12 @@ export function EventHubListing({
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
             isActive={isActive}
+            eventTicketTypes={eventTicketTypes}
+            orderTicketsMap={orderTicketsMap}
+            setEventTicketTypes={setEventTicketTypes}
+            setEventCapacity={setEventCapacity}
+            setEventVacancy={setEventVacancy}
+            setEventPrice={setEventPrice}
             updateData={updateData}
             onSaved={() => setEditOpen(false)}
             onSavingChange={setSavingEdit}

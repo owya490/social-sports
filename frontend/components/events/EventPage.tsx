@@ -24,6 +24,7 @@ export default function EventPage({ eventId }: EventPageProps) {
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [eventTags, setEventTags] = useState<Tag[]>([]);
+  const [bannerVacancy, setBannerVacancy] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function EventPage({ eventId }: EventPageProps) {
         }
 
         setEventData(event);
+        setBannerVacancy(event.vacancy);
 
         if (Array.isArray(event.eventTags) && event.eventTags.length > 0) {
           const tagResults = await Promise.allSettled(event.eventTags.map((tagId) => getTagById(tagId as TagId)));
@@ -103,13 +105,18 @@ export default function EventPage({ eventId }: EventPageProps) {
         name={eventData.name}
         startDate={eventData.startDate}
         organiser={eventData.organiser}
-        vacancy={eventData.vacancy}
+        vacancy={bannerVacancy}
         hideVacancy={eventData.hideVacancy}
       />
 
       {/* Event Details */}
       <div className="mt-1 mb-10">
-        <EventDetails eventData={eventData} eventTags={eventTags} setLoading={setLoading} />
+        <EventDetails
+          eventData={eventData}
+          eventTags={eventTags}
+          setLoading={setLoading}
+          onEffectiveVacancyChange={setBannerVacancy}
+        />
         {/* Stub for Orgnaiser on Event Page
         <div className="w-full flex justify-center">
           <div className="md:screen-width-primary">Owen</div>

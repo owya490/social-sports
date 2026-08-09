@@ -56,7 +56,7 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  *
  * Before creating a new session, checks if there's an existing valid session in localStorage (within 20 minutes).
  * If found and still valid on the backend, returns the existing session instead of creating a new one.
- * Sessions are keyed by eventId and numTickets to ensure proper context isolation.
+ * Sessions are keyed by eventId, numTickets, and eventTicketTypeId to ensure proper context isolation.
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionDataType

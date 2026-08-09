@@ -1,19 +1,22 @@
 "use client";
 
 /**
- * THESIS: Edit details is a calm sectioned operate sheet — Basic / Time / Location / Sport & Link —
+ * THESIS: Edit details is a calm sectioned operate sheet — Basic / Time / Location / Ticket Types / Sport & Link —
  * not a sticky document toolbar or a view/edit toggle card.
  * OWN-WORLD: Honest Clubhouse light tokens, Satoshi, 12px radius, yellow Update event only;
  * TipTap bubble-on-selection; Luma section rhythm without Appearance themes.
  * STORY: Organiser opens Edit details, adjusts any Sportshub field, taps Update event once.
- * FIRST VIEWPORT: Large title → seamless description → Time timeline → Location → Sport & Link;
+ * FIRST VIEWPORT: Large title → seamless description → Time timeline → Location → Ticket Types → Sport & Link;
  * yellow Update event in panel footer (form=event-hub-edit-details).
  * FORM: Comp A sectioned-timeline (approved); seed edit-redesign sections-bubble.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
 
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import {
   formatDateToString,
   formatStringToDate,
@@ -29,6 +32,7 @@ import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { EventHubDescriptionEditor } from "./EventHubDescriptionEditor";
+import { EventHubTicketTypesEditor } from "./EventHubTicketTypesEditor";
 
 const FORM_ID = "event-hub-edit-details";
 
@@ -47,6 +51,12 @@ type EventHubEditFormProps = {
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
   isActive: boolean;
+  eventTicketTypes?: EventTicketTypesMap;
+  orderTicketsMap?: Map<Order, Ticket[]>;
+  setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
+  setEventCapacity?: (capacity: number) => void;
+  setEventVacancy?: (vacancy: number) => void;
+  setEventPrice?: (price: number) => void;
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
   onSaved: () => void;
   onSavingChange?: (saving: boolean) => void;
@@ -63,6 +73,12 @@ export function EventHubEditForm({
   eventRegistrationDeadline,
   eventEventLink,
   isActive,
+  eventTicketTypes,
+  orderTicketsMap,
+  setEventTicketTypes,
+  setEventCapacity,
+  setEventVacancy,
+  setEventPrice,
   updateData,
   onSaved,
   onSavingChange,
@@ -237,6 +253,9 @@ export function EventHubEditForm({
   };
 
   const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
+  const canEditTicketTypes = Boolean(
+    orderTicketsMap && setEventTicketTypes && setEventCapacity && setEventVacancy && setEventPrice
+  );
 
   return (
     <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-8">
@@ -328,6 +347,21 @@ export function EventHubEditForm({
         </FieldWithIcon>
         {locationError ? <Warning>{locationError}</Warning> : null}
       </Section>
+
+      {canEditTicketTypes ? (
+        <Section label="Ticket Types">
+          <EventHubTicketTypesEditor
+            eventId={eventId}
+            eventTicketTypes={eventTicketTypes}
+            orderTicketsMap={orderTicketsMap!}
+            isActive={isActive}
+            setEventTicketTypes={setEventTicketTypes!}
+            setEventCapacity={setEventCapacity!}
+            setEventVacancy={setEventVacancy!}
+            setEventPrice={setEventPrice!}
+          />
+        </Section>
+      ) : null}
 
       <Section label="Sport & Link">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

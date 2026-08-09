@@ -22,6 +22,8 @@ interface EventTicketTypeFormDialogProps {
   initialValues: EventTicketTypeFormValues;
   user: UserData;
   onSave: (values: EventTicketTypeFormValues) => Promise<void>;
+  /** Hide form picker when forms are managed elsewhere (e.g. event hub Forms tab). */
+  hideFormSelector?: boolean;
 }
 
 export function EventTicketTypeFormDialog({
@@ -31,6 +33,7 @@ export function EventTicketTypeFormDialog({
   initialValues,
   user,
   onSave,
+  hideFormSelector = false,
 }: EventTicketTypeFormDialogProps) {
   const [name, setName] = useState(initialValues.name);
   const [priceDollars, setPriceDollars] = useState(String(initialValues.priceDollars));
@@ -133,10 +136,12 @@ export function EventTicketTypeFormDialog({
                     onChange={(e) => setCapacity(e.target.value)}
                     crossOrigin={undefined}
                   />
-                  <div>
-                    <p className="text-sm font-semibold mb-2">Registration Form</p>
-                    <FormSelector formId={formId} user={user} updateField={setFormId} />
-                  </div>
+                  {!hideFormSelector ? (
+                    <div>
+                      <p className="text-sm font-semibold mb-2">Registration Form</p>
+                      <FormSelector formId={formId} user={user} updateField={setFormId} />
+                    </div>
+                  ) : null}
                   {error && <p className="text-red-500 text-sm">{error}</p>}
                   <div className="flex justify-end gap-2 mt-2">
                     <InvertedHighlightButton type="button" text="Cancel" onClick={onClose} />

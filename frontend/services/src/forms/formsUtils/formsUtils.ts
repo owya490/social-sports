@@ -1,5 +1,6 @@
 // TODO: functions to abstract away editing forms
 
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId, FormResponse, FormResponseId, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -7,6 +8,7 @@ import { OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { doc, DocumentData, DocumentReference, getDoc, QueryDocumentSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
+import { GENERAL_TICKET_TYPE_NAME } from "../../events/eventsUtils/eventTicketTypesUtils";
 import { FormResponsePaths, FormTemplatePaths } from "../formsConstants";
 import { formsServiceLogger } from "../formsServices";
 
@@ -135,7 +137,11 @@ export function getFormResponseIdsFromOrderTicketsMap(orderTicketsMap: Map<Order
   return formResponseIds;
 }
 
-/** Only form responses linked to an approved ticket on an approved order. */
+/**
+ * Approved-ticket responses, plus responses not linked to any ticket in the map
+ * (manual organiser submissions / legacy attendee answers). Pending/rejected
+ * ticket-linked responses stay hidden.
+ */
 export function filterFormResponsesForApprovedOrders(
   formResponses: FormResponse[],
   orderTicketsMap: Map<Order, Ticket[]>
@@ -143,27 +149,59 @@ export function filterFormResponsesForApprovedOrders(
   const approvedFormResponseIds = getFormResponseIdsFromOrderTicketsMap(
     getApprovedOrderTicketsMap(orderTicketsMap)
   );
-  return formResponses.filter((response) => approvedFormResponseIds.has(response.formResponseId));
+  const allLinkedFormResponseIds = getFormResponseIdsFromOrderTicketsMap(orderTicketsMap);
+  return formResponses.filter((response) => {
+    const id = response.formResponseId;
+    return approvedFormResponseIds.has(id) || !allLinkedFormResponseIds.has(id);
+  });
 }
 
-/** Form responses linked to approved tickets for a specific event ticket type. */
+/**
+ * Form responses linked to approved tickets for a specific event ticket type.
+ * General Admission is a catch-all for:
+ * - legacy tickets with no eventTicketTypeId
+ * - tickets still named General Admission (stale type id after remigration)
+ * - responses not linked to any ticket (manual / legacy attendee answers)
+ */
 export function filterFormResponsesForTicketType(
   formResponses: FormResponse[],
   orderTicketsMap: Map<Order, Ticket[]>,
-  eventTicketTypeId: import("@/interfaces/EventTicketTypeTypes").EventTicketTypeId
+  eventTicketTypeId: EventTicketTypeId,
+  ticketTypeName?: string | null
 ): FormResponse[] {
   const approvedMap = getApprovedOrderTicketsMap(orderTicketsMap);
   const typeFormResponseIds = new Set<FormResponseId>();
+  const includeCatchAll = ticketTypeName === GENERAL_TICKET_TYPE_NAME;
+  const allLinkedFormResponseIds = includeCatchAll
+    ? getFormResponseIdsFromOrderTicketsMap(orderTicketsMap)
+    : null;
 
   approvedMap.forEach((tickets) => {
     tickets.forEach((ticket) => {
-      if (ticket.eventTicketTypeId === eventTicketTypeId && ticket.formResponseId) {
+      if (!ticket.formResponseId) {
+        return;
+      }
+      if (ticket.eventTicketTypeId === eventTicketTypeId) {
+        typeFormResponseIds.add(ticket.formResponseId);
+        return;
+      }
+      if (!includeCatchAll) {
+        return;
+      }
+      if (!ticket.eventTicketTypeId || ticket.eventTicketTypeName === GENERAL_TICKET_TYPE_NAME) {
         typeFormResponseIds.add(ticket.formResponseId);
       }
     });
   });
 
-  return formResponses.filter((response) => typeFormResponseIds.has(response.formResponseId));
+  return formResponses.filter((response) => {
+    const id = response.formResponseId;
+    if (typeFormResponseIds.has(id)) {
+      return true;
+    }
+    // Unlinked responses only surface under General Admission.
+    return includeCatchAll && allLinkedFormResponseIds !== null && !allLinkedFormResponseIds.has(id);
+  });
 }
 
 /** Human-readable value for a single form section (matches organiser tooling). */

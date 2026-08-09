@@ -15,7 +15,10 @@ public class EventTicketType {
     private Integer price;
     private Integer capacity;
     private Integer vacancy;
-    /** Optional registration form for this ticket type. Falls back to event.formId when unset. */
+    /**
+     * Optional registration form for this ticket type. General Admission falls back to
+     * event.formId when unset; other types with a null formId use no form.
+     */
     @Nullable
     private String formId;
 }

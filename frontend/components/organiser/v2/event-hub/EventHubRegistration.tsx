@@ -4,10 +4,6 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
-import {
-  EventTicketTypeFormDialog,
-  EventTicketTypeFormValues,
-} from "@/components/organiser/event/settings/EventTicketTypeFormDialog";
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
@@ -17,13 +13,10 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import {
-  applyCapacityChange,
-  countSoldTicketsForType,
-  createEventTicketType,
   getSortedEventTicketTypes,
   hasEventTicketTypes,
+  GENERAL_TICKET_TYPE_NAME,
   resolveFormIdForTicketType,
-  syncEventAggregatesFromTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getForm, getFormResponsesForEvent, submitManualFormResponse } from "@/services/src/forms/formsServices";
 import {
@@ -32,9 +25,7 @@ import {
   getApprovedOrderTicketsMap,
   getFormSectionAnswerDisplay,
 } from "@/services/src/forms/formsUtils/formsUtils";
-import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
-import { centsToDollars, dollarsToCents, getEventPriceDisplay } from "@/utilities/priceUtils";
-import { CheckIcon, PencilIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, PlusIcon, TicketIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -53,9 +44,6 @@ type EventHubRegistrationProps = {
   orderTicketsMap: Map<Order, Ticket[]>;
   eventTicketTypes: EventTicketTypesMap | undefined;
   setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
-  setEventCapacity: (capacity: number) => void;
-  setEventVacancy: (vacancy: number) => void;
-  setEventPrice: (price: number) => void;
 };
 
 const formatTimestamp = (ts: Timestamp | null): string => {
@@ -85,9 +73,6 @@ export function EventHubRegistration({
   orderTicketsMap,
   eventTicketTypes,
   setEventTicketTypes,
-  setEventCapacity,
-  setEventVacancy,
-  setEventPrice,
 }: EventHubRegistrationProps) {
   const logger = useMemo(() => new Logger("EventHubRegistration"), []);
   const { user, userLoading } = useUser();
@@ -99,15 +84,11 @@ export function EventHubRegistration({
   const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [ticketTypeError, setTicketTypeError] = useState<string | null>(null);
   const [formId, setFormId] = useState<FormId | null>(null);
   const [form, setForm] = useState<Form | null>(null);
   const [attachingForm, setAttachingForm] = useState(false);
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
   const [isChangeFormPanelOpen, setIsChangeFormPanelOpen] = useState(false);
-  const [ticketTypeDialogOpen, setTicketTypeDialogOpen] = useState(false);
-  const [editingTicketTypeId, setEditingTicketTypeId] = useState<EventTicketTypeId | null>(null);
-  const [organiserEmail, setOrganiserEmail] = useState("");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
@@ -120,8 +101,6 @@ export function EventHubRegistration({
     [resolvedTicketTypes]
   );
   const selectedTicketType = sortedTicketTypes.find((t) => t.eventTicketTypeId === selectedTypeId);
-  const editingTicketType =
-    editingTicketTypeId && resolvedTicketTypes ? resolvedTicketTypes[editingTicketTypeId] : undefined;
 
   useEffect(() => {
     if (eventTicketTypes === undefined) return;
@@ -131,11 +110,16 @@ export function EventHubRegistration({
   const applyResponseFilter = useCallback(
     (responses: FormResponse[]) => {
       if (usesTicketTypes && selectedTypeId) {
-        return filterFormResponsesForTicketType(responses, orderTicketsMap, selectedTypeId);
+        return filterFormResponsesForTicketType(
+          responses,
+          orderTicketsMap,
+          selectedTypeId,
+          selectedTicketType?.eventTicketType.name
+        );
       }
       return filterFormResponsesForApprovedOrders(responses, orderTicketsMap);
     },
-    [usesTicketTypes, selectedTypeId, orderTicketsMap]
+    [usesTicketTypes, selectedTypeId, selectedTicketType, orderTicketsMap]
   );
 
   useEffect(() => {
@@ -143,7 +127,11 @@ export function EventHubRegistration({
   }, [applyResponseFilter]);
 
   const loadFormAndResponses = useCallback(
-    async (resolvedFormId: FormId | null, typeIdForFilter: EventTicketTypeId | null) => {
+    async (
+      resolvedFormId: FormId | null,
+      typeIdForFilter: EventTicketTypeId | null,
+      typeNameForFilter?: string | null
+    ) => {
       setFormId(resolvedFormId);
       if (!resolvedFormId) {
         setForm(null);
@@ -157,7 +145,9 @@ export function EventHubRegistration({
       const fetched = await getFormResponsesForEvent(resolvedFormId, eventId);
       unfilteredFormResponsesRef.current = fetched;
       if (typeIdForFilter) {
-        setFormResponses(filterFormResponsesForTicketType(fetched, orderTicketsMap, typeIdForFilter));
+        setFormResponses(
+          filterFormResponsesForTicketType(fetched, orderTicketsMap, typeIdForFilter, typeNameForFilter)
+        );
       } else {
         setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
       }
@@ -174,10 +164,6 @@ export function EventHubRegistration({
       setEventData(loadedEventData);
 
       if (userLoading || !user.userId) return;
-
-      const email =
-        loadedEventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
-      setOrganiserEmail(email);
 
       if (loadedEventData.organiserId !== user.userId) {
         setError("You are not authorised to view this event");
@@ -214,7 +200,11 @@ export function EventHubRegistration({
       try {
         const resolvedFormId = resolveFormIdForTicketType(eventData, selectedTypeId);
         if (cancelled) return;
-        await loadFormAndResponses(resolvedFormId, selectedTypeId);
+        await loadFormAndResponses(
+          resolvedFormId,
+          selectedTypeId,
+          selectedTicketType?.eventTicketType.name
+        );
       } catch (err) {
         if (!cancelled) {
           logger.error(`Failed to load type form responses: ${err}`);
@@ -228,7 +218,7 @@ export function EventHubRegistration({
     return () => {
       cancelled = true;
     };
-  }, [eventData, usesTicketTypes, selectedTypeId, loadFormAndResponses, logger]);
+  }, [eventData, usesTicketTypes, selectedTypeId, selectedTicketType, loadFormAndResponses, logger]);
 
   const fetchResponses = useCallback(async () => {
     if (!eventData) {
@@ -239,7 +229,11 @@ export function EventHubRegistration({
     try {
       if (usesTicketTypes && selectedTypeId) {
         const resolvedFormId = resolveFormIdForTicketType(eventData, selectedTypeId);
-        await loadFormAndResponses(resolvedFormId, selectedTypeId);
+        await loadFormAndResponses(
+          resolvedFormId,
+          selectedTypeId,
+          selectedTicketType?.eventTicketType.name
+        );
         return;
       }
       await loadFormAndResponses((eventData.formId as FormId | null) ?? null, null);
@@ -247,7 +241,15 @@ export function EventHubRegistration({
       logger.error(`Failed to refresh form responses: ${err}`);
       setError("Failed to load form responses");
     }
-  }, [eventData, usesTicketTypes, selectedTypeId, loadFormAndResponses, fetchEvent, logger]);
+  }, [
+    eventData,
+    usesTicketTypes,
+    selectedTypeId,
+    selectedTicketType,
+    loadFormAndResponses,
+    fetchEvent,
+    logger,
+  ]);
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
@@ -265,7 +267,7 @@ export function EventHubRegistration({
           ...types,
           [selectedTypeId]: { ...existing, formId: selectedFormId },
         };
-        const syncEventFormId = Object.keys(types).length === 1;
+        const syncEventFormId = existing.name === GENERAL_TICKET_TYPE_NAME;
         await updateEventById(eventId, {
           eventTicketTypes: nextTypes,
           ...(syncEventFormId ? { formId: selectedFormId } : {}),
@@ -278,7 +280,11 @@ export function EventHubRegistration({
         };
         setEventData(nextEventData);
         setEventTicketTypes(nextTypes);
-        await loadFormAndResponses(resolveFormIdForTicketType(nextEventData, selectedTypeId), selectedTypeId);
+        await loadFormAndResponses(
+          resolveFormIdForTicketType(nextEventData, selectedTypeId),
+          selectedTypeId,
+          existing.name
+        );
         setIsChangeFormPanelOpen(false);
         return;
       }
@@ -359,190 +365,49 @@ export function EventHubRegistration({
     });
 
     const purchaserInfo = formResponseToPurchaser.get(response.formResponseId);
-    const manualSubmissionText = `manual submission for ${organiserEmail}`;
-    row.purchaserName = purchaserInfo?.name || manualSubmissionText;
-    row.purchaserEmail = purchaserInfo?.email || manualSubmissionText;
+    row.purchaserName = purchaserInfo?.name || "Form submission";
+    row.purchaserEmail = purchaserInfo?.email || "Form submission";
     row.submissionTime = formatTimestamp(response.submissionTime);
     return row;
   });
 
-  const persistTicketTypes = async (nextTypes: EventTicketTypesMap) => {
-    setTicketTypeError(null);
-    const aggregates = syncEventAggregatesFromTicketTypes(nextTypes);
-    await updateEventById(eventId, {
-      eventTicketTypes: nextTypes,
-      price: aggregates.price,
-      capacity: aggregates.capacity,
-      vacancy: aggregates.vacancy,
-    });
-    setEventTicketTypes(nextTypes);
-    setEventPrice(aggregates.price);
-    setEventCapacity(aggregates.capacity);
-    setEventVacancy(aggregates.vacancy);
-    setEventData((prev) =>
-      prev
-        ? {
-            ...prev,
-            eventTicketTypes: nextTypes,
-            price: aggregates.price,
-            capacity: aggregates.capacity,
-            vacancy: aggregates.vacancy,
-          }
-        : prev
-    );
-  };
-
-  const handleSaveTicketType = async (values: EventTicketTypeFormValues) => {
-    const price = values.priceDollars <= 0 ? 0 : dollarsToCents(values.priceDollars);
-    const current = resolvedTicketTypes ?? {};
-
-    if (editingTicketTypeId && current[editingTicketTypeId]) {
-      const existing = current[editingTicketTypeId];
-      const updatedType = applyCapacityChange(
-        {
-          ...existing,
-          name: values.name,
-          price,
-          formId: values.formId,
-        },
-        values.capacity
-      );
-      await persistTicketTypes({
-        ...current,
-        [editingTicketTypeId]: updatedType,
-      });
-      setSelectedTypeId(editingTicketTypeId);
-    } else {
-      const eventTicketType = createEventTicketType({
-        name: values.name,
-        price,
-        capacity: values.capacity,
-        formId: values.formId,
-      });
-      await persistTicketTypes({
-        ...current,
-        [eventTicketType.id]: eventTicketType,
-      });
-      setSelectedTypeId(eventTicketType.id);
-    }
-    setTicketTypeDialogOpen(false);
-    setEditingTicketTypeId(null);
-  };
-
-  const handleDeleteTicketType = async (id: EventTicketTypeId) => {
-    if (!resolvedTicketTypes?.[id]) return;
-    if (Object.keys(resolvedTicketTypes).length <= 1) {
-      setTicketTypeError("Events must have at least one ticket type.");
-      return;
-    }
-    const sold = countSoldTicketsForType(orderTicketsMap, id);
-    if (sold > 0) {
-      setTicketTypeError(
-        `Cannot delete "${resolvedTicketTypes[id].name}" because ${sold} ticket(s) have already been sold.`
-      );
-      return;
-    }
-    const confirmed = window.confirm(`Delete ticket type "${resolvedTicketTypes[id].name}"? This cannot be undone.`);
-    if (!confirmed) return;
-
-    const { [id]: _removed, ...rest } = resolvedTicketTypes;
-    await persistTicketTypes(rest);
-    const remaining = getSortedEventTicketTypes(rest);
-    setSelectedTypeId(remaining[0]?.eventTicketTypeId ?? null);
-  };
-
-  const renderTypeTabs = () =>
+  const renderTypeSelector = () =>
     usesTicketTypes && sortedTicketTypes.length > 0 ? (
-      <div className="space-y-3 pb-3 mb-1 border-b border-border">
-        <div className="flex flex-wrap items-center gap-2">
-          {sortedTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => {
-            const selected = selectedTypeId === eventTicketTypeId;
-            return (
-              <button
-                key={eventTicketTypeId}
-                type="button"
-                onClick={() => setSelectedTypeId(eventTicketTypeId)}
-                className={`px-3 py-1.5 text-sm font-medium font-sans rounded-lg border border-border transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                  selected
-                    ? "bg-core-text text-white border-core-text"
-                    : "bg-background text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
-                }`}
-              >
-                {eventTicketType.name}
-              </button>
-            );
-          })}
-          <EventHubGhostButton
-            onClick={() => {
-              setEditingTicketTypeId(null);
-              setTicketTypeDialogOpen(true);
-            }}
+      <div className="pb-3 mb-1 border-b border-border">
+        <label className="block space-y-1.5 max-w-sm">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans">
+            <TicketIcon className="h-4 w-4" aria-hidden />
+            Ticket type
+          </span>
+          <select
+            value={selectedTypeId ?? ""}
+            onChange={(e) => setSelectedTypeId(e.target.value as EventTicketTypeId)}
+            className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
-            <PlusIcon className="h-4 w-4" aria-hidden />
-            Add type
-          </EventHubGhostButton>
-        </div>
-
-        {selectedTicketType ? (
-          <div className="rounded-xl border border-border bg-background px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground font-sans">
-                {selectedTicketType.eventTicketType.name}
-              </p>
-              <p className="text-xs text-foreground-muted font-sans mt-0.5">
-                {getEventPriceDisplay(selectedTicketType.eventTicketType.price, true)} ·{" "}
-                {countSoldTicketsForType(orderTicketsMap, selectedTicketType.eventTicketTypeId)} sold ·{" "}
-                {selectedTicketType.eventTicketType.vacancy} remaining of{" "}
-                {selectedTicketType.eventTicketType.capacity}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <EventHubGhostButton
-                onClick={() => {
-                  setEditingTicketTypeId(selectedTicketType.eventTicketTypeId);
-                  setTicketTypeDialogOpen(true);
-                }}
-              >
-                <PencilIcon className="h-4 w-4" aria-hidden />
-                Edit
-              </EventHubGhostButton>
-              <EventHubGhostButton
-                onClick={() => void handleDeleteTicketType(selectedTicketType.eventTicketTypeId)}
-              >
-                <TrashIcon className="h-4 w-4" aria-hidden />
-                Delete
-              </EventHubGhostButton>
-            </div>
-          </div>
-        ) : null}
-
-        {ticketTypeError ? <p className="text-sm text-danger font-sans">{ticketTypeError}</p> : null}
+            {sortedTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+              <option key={eventTicketTypeId} value={eventTicketTypeId}>
+                {eventTicketType.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
     ) : (
-      <div className="rounded-xl border border-border bg-background px-4 py-4 mb-3 space-y-3">
-        <div>
-          <p className="text-sm font-semibold text-foreground font-sans">Ticket types</p>
-          <p className="text-xs text-foreground-muted font-sans mt-1">
-            Add ticket types to offer different prices, capacities, and registration forms.
-          </p>
+      <div className="rounded-xl border border-border bg-background px-4 py-4 mb-3 space-y-1">
+        <div className="flex items-center gap-2">
+          <TicketIcon className="h-4 w-4 text-foreground-muted" aria-hidden />
+          <p className="text-sm font-semibold text-foreground font-sans">No ticket types</p>
         </div>
-        <EventHubPrimaryButton
-          onClick={() => {
-            setEditingTicketTypeId(null);
-            setTicketTypeDialogOpen(true);
-          }}
-        >
-          <PlusIcon className="h-4 w-4" aria-hidden />
-          Add ticket type
-        </EventHubPrimaryButton>
-        {ticketTypeError ? <p className="text-sm text-danger font-sans">{ticketTypeError}</p> : null}
+        <p className="text-xs text-foreground-muted font-sans">
+          Add ticket types in Edit details to attach a form per type.
+        </p>
       </div>
     );
 
   if (loading || (usesTicketTypes && formLoading && !formId && formResponses.length === 0 && !error)) {
     return (
       <EventHubStage>
-        <EventHubToolbar meta="Registration" />
+        <EventHubToolbar meta="Forms" />
         <div className="space-y-3 pt-2">
           <Skeleton height={28} width="40%" />
           <Skeleton height={52} />
@@ -566,7 +431,7 @@ export function EventHubRegistration({
   if (!formId) {
     return (
       <EventHubStage>
-        {renderTypeTabs()}
+        {renderTypeSelector()}
         <EventHubToolbar
           meta={
             usesTicketTypes && selectedTicketType
@@ -586,44 +451,19 @@ export function EventHubRegistration({
             <FormSelector formId={formId} user={user} updateField={handleFormAttachment} />
           )}
         </div>
-        <EventTicketTypeFormDialog
-          open={ticketTypeDialogOpen}
-          onClose={() => {
-            setTicketTypeDialogOpen(false);
-            setEditingTicketTypeId(null);
-          }}
-          title={editingTicketTypeId ? "Edit Ticket Type" : "Add Ticket Type"}
-          initialValues={
-            editingTicketType
-              ? {
-                  name: editingTicketType.name,
-                  priceDollars: centsToDollars(editingTicketType.price),
-                  capacity: editingTicketType.capacity,
-                  formId: editingTicketType.formId ?? null,
-                }
-              : {
-                  name: "",
-                  priceDollars: centsToDollars(MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS),
-                  capacity: 20,
-                  formId: null,
-                }
-          }
-          user={user}
-          onSave={handleSaveTicketType}
-        />
       </EventHubStage>
     );
   }
 
   return (
     <EventHubStage>
-      {renderTypeTabs()}
+      {renderTypeSelector()}
       <EventHubToolbar
         meta={
           <span className="block truncate">
             {formResponses.length} response{formResponses.length === 1 ? "" : "s"}
             {form?.title ? <span className="text-foreground-muted"> · {form.title}</span> : null}
-            {usesTicketTypes && selectedTicketType ? (
+            {selectedTicketType ? (
               <span className="text-foreground-muted"> · {selectedTicketType.eventTicketType.name}</span>
             ) : null}
           </span>
@@ -670,7 +510,6 @@ export function EventHubRegistration({
           eventId={eventId}
           orderTicketsMap={approvedOrderTicketsMap}
           showPurchaserColumn={true}
-          organiserEmail={organiserEmail}
           flush
         />
       ) : null}
@@ -679,7 +518,7 @@ export function EventHubRegistration({
         open={isChangeFormPanelOpen}
         onClose={() => setIsChangeFormPanelOpen(false)}
         title={
-          usesTicketTypes && selectedTicketType
+          selectedTicketType
             ? `Change form · ${selectedTicketType.eventTicketType.name}`
             : "Change attached form"
         }
@@ -742,32 +581,6 @@ export function EventHubRegistration({
           />
         </div>
       </EventHubPanel>
-
-      <EventTicketTypeFormDialog
-        open={ticketTypeDialogOpen}
-        onClose={() => {
-          setTicketTypeDialogOpen(false);
-          setEditingTicketTypeId(null);
-        }}
-        title={editingTicketTypeId ? "Edit Ticket Type" : "Add Ticket Type"}
-        initialValues={
-          editingTicketType
-            ? {
-                name: editingTicketType.name,
-                priceDollars: centsToDollars(editingTicketType.price),
-                capacity: editingTicketType.capacity,
-                formId: editingTicketType.formId ?? null,
-              }
-            : {
-                name: "",
-                priceDollars: centsToDollars(MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS),
-                capacity: 20,
-                formId: null,
-              }
-        }
-        user={user}
-        onSave={handleSaveTicketType}
-      />
     </EventHubStage>
   );
 }

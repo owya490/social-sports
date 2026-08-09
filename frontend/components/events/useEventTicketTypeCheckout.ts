@@ -80,6 +80,8 @@ export function useEventTicketTypeCheckout(params: {
   };
 }
 
+export type EventTicketTypeCheckout = ReturnType<typeof useEventTicketTypeCheckout>;
+
 export function resolveFallbackTicketTypeId(event: {
   eventTicketTypes?: EventTicketTypesMap;
   price?: number;

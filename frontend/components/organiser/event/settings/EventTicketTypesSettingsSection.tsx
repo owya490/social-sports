@@ -12,8 +12,10 @@ import {
   applyCapacityChange,
   countSoldTicketsForType,
   createEventTicketType,
+  GENERAL_TICKET_TYPE_NAME,
   getSortedEventTicketTypes,
   hasEventTicketTypes,
+  resolveFormIdForTicketType,
   syncEventAggregatesFromTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
@@ -64,7 +66,10 @@ export function EventTicketTypesSettingsSection({
   const sortedTypes = useMemo(() => getSortedEventTicketTypes(eventTicketTypes), [eventTicketTypes]);
   const editingType = editingId && eventTicketTypes ? eventTicketTypes[editingId] : undefined;
 
-  const persistTicketTypes = async (nextTypes: EventTicketTypesMap) => {
+  const persistTicketTypes = async (
+    nextTypes: EventTicketTypesMap,
+    options?: { syncEventFormId?: boolean; formId?: FormId | null }
+  ) => {
     onSavingChange?.(true);
     setError(null);
     try {
@@ -77,6 +82,7 @@ export function EventTicketTypesSettingsSection({
           price: aggregates.price,
           capacity: aggregates.capacity,
           vacancy: aggregates.vacancy,
+          ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
         });
       }
       setEventTicketTypes(nextTypes);
@@ -109,6 +115,7 @@ export function EventTicketTypesSettingsSection({
   }) => {
     const price = values.priceDollars <= 0 ? 0 : dollarsToCents(values.priceDollars);
     const current = eventTicketTypes ?? {};
+    const syncEventFormId = values.name === GENERAL_TICKET_TYPE_NAME;
 
     if (editingId && current[editingId]) {
       const existing = current[editingId];
@@ -121,10 +128,13 @@ export function EventTicketTypesSettingsSection({
         },
         values.capacity
       );
-      await persistTicketTypes({
-        ...current,
-        [editingId]: updatedType,
-      });
+      await persistTicketTypes(
+        {
+          ...current,
+          [editingId]: updatedType,
+        },
+        { syncEventFormId, formId: values.formId }
+      );
     } else {
       const eventTicketType = createEventTicketType({
         name: values.name,
@@ -132,10 +142,13 @@ export function EventTicketTypesSettingsSection({
         capacity: values.capacity,
         formId: values.formId,
       });
-      await persistTicketTypes({
-        ...current,
-        [eventTicketType.id]: eventTicketType,
-      });
+      await persistTicketTypes(
+        {
+          ...current,
+          [eventTicketType.id]: eventTicketType,
+        },
+        { syncEventFormId, formId: values.formId }
+      );
     }
     setDialogOpen(false);
     setEditingId(null);
@@ -203,7 +216,6 @@ export function EventTicketTypesSettingsSection({
                 <p className="text-sm text-gray-700 mt-1">
                   {getEventPriceDisplay(eventTicketType.price)} · {sold} sold · {eventTicketType.vacancy} remaining of{" "}
                   {eventTicketType.capacity}
-                  {eventTicketType.formId ? " · Form attached" : ""}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -244,7 +256,10 @@ export function EventTicketTypesSettingsSection({
                 name: editingType.name,
                 priceDollars: centsToDollars(editingType.price),
                 capacity: editingType.capacity,
-                formId: editingType.formId ?? null,
+                formId: resolveFormIdForTicketType(
+                  { formId: eventData.formId, eventTicketTypes },
+                  editingId
+                ),
               }
             : {
                 name: "",

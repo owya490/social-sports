@@ -13,6 +13,7 @@ import { getEventById, updateEventById } from "@/services/src/events/eventsServi
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
+  GENERAL_TICKET_TYPE_NAME,
   resolveFormIdForTicketType,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsServices";
@@ -77,7 +78,6 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   const [attachingForm, setAttachingForm] = useState(false);
   const router = useRouter();
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
-  const [organiserEmail, setOrganiserEmail] = useState<string>("");
   const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
   const usesTicketTypes = hasEventTicketTypes(eventData ?? {});
   const sortedTicketTypes = useMemo(
@@ -89,11 +89,16 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   const applyResponseFilter = useCallback(
     (responses: FormResponse[]) => {
       if (usesTicketTypes && selectedTypeId) {
-        return filterFormResponsesForTicketType(responses, orderTicketsMap, selectedTypeId);
+        return filterFormResponsesForTicketType(
+          responses,
+          orderTicketsMap,
+          selectedTypeId,
+          selectedTicketType?.eventTicketType.name
+        );
       }
       return filterFormResponsesForApprovedOrders(responses, orderTicketsMap);
     },
-    [usesTicketTypes, selectedTypeId, orderTicketsMap]
+    [usesTicketTypes, selectedTypeId, selectedTicketType, orderTicketsMap]
   );
 
   useEffect(() => {
@@ -101,7 +106,11 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   }, [applyResponseFilter]);
 
   const loadFormAndResponses = useCallback(
-    async (resolvedFormId: FormId | null, typeIdForFilter: EventTicketTypeId | null) => {
+    async (
+      resolvedFormId: FormId | null,
+      typeIdForFilter: EventTicketTypeId | null,
+      typeNameForFilter?: string | null
+    ) => {
       setFormId(resolvedFormId);
       if (!resolvedFormId) {
         setForm(null);
@@ -115,7 +124,9 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
       const fetched = await getFormResponsesForEvent(resolvedFormId, eventId);
       unfilteredFormResponsesRef.current = fetched;
       if (typeIdForFilter) {
-        setFormResponses(filterFormResponsesForTicketType(fetched, orderTicketsMap, typeIdForFilter));
+        setFormResponses(
+          filterFormResponsesForTicketType(fetched, orderTicketsMap, typeIdForFilter, typeNameForFilter)
+        );
       } else {
         setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
       }
@@ -133,13 +144,6 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
 
       if (userLoading || !user.userId) {
         return;
-      }
-
-      const email =
-        loadedEventData.organiser?.publicContactInformation?.email || user.contactInformation?.email || "";
-      setOrganiserEmail(email);
-      if (!email) {
-        logger.warn(`Organiser email not found for event ${eventId}, organiserId: ${loadedEventData.organiserId}`);
       }
 
       if (loadedEventData.organiserId !== user.userId) {
@@ -177,7 +181,11 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
       try {
         const resolvedFormId = resolveFormIdForTicketType(eventData, selectedTypeId);
         if (cancelled) return;
-        await loadFormAndResponses(resolvedFormId, selectedTypeId);
+        await loadFormAndResponses(
+          resolvedFormId,
+          selectedTypeId,
+          selectedTicketType?.eventTicketType.name
+        );
       } catch (err) {
         if (!cancelled) {
           logger.error(`Failed to load type form responses: ${err}`);
@@ -191,7 +199,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
     return () => {
       cancelled = true;
     };
-  }, [eventData, usesTicketTypes, selectedTypeId, loadFormAndResponses, logger]);
+  }, [eventData, usesTicketTypes, selectedTypeId, selectedTicketType, loadFormAndResponses, logger]);
 
   const fetchResponses = useCallback(async () => {
     if (!eventData) {
@@ -202,7 +210,11 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
     try {
       if (usesTicketTypes && selectedTypeId) {
         const resolvedFormId = resolveFormIdForTicketType(eventData, selectedTypeId);
-        await loadFormAndResponses(resolvedFormId, selectedTypeId);
+        await loadFormAndResponses(
+          resolvedFormId,
+          selectedTypeId,
+          selectedTicketType?.eventTicketType.name
+        );
         return;
       }
       await loadFormAndResponses((eventData.formId as FormId | null) ?? null, null);
@@ -210,7 +222,15 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
       logger.error(`Failed to refresh form responses: ${err}`);
       setError("Failed to load form responses");
     }
-  }, [eventData, usesTicketTypes, selectedTypeId, loadFormAndResponses, fetchEvent, logger]);
+  }, [
+    eventData,
+    usesTicketTypes,
+    selectedTypeId,
+    selectedTicketType,
+    loadFormAndResponses,
+    fetchEvent,
+    logger,
+  ]);
 
   const handleFormAttachment = async (selectedFormId: FormId | null) => {
     try {
@@ -228,7 +248,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
           ...types,
           [selectedTypeId]: { ...existing, formId: selectedFormId },
         };
-        const syncEventFormId = Object.keys(types).length === 1;
+        const syncEventFormId = existing.name === GENERAL_TICKET_TYPE_NAME;
         await updateEventById(eventId, {
           eventTicketTypes: nextTypes,
           ...(syncEventFormId ? { formId: selectedFormId } : {}),
@@ -240,7 +260,11 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
           ...(syncEventFormId ? { formId: selectedFormId } : {}),
         };
         setEventData(nextEventData);
-        await loadFormAndResponses(resolveFormIdForTicketType(nextEventData, selectedTypeId), selectedTypeId);
+        await loadFormAndResponses(
+          resolveFormIdForTicketType(nextEventData, selectedTypeId),
+          selectedTypeId,
+          existing.name
+        );
         return;
       }
 
@@ -358,9 +382,8 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
     });
 
     const purchaserInfo = formResponseToPurchaser.get(response.formResponseId);
-    const manualSubmissionText = `manual submission for ${organiserEmail}`;
-    row.purchaserName = purchaserInfo?.name || manualSubmissionText;
-    row.purchaserEmail = purchaserInfo?.email || manualSubmissionText;
+    row.purchaserName = purchaserInfo?.name || "Form submission";
+    row.purchaserEmail = purchaserInfo?.email || "Form submission";
     row.submissionTime = formatTimestamp(response.submissionTime);
 
     return row;
@@ -432,7 +455,6 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
         eventId={eventId}
         orderTicketsMap={approvedOrderTicketsMap}
         showPurchaserColumn={true}
-        organiserEmail={organiserEmail}
       />
 
       <AddFormResponseDialog

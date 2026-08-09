@@ -203,15 +203,47 @@ export function countSoldTicketsForType(
   return count;
 }
 
-/** Form for a ticket type, falling back to the event-level formId. */
+function findEventTicketType(
+  eventTicketTypes: EventTicketTypesMap | null | undefined,
+  eventTicketTypeId: EventTicketTypeId
+): EventTicketType | null {
+  if (!eventTicketTypes) {
+    return null;
+  }
+  const byKey = eventTicketTypes[eventTicketTypeId];
+  if (byKey) {
+    return byKey;
+  }
+  return Object.values(eventTicketTypes).find((type) => type?.id === eventTicketTypeId) ?? null;
+}
+
+/**
+ * Form for a ticket type. Prefer the type's formId; only General Admission falls back to
+ * event.formId when unset. Other types with a null formId use no form.
+ */
 export function resolveFormIdForTicketType(
   event: EventWithInventory,
   eventTicketTypeId: EventTicketTypeId | null | undefined
 ): FormId | null {
-  if (eventTicketTypeId && event.eventTicketTypes?.[eventTicketTypeId]?.formId) {
-    return event.eventTicketTypes[eventTicketTypeId].formId as FormId;
+  const eventFormId = (event.formId as FormId | null | undefined) ?? null;
+  if (!eventTicketTypeId) {
+    return eventFormId;
   }
-  return (event.formId as FormId | null | undefined) ?? null;
+
+  const ticketType = findEventTicketType(event.eventTicketTypes, eventTicketTypeId);
+  if (!ticketType) {
+    return eventFormId;
+  }
+
+  if (ticketType.formId) {
+    return ticketType.formId as FormId;
+  }
+
+  if (ticketType.name === GENERAL_TICKET_TYPE_NAME) {
+    return eventFormId;
+  }
+
+  return null;
 }
 
 /** Firestore updates: nested when eventTicketTypes exists, otherwise top-level. */
