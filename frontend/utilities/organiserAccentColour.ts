@@ -35,11 +35,6 @@ export function contrastForRgb(r: number, g: number, b: number): string {
   return relativeLuminance(r, g, b) > 0.5 ? DEFAULT_ORGANISER_ACCENT_CONTRAST : "#ffffff";
 }
 
-/** Same-origin avatar URL — Firebase download URLs omit CORS, so the hub avatar is served via this proxy. */
-export function organiserHubAvatarSrc(imageUrl: string): string {
-  return `/api/organiser-accent-image?url=${encodeURIComponent(imageUrl)}`;
-}
-
 export function parseOrganiserAccentCache(raw: string | null, now = Date.now()): OrganiserAccentCacheEntry | null {
   if (!raw) return null;
   try {
@@ -96,6 +91,7 @@ export function writeCachedOrganiserAccent(
 }
 
 export function applyOrganiserAccentCssVars(palette: OrganiserAccentPalette): void {
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.style.setProperty("--color-accent", palette.accent);
   root.style.setProperty("--color-accent-contrast", palette.contrast);
@@ -103,28 +99,15 @@ export function applyOrganiserAccentCssVars(palette: OrganiserAccentPalette): vo
 }
 
 export function clearOrganiserAccentCssVars(): void {
+  if (typeof document === "undefined") return;
   const root = document.documentElement;
   root.style.removeProperty("--color-accent");
   root.style.removeProperty("--color-accent-contrast");
   root.style.removeProperty("--color-focus");
 }
 
-/**
- * Average colourful mid-tone pixels from an already-loaded hub avatar <img>.
- */
-export function accentFromLoadedAvatar(img: HTMLImageElement): OrganiserAccentPalette {
-  const size = 32;
-  const canvas = document.createElement("canvas");
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) {
-    return { accent: DEFAULT_ORGANISER_ACCENT, contrast: DEFAULT_ORGANISER_ACCENT_CONTRAST };
-  }
-
-  ctx.drawImage(img, 0, 0, size, size);
-  const { data } = ctx.getImageData(0, 0, size, size);
-
+/** Average colourful mid-tone pixels from raw RGBA image data. */
+export function dominantColourFromImageData(data: Uint8ClampedArray): OrganiserAccentPalette {
   let r = 0;
   let g = 0;
   let b = 0;
@@ -157,23 +140,34 @@ export function accentFromLoadedAvatar(img: HTMLImageElement): OrganiserAccentPa
   };
 }
 
-/** Use the hub avatar once it has loaded: cache hit → apply; else sample → cache → apply. */
-export function syncOrganiserAccentFromHubAvatar(
+/**
+ * Sample a local File/Blob in the browser (no network). Used when the organiser
+ * picks a profile photo — browsers block reading pixels from Firebase URLs.
+ */
+export async function accentFromLocalImageFile(file: Blob): Promise<OrganiserAccentPalette> {
+  const bitmap = await createImageBitmap(file);
+  try {
+    const size = 32;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return { accent: DEFAULT_ORGANISER_ACCENT, contrast: DEFAULT_ORGANISER_ACCENT_CONTRAST };
+    }
+    ctx.drawImage(bitmap, 0, 0, size, size);
+    return dominantColourFromImageData(ctx.getImageData(0, 0, size, size).data);
+  } finally {
+    bitmap.close();
+  }
+}
+
+/** Cache + apply after a profile photo upload/selection. */
+export function rememberOrganiserAccentFromPhoto(
   userId: string,
   imageUrl: string,
-  img: HTMLImageElement
+  palette: OrganiserAccentPalette
 ): void {
-  const cached = readCachedOrganiserAccent(userId, imageUrl);
-  if (cached) {
-    applyOrganiserAccentCssVars(cached);
-    return;
-  }
-
-  try {
-    const palette = accentFromLoadedAvatar(img);
-    writeCachedOrganiserAccent(userId, imageUrl, palette);
-    applyOrganiserAccentCssVars(palette);
-  } catch {
-    // Browser blocked pixel read — leave the default accent.
-  }
+  writeCachedOrganiserAccent(userId, imageUrl, palette);
+  applyOrganiserAccentCssVars(palette);
 }

@@ -1,8 +1,8 @@
 import {
   contrastForRgb,
+  dominantColourFromImageData,
   ORGANISER_ACCENT_CACHE_TTL_MS,
   ORGANISER_ACCENT_STORAGE_KEY,
-  organiserHubAvatarSrc,
   parseOrganiserAccentCache,
   readCachedOrganiserAccent,
   rgbToHex,
@@ -10,11 +10,6 @@ import {
 } from "./organiserAccentColour";
 
 describe("organiserAccentColour", () => {
-  it("builds a same-origin hub avatar url", () => {
-    const src = "https://firebasestorage.googleapis.com/v0/b/bucket/o/photo.jpg?alt=media";
-    expect(organiserHubAvatarSrc(src)).toBe(`/api/organiser-accent-image?url=${encodeURIComponent(src)}`);
-  });
-
   it("converts rgb to hex", () => {
     expect(rgbToHex(242, 183, 5)).toBe("#f2b705");
     expect(rgbToHex(0, 0, 0)).toBe("#000000");
@@ -23,6 +18,18 @@ describe("organiserAccentColour", () => {
   it("picks dark contrast on light accents and white on dark accents", () => {
     expect(contrastForRgb(242, 183, 5)).toBe("#0a0a0a");
     expect(contrastForRgb(20, 40, 80)).toBe("#ffffff");
+  });
+
+  it("averages saturated mid-tone pixels for the dominant colour", () => {
+    const data = new Uint8ClampedArray([
+      200, 40, 40, 255,
+      250, 250, 250, 255,
+      10, 10, 10, 255,
+      180, 50, 50, 255,
+    ]);
+    const palette = dominantColourFromImageData(data);
+    expect(palette.accent).toBe(rgbToHex(190, 45, 45));
+    expect(palette.contrast).toBe("#ffffff");
   });
 
   it("reads and writes a 1-day cache keyed by user and image url", () => {

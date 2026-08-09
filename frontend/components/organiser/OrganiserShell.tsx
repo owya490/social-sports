@@ -40,7 +40,8 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
     };
   }, [isV2Shell]);
 
-  // Restore a cached hub accent immediately; the sidebar avatar samples on load if missing.
+  // Accent is sampled client-side from the local file at profile-photo upload,
+  // then cached for a day — hub load only restores that cache.
   useEffect(() => {
     if (!isV2Shell || !user.userId || !user.profilePicture) return;
     const cached = readCachedOrganiserAccent(user.userId, user.profilePicture);
