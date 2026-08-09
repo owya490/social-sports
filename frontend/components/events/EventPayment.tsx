@@ -1,6 +1,5 @@
 "use client";
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
-import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
@@ -23,6 +22,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import BookingButton from "./BookingButton";
 import ContactEventButton from "./ContactEventButton";
+import TicketTypeSelect from "./TicketTypeSelect";
 import { EventTicketTypeCheckout } from "./useEventTicketTypeCheckout";
 
 interface EventPaymentProps {
@@ -50,13 +50,14 @@ export default function EventPayment(props: EventPaymentProps) {
     showTypeSelector,
     activeTypes,
     selectedTypeId,
-    setSelectedTypeId,
+    handleTicketTypeChange,
     effectiveVacancy,
     effectivePrice,
     effectiveEventTicketTypeId,
     allCounts,
     attendeeCount,
     setAttendeeCount,
+    typeSoldOut,
   } = ticketCheckout;
 
   const isFree = isFreeEvent(effectivePrice);
@@ -65,12 +66,6 @@ export default function EventPayment(props: EventPaymentProps) {
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
-    }
-  };
-
-  const handleTicketTypeChange = (value?: string) => {
-    if (value) {
-      setSelectedTypeId(value as EventTicketTypeId);
     }
   };
 
@@ -84,7 +79,6 @@ export default function EventPayment(props: EventPaymentProps) {
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
   const bookingMaintenanceActive = isBookingMaintenanceActive();
-  const typeSoldOut = effectiveVacancy === 0 && allCounts.length === 0;
   const eventFullySoldOut = props.vacancy === 0 && typeSoldOut;
 
   return (
@@ -146,25 +140,11 @@ export default function EventPayment(props: EventPaymentProps) {
                 props.waitlistEnabled && WAITLIST_ENABLED ? (
                   <>
                     {showTypeSelector && (
-                      <div className="mb-4 !text-black">
-                        <Select
-                          className="text-black"
-                          label="Ticket type"
-                          size="lg"
-                          value={selectedTypeId ?? ""}
-                          onChange={handleTicketTypeChange}
-                        >
-                          {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
-                            <Option key={eventTicketTypeId} value={eventTicketTypeId}>
-                              {eventTicketType.name}
-                              {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
-                              {!isFreeEvent(eventTicketType.price)
-                                ? ` — ${getEventPriceDisplay(eventTicketType.price, true)}`
-                                : ""}
-                            </Option>
-                          ))}
-                        </Select>
-                      </div>
+                      <TicketTypeSelect
+                        activeTypes={activeTypes}
+                        selectedTypeId={selectedTypeId}
+                        onChange={handleTicketTypeChange}
+                      />
                     )}
                     <div className="mb-4 !text-black">
                       <Select
@@ -201,25 +181,11 @@ export default function EventPayment(props: EventPaymentProps) {
               ) : (
                 <>
                   {showTypeSelector && (
-                    <div className="mb-4 !text-black">
-                      <Select
-                        className="text-black"
-                        label="Ticket type"
-                        size="lg"
-                        value={selectedTypeId ?? ""}
-                        onChange={handleTicketTypeChange}
-                      >
-                        {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
-                          <Option key={eventTicketTypeId} value={eventTicketTypeId}>
-                            {eventTicketType.name}
-                            {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
-                            {!isFreeEvent(eventTicketType.price)
-                              ? ` — ${getEventPriceDisplay(eventTicketType.price, true)}`
-                              : ` — ${eventTicketType.vacancy} left`}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
+                    <TicketTypeSelect
+                      activeTypes={activeTypes}
+                      selectedTypeId={selectedTypeId}
+                      onChange={handleTicketTypeChange}
+                    />
                   )}
                   {typeSoldOut ? (
                     <div className="text-center py-4">

@@ -64,12 +64,21 @@ export function useEventTicketTypeCheckout(params: {
     setAttendeeCount(allCounts[0] ?? 1);
   }, [allCounts.join(",")]);
 
+  const handleTicketTypeChange = (value?: string) => {
+    if (value) {
+      setSelectedTypeId(value as EventTicketTypeId);
+    }
+  };
+
+  const typeSoldOut = effectiveVacancy === 0 && allCounts.length === 0;
+
   return {
     usesTicketTypes,
     showTypeSelector,
     activeTypes,
     selectedTypeId,
     setSelectedTypeId,
+    handleTicketTypeChange,
     selectedType,
     effectiveVacancy,
     effectivePrice,
@@ -77,6 +86,7 @@ export function useEventTicketTypeCheckout(params: {
     allCounts,
     attendeeCount,
     setAttendeeCount,
+    typeSoldOut,
   };
 }
 

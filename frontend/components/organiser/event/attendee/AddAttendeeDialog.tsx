@@ -3,10 +3,13 @@ import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfac
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { addAttendee } from "@/services/src/attendee/attendeeService";
+import { getEventById } from "@/services/src/events/eventsService";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
   resolveCheckoutTicketTypeId,
+  resolveEventInventory,
+  type SortedEventTicketType,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
@@ -41,21 +44,54 @@ const InviteAttendeeDialog = ({
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
   const [numTickets, setNumTickets] = useState<string>("1");
-  const ticketTypes = useMemo(() => getSortedEventTicketTypes(eventData.eventTicketTypes), [eventData.eventTicketTypes]);
+  const eventInventory = useMemo(() => resolveEventInventory(eventData), [eventData]);
+  const baseTicketTypes = useMemo(
+    () => getSortedEventTicketTypes(eventData.eventTicketTypes),
+    [eventData.eventTicketTypes]
+  );
+  const [ticketTypes, setTicketTypes] = useState<SortedEventTicketType[]>(baseTicketTypes);
+  const [aggregateVacancy, setAggregateVacancy] = useState(eventInventory.vacancy);
   const showTypeSelector = hasEventTicketTypes(eventData) && ticketTypes.length > 1;
+  const availableTicketTypes = useMemo(
+    () => ticketTypes.filter((t) => t.eventTicketType.vacancy > 0),
+    [ticketTypes]
+  );
   const [selectedTicketTypeId, setSelectedTicketTypeId] = useState<EventTicketTypeId | null>(null);
+
+  useEffect(() => {
+    setTicketTypes(baseTicketTypes);
+    setAggregateVacancy(eventInventory.vacancy);
+  }, [baseTicketTypes, eventInventory.vacancy]);
 
   useEffect(() => {
     if (!showTypeSelector) {
       setSelectedTicketTypeId(null);
       return;
     }
-    setSelectedTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
-  }, [showTypeSelector, ticketTypes]);
+    setSelectedTicketTypeId((prev) => {
+      if (prev && availableTicketTypes.some((t) => t.eventTicketTypeId === prev)) {
+        return prev;
+      }
+      return availableTicketTypes[0]?.eventTicketTypeId ?? null;
+    });
+  }, [showTypeSelector, availableTicketTypes]);
 
   const selectedVacancy = showTypeSelector
-    ? ticketTypes.find((t) => t.eventTicketTypeId === selectedTicketTypeId)?.eventTicketType.vacancy ?? eventData.vacancy
-    : eventData.vacancy;
+    ? ticketTypes.find((t) => t.eventTicketTypeId === selectedTicketTypeId)?.eventTicketType.vacancy ?? 0
+    : aggregateVacancy;
+  const canSubmit = selectedVacancy > 0;
+
+  useEffect(() => {
+    if (!canSubmit) {
+      setNumTickets("0");
+      return;
+    }
+    setNumTickets((prev) => {
+      const current = parseInt(prev, 10);
+      if (isNaN(current) || current < 1) return "1";
+      return String(clampTicketQuantity(current, 1, selectedVacancy));
+    });
+  }, [canSubmit, selectedVacancy]);
 
   const [loading, setLoading] = useState<boolean>(false);
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
@@ -80,16 +116,24 @@ const InviteAttendeeDialog = ({
   const handleAddAttendee = async () => {
     try {
       setLoading(true);
+      const qty = parseInt(numTickets, 10) || 0;
+      if (selectedVacancy <= 0 || qty <= 0 || qty > selectedVacancy) {
+        setErrorMessage("No tickets available for the selected type");
+        handleErrorAddingAttendee();
+        return;
+      }
+      const eventTicketTypeId =
+        showTypeSelector && selectedTicketTypeId
+          ? selectedTicketTypeId
+          : resolveCheckoutTicketTypeId(eventData);
       const { orderId, ticketIds } = await addAttendee({
         eventId,
         email: attendeeEmail,
         fullName: attendeeName,
         phone: attendeePhoneNumber,
-        numTickets: parseInt(numTickets),
+        numTickets: qty,
         price: 0, // price is free as it is being added manually
-        eventTicketTypeId: showTypeSelector && selectedTicketTypeId
-          ? selectedTicketTypeId
-          : resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId,
       });
       const now = Timestamp.now();
       const newOrder: Order = {
@@ -111,12 +155,32 @@ const InviteAttendeeDialog = ({
         purchaseDate: now,
         status: OrderAndTicketStatus.APPROVED,
         type: OrderAndTicketType.MANUAL,
+        eventTicketTypeId,
       }));
       setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
-      setEventVacancy(eventData.vacancy - parseInt(numTickets));
+      setTicketTypes((prev) =>
+        prev.map((entry) =>
+          entry.eventTicketTypeId === eventTicketTypeId
+            ? {
+                ...entry,
+                eventTicketType: {
+                  ...entry.eventTicketType,
+                  vacancy: Math.max(0, entry.eventTicketType.vacancy - qty),
+                },
+              }
+            : entry
+        )
+      );
+      setAggregateVacancy((prev) => Math.max(0, prev - qty));
+      try {
+        const updatedEventData = await getEventById(eventId);
+        setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
+      } catch {
+        setEventVacancy((prev) => Math.max(0, prev - qty));
+      }
       setEventMetadata((prev) => ({
         ...prev,
-        completeTicketCount: prev.completeTicketCount + parseInt(numTickets),
+        completeTicketCount: prev.completeTicketCount + qty,
       }));
       resetInputFields();
       setShowSuccessAlert(true);
@@ -246,8 +310,9 @@ const InviteAttendeeDialog = ({
                             onChange={(value) => {
                               if (value) setSelectedTicketTypeId(value as EventTicketTypeId);
                             }}
+                            disabled={availableTicketTypes.length === 0}
                           >
-                            {ticketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                            {availableTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
                               <Option key={eventTicketTypeId} value={eventTicketTypeId}>
                                 {eventTicketType.name} — {getEventPriceDisplay(eventTicketType.price)} ·{" "}
                                 {eventTicketType.vacancy} left
@@ -255,6 +320,9 @@ const InviteAttendeeDialog = ({
                             ))}
                           </Select>
                         )}
+                        {!canSubmit ? (
+                          <p className="text-sm text-red-400">No tickets available to add.</p>
+                        ) : null}
                         <Input
                           label="Number of tickets"
                           crossOrigin={undefined}
@@ -263,13 +331,14 @@ const InviteAttendeeDialog = ({
                           type="number"
                           min={1}
                           max={selectedVacancy}
+                          disabled={!canSubmit}
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
-                            if (!isNaN(value)) {
+                            if (!isNaN(value) && selectedVacancy > 0) {
                               const capped = clampTicketQuantity(value, 1, selectedVacancy);
                               setNumTickets(capped.toString());
                             } else {
-                              setNumTickets("1");
+                              setNumTickets(canSubmit ? "1" : "0");
                             }
                           }}
                           className="focus:ring-0"
@@ -278,8 +347,9 @@ const InviteAttendeeDialog = ({
 
                       <div className="mt-2 float-right">
                         <button
-                          className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
+                          className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                           type="submit"
+                          disabled={!canSubmit}
                         >
                           Add Attendee
                         </button>

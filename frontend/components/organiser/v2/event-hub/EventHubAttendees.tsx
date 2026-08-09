@@ -316,7 +316,11 @@ function AttendeeEditTicketsPanel({
     }
   };
 
-  const inventoryVacancy = resolveEventInventory(eventData).vacancy;
+  const ticketTypeId = tickets[0]?.eventTicketTypeId;
+  const matchingTicketType =
+    ticketTypeId != null ? eventData.eventTicketTypes?.[ticketTypeId] : undefined;
+  const inventoryVacancy =
+    matchingTicketType?.vacancy ?? resolveEventInventory(eventData).vacancy;
 
   return (
     <form id="event-hub-edit-tickets" className="space-y-4" onSubmit={handleSubmit}>
@@ -387,6 +391,10 @@ export function EventHubAttendees({
   const usesTicketTypes = hasEventTicketTypes(eventData);
   const showTypeSelector = usesTicketTypes && ticketTypes.length > 1;
   const showListTypeFilter = usesTicketTypes && ticketTypes.length > 1;
+  const availableTicketTypes = useMemo(
+    () => ticketTypes.filter((t) => t.eventTicketType.vacancy > 0),
+    [ticketTypes]
+  );
   const [addTicketTypeId, setAddTicketTypeId] = useState<EventTicketTypeId | null>(null);
   /** null = All ticket types */
   const [listTicketTypeId, setListTicketTypeId] = useState<EventTicketTypeId | null>(null);
@@ -396,8 +404,13 @@ export function EventHubAttendees({
       setAddTicketTypeId(null);
       return;
     }
-    setAddTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
-  }, [showTypeSelector, ticketTypes]);
+    setAddTicketTypeId((prev) => {
+      if (prev && availableTicketTypes.some((t) => t.eventTicketTypeId === prev)) {
+        return prev;
+      }
+      return availableTicketTypes[0]?.eventTicketTypeId ?? null;
+    });
+  }, [showTypeSelector, availableTicketTypes]);
 
   useEffect(() => {
     if (!listTicketTypeId) {
@@ -411,9 +424,22 @@ export function EventHubAttendees({
   const selectedListTicketType = ticketTypes.find((t) => t.eventTicketTypeId === listTicketTypeId);
 
   const addTypeVacancy = showTypeSelector
-    ? ticketTypes.find((t) => t.eventTicketTypeId === addTicketTypeId)?.eventTicketType.vacancy ??
-      eventInventory.vacancy
+    ? ticketTypes.find((t) => t.eventTicketTypeId === addTicketTypeId)?.eventTicketType.vacancy ?? 0
     : eventInventory.vacancy;
+  const canAddAttendee = addTypeVacancy > 0;
+
+  useEffect(() => {
+    if (!canAddAttendee) {
+      setAddTickets("0");
+      return;
+    }
+    setAddTickets((prev) => {
+      const current = parseInt(prev, 10);
+      if (isNaN(current) || current < 1) return "1";
+      return String(clampTicketQuantity(current, 1, addTypeVacancy));
+    });
+  }, [canAddAttendee, addTypeVacancy]);
+
   const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [approvedMap, setApprovedMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [pendingMap, setPendingMap] = useState<Map<Order, Ticket[]>>(new Map());
@@ -539,7 +565,7 @@ export function EventHubAttendees({
     setAddTickets("1");
     setAddError(null);
     if (showTypeSelector) {
-      setAddTicketTypeId(ticketTypes[0]?.eventTicketTypeId ?? null);
+      setAddTicketTypeId(availableTicketTypes[0]?.eventTicketTypeId ?? null);
     }
   };
 
@@ -558,7 +584,15 @@ export function EventHubAttendees({
     setAddSaving(true);
     setAddError(null);
     try {
-      const qty = parseInt(addTickets, 10) || 1;
+      const qty = parseInt(addTickets, 10) || 0;
+      if (addTypeVacancy <= 0 || qty <= 0 || qty > addTypeVacancy) {
+        setAddError("No tickets available for the selected type");
+        return;
+      }
+      const eventTicketTypeId =
+        showTypeSelector && addTicketTypeId
+          ? addTicketTypeId
+          : resolveCheckoutTicketTypeId(eventData);
       const { orderId, ticketIds } = await addAttendee({
         eventId,
         email: addEmail,
@@ -566,10 +600,7 @@ export function EventHubAttendees({
         phone: addPhone,
         numTickets: qty,
         price: 0,
-        eventTicketTypeId:
-          showTypeSelector && addTicketTypeId
-            ? addTicketTypeId
-            : resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId,
       });
       const now = Timestamp.now();
       const newOrder: Order = {
@@ -591,9 +622,19 @@ export function EventHubAttendees({
         purchaseDate: now,
         status: OrderAndTicketStatus.APPROVED,
         type: OrderAndTicketType.MANUAL,
+        eventTicketTypeId,
       }));
       setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
-      setEventVacancy(eventInventory.vacancy - qty);
+      try {
+        const updatedEventData = await getEventById(eventId);
+        if (onEventRefresh) {
+          onEventRefresh(updatedEventData);
+        } else {
+          setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
+        }
+      } catch {
+        setEventVacancy((prev) => Math.max(0, prev - qty));
+      }
       setEventMetadata((prev) => ({
         ...prev,
         completeTicketCount: prev.completeTicketCount + qty,
@@ -1014,7 +1055,11 @@ export function EventHubAttendees({
         onClose={closeAddPanel}
         title="Add attendee"
         footer={
-          <EventHubPrimaryButton type="submit" form="event-hub-add-attendee" disabled={addSaving}>
+          <EventHubPrimaryButton
+            type="submit"
+            form="event-hub-add-attendee"
+            disabled={addSaving || !canAddAttendee}
+          >
             <CheckIcon className="h-4 w-4" aria-hidden />
             {addSaving ? "Adding…" : "Add attendee"}
           </EventHubPrimaryButton>
@@ -1061,35 +1106,44 @@ export function EventHubAttendees({
               <select
                 required
                 value={addTicketTypeId ?? ""}
+                disabled={availableTicketTypes.length === 0}
                 onChange={(e) => setAddTicketTypeId(e.target.value as EventTicketTypeId)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
               >
-                {ticketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
-                  <option key={eventTicketTypeId} value={eventTicketTypeId}>
-                    {eventTicketType.name} — {getEventPriceDisplay(eventTicketType.price)} ·{" "}
-                    {eventTicketType.vacancy} left
-                  </option>
-                ))}
+                {availableTicketTypes.length === 0 ? (
+                  <option value="">No tickets available</option>
+                ) : (
+                  availableTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                    <option key={eventTicketTypeId} value={eventTicketTypeId}>
+                      {eventTicketType.name} — {getEventPriceDisplay(eventTicketType.price)} ·{" "}
+                      {eventTicketType.vacancy} left
+                    </option>
+                  ))
+                )}
               </select>
             </label>
           )}
+          {!canAddAttendee ? (
+            <p className="text-sm text-danger font-sans">No tickets available to add.</p>
+          ) : null}
           <label className="block space-y-1.5">
             <span className="text-xs font-medium text-foreground-muted font-sans">Tickets</span>
             <input
               type="number"
               required
               min={1}
-              max={Math.max(1, addTypeVacancy)}
+              max={addTypeVacancy}
               value={addTickets}
+              disabled={!canAddAttendee}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);
-                if (!isNaN(value)) {
+                if (!isNaN(value) && addTypeVacancy > 0) {
                   setAddTickets(String(clampTicketQuantity(value, 1, addTypeVacancy)));
                 } else {
-                  setAddTickets("1");
+                  setAddTickets(canAddAttendee ? "1" : "0");
                 }
               }}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
             />
           </label>
           {addError ? <p className="text-sm text-danger font-sans">{addError}</p> : null}

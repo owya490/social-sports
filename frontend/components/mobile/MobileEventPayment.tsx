@@ -1,7 +1,6 @@
 "use client";
 
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
-import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
@@ -22,6 +21,7 @@ import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
+import TicketTypeSelect from "../events/TicketTypeSelect";
 import { EventTicketTypeCheckout } from "../events/useEventTicketTypeCheckout";
 
 interface MobileEventPaymentProps {
@@ -49,13 +49,13 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     showTypeSelector,
     activeTypes,
     selectedTypeId,
-    setSelectedTypeId,
-    effectiveVacancy,
+    handleTicketTypeChange,
     effectivePrice,
     effectiveEventTicketTypeId,
     allCounts,
     attendeeCount,
     setAttendeeCount,
+    typeSoldOut,
   } = ticketCheckout;
 
   const isFree = isFreeEvent(effectivePrice);
@@ -64,12 +64,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const handleAttendeeCount = (value?: string) => {
     if (value) {
       setAttendeeCount(parseInt(value));
-    }
-  };
-
-  const handleTicketTypeChange = (value?: string) => {
-    if (value) {
-      setSelectedTypeId(value as EventTicketTypeId);
     }
   };
 
@@ -83,7 +77,6 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
   const eventInPast = Timestamp.now() > endDate;
   const eventRegistrationClosed = Timestamp.now() > registrationEndDate || paused;
   const bookingMaintenanceActive = isBookingMaintenanceActive();
-  const typeSoldOut = effectiveVacancy === 0 && allCounts.length === 0;
   const eventFullySoldOut = props.vacancy === 0 && typeSoldOut;
 
   return (
@@ -139,22 +132,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
               props.waitlistEnabled && WAITLIST_ENABLED ? (
                 <>
                   {showTypeSelector && (
-                    <div className="mb-3 !text-black">
-                      <Select
-                        className="text-black"
-                        label="Ticket type"
-                        size="lg"
-                        value={selectedTypeId ?? ""}
-                        onChange={handleTicketTypeChange}
-                      >
-                        {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
-                          <Option key={eventTicketTypeId} value={eventTicketTypeId}>
-                            {eventTicketType.name}
-                            {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
-                          </Option>
-                        ))}
-                      </Select>
-                    </div>
+                    <TicketTypeSelect
+                      activeTypes={activeTypes}
+                      selectedTypeId={selectedTypeId}
+                      onChange={handleTicketTypeChange}
+                      className="mb-3 !text-black"
+                    />
                   )}
                   <div className="mb-4 !text-black">
                     <Select
@@ -191,25 +174,12 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
             ) : (
               <>
                 {showTypeSelector && (
-                  <div className="mb-3 !text-black">
-                    <Select
-                      className="text-black"
-                      label="Ticket type"
-                      size="lg"
-                      value={selectedTypeId ?? ""}
-                      onChange={handleTicketTypeChange}
-                    >
-                      {activeTypes.map(({ eventTicketTypeId, eventTicketType }) => (
-                        <Option key={eventTicketTypeId} value={eventTicketTypeId}>
-                          {eventTicketType.name}
-                          {eventTicketType.vacancy === 0 ? " (Sold out)" : ""}
-                          {!isFreeEvent(eventTicketType.price)
-                            ? ` — ${getEventPriceDisplay(eventTicketType.price)}`
-                            : ""}
-                        </Option>
-                      ))}
-                    </Select>
-                  </div>
+                  <TicketTypeSelect
+                    activeTypes={activeTypes}
+                    selectedTypeId={selectedTypeId}
+                    onChange={handleTicketTypeChange}
+                    className="mb-3 !text-black"
+                  />
                 )}
                 {typeSoldOut ? (
                   <div className="text-center py-4">

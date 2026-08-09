@@ -43,14 +43,17 @@ export function EventTicketTypeFormDialog({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) {
-      setName(initialValues.name);
-      setPriceDollars(String(initialValues.priceDollars));
-      setCapacity(String(initialValues.capacity));
-      setFormId(initialValues.formId);
-      setError(null);
+    if (!open) {
+      return;
     }
-  }, [open, initialValues]);
+    setName(initialValues.name);
+    setPriceDollars(String(initialValues.priceDollars));
+    setCapacity(String(initialValues.capacity));
+    setFormId(initialValues.formId);
+    setError(null);
+    // Reset only when the dialog opens; ignore initialValues identity changes from parent re-renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: open-only reset
+  }, [open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
