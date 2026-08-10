@@ -15,6 +15,7 @@ export function isBookingMaintenanceActive(): boolean {
 export const ORGANISER_HUB_V2_BANNER_USER_IDS: readonly string[] = [
   "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball
   "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
+  "O4AJaCKtX8h9wm647mMRvsfra353",
 ];
 
 export function isOrganiserHubV2BannerEnabled(userId: string): boolean {
