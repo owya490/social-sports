@@ -14,7 +14,7 @@ Read the root `AGENTS.md` first.
 - Python functions are legacy/supporting backend code; prefer Java for new backend endpoints unless explicitly requested.
 - Keep Firebase exports in `main.py` and business logic in `lib/`.
 - Validate and authenticate requests before business operations.
-- Mock external Stripe, Firebase, email, and network boundaries in unit tests.
+- When adding or updating unit tests, mock external Stripe, Firebase, email, and network boundaries.
 - Never commit `.env*`, `functions_key*.json`, or service-account credentials.
 - Tests currently initialize Firestore during import, so they require the untracked `functions_key.json` and local environment configuration. Do not fabricate credentials to make them run.
 

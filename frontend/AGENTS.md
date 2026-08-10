@@ -16,7 +16,7 @@ Read the root `AGENTS.md` first.
 - Follow strict TypeScript and nearby Next.js App Router patterns.
 - Prefer existing service-layer APIs over direct Firebase access from components.
 - Reuse definitions from `interfaces/`; update backend contracts when request or response shapes change.
-- Follow nearby Jest tests and augment an existing test file when it cleanly covers the behavior.
+- When updating Jest tests, follow nearby patterns and augment an existing test file when it cleanly covers the behavior.
 - Do not commit environment files or fabricate build credentials.
 
 ## Generated Content
