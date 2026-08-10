@@ -67,7 +67,7 @@ The **Ticket Types** section in Settings lets you offer multiple booking options
 
 New events start with a single **General Admission** type. Buyers only see a ticket type selector when more than one type exists.
 
-For the full workflow — including forms per type, capacity rules, and deletion limits — see [Ticket Types](/docs/organisers/events/ticket-types).
+For the full workflow - including forms per type, capacity rules, and deletion limits - see [Ticket Types](/docs/organisers/events/ticket-types).
 
 ## Enable Booking Approval
 

@@ -1,14 +1,14 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Features</title><link>https://www.sportshub.net.au/tags/features/</link><description>Recent content in Features on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sun, 09 Aug 2026 00:00:00 +1000</lastBuildDate><atom:link href="https://www.sportshub.net.au/tags/features/index.xml" rel="self" type="application/rss+xml"/><item><title>Ticket Types: Price, Capacity, and Forms Per Option</title><link>https://www.sportshub.net.au/blogs/features/ticket-types/</link><pubDate>Sun, 09 Aug 2026 00:00:00 +1000</pubDate><guid>https://www.sportshub.net.au/blogs/features/ticket-types/</guid><description>
-&lt;p>&lt;img src="https://images.unsplash.com/photo-1461896830474-25b9d82e9f1c?auto=format&amp;amp;fit=crop&amp;amp;w=1600&amp;amp;q=80" alt="ticket-types" loading="lazy" />&lt;/p>
-&lt;h1>Ticket Types: Price, Capacity, and Forms Per Option&lt;/h1>&lt;p>One price and one capacity isn&amp;rsquo;t always enough. Mixed doubles need Men&amp;rsquo;s and Women&amp;rsquo;s. Clubs want Early Bird and Standard. Social sessions need Member and Guest. That&amp;rsquo;s why we&amp;rsquo;ve launched &lt;strong>Ticket Types&lt;/strong> — multiple booking options on a single event, each with its own price, capacity, and registration form.&lt;/p>
+&lt;p>&lt;img src="https://www.camerapro.com.au/media/magefan_blog/christopher-burns-200321-unsplash.png" alt="ticket-types" loading="lazy" />&lt;/p>
+&lt;h1>Ticket Types: Price, Capacity, and Forms Per Option&lt;/h1>&lt;p>One price and one capacity isn&amp;rsquo;t always enough. Mixed doubles need Men&amp;rsquo;s and Women&amp;rsquo;s. Clubs want Early Bird and Standard. Social sessions need Member and Guest. That&amp;rsquo;s why we&amp;rsquo;ve launched &lt;strong>Ticket Types&lt;/strong> - multiple booking options on a single event, each with its own price, capacity, and registration form.&lt;/p>
 &lt;p>Players choose a ticket type when they book. You manage inventory and forms per type from your Organiser Hub.&lt;/p>
 &lt;h2>Why Organisers Love It&lt;span class="hx:absolute hx:-mt-20" id="why-organisers-love-it">&lt;/span>
 &lt;a href="#why-organisers-love-it" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Ticket Types give you flexible inventory without splitting one session into multiple events:&lt;/p>
 &lt;ul>
-&lt;li>&lt;strong>Different prices&lt;/strong> — Early Bird, Standard, or Member vs Guest on the same event&lt;/li>
-&lt;li>&lt;strong>Separate capacity&lt;/strong> — fill Men&amp;rsquo;s and Women&amp;rsquo;s spots independently, or cap VIP seats while General Admission stays open&lt;/li>
-&lt;li>&lt;strong>Forms per type&lt;/strong> — attach a different registration form to each option, or leave some types form-free&lt;/li>
-&lt;li>&lt;strong>Clear buyer choice&lt;/strong> — attendees see the type name, price, and remaining spots before they pay&lt;/li>
+&lt;li>&lt;strong>Different prices&lt;/strong> - Early Bird, Standard, or Member vs Guest on the same event&lt;/li>
+&lt;li>&lt;strong>Separate capacity&lt;/strong> - fill Men&amp;rsquo;s and Women&amp;rsquo;s spots independently, or cap VIP seats while General Admission stays open&lt;/li>
+&lt;li>&lt;strong>Forms per type&lt;/strong> - attach a different registration form to each option, or leave some types form-free&lt;/li>
+&lt;li>&lt;strong>Clear buyer choice&lt;/strong> - attendees see the type name, price, and remaining spots before they pay&lt;/li>
 &lt;/ul>
 &lt;p>New events still start with a single &lt;strong>General Admission&lt;/strong> type. Add more types whenever you need them.&lt;/p>
 &lt;h2>What Players Experience&lt;span class="hx:absolute hx:-mt-20" id="what-players-experience">&lt;/span>
@@ -17,7 +17,7 @@
 &lt;li>They open your event page&lt;/li>
 &lt;li>If there&amp;rsquo;s more than one ticket type, they pick the option they want&lt;/li>
 &lt;li>They see that type&amp;rsquo;s price and availability&lt;/li>
-&lt;li>Checkout uses that type — including any form attached to it&lt;/li>
+&lt;li>Checkout uses that type - including any form attached to it&lt;/li>
 &lt;/ol>
 &lt;p>If a type is sold out, it&amp;rsquo;s marked clearly so they can choose another option or waitlist where available.&lt;/p>
 &lt;h2>How to Set It Up (Organiser Hub)&lt;span class="hx:absolute hx:-mt-20" id="how-to-set-it-up-organiser-hub">&lt;/span>
@@ -27,7 +27,7 @@
 &lt;li>Go to &lt;strong>Settings&lt;/strong>&lt;/li>
 &lt;li>Under &lt;strong>Ticket Types&lt;/strong>, click &lt;strong>Add Type&lt;/strong>&lt;/li>
 &lt;li>Set the &lt;strong>name&lt;/strong>, &lt;strong>price&lt;/strong>, &lt;strong>capacity&lt;/strong>, and optional &lt;strong>registration form&lt;/strong>&lt;/li>
-&lt;li>Save — buyers can select the new type immediately&lt;/li>
+&lt;li>Save - buyers can select the new type immediately&lt;/li>
 &lt;/ol>
 &lt;p>You can edit a type anytime. You can delete a type only if no tickets have been sold for it, and every event must keep at least one ticket type.&lt;/p>
 &lt;p>Forms stay in sync too: the &lt;strong>Forms&lt;/strong> tab lets you switch between ticket types to attach forms and review responses for each option.&lt;/p>

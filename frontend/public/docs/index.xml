@@ -932,7 +932,7 @@ All form responses are available in your Event Management page within the Organi
 &lt;li>Set the name, price, capacity, and optional form, then save.&lt;/li>
 &lt;/ol>
 &lt;p>New events start with a single &lt;strong>General Admission&lt;/strong> type. Buyers only see a ticket type selector when more than one type exists.&lt;/p>
-&lt;p>For the full workflow — including forms per type, capacity rules, and deletion limits — see &lt;a href="https://www.sportshub.net.au/docs/organisers/events/ticket-types/" >Ticket Types&lt;/a>.&lt;/p>
+&lt;p>For the full workflow - including forms per type, capacity rules, and deletion limits - see &lt;a href="https://www.sportshub.net.au/docs/organisers/events/ticket-types/" >Ticket Types&lt;/a>.&lt;/p>
 &lt;h2>Enable Booking Approval&lt;span class="hx:absolute hx:-mt-20" id="enable-booking-approval">&lt;/span>
 &lt;a href="#enable-booking-approval" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>This setting lets you require manual approval before a booking is confirmed. When enabled, players click &lt;strong>Request to Book&lt;/strong> instead of &lt;strong>Book Now&lt;/strong>, and their payment method is &lt;strong>not charged unless you accept them&lt;/strong>.&lt;/p>
 &lt;h3>How to Enable&lt;span class="hx:absolute hx:-mt-20" id="how-to-enable-1">&lt;/span>
@@ -955,7 +955,7 @@ All form responses are available in your Event Management page within the Organi
 &lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Ticket Types let you offer more than one booking option on a single event. Each type has its own &lt;strong>name&lt;/strong>, &lt;strong>price&lt;/strong>, &lt;strong>capacity&lt;/strong>, and optional &lt;strong>registration form&lt;/strong>. Buyers select one type per checkout, and inventory is tracked separately for each option.&lt;/p>
 &lt;p>New events start with a single &lt;strong>General Admission&lt;/strong> ticket type. Add more types when you need different prices, separate capacities, or type-specific forms.&lt;/p>
 &lt;h2>Where to Manage Ticket Types&lt;span class="hx:absolute hx:-mt-20" id="where-to-manage-ticket-types">&lt;/span>
-&lt;a href="#where-to-manage-ticket-types" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>In &lt;strong>Organiser Hub (v1)&lt;/strong>, ticket types are managed from the event &lt;strong>Settings&lt;/strong> tab:&lt;/p>
+&lt;a href="#where-to-manage-ticket-types" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>In the &lt;strong>Organiser Hub&lt;/strong>, ticket types are managed from the event &lt;strong>Settings&lt;/strong> tab:&lt;/p>
 &lt;ol>
 &lt;li>Open your event in the &lt;a href="https://www.sportshub.net.au/organiser" target="_blank" rel="noopener">Organiser Hub&lt;/a>&lt;/li>
 &lt;li>Go to the &lt;strong>Settings&lt;/strong> tab&lt;/li>
@@ -966,8 +966,8 @@ All form responses are available in your Event Management page within the Organi
 &lt;a href="#add-a-ticket-type" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
 &lt;li>In &lt;strong>Settings → Ticket Types&lt;/strong>, click &lt;strong>Add Type&lt;/strong>&lt;/li>
 &lt;li>Enter a &lt;strong>Name&lt;/strong> (for example, Early Bird, Member, or Women&amp;rsquo;s)&lt;/li>
-&lt;li>Set the &lt;strong>Price (AUD)&lt;/strong> — use &lt;code>0&lt;/code> for a free type&lt;/li>
-&lt;li>Set the &lt;strong>Capacity&lt;/strong> — how many tickets of this type can be sold&lt;/li>
+&lt;li>Set the &lt;strong>Price (AUD)&lt;/strong> - use &lt;code>0&lt;/code> for a free type&lt;/li>
+&lt;li>Set the &lt;strong>Capacity&lt;/strong> - how many tickets of this type can be sold&lt;/li>
 &lt;li>Optionally choose a &lt;strong>Registration Form&lt;/strong> for this type&lt;/li>
 &lt;li>Save&lt;/li>
 &lt;/ol>
@@ -994,11 +994,11 @@ All form responses are available in your Event Management page within the Organi
 &lt;li>For &lt;strong>General Admission&lt;/strong>, if no type-level form is set, SPORTSHUB falls back to the event-level form&lt;/li>
 &lt;li>Other ticket types with no form attached collect &lt;strong>no form&lt;/strong> at checkout&lt;/li>
 &lt;/ul>
-&lt;p>In Organiser Hub v1, use the &lt;strong>Forms&lt;/strong> tab to switch between ticket types, attach a form to the selected type, and review responses filtered to that type.&lt;/p>
+&lt;p>In the Organiser Hub, use the &lt;strong>Forms&lt;/strong> tab to switch between ticket types, attach a form to the selected type, and review responses filtered to that type.&lt;/p>
 &lt;p>Learn more about building forms in &lt;a href="https://www.sportshub.net.au/docs/organisers/organiser-hub/forms/create-form/" >Creating a Form&lt;/a>.&lt;/p>
 &lt;h2>What Buyers See&lt;span class="hx:absolute hx:-mt-20" id="what-buyers-see">&lt;/span>
 &lt;a href="#what-buyers-see" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
-&lt;li>If the event has &lt;strong>one&lt;/strong> ticket type, checkout behaves as before — no extra selector&lt;/li>
+&lt;li>If the event has &lt;strong>one&lt;/strong> ticket type, checkout behaves as before - no extra selector&lt;/li>
 &lt;li>If the event has &lt;strong>multiple&lt;/strong> ticket types, buyers choose a type and see its price and remaining spots&lt;/li>
 &lt;li>Sold-out types are labelled so buyers can pick another option&lt;/li>
 &lt;/ul>

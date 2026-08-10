@@ -14,7 +14,7 @@ New events start with a single **General Admission** ticket type. Add more types
 
 ## Where to Manage Ticket Types
 
-In **Organiser Hub (v1)**, ticket types are managed from the event **Settings** tab:
+In the **Organiser Hub**, ticket types are managed from the event **Settings** tab:
 
 1. Open your event in the [Organiser Hub](https://www.sportshub.net.au/organiser)
 2. Go to the **Settings** tab
@@ -26,8 +26,8 @@ From there you can add, edit, and delete ticket types.
 
 1. In **Settings → Ticket Types**, click **Add Type**
 2. Enter a **Name** (for example, Early Bird, Member, or Women's)
-3. Set the **Price (AUD)** — use `0` for a free type
-4. Set the **Capacity** — how many tickets of this type can be sold
+3. Set the **Price (AUD)** - use `0` for a free type
+4. Set the **Capacity** - how many tickets of this type can be sold
 5. Optionally choose a **Registration Form** for this type
 6. Save
 
@@ -59,13 +59,13 @@ Each ticket type can have its own registration form:
 - For **General Admission**, if no type-level form is set, SPORTSHUB falls back to the event-level form
 - Other ticket types with no form attached collect **no form** at checkout
 
-In Organiser Hub v1, use the **Forms** tab to switch between ticket types, attach a form to the selected type, and review responses filtered to that type.
+In the Organiser Hub, use the **Forms** tab to switch between ticket types, attach a form to the selected type, and review responses filtered to that type.
 
 Learn more about building forms in [Creating a Form](/docs/organisers/organiser-hub/forms/create-form).
 
 ## What Buyers See
 
-- If the event has **one** ticket type, checkout behaves as before — no extra selector
+- If the event has **one** ticket type, checkout behaves as before - no extra selector
 - If the event has **multiple** ticket types, buyers choose a type and see its price and remaining spots
 - Sold-out types are labelled so buyers can pick another option
 
