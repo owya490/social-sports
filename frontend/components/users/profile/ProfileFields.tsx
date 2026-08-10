@@ -230,12 +230,40 @@ const RenderEditableDateField = ({
   customValidation?: (value: any) => boolean;
 }) => {
   function convertDateToInput(dateStr: string): string {
-    const [day, month, year] = dateStr.split("/");
+    if (!dateStr) {
+      return "";
+    }
+
+    // Already in HTML date input format (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+
+    // Stored format: DD/MM/YYYY or legacy DD-MM-YYYY
+    const parts = dateStr.split(/[/-]/);
+    if (parts.length !== 3) {
+      return "";
+    }
+
+    const [day, month, year] = parts;
+    if (!day || !month || !year) {
+      return "";
+    }
+
     return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
   }
 
   function convertInputToDate(dateStr: string): string {
+    if (!dateStr) {
+      return "";
+    }
+
     const [year, month, day] = dateStr.split("-");
+    if (!day || !month || !year) {
+      return "";
+    }
+
+    // Always persist as DD/MM/YYYY for consistency
     return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
   }
 
