@@ -37,7 +37,6 @@ import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
-import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -173,7 +172,6 @@ export function OrganiserEventHubView() {
         eventServiceLogger.error(`Error fetching event for organiser v2 event hub: ${error}`);
         router.push("/error");
       } finally {
-        await sleep(400);
         if (isActive) setLoading(false);
       }
     };
