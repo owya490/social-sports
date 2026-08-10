@@ -44,7 +44,6 @@ import {
   updateRecurrenceTemplateRecurrenceData,
 } from "@/services/src/recurringEvents/recurringEventsService";
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
-import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -159,7 +158,6 @@ export default function OrganiserRecurringHubV2Page() {
         logger.error(`Failed to load recurrence template ${recurrenceTemplateId}: ${error}`);
         router.push("/error");
       } finally {
-        await sleep(400);
         if (isActive) setLoading(false);
       }
     };
