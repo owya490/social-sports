@@ -164,6 +164,20 @@ export function markWelcomeSeen(): void {
   }
 }
 
+export function hasWelcomeBeenSeen(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(WELCOME_SEEN_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/** First visit → welcome tour; after welcome has been opened → dashboard. */
+export function getOrganiserV2EntryHref(): string {
+  return hasWelcomeBeenSeen() ? DASHBOARD_PATH : WELCOME_PATH;
+}
+
 export function readTourSession(): TourSession | null {
   if (typeof window === "undefined") return null;
   try {
