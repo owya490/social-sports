@@ -19,8 +19,6 @@ Read the root `AGENTS.md` and `functions/AGENTS.md` first.
 - Java models and request objects may form contracts with TypeScript types in `frontend/interfaces/`; inspect both sides before changing a shape.
 - Use Loops for new email behavior; SendGrid is legacy.
 
-## Tests And Deployment
-
-- Inspect and extend the nearest JUnit test before adding a new test class.
+## Deployment
 - Deployment requires explicit operator approval.
 - For an approved single-function deployment, use `./deployFunctionsToGCloud.sh <dev|prod> <function_name>`.
