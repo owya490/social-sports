@@ -1,6 +1,7 @@
 "use client";
 import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
+import { convertDateToInput, convertInputToDate } from "@/utilities/profileDateUtils";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import CheckIcon from "@heroicons/react/24/outline/CheckIcon";
 import { Input, Option, Select } from "@material-tailwind/react";
@@ -229,16 +230,6 @@ const RenderEditableDateField = ({
   onChange: (value: any) => void;
   customValidation?: (value: any) => boolean;
 }) => {
-  function convertDateToInput(dateStr: string): string {
-    const [day, month, year] = dateStr.split("/");
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-
-  function convertInputToDate(dateStr: string): string {
-    const [year, month, day] = dateStr.split("-");
-    return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
-  }
-
   return (
     <div key={label} className="mb-2">
       <div className="flex flex-col md:flex-row md:justify-between w-full">
