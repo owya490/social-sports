@@ -3,8 +3,33 @@ import {
   hasWelcomeBeenSeen,
   markWelcomeSeen,
   WELCOME_SEEN_KEY,
-} from "@/components/organiser/v2/welcome/welcomeOnboarding";
-import { isOrganiserHubV2BannerEnabled } from "@/services/featureFlags";
+} from "../../components/organiser/v2/welcome/welcomeOnboarding";
+import { isOrganiserHubV2BannerEnabled } from "../featureFlags";
+
+function installLocalStorageMock() {
+  const store = new Map<string, string>();
+  const localStorage = {
+    getItem: (key: string) => (store.has(key) ? store.get(key)! : null),
+    setItem: (key: string, value: string) => {
+      store.set(key, String(value));
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+  };
+  Object.defineProperty(globalThis, "localStorage", {
+    configurable: true,
+    value: localStorage,
+  });
+  Object.defineProperty(globalThis, "window", {
+    configurable: true,
+    value: { localStorage },
+  });
+  return localStorage;
+}
 
 describe("organiser hub v2 banner allowlist", () => {
   it("enables the banner for the pilot organisers", () => {
@@ -20,7 +45,7 @@ describe("organiser hub v2 banner allowlist", () => {
 
 describe("organiser v2 welcome entry href", () => {
   beforeEach(() => {
-    window.localStorage.removeItem(WELCOME_SEEN_KEY);
+    installLocalStorageMock().removeItem(WELCOME_SEEN_KEY);
   });
 
   it("sends first-time visitors to the welcome tour", () => {
