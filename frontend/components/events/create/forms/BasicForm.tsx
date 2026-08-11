@@ -275,8 +275,8 @@ export function BasicInformation({
 
       let hasDateError = false;
 
-      if (currentDateTime > selectedStartDateTime) {
-        setDateWarning("Event start date and time is in the past!");
+      if (currentDateTime > selectedEndDateTime) {
+        setDateWarning("Event end date and time is in the past!");
         hasDateError = true;
       } else {
         setDateWarning(null);
@@ -394,7 +394,7 @@ export function BasicInformation({
                 date={endDate}
                 placeholder="End Date"
                 handleChange={handleEndDateChange}
-                errorMessage={dateWarning?.includes("end date") ? dateWarning : timeWarning ?? ""}
+                errorMessage={dateWarning?.includes("Event end date") ? dateWarning : timeWarning ?? ""}
               />
             </div>
             <div className="basis-1/4">
@@ -402,7 +402,7 @@ export function BasicInformation({
                 value={endTime}
                 placeholder="End Time"
                 handleChange={handleEndTimeChange}
-                errorMessage={timeWarning || ""}
+                errorMessage={dateWarning?.includes("Event end date") ? dateWarning : timeWarning || ""}
               />
             </div>
           </div>
