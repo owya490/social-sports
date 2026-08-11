@@ -1,7 +1,9 @@
 import {
   accentContrastFor,
+  darkerCompanionFor,
   DEFAULT_PROFILE_COLOUR,
   isAllowedProfileColour,
+  relativeLuminance,
   resolveProfileColour,
 } from "../src/users/profileColour";
 
@@ -21,5 +23,12 @@ describe("profileColour", () => {
   it("picks black contrast for light accents and white for dark accents", () => {
     expect(accentContrastFor("#f2b705")).toBe("#0a0a0a");
     expect(accentContrastFor("#2563eb")).toBe("#ffffff");
+  });
+
+  it("derives a darker companion shade for selection rings", () => {
+    const companion = darkerCompanionFor("#f2b705");
+    expect(companion).toMatch(/^#[0-9a-f]{6}$/);
+    expect(relativeLuminance(companion)).toBeLessThan(relativeLuminance("#f2b705"));
+    expect(darkerCompanionFor("#2563eb")).not.toBe("#2563eb");
   });
 });
