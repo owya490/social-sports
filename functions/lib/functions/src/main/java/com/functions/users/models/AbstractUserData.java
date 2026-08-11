@@ -26,6 +26,8 @@ public abstract class AbstractUserData {
 	private List<String> publicUpcomingOrganiserEvents = new ArrayList<>();
 	private String username;
 	private List<String> publicEventCollections = new ArrayList<>();
+	/** Organiser Hub accent colour (#rrggbb). Defaults to sports yellow when unset. */
+	private String profileColour;
 	/** 
 	 * Private User Data fields
 	 * NEEDS TO MATCH PrivateUserData.java AND PrivateUserData in UserTypes.ts

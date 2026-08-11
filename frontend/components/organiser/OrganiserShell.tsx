@@ -4,18 +4,31 @@ import { usesOrganiserV2Shell } from "@/components/navbar/navbarVisibility";
 import { OrganiserBreadcrumbProvider } from "@/components/organiser/OrganiserBreadcrumbContext";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
+import { useUser } from "@/components/utility/UserContext";
+import { accentContrastFor, resolveProfileColour } from "@/services/src/users/profileColour";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 
 /** Matches `--color-surface` — kept in sync for body overscroll / Safari chrome. */
 const ORGANISER_V2_CANVAS = "#f7f7f7";
 
 export default function OrganiserShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const onMobileOpenChange = useCallback((open: boolean) => setMobileOpen(open), []);
   const openMobileNav = useCallback(() => setMobileOpen(true), []);
   const isV2Shell = usesOrganiserV2Shell(pathname);
+
+  const accentStyle = useMemo((): CSSProperties => {
+    const accent = resolveProfileColour(user.profileColour);
+    const contrast = accentContrastFor(accent);
+    return {
+      ["--color-accent" as string]: accent,
+      ["--color-accent-contrast" as string]: contrast,
+      ["--color-focus" as string]: accent,
+    };
+  }, [user.profileColour]);
 
   // Keep html/body paint colour on the v2 canvas so overscroll and translucent
   // Safari chrome match the grey hub background (not the global white body).
@@ -36,7 +49,7 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
   if (isV2Shell) {
     return (
       <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen bg-surface" style={accentStyle}>
           <OrganiserSidebar mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange} />
           <div className="min-h-screen transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
             {children}
@@ -47,9 +60,9 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
   }
 
   return (
-    <>
+    <div style={accentStyle}>
       <OrganiserNavbar />
       <div className="pb-28 sm:ml-14 sm:pb-0">{children}</div>
-    </>
+    </div>
   );
 }
