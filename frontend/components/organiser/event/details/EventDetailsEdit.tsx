@@ -341,8 +341,8 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
       `${formatStringToDate(newEditRegistrationDeadlineDate)}T${formatTimeTo24Hour(newEditRegistrationDeadlineTime)}`
     );
 
-    if (currentDateTime > selectedStartDateTime) {
-      setDateWarning("Event start date and time is in the past!");
+    if (currentDateTime > selectedEndDateTime) {
+      setDateWarning("Event end date and time is in the past!");
     } else {
       setDateWarning(null);
     }

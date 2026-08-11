@@ -173,7 +173,7 @@ export function EventHubEditForm({
       `${formatStringToDate(registrationDeadlineDate)}T${formatTimeTo24Hour(registrationDeadlineTime)}`
     );
 
-    setDateWarning(currentDateTime > selectedStartDateTime ? "Event start date and time is in the past!" : null);
+    setDateWarning(currentDateTime > selectedEndDateTime ? "Event end date and time is in the past!" : null);
     setTimeWarning(selectedEndDateTime < selectedStartDateTime ? "Event must end after it starts!" : null);
     setRegistrationDeadlineWarning(
       selectedRegistrationDeadline > selectedEndDateTime ? "Registration deadline is after event end!" : null
