@@ -5,7 +5,7 @@ import { OrganiserBreadcrumbProvider } from "@/components/organiser/OrganiserBre
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
 import { useUser } from "@/components/utility/UserContext";
-import { accentContrastFor, resolveProfileColour } from "@/services/src/users/profileColour";
+import { darkerCompanionFor, resolveProfileColour } from "@/services/src/users/profileColour";
 import { usePathname } from "next/navigation";
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -22,7 +22,8 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
 
   const accentStyle = useMemo((): CSSProperties => {
     const accent = resolveProfileColour(user.profileColour);
-    const contrast = accentContrastFor(accent);
+    // Fill = profile colour; label text = darker companion (v2 primary buttons).
+    const contrast = darkerCompanionFor(accent);
     return {
       ["--color-accent" as string]: accent,
       ["--color-accent-contrast" as string]: contrast,

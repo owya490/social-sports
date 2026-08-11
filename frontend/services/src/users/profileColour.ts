@@ -100,12 +100,12 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
 
 /**
  * Darker companion shade of the accent (same hue, lower lightness).
- * Used for selection rings / pairing with the primary profile colour.
+ * Used for selection rings and primary-button label text on the accent fill.
  */
-export function darkerCompanionFor(hex: string, amount = 0.28): string {
+export function darkerCompanionFor(hex: string, amount = 0.38): string {
   const { r, g, b } = hexToRgb(hex);
   const { h, s, l } = rgbToHsl(r, g, b);
-  const darkened = Math.max(0.12, l * (1 - amount));
+  const darkened = Math.max(0.1, l * (1 - amount));
   const rgb = hslToRgb(h, s, darkened);
   return rgbToHex(rgb.r, rgb.g, rgb.b);
 }

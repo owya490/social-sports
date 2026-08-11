@@ -31,4 +31,11 @@ describe("profileColour", () => {
     expect(relativeLuminance(companion)).toBeLessThan(relativeLuminance("#f2b705"));
     expect(darkerCompanionFor("#2563eb")).not.toBe("#2563eb");
   });
+
+  it("uses a distinctly bolder companion than the accent fill", () => {
+    // Sports yellow should not resolve to near-black; still same-hue darker.
+    const companion = darkerCompanionFor(DEFAULT_PROFILE_COLOUR);
+    expect(relativeLuminance(companion)).toBeGreaterThan(0.05);
+    expect(relativeLuminance(companion)).toBeLessThan(relativeLuminance(DEFAULT_PROFILE_COLOUR) * 0.85);
+  });
 });
