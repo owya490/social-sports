@@ -609,7 +609,7 @@ export function BasicInformation({
                   window.scrollTo(0, 0);
                   const link = await getStripeStandardAccountLink(
                     user.userId,
-                    getUrlWithCurrentHostname("/organiser/dashboard"),
+                    getUrlWithCurrentHostname("/organiser/v2/dashboard"),
                     getRefreshAccountLinkUrl()
                   );
                   router.push(link);

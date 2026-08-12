@@ -30,7 +30,7 @@ export default function HeroSection() {
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/organiser/dashboard"
+                    href="/organiser/v2/dashboard"
                     className="bg-core-text text-white px-6 py-3 rounded-lg font-medium hover:bg-gray-800 transition-colors duration-200 text-center"
                   >
                     Start organising

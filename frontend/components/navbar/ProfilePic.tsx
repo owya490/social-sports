@@ -135,7 +135,7 @@ export default function ProfilePic() {
                       <Menu.Item>
                         {({ active }) => (
                           <Link
-                            href="/organiser/dashboard"
+                            href="/organiser/v2/dashboard"
                             className={`${
                               active ? "text-core-text bg-core-hover" : "text-core-text"
                             } group flex w-full items-center rounded-md px-2 py-2 text-sm`}

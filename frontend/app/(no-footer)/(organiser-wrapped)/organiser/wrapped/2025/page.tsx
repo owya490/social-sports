@@ -60,7 +60,7 @@ export default function WrappedPage() {
     return (
       <WrappedError
         message={error}
-        linkHref="/organiser/dashboard"
+        linkHref="/organiser/v2/dashboard"
         linkText="Return to Dashboard"
         className="-mt-[var(--navbar-height)]"
       />
