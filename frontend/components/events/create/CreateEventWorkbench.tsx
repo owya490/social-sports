@@ -3,7 +3,7 @@
 /**
  * THESIS: One-viewport create — full-bleed image header on small screens, thumbnail rail on md+ — refuses scroll and the old wizard.
  * OWN-WORLD: Honest Clubhouse tokens on white canvas, Satoshi, dense soft controls.
- * STORY: Organiser names the session, sets when/where/price, pauses registration by default, creates.
+ * STORY: Organiser names the session, sets when/where/price, creates with bookings open by default.
  * FIRST VIEWPORT: Event image (16:9 full-bleed <md / square thumbnail md+) + sport + Public↔Private; title; when/where; price+capacity; Create.
  * FORM: Luma create density inside organiser tokens; deep edits in EventHubPanel.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md

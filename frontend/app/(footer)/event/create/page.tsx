@@ -195,12 +195,11 @@ export default function CreateEvent() {
   ) : (
     <>
       {/*
-        THESIS: One-viewport create — thumbnail rail beside compact essentials — no page scroll.
+        THESIS: Compact create — thumbnail rail beside essentials on the footer shell.
         OWN-WORLD: Honest Clubhouse on white canvas; Satoshi; dense soft controls.
-        STORY: Organiser names the session, sets when/where/price, pauses registration by default, creates.
-        FIRST VIEWPORT: Thumbnail + sport + Public/Pause left; title; when/where; side-by-side options; Create.
-        FORM: Luma density inside organiser tokens; no-footer shell; deep edits in EventHubPanel.
-        FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+        STORY: Organiser names the session, sets when/where/price, creates with bookings open by default.
+        FIRST VIEWPORT: Thumbnail + sport + Public|Private left; title; when/where; side-by-side options; Create.
+        FORM: Luma density inside organiser tokens; site footer layout; deep edits in EventHubPanel.
       */}
       {!showForm ? (
         <div className="h-screen w-full flex justify-center items-center bg-background text-foreground font-sans">

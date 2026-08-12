@@ -61,7 +61,7 @@ export const CREATE_EVENT_INITIAL_DATA: CreateEventFormData = {
   lng: 0,
   stripeFeeToCustomer: true,
   promotionalCodesEnabled: false,
-  paused: true, // Registration starts closed until organiser resumes
+  paused: false,
   eventLink: "",
   newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
   hideVacancy: false,
