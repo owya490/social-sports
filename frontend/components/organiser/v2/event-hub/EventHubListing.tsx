@@ -32,6 +32,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { ImagePickerReveal } from "../shared/ImagePickerLoading";
+import { ShortDateBadge } from "../shared/ShortDateBadge";
 import { EVENT_HUB_EDIT_FORM_ID, EventHubEditForm } from "./EventHubEditForm";
 import { EventHubPanel } from "./EventHubPanel";
 import { EventHubShareControl } from "./EventHubShareControl";
@@ -101,8 +102,6 @@ export function EventHubListing({
   const cover = eventImage || eventThumbnail;
   const hostName = [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "You";
   const hostEmail = user.contactInformation?.email || "";
-  const monthShort = loading ? "" : eventStartDate.toDate().toLocaleString("en-AU", { month: "short" }).toUpperCase();
-  const dayNum = loading ? "" : String(eventStartDate.toDate().getDate());
   const inventory = useMemo(
     () =>
       resolveEventInventory({
@@ -122,6 +121,9 @@ export function EventHubListing({
   );
   const sortedTicketTypes = getSortedEventTicketTypes(eventTicketTypes);
   const showTicketTypesRow = hasEventTicketTypes({ eventTicketTypes }) && sortedTicketTypes.length > 0;
+  const startDateLabel = timestampToDateString(eventStartDate);
+  const endDateLabel = timestampToDateString(eventEndDate);
+  const isMultiDay = startDateLabel !== endDateLabel;
 
   useEffect(() => {
     if (isTemplate) {
@@ -191,20 +193,10 @@ export function EventHubListing({
             ) : (
               <ul className="space-y-4">
                 <li className="flex gap-3 items-start">
-                  <div
-                    className="flex h-11 w-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border text-center"
-                    aria-hidden
-                  >
-                    <span className="bg-[#FF3B30] text-white flex items-center justify-center leading-none">
-                      <span className="text-xs font-semibold tracking-wide scale-75 origin-center">{monthShort}</span>
-                    </span>
-                    <span className="flex-1 flex items-center justify-center bg-background text-base font-bold text-foreground tabular-nums leading-none">
-                      {dayNum}
-                    </span>
-                  </div>
+                  <ShortDateBadge date={eventStartDate.toDate()} />
                   <div className="min-w-0 pt-0.5">
                     <p className="text-sm font-semibold text-foreground font-sans">
-                      {timestampToDateString(eventStartDate)}
+                      {isMultiDay ? `${startDateLabel} – ${endDateLabel}` : startDateLabel}
                     </p>
                     <p className="text-sm text-foreground-secondary font-sans">
                       {timestampToTimeOfDay(eventStartDate)} – {timestampToTimeOfDay(eventEndDate)}
