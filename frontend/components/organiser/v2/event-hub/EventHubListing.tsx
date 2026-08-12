@@ -121,6 +121,9 @@ export function EventHubListing({
   );
   const sortedTicketTypes = getSortedEventTicketTypes(eventTicketTypes);
   const showTicketTypesRow = hasEventTicketTypes({ eventTicketTypes }) && sortedTicketTypes.length > 0;
+  const startDateLabel = timestampToDateString(eventStartDate);
+  const endDateLabel = timestampToDateString(eventEndDate);
+  const isMultiDay = startDateLabel !== endDateLabel;
 
   useEffect(() => {
     if (isTemplate) {
@@ -193,7 +196,7 @@ export function EventHubListing({
                   <ShortDateBadge date={eventStartDate.toDate()} />
                   <div className="min-w-0 pt-0.5">
                     <p className="text-sm font-semibold text-foreground font-sans">
-                      {timestampToDateString(eventStartDate)}
+                      {isMultiDay ? `${startDateLabel} – ${endDateLabel}` : startDateLabel}
                     </p>
                     <p className="text-sm text-foreground-secondary font-sans">
                       {timestampToTimeOfDay(eventStartDate)} – {timestampToTimeOfDay(eventEndDate)}

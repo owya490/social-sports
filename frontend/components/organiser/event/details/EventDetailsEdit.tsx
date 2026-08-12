@@ -25,6 +25,7 @@ import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
+  addCalendarDaysToYmd,
   dateAndTimeInLocalToDate,
   dateAndTimeInLocalToTimestamp,
   formatDateToString,
@@ -240,11 +241,31 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
     };
   };
 
-  // Keep end datetime and registration deadline in sync with start date.
+  // When the organiser changes start date, preserve multi-day span; keep registration deadline on start.
+  const prevEditStartDateRef = useRef<string | null>(null);
   useEffect(() => {
-    setNewEditEndDate(newEditStartDate);
+    const prevStartDate = prevEditStartDateRef.current;
+    prevEditStartDateRef.current = newEditStartDate;
+
+    if (prevStartDate === null || prevStartDate === "" || newEditStartDate === "" || prevStartDate === newEditStartDate) {
+      return;
+    }
+
+    const prevYmd = formatStringToDate(prevStartDate);
+    const nextYmd = formatStringToDate(newEditStartDate);
+    const [prevY, prevM, prevD] = prevYmd.split("-").map(Number);
+    const [nextY, nextM, nextD] = nextYmd.split("-").map(Number);
+    const dayDelta = Math.round(
+      (Date.UTC(nextY, nextM - 1, nextD) - Date.UTC(prevY, prevM - 1, prevD)) / (24 * 60 * 60 * 1000)
+    );
+    if (dayDelta !== 0) {
+      const shiftedEndYmd = addCalendarDaysToYmd(formatStringToDate(newEditEndDate), dayDelta);
+      setNewEditEndDate(formatDateToString(shiftedEndYmd < nextYmd ? nextYmd : shiftedEndYmd));
+    }
+
     setNewEditRegistrationDeadlineDate(newEditStartDate);
     setNewEditRegistrationDeadlineTime(newEditStartTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newEditStartDate]);
 
   // Sport
@@ -304,8 +325,9 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
 
   // loading useEffect to populate states
   useEffect(() => {
-    setNewEditStartDate(timestampToDateString(eventStartDate));
-    setStartDate(timestampToDateString(eventStartDate));
+    const nextStartDate = timestampToDateString(eventStartDate);
+    setNewEditStartDate(nextStartDate);
+    setStartDate(nextStartDate);
     setNewEditStartTime(timestampToTimeOfDay(eventStartDate));
     setStartTime(timestampToTimeOfDay(eventStartDate));
     setNewEditEndDate(timestampToDateString(eventEndDate));
@@ -336,6 +358,8 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
 
     setNewEditAttachFormId(eventFormId);
     setAttachFormId(eventFormId);
+    // Hydration is not a user start-date change — keep the event's real end date.
+    prevEditStartDateRef.current = nextStartDate;
   }, [loading]);
 
   // UseEffect triggered on certain field mutations to ensure entry is valid
