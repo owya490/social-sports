@@ -1,26 +1,17 @@
 "use client";
 
+import { useUser } from "@/components/utility/UserContext";
 import { TopSalesEventSlice } from "@/services/src/organiser/organiserDashboardMetricsService";
+import { accentShadeRamp, resolveProfileColour } from "@/services/src/users/profileColour";
 import { displayPrice } from "@/utilities/priceUtils";
 import Link from "next/link";
+import { useMemo } from "react";
 import Skeleton from "react-loading-skeleton";
 
 type TopSalesDonutSectionProps = {
   slices: TopSalesEventSlice[];
   loading: boolean;
 };
-
-/** Distinct rainbow slices so each event maps clearly on the ring. */
-const SLICE_COLORS = [
-  "#f2b705", // sports yellow
-  "#ea580c", // orange
-  "#16a34a", // green
-  "#0891b2", // teal
-  "#2563eb", // blue
-  "#db2777", // pink
-  "#ca8a04", // gold
-  "#64748b", // slate
-];
 
 const RING_SIZE = 64;
 const RING_STROKE = 9;
@@ -83,9 +74,11 @@ function formatSalesLabel(cents: number): string {
 function SalesDonut({
   slices,
   totalCents,
+  colors,
 }: {
   slices: TopSalesEventSlice[];
   totalCents: number;
+  colors: string[];
 }) {
   const cx = RING_SIZE / 2;
   const cy = RING_SIZE / 2;
@@ -94,21 +87,25 @@ function SalesDonut({
 
   const gapCount = slices.length > 1 ? slices.length : 0;
   const usableDeg = 360 - gapCount * RING_GAP_DEG;
-  let cursor = 0;
 
-  const paths = slices.map((slice, index) => {
+  const paths = slices.reduce<
+    { key: string; d: string; color: string; cursor: number }[]
+  >((acc, slice, index) => {
+    const cursor = acc.length > 0 ? acc[acc.length - 1].cursor : 0;
     const share = totalCents > 0 ? slice.salesCents / totalCents : 0;
     const sweep = Math.max(share * usableDeg, 0.5);
     const start = cursor;
     const end = cursor + sweep;
-    cursor = end + (gapCount > 0 ? RING_GAP_DEG : 0);
+    const nextCursor = end + (gapCount > 0 ? RING_GAP_DEG : 0);
 
-    return {
+    acc.push({
       key: String(slice.eventId),
       d: donutSegmentPath(cx, cy, outerR, innerR, start, end),
-      color: SLICE_COLORS[index % SLICE_COLORS.length],
-    };
-  });
+      color: colors[index % colors.length],
+      cursor: nextCursor,
+    });
+    return acc;
+  }, []);
 
   return (
     <div className="relative shrink-0" style={{ width: RING_SIZE, height: RING_SIZE }}>
@@ -134,8 +131,14 @@ function SalesDonut({
 }
 
 export function TopSalesDonutSection({ slices, loading }: TopSalesDonutSectionProps) {
+  const { user } = useUser();
   const totalCents = slices.reduce((sum, slice) => sum + slice.salesCents, 0);
   const hasData = totalCents > 0;
+
+  const sliceColors = useMemo(() => {
+    const base = resolveProfileColour(user.profileColour);
+    return accentShadeRamp(base, Math.max(slices.length, 1));
+  }, [slices.length, user.profileColour]);
 
   return (
     <section
@@ -165,11 +168,11 @@ export function TopSalesDonutSection({ slices, loading }: TopSalesDonutSectionPr
           </p>
         ) : (
           <div className="flex flex-1 items-center gap-3 sm:gap-5 min-w-0">
-            <SalesDonut slices={slices} totalCents={totalCents} />
+            <SalesDonut slices={slices} totalCents={totalCents} colors={sliceColors} />
 
             <ul className="flex-1 min-w-0 max-h-[5.5rem] sm:max-h-[4.75rem] overflow-y-auto overscroll-contain [scrollbar-gutter:stable]">
               {slices.map((slice, index) => {
-                const color = SLICE_COLORS[index % SLICE_COLORS.length];
+                const color = sliceColors[index % sliceColors.length];
                 const content = (
                   <>
                     <span

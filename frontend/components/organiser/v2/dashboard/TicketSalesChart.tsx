@@ -154,8 +154,13 @@ export function TicketSalesChart({ weekTickets, monthTickets, loading }: TicketS
                     <div
                       className={`w-full rounded-t-sm transition-[height] duration-300 ease-out ${
                         isMonth ? "max-w-none" : "max-w-12 rounded-t-md"
-                      } ${bucket.isCurrent ? "bg-accent" : "bg-surface-muted"} group-hover:brightness-95`}
-                      style={{ height: `${heightPercent}%` }}
+                      } group-hover:brightness-95`}
+                      style={{
+                        height: `${heightPercent}%`,
+                        backgroundColor: bucket.isCurrent
+                          ? "var(--color-accent)"
+                          : "color-mix(in srgb, var(--color-accent) 28%, var(--color-surface-muted))",
+                      }}
                     />
                   </div>
                   {isMonth ? (

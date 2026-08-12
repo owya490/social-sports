@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  darkerCompanionFor,
   DEFAULT_PROFILE_COLOUR,
+  lighterCompanionFor,
   PROFILE_COLOUR_OPTIONS,
   resolveProfileColour,
 } from "@/services/src/users/profileColour";
@@ -18,11 +18,11 @@ function swatchStyle(colour: string, isSelected: boolean): CSSProperties {
   if (!isSelected) {
     return { backgroundColor: colour };
   }
-  const companion = darkerCompanionFor(colour);
-  // White gap so the colour ring reads against the fill; outer ring = darker companion.
+  const light = lighterCompanionFor(colour);
+  // Tight ring: light companion around the selected fill.
   return {
     backgroundColor: colour,
-    boxShadow: `0 0 0 2px #ffffff, 0 0 0 4px ${colour}, 0 0 0 7px ${companion}`,
+    boxShadow: `0 0 0 2px ${light}`,
   };
 }
 
@@ -33,9 +33,9 @@ export function ProfileColourSelector({ value, onChange, disabled = false }: Pro
     <div>
       <strong className="text-xs md:text-md font-medium text-gray-700">Profile colour</strong>
       <p className="text-xs font-light text-gray-500 mt-0.5 mb-2">
-        Used for accents in your Organiser Hub. Default is sports yellow.
+        Used for accents in your Organiser Hub. Button text uses a lighter shade of the same colour.
       </p>
-      <div className="flex flex-wrap gap-2.5 p-0.5" role="radiogroup" aria-label="Profile colour">
+      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Profile colour">
         {PROFILE_COLOUR_OPTIONS.map((option) => {
           const isSelected = selected === option.value.toLowerCase();
           return (
@@ -51,8 +51,8 @@ export function ProfileColourSelector({ value, onChange, disabled = false }: Pro
                 if (option.value.toLowerCase() === selected) return;
                 void onChange(option.value);
               }}
-              className={`h-8 w-8 rounded-full border-2 border-transparent transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50 disabled:pointer-events-none ${
-                isSelected ? "scale-110" : "hover:scale-105"
+              className={`h-7 w-7 rounded-full border border-transparent transition-transform focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black disabled:opacity-50 disabled:pointer-events-none ${
+                isSelected ? "scale-105" : "hover:scale-105"
               }`}
               style={swatchStyle(option.value, isSelected)}
             />
@@ -66,7 +66,7 @@ export function ProfileColourSelector({ value, onChange, disabled = false }: Pro
           onClick={() => void onChange(DEFAULT_PROFILE_COLOUR)}
           className="mt-2 text-xs text-gray-600 hover:underline disabled:opacity-50"
         >
-          Reset to sports yellow
+          Reset to yellow
         </button>
       )}
     </div>

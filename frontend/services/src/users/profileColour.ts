@@ -1,25 +1,31 @@
-/** Default SPORTSHUB sports-yellow accent — matches DESIGN.md / globals.css. */
-export const DEFAULT_PROFILE_COLOUR = "#f2b705";
+/** Default organiser accent — deep gold (readable with a light companion). */
+export const DEFAULT_PROFILE_COLOUR = "#a16207";
 
 export type ProfileColourOption = {
   label: string;
+  /** Strong fill used on primary buttons / chart accents. */
   value: string;
+  /** Lighter companion for button text and selection rings. */
+  light: string;
 };
 
-/** Constrained palette for profile / organiser-hub accents. */
+/**
+ * Seven rainbow accents. Bases are saturated enough that the light companion
+ * reads clearly as button label text.
+ */
 export const PROFILE_COLOUR_OPTIONS: readonly ProfileColourOption[] = [
-  { label: "Sports yellow", value: "#f2b705" },
-  { label: "Blue", value: "#2563eb" },
-  { label: "Emerald", value: "#059669" },
-  { label: "Amber", value: "#d97706" },
-  { label: "Pink", value: "#db2777" },
-  { label: "Violet", value: "#7c3aed" },
-  { label: "Cyan", value: "#0891b2" },
-  { label: "Red", value: "#dc2626" },
-  { label: "Indigo", value: "#4f46e5" },
+  { label: "Red", value: "#c41e3a", light: "#fecdd3" },
+  { label: "Orange", value: "#c2410c", light: "#ffedd5" },
+  { label: "Yellow", value: "#a16207", light: "#fef08c" },
+  { label: "Green", value: "#15803d", light: "#bbf7d0" },
+  { label: "Blue", value: "#1d4ed8", light: "#bfdbfe" },
+  { label: "Indigo", value: "#4338ca", light: "#c7d2fe" },
+  { label: "Violet", value: "#7e22ce", light: "#e9d5ff" },
 ] as const;
 
-const PROFILE_COLOUR_VALUES = new Set(PROFILE_COLOUR_OPTIONS.map((option) => option.value.toLowerCase()));
+const PROFILE_COLOUR_BY_VALUE = new Map(
+  PROFILE_COLOUR_OPTIONS.map((option) => [option.value.toLowerCase(), option]),
+);
 
 const HEX_COLOUR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -37,11 +43,6 @@ export function relativeLuminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-/** Black or white text for readable contrast on the given accent fill. */
-export function accentContrastFor(hex: string): string {
-  return relativeLuminance(hex) > 0.45 ? "#0a0a0a" : "#ffffff";
-}
-
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
   const normalised = hex.replace("#", "");
   return {
@@ -52,7 +53,7 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 }
 
 function rgbToHex(r: number, g: number, b: number): string {
-  const toHex = (channel: number) => Math.round(channel).toString(16).padStart(2, "0");
+  const toHex = (channel: number) => Math.round(Math.min(255, Math.max(0, channel))).toString(16).padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
@@ -98,24 +99,75 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
   };
 }
 
-/**
- * Darker companion shade of the accent (same hue, lower lightness).
- * Used for selection rings and primary-button label text on the accent fill.
- */
-export function darkerCompanionFor(hex: string, amount = 0.38): string {
+function deriveLighterCompanion(hex: string): string {
   const { r, g, b } = hexToRgb(hex);
   const { h, s, l } = rgbToHsl(r, g, b);
-  const darkened = Math.max(0.1, l * (1 - amount));
-  const rgb = hslToRgb(h, s, darkened);
+  // Soft pastel of the same hue — readable on the saturated base fill.
+  const lightL = Math.min(0.92, Math.max(0.78, l + 0.45));
+  const softS = Math.min(0.55, s * 0.55);
+  const rgb = hslToRgb(h, softS, lightL);
   return rgbToHex(rgb.r, rgb.g, rgb.b);
+}
+
+/** Lighter companion for button text / selection rings (curated when available). */
+export function lighterCompanionFor(hex: string): string {
+  const option = PROFILE_COLOUR_BY_VALUE.get(hex.toLowerCase());
+  if (option) return option.light;
+  return deriveLighterCompanion(hex);
+}
+
+/**
+ * Distinct same-hue shades for multi-slice charts (top sales donut, etc.).
+ * Index 0 is closest to the base; later indices step lighter then darker.
+ */
+export function accentShadeRamp(base: string, count: number): string[] {
+  if (count <= 0) return [];
+  const resolved = resolveProfileColour(base);
+  const light = lighterCompanionFor(resolved);
+  const { r, g, b } = hexToRgb(resolved);
+  const { h, s, l } = rgbToHsl(r, g, b);
+
+  if (count === 1) return [resolved];
+
+  const shades: string[] = [];
+  for (let i = 0; i < count; i += 1) {
+    if (i === 0) {
+      shades.push(resolved);
+      continue;
+    }
+    // Alternate stepping toward the light companion, then darker variants.
+    const t = i / (count - 1);
+    if (t <= 0.55) {
+      const mix = t / 0.55;
+      shades.push(mixHex(resolved, light, 0.25 + mix * 0.55));
+    } else {
+      const darkT = (t - 0.55) / 0.45;
+      const darkened = Math.max(0.18, l * (1 - 0.18 - darkT * 0.35));
+      const rgb = hslToRgb(h, Math.min(1, s * 1.05), darkened);
+      shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
+    }
+  }
+  return shades;
+}
+
+function mixHex(a: string, b: string, amount: number): string {
+  const ar = hexToRgb(a);
+  const br = hexToRgb(b);
+  const t = Math.min(1, Math.max(0, amount));
+  return rgbToHex(ar.r + (br.r - ar.r) * t, ar.g + (br.g - ar.g) * t, ar.b + (br.b - ar.b) * t);
+}
+
+/** Soft muted fill for secondary chart bars (same hue, low intensity). */
+export function accentMutedFor(hex: string): string {
+  return mixHex(resolveProfileColour(hex), "#ebebeb", 0.72);
 }
 
 export function isAllowedProfileColour(value: string | null | undefined): value is string {
   if (!value || !HEX_COLOUR_PATTERN.test(value)) return false;
-  return PROFILE_COLOUR_VALUES.has(value.toLowerCase());
+  return PROFILE_COLOUR_BY_VALUE.has(value.toLowerCase());
 }
 
-/** Resolve a stored profile colour to a safe accent hex (defaults to sports yellow). */
+/** Resolve a stored profile colour to a safe accent hex. */
 export function resolveProfileColour(value: string | null | undefined): string {
   if (isAllowedProfileColour(value)) return value.toLowerCase();
   return DEFAULT_PROFILE_COLOUR;
