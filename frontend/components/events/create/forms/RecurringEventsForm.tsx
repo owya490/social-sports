@@ -1,4 +1,5 @@
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
+import { dateYmdInLocalToDate } from "@/services/src/datetimeUtils";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
 import { Radio, Switch } from "@mantine/core";
@@ -27,8 +28,7 @@ export const RecurringEventsForm = ({
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
 
   useEffect(() => {
-    const dateObject = new Date(startDate);
-    const timestamp = Timestamp.fromDate(dateObject);
+    const timestamp = Timestamp.fromDate(dateYmdInLocalToDate(startDate));
     const futureRecurrences: Timestamp[] = calculateRecurrenceDates(newRecurrenceData, timestamp);
     setRecurrenceDates(futureRecurrences);
   }, [startDate, newRecurrenceData.frequency, newRecurrenceData.recurrenceAmount]);

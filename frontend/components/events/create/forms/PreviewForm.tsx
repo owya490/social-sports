@@ -1,7 +1,7 @@
 import { CreateEventFormData } from "@/components/events/create/createEventFormTypes";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
-import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
+import { dateAndTimeInLocalToDate, formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
@@ -16,11 +16,7 @@ type PreviewFormProps = BasicData & {
 };
 
 export const PreviewForm = ({ form, user }: PreviewFormProps) => {
-  const dateString = form.startDate + " " + form.startTime;
-  const [datePart, timePart] = dateString.split(" ");
-  const [year, month, day] = datePart.split("-");
-  const [hours, minutes] = timePart.split(":");
-  const myDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes));
+  const myDate = dateAndTimeInLocalToDate(form.startDate, form.startTime);
 
   return (
     <div className="lg:grid lg:grid-cols-3 mt-20 space-y-6">

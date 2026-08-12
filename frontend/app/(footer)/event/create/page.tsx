@@ -2,7 +2,7 @@
 
 import { CreateEventWorkbench } from "@/components/events/create/CreateEventWorkbench";
 import {
-  CREATE_EVENT_INITIAL_DATA,
+  createEventInitialData,
   CreateEventFormData,
 } from "@/components/events/create/createEventFormTypes";
 import Loading from "@/components/loading/Loading";
@@ -20,6 +20,7 @@ import {
 } from "@/services/src/images/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
+import { dateAndTimeInLocalToTimestamp } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -39,7 +40,7 @@ export default function CreateEvent() {
   const [hasAlert, setHasAlert] = useState(false);
   const [AlertMessage, setAlertMessage] = useState("");
 
-  const [data, setData] = useState(CREATE_EVENT_INITIAL_DATA);
+  const [data, setData] = useState(createEventInitialData);
 
   const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
@@ -177,11 +178,7 @@ export default function CreateEvent() {
   }
 
   function convertDateAndTimeStringToTimestamp(date: string, time: string): Timestamp {
-    const dateObject = new Date(date);
-    const timeArr = time.split(":");
-    dateObject.setHours(parseInt(timeArr[0]));
-    dateObject.setMinutes(parseInt(timeArr[1]));
-    return Timestamp.fromDate(dateObject);
+    return dateAndTimeInLocalToTimestamp(date, time);
   }
 
   const handleAlertClose = () => {
@@ -214,7 +211,6 @@ export default function CreateEvent() {
           eventImageUrls={eventImageUrls}
           setThumbnailUrls={setEventThumbnailUrls}
           setImageUrls={setEventImageUrls}
-          setLoading={setLoading}
           setHasError={setHasError}
           hasAlert={hasAlert}
           alertMessage={AlertMessage}

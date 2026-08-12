@@ -14,18 +14,17 @@ import { CreateEventFormData } from "@/components/events/create/createEventFormT
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { EventHubDescriptionEditor } from "@/components/organiser/v2/event-hub/EventHubDescriptionEditor";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
-import { EventHubGhostButton } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { ShortDateBadge } from "@/components/organiser/v2/shared/ShortDateBadge";
+import { SportshubStripeIntegrationIcon } from "@/components/organiser/v2/settings/SportshubStripeIntegrationIcon";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { Logger } from "@/observability/logger";
+import { addCalendarDaysToYmd, dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
-import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
-import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import {
   ArrowPathIcon,
@@ -41,12 +40,16 @@ import {
 } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(
   MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100
 ).toFixed(2)}`;
+
+const logger = new Logger("CreateEventWorkbench");
+
+const LOCATION_COORDINATES_ERROR_MESSAGE = "Failed to get location coordinates. Please select a location again.";
 
 const validatePrice = (amount: number): string | null => {
   if (amount > 0 && amount < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
@@ -69,7 +72,7 @@ function formatFrequency(frequency: Frequency): string {
 }
 
 function formatShortWeekdayDate(isoDate: string): string {
-  const d = new Date(`${isoDate}T12:00:00`);
+  const d = dateAndTimeInLocalToDate(isoDate, "12:00");
   if (Number.isNaN(d.getTime())) return isoDate;
   return d.toLocaleDateString("en-AU", { weekday: "short", month: "short", day: "numeric" });
 }
@@ -226,7 +229,6 @@ type CreateEventWorkbenchProps = {
   eventImageUrls: string[];
   setThumbnailUrls: (urls: string[]) => void;
   setImageUrls: (urls: string[]) => void;
-  setLoading: (value: boolean) => void;
   setHasError: (value: boolean) => void;
   hasAlert: boolean;
   alertMessage: string;
@@ -244,24 +246,24 @@ export function CreateEventWorkbench({
   eventImageUrls,
   setThumbnailUrls,
   setImageUrls,
-  setLoading,
   setHasError,
   hasAlert,
   alertMessage,
   onAlertClose,
   onSubmit,
 }: CreateEventWorkbenchProps) {
-  const router = useRouter();
   const priceInputRef = useRef<HTMLInputElement>(null);
   const capacityInputRef = useRef<HTMLInputElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const recurrenceWasEnabledRef = useRef(false);
+  const prevStartDateRef = useRef<string | null>(null);
   const [locationDraft, setLocationDraft] = useState(data.location);
   const [selectionMade, setSelectionMade] = useState(Boolean(data.location));
   const [dateWarning, setDateWarning] = useState<string | null>(null);
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [priceWarning, setPriceWarning] = useState<string | null>(null);
+  const [locationWarning, setLocationWarning] = useState<string | null>(null);
   const [panel, setPanel] = useState<CreatePanel>(null);
   const [recurrenceOpen, setRecurrenceOpen] = useState(false);
   const [sportOpen, setSportOpen] = useState(false);
@@ -293,7 +295,28 @@ export function CreateEventWorkbench({
   const sportIcon = selectedSport?.iconImage;
 
   useEffect(() => {
-    updateField({ endDate: data.startDate });
+    const prevStartDate = prevStartDateRef.current;
+    prevStartDateRef.current = data.startDate;
+
+    // Skip mount — defaults already set endDate; only react to startDate changes after that.
+    if (prevStartDate === null || prevStartDate === data.startDate) {
+      return;
+    }
+
+    const [prevY, prevM, prevD] = prevStartDate.split("-").map(Number);
+    const [nextY, nextM, nextD] = data.startDate.split("-").map(Number);
+    const dayDelta = Math.round(
+      (Date.UTC(nextY, nextM - 1, nextD) - Date.UTC(prevY, prevM - 1, prevD)) / (24 * 60 * 60 * 1000)
+    );
+    if (dayDelta === 0) {
+      return;
+    }
+
+    const shiftedEndDate = addCalendarDaysToYmd(data.endDate, dayDelta);
+    // Preserve duration; clamp if somehow end would land before the new start.
+    updateField({
+      endDate: shiftedEndDate < data.startDate ? data.startDate : shiftedEndDate,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.startDate]);
 
@@ -318,13 +341,19 @@ export function CreateEventWorkbench({
           const fullAddress = `${place.name}, ${place.formatted_address}`;
           setLocationDraft(fullAddress);
           setSelectionMade(true);
-          updateField({ location: fullAddress });
+          // Drop any previous coordinates until the new place resolves.
+          updateField({ location: fullAddress, lat: 0, lng: 0 });
           try {
             const { lat, lng } = await getLocationCoordinates(fullAddress);
             updateField({ lat, lng });
+            setLocationWarning(null);
             locationInputRef.current?.setCustomValidity("");
           } catch (error) {
-            console.error(error);
+            logger.error(`Failed to get location coordinates: ${error}`);
+            updateField({ lat: 0, lng: 0 });
+            setSelectionMade(false);
+            setLocationWarning(LOCATION_COORDINATES_ERROR_MESSAGE);
+            locationInputRef.current?.setCustomValidity(LOCATION_COORDINATES_ERROR_MESSAGE);
           }
         }
       });
@@ -334,8 +363,8 @@ export function CreateEventWorkbench({
 
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(`${data.startDate}T${data.startTime}`);
-    const selectedEndDateTime = new Date(`${data.endDate}T${data.endTime}`);
+    const selectedStartDateTime = dateAndTimeInLocalToDate(data.startDate, data.startTime);
+    const selectedEndDateTime = dateAndTimeInLocalToDate(data.endDate, data.endTime);
 
     let hasDateError = false;
 
@@ -363,7 +392,10 @@ export function CreateEventWorkbench({
     const hasNameError = data.name.trim() === "";
     const hasCapacityError = !data.capacity || data.capacity < 1;
     const hasLocationMissing = !selectionMade && locationDraft.trim() === "";
-    setHasError(hasDateError || hasPriceError || hasLocationMissing || hasNameError || hasCapacityError);
+    const hasLocationError = locationWarning !== null;
+    setHasError(
+      hasDateError || hasPriceError || hasLocationMissing || hasLocationError || hasNameError || hasCapacityError
+    );
   }, [
     data.startDate,
     data.startTime,
@@ -375,6 +407,7 @@ export function CreateEventWorkbench({
     isFreeEvent,
     selectionMade,
     locationDraft,
+    locationWarning,
     setHasError,
   ]);
 
@@ -401,7 +434,8 @@ export function CreateEventWorkbench({
     : "Off";
   const acceptPaymentsLabel = isFreeEvent ? "Accept bookings" : "Accept payments";
 
-  const canCreate = data.name.trim() !== "" && (selectionMade || locationDraft.trim() !== "");
+  const canCreate =
+    data.name.trim() !== "" && locationWarning === null && (selectionMade || locationDraft.trim() !== "");
 
   const closePanel = () => setPanel(null);
 
@@ -691,30 +725,41 @@ export function CreateEventWorkbench({
                       const next = e.target.value;
                       setLocationDraft(next);
                       setSelectionMade(false);
+                      setLocationWarning(null);
                       locationInputRef.current?.setCustomValidity("");
                       if (next.trim() === "") {
-                        updateField({ location: "" });
+                        updateField({ location: "", lat: 0, lng: 0 });
+                      } else {
+                        // Typing invalidates any previously resolved coordinates.
+                        updateField({ lat: 0, lng: 0 });
                       }
                     }}
                     onBlur={() => {
                       const trimmed = locationDraft.trim();
                       if (trimmed === "") {
-                        updateField({ location: "" });
+                        updateField({ location: "", lat: 0, lng: 0 });
+                        setLocationWarning(null);
                         locationInputRef.current?.setCustomValidity("");
                         return;
                       }
                       if (!selectionMade) {
                         updateField({ location: trimmed });
                       }
-                      locationInputRef.current?.setCustomValidity("");
+                      if (locationWarning) {
+                        locationInputRef.current?.setCustomValidity(locationWarning);
+                      } else {
+                        locationInputRef.current?.setCustomValidity("");
+                      }
                     }}
                     placeholder={isLoaded ? "Search a location or paste an address" : "Loading maps…"}
                     disabled={!isLoaded && !loadError}
                     className="w-full bg-transparent border-0 p-0 mt-1 text-base md:text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     aria-label="Event location"
+                    aria-invalid={locationWarning !== null}
                   />
                 </div>
               </div>
+              {locationWarning ? <p className="text-xs text-danger font-sans px-2.5 pb-2">{locationWarning}</p> : null}
             </div>
 
             <button
@@ -807,26 +852,17 @@ export function CreateEventWorkbench({
                     />
                   </OptionCell>
                 ) : (
-                  <div className="rounded-xl border border-border bg-background px-2.5 py-2 space-y-1.5">
-                    <p className="text-xs font-medium text-foreground">Accept payments on SPORTSHUB</p>
-                    <p className="text-xs text-foreground-muted leading-relaxed">
-                      Connect Stripe to take bookings and payouts through the platform.
+                  <div className="rounded-xl border border-border bg-background px-2.5 py-2 flex gap-2.5 items-center">
+                    <SportshubStripeIntegrationIcon />
+                    <p className="min-w-0 flex-1 text-xs font-medium text-foreground leading-snug">
+                      Connect Stripe to take payments through SPORTSHUB.
                     </p>
-                    <EventHubGhostButton
-                      type="button"
-                      onClick={async () => {
-                        setLoading(true);
-                        window.scrollTo(0, 0);
-                        const link = await getStripeStandardAccountLink(
-                          user.userId,
-                          getUrlWithCurrentHostname("/organiser/dashboard"),
-                          getRefreshAccountLinkUrl()
-                        );
-                        router.push(link);
-                      }}
+                    <Link
+                      href="/organiser/v2/settings"
+                      className="shrink-0 inline-flex items-center rounded-lg border border-border bg-background px-2 py-1 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                     >
                       Connect Stripe
-                    </EventHubGhostButton>
+                    </Link>
                   </div>
                 )}
 

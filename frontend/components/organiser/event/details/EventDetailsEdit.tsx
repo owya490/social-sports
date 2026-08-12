@@ -25,11 +25,12 @@ import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
+  dateAndTimeInLocalToDate,
+  dateAndTimeInLocalToTimestamp,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
-  parseDateTimeStringToTimestamp,
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
@@ -127,8 +128,14 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   const [endTime, setEndTime] = useState("");
 
   const handleDateTimeUpdate = (): Partial<EventData> => {
-    const updatedStartTimestamp = parseDateTimeStringToTimestamp(`${newEditStartDate} ${newEditStartTime}`);
-    const updatedEndTimestamp = parseDateTimeStringToTimestamp(`${newEditEndDate} ${newEditEndTime}`);
+    const updatedStartTimestamp = dateAndTimeInLocalToTimestamp(
+      formatStringToDate(newEditStartDate),
+      formatTimeTo24Hour(newEditStartTime)
+    );
+    const updatedEndTimestamp = dateAndTimeInLocalToTimestamp(
+      formatStringToDate(newEditEndDate),
+      formatTimeTo24Hour(newEditEndTime)
+    );
     return {
       startDate: updatedStartTimestamp,
       endDate: updatedEndTimestamp,
@@ -143,8 +150,9 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   const [registrationDeadlineTime, setRegistrationDeadlineTime] = useState("");
 
   const handleRegistrationDeadlineUpdate = (): Partial<EventData> => {
-    const updatedRegistrationDeadline = parseDateTimeStringToTimestamp(
-      `${newEditRegistrationDeadlineDate} ${newEditRegistrationDeadlineTime}`
+    const updatedRegistrationDeadline = dateAndTimeInLocalToTimestamp(
+      formatStringToDate(newEditRegistrationDeadlineDate),
+      formatTimeTo24Hour(newEditRegistrationDeadlineTime)
     );
     return {
       registrationDeadline: updatedRegistrationDeadline,
@@ -333,12 +341,17 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   // UseEffect triggered on certain field mutations to ensure entry is valid
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(
-      `${formatStringToDate(newEditStartDate)}T${formatTimeTo24Hour(newEditStartTime)}`
+    const selectedStartDateTime = dateAndTimeInLocalToDate(
+      formatStringToDate(newEditStartDate),
+      formatTimeTo24Hour(newEditStartTime)
     );
-    const selectedEndDateTime = new Date(`${formatStringToDate(newEditEndDate)}T${formatTimeTo24Hour(newEditEndTime)}`);
-    const selectedRegistrationDeadline = new Date(
-      `${formatStringToDate(newEditRegistrationDeadlineDate)}T${formatTimeTo24Hour(newEditRegistrationDeadlineTime)}`
+    const selectedEndDateTime = dateAndTimeInLocalToDate(
+      formatStringToDate(newEditEndDate),
+      formatTimeTo24Hour(newEditEndTime)
+    );
+    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
+      formatStringToDate(newEditRegistrationDeadlineDate),
+      formatTimeTo24Hour(newEditRegistrationDeadlineTime)
     );
 
     if (currentDateTime > selectedStartDateTime) {

@@ -18,11 +18,12 @@ import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import {
+  dateAndTimeInLocalToDate,
+  dateAndTimeInLocalToTimestamp,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
-  parseDateTimeStringToTimestamp,
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
@@ -167,10 +168,14 @@ export function EventHubEditForm({
 
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(`${formatStringToDate(startDate)}T${formatTimeTo24Hour(startTime)}`);
-    const selectedEndDateTime = new Date(`${formatStringToDate(endDate)}T${formatTimeTo24Hour(endTime)}`);
-    const selectedRegistrationDeadline = new Date(
-      `${formatStringToDate(registrationDeadlineDate)}T${formatTimeTo24Hour(registrationDeadlineTime)}`
+    const selectedStartDateTime = dateAndTimeInLocalToDate(
+      formatStringToDate(startDate),
+      formatTimeTo24Hour(startTime)
+    );
+    const selectedEndDateTime = dateAndTimeInLocalToDate(formatStringToDate(endDate), formatTimeTo24Hour(endTime));
+    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
+      formatStringToDate(registrationDeadlineDate),
+      formatTimeTo24Hour(registrationDeadlineTime)
     );
 
     setDateWarning(currentDateTime > selectedStartDateTime ? "Event start date and time is in the past!" : null);
@@ -230,10 +235,11 @@ export function EventHubEditForm({
         name: nextName,
         nameTokens: nextName.toLowerCase().split(" "),
         description,
-        startDate: parseDateTimeStringToTimestamp(`${startDate} ${startTime}`),
-        endDate: parseDateTimeStringToTimestamp(`${endDate} ${endTime}`),
-        registrationDeadline: parseDateTimeStringToTimestamp(
-          `${registrationDeadlineDate} ${registrationDeadlineTime}`
+        startDate: dateAndTimeInLocalToTimestamp(formatStringToDate(startDate), formatTimeTo24Hour(startTime)),
+        endDate: dateAndTimeInLocalToTimestamp(formatStringToDate(endDate), formatTimeTo24Hour(endTime)),
+        registrationDeadline: dateAndTimeInLocalToTimestamp(
+          formatStringToDate(registrationDeadlineDate),
+          formatTimeTo24Hour(registrationDeadlineTime)
         ),
         location,
         locationTokens: location.toLowerCase().split(" "),

@@ -1,3 +1,5 @@
+import { dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
+
 type ShortDateBadgeProps = {
   /** Date instance or ISO date string (`YYYY-MM-DD`). Invalid/empty renders an empty shell. */
   date: Date | string | null | undefined;
@@ -9,8 +11,10 @@ function toDate(value: Date | string | null | undefined): Date | null {
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? null : value;
   }
-  // Noon avoids DST edge cases when parsing YYYY-MM-DD as local date
-  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T12:00:00`) : new Date(value);
+  // Noon local avoids DST edge cases for YYYY-MM-DD calendar chips
+  const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value)
+    ? dateAndTimeInLocalToDate(value, "12:00")
+    : new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
