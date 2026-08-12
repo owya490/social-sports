@@ -1,4 +1,4 @@
-import { FormData } from "@/app/(footer)/event/create/page";
+import { CreateEventFormData } from "@/components/events/create/createEventFormTypes";
 import EventCard from "@/components/events/EventCard";
 import { UserData } from "@/interfaces/UserTypes";
 import { formatDateToString, formatTimeTo12Hour } from "@/services/src/datetimeUtils";
@@ -7,12 +7,12 @@ import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { Timestamp } from "firebase/firestore";
 
 type BasicData = {
-  form: FormData;
+  form: CreateEventFormData;
   user: UserData;
 };
 
 type PreviewFormProps = BasicData & {
-  updateField: (fields: Partial<FormData>) => void;
+  updateField: (fields: Partial<CreateEventFormData>) => void;
 };
 
 export const PreviewForm = ({ form, user }: PreviewFormProps) => {
