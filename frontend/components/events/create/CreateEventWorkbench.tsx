@@ -278,12 +278,11 @@ export function CreateEventWorkbench({
     return getThumbnailUrlsBySport(data.sport);
   }, [data.thumbnail, data.sport]);
 
-  // Mobile header shows the event image (16:9); fall back to thumbnail, then product default.
+  // <md hero is the event image only; never prefer thumbnail (md+ rail uses thumbnailUrl).
   const eventImageUrl = useMemo(() => {
     if (typeof data.image === "string" && data.image) return data.image;
-    if (thumbnailUrl) return thumbnailUrl;
     return DEFAULT_EVENT_IMAGE_URL;
-  }, [data.image, thumbnailUrl]);
+  }, [data.image]);
 
   const selectedSport = useMemo(() => {
     return Object.values(SPORTS_CONFIG).find((s) => s.value === data.sport) ?? SPORTS_CONFIG[data.sport];
@@ -507,14 +506,14 @@ export function CreateEventWorkbench({
                     aria-expanded={sportOpen}
                     aria-haspopup="listbox"
                   >
-                    <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                       {sportIcon ? (
                         <Image
                           src={sportIcon}
                           alt=""
-                          width={18}
-                          height={18}
-                          className="h-[18px] w-[18px] object-contain opacity-80"
+                          width={24}
+                          height={24}
+                          className="h-6 w-6 object-contain opacity-80"
                         />
                       ) : null}
                     </span>
@@ -580,7 +579,7 @@ export function CreateEventWorkbench({
                 value={data.name}
                 onChange={(e) => updateField({ name: e.target.value })}
                 placeholder="Event Name"
-                className="w-full bg-transparent border-0 px-0 py-0.5 text-3xl font-bold tracking-tight text-foreground placeholder:text-foreground-muted/60 outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 max-md:[font-size:2.75rem!important] max-md:leading-[1.1]"
+                className="w-full bg-transparent border-0 px-0 py-0.5 text-3xl font-bold tracking-tight text-foreground placeholder:text-foreground-muted/60 outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 max-md:leading-[1.1]"
               />
             </div>
 
@@ -605,7 +604,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.startDate}
                       onChange={(e) => updateField({ startDate: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:!text-xs md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                       aria-label={`Start ${formatShortWeekdayDate(data.startDate)}`}
                       ref={(input) => {
                         if (input) input.setCustomValidity(dateWarning?.includes("start") ? dateWarning : "");
@@ -621,7 +620,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.startTime}
                       onChange={(e) => updateField({ startTime: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:!text-xs md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                       aria-label={`Start ${formatClock(data.startTime)}`}
                     />
                   </div>
@@ -644,7 +643,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.endDate}
                       onChange={(e) => updateField({ endDate: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:!text-xs md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                       ref={(input) => {
                         if (input)
                           input.setCustomValidity(
@@ -662,7 +661,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.endTime}
                       onChange={(e) => updateField({ endTime: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:!text-xs md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     />
                   </div>
                 </div>
@@ -710,7 +709,7 @@ export function CreateEventWorkbench({
                     }}
                     placeholder={isLoaded ? "Search a location or paste an address" : "Loading maps…"}
                     disabled={!isLoaded && !loadError}
-                    className="w-full bg-transparent border-0 p-0 mt-1 text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 max-md:[font-size:0.625rem!important]"
+                    className="w-full bg-transparent border-0 p-0 mt-1 max-md:!text-xs text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     aria-label="Event location"
                   />
                 </div>
