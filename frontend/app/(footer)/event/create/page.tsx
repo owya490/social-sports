@@ -88,7 +88,7 @@ export default function CreateEvent() {
     try {
       const eventId = await createEventWorkflow(data, user);
       if (eventId !== null) {
-        router.push(`/event/${eventId}`);
+        router.push(`/organiser/v2/event/${eventId}`);
       }
     } catch (err) {
       createEventLogger.error(`Error creating event: ${err}`);
