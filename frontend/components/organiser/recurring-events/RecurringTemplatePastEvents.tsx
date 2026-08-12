@@ -37,7 +37,7 @@ export const RecurringTemplatePastEvents = ({ pastEvents }: RecurringTemplatePas
                     </a>
                   </td>
                   <td>
-                    <a className="underline text-blue-600" href={`/organiser/event/${event[1]}`}>
+                    <a className="underline text-blue-600" href={`/organiser/v2/event/${event[1]}`}>
                       Organiser Page
                     </a>
                   </td>

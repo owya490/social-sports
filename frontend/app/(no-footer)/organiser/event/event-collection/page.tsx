@@ -51,7 +51,7 @@ export default function EventCollectionsPage() {
         true, // Default to private
         DEFAULT_EVENT_IMAGE_URL
       );
-      router.push(`/organiser/event/event-collection/${collectionId}`);
+      router.push(`/organiser/v2/event/event-collection/${collectionId}`);
     } catch (error) {
       logger.error(`Failed to create collection: ${error}`);
       router.push(getErrorUrl(error));
