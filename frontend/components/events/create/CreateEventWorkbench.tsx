@@ -253,6 +253,7 @@ export function CreateEventWorkbench({
 }: CreateEventWorkbenchProps) {
   const router = useRouter();
   const priceInputRef = useRef<HTMLInputElement>(null);
+  const capacityInputRef = useRef<HTMLInputElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const recurrenceWasEnabledRef = useRef(false);
@@ -672,7 +673,7 @@ export function CreateEventWorkbench({
             </div>
 
             <div
-              className="rounded-xl border border-border bg-background overflow-hidden cursor-text transition-colors hover:bg-surface-hover/60 focus-within:outline-none focus-within:ring-0"
+              className="rounded-xl border border-border bg-background overflow-hidden cursor-text transition-colors hover:bg-surface-hover focus-within:outline-none focus-within:ring-0"
               onClick={() => locationInputRef.current?.focus()}
             >
               {loadError ? <p className="text-xs text-danger font-sans px-2.5 pt-2">Error loading maps</p> : null}
@@ -709,7 +710,7 @@ export function CreateEventWorkbench({
                     }}
                     placeholder={isLoaded ? "Search a location or paste an address" : "Loading maps…"}
                     disabled={!isLoaded && !loadError}
-                    className="w-full bg-transparent border-0 p-0 mt-1 max-md:!text-xs text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                    className="w-full bg-transparent border-0 p-0 mt-1 text-base md:text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     aria-label="Event location"
                   />
                 </div>
@@ -731,7 +732,12 @@ export function CreateEventWorkbench({
               <h2 className="text-xs font-medium text-foreground-muted mb-1.5 px-0.5">Event Options</h2>
               <div className="space-y-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <OptionCell icon={<TicketIcon className="h-4 w-4" />} label="Ticket Price">
+                  <OptionCell
+                    icon={<TicketIcon className="h-4 w-4" />}
+                    label="Ticket Price"
+                    onClick={() => priceInputRef.current?.focus()}
+                    className="cursor-text"
+                  >
                     <label htmlFor="create-event-price" className="sr-only">
                       Ticket price in dollars
                     </label>
@@ -761,12 +767,18 @@ export function CreateEventWorkbench({
                     />
                   </OptionCell>
 
-                  <OptionCell icon={<UserGroupIcon className="h-4 w-4" />} label="Capacity">
+                  <OptionCell
+                    icon={<UserGroupIcon className="h-4 w-4" />}
+                    label="Capacity"
+                    onClick={() => capacityInputRef.current?.focus()}
+                    className="cursor-text"
+                  >
                     <label htmlFor="create-event-capacity" className="sr-only">
                       Max attendees
                     </label>
                     <input
                       id="create-event-capacity"
+                      ref={capacityInputRef}
                       type="number"
                       required
                       min={1}
