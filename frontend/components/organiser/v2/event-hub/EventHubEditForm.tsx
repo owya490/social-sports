@@ -18,11 +18,13 @@ import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import {
+  addCalendarDaysToYmd,
+  dateAndTimeInLocalToDate,
+  dateAndTimeInLocalToTimestamp,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
-  parseDateTimeStringToTimestamp,
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
@@ -115,10 +117,13 @@ export function EventHubEditForm({
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 
+  const prevStartDateRef = useRef<string | null>(null);
+
   useEffect(() => {
+    const nextStartDate = timestampToDateString(eventStartDate);
     setName(eventName);
     setDescription(eventDescription);
-    setStartDate(timestampToDateString(eventStartDate));
+    setStartDate(nextStartDate);
     setStartTime(timestampToTimeOfDay(eventStartDate));
     setEndDate(timestampToDateString(eventEndDate));
     setEndTime(timestampToTimeOfDay(eventEndDate));
@@ -129,6 +134,8 @@ export function EventHubEditForm({
     setLocationError("");
     setSport(eventSport);
     setEventLink(eventEventLink ?? "");
+    // Hydration is not a user start-date change — keep the event's real end date.
+    prevStartDateRef.current = nextStartDate;
   }, [
     eventName,
     eventDescription,
@@ -154,23 +161,43 @@ export function EventHubEditForm({
     };
   }, [isLoaded]);
 
-  const skipStartSync = useRef(true);
   useEffect(() => {
-    if (skipStartSync.current) {
-      skipStartSync.current = false;
+    const prevStartDate = prevStartDateRef.current;
+    prevStartDateRef.current = startDate;
+
+    // Skip mount / hydration — only shift when the organiser changes start date.
+    if (prevStartDate === null || prevStartDate === startDate) {
       return;
     }
+
+    const prevYmd = formatStringToDate(prevStartDate);
+    const nextYmd = formatStringToDate(startDate);
+    const [prevY, prevM, prevD] = prevYmd.split("-").map(Number);
+    const [nextY, nextM, nextD] = nextYmd.split("-").map(Number);
+    const dayDelta = Math.round(
+      (Date.UTC(nextY, nextM - 1, nextD) - Date.UTC(prevY, prevM - 1, prevD)) / (24 * 60 * 60 * 1000)
+    );
+    if (dayDelta !== 0) {
+      const shiftedEndYmd = addCalendarDaysToYmd(formatStringToDate(endDate), dayDelta);
+      setEndDate(formatDateToString(shiftedEndYmd < nextYmd ? nextYmd : shiftedEndYmd));
+    }
+
     setRegistrationDeadlineDate(startDate);
     setRegistrationDeadlineTime(startTime);
-    setEndDate(startDate);
+    // endDate/startTime intentionally read from the change that triggered this effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startDate]);
 
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(`${formatStringToDate(startDate)}T${formatTimeTo24Hour(startTime)}`);
-    const selectedEndDateTime = new Date(`${formatStringToDate(endDate)}T${formatTimeTo24Hour(endTime)}`);
-    const selectedRegistrationDeadline = new Date(
-      `${formatStringToDate(registrationDeadlineDate)}T${formatTimeTo24Hour(registrationDeadlineTime)}`
+    const selectedStartDateTime = dateAndTimeInLocalToDate(
+      formatStringToDate(startDate),
+      formatTimeTo24Hour(startTime)
+    );
+    const selectedEndDateTime = dateAndTimeInLocalToDate(formatStringToDate(endDate), formatTimeTo24Hour(endTime));
+    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
+      formatStringToDate(registrationDeadlineDate),
+      formatTimeTo24Hour(registrationDeadlineTime)
     );
 
     setDateWarning(currentDateTime > selectedEndDateTime ? "Event end date and time is in the past!" : null);
@@ -230,10 +257,11 @@ export function EventHubEditForm({
         name: nextName,
         nameTokens: nextName.toLowerCase().split(" "),
         description,
-        startDate: parseDateTimeStringToTimestamp(`${startDate} ${startTime}`),
-        endDate: parseDateTimeStringToTimestamp(`${endDate} ${endTime}`),
-        registrationDeadline: parseDateTimeStringToTimestamp(
-          `${registrationDeadlineDate} ${registrationDeadlineTime}`
+        startDate: dateAndTimeInLocalToTimestamp(formatStringToDate(startDate), formatTimeTo24Hour(startTime)),
+        endDate: dateAndTimeInLocalToTimestamp(formatStringToDate(endDate), formatTimeTo24Hour(endTime)),
+        registrationDeadline: dateAndTimeInLocalToTimestamp(
+          formatStringToDate(registrationDeadlineDate),
+          formatTimeTo24Hour(registrationDeadlineTime)
         ),
         location,
         locationTokens: location.toLowerCase().split(" "),

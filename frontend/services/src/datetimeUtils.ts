@@ -162,6 +162,49 @@ export function setDateToEndOfDay(date: Date): Date {
   return date;
 }
 
+/** Add whole calendar days to a `YYYY-MM-DD` string (month/year overflow safe; timezone-agnostic). */
+export function addCalendarDaysToYmd(dateYmd: string, days: number): string {
+  const [year, month, day] = dateYmd.split("-").map(Number);
+  const next = new Date(Date.UTC(year, month - 1, day + days));
+  const y = next.getUTCFullYear();
+  const m = String(next.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(next.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Local-browser calendar date as `YYYY-MM-DD`. */
+export function formatDateInLocalYmd(date: Date = new Date()): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function getLocalTomorrowYmd(): string {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return formatDateInLocalYmd(tomorrow);
+}
+
+/**
+ * Interprets `YYYY-MM-DD` + `HH:mm` as the browser's local wall time.
+ * Prefer this over `new Date("yyyy-mm-dd")` (UTC midnight) or mixed setHours patterns.
+ */
+export function dateAndTimeInLocalToDate(dateYmd: string, timeHm: string): Date {
+  const [year, month, day] = dateYmd.split("-").map(Number);
+  const [hours, minutes] = timeHm.split(":").map(Number);
+  return new Date(year, month - 1, day, hours || 0, minutes || 0, 0, 0);
+}
+
+export function dateAndTimeInLocalToTimestamp(dateYmd: string, timeHm: string): Timestamp {
+  return Timestamp.fromDate(dateAndTimeInLocalToDate(dateYmd, timeHm));
+}
+
+/** Local midnight for a `YYYY-MM-DD` calendar date (not UTC). */
+export function dateYmdInLocalToDate(dateYmd: string): Date {
+  return dateAndTimeInLocalToDate(dateYmd, "00:00");
+}
+
 // Helper functions for mobile date/time formatting
 export function formatMobileSameDayDateTime(startDate: Timestamp, endDate: Timestamp): string {
   const date = startDate.toDate();

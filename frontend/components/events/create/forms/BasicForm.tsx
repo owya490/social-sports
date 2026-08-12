@@ -6,6 +6,7 @@ import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
 import {
   clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
@@ -269,9 +270,9 @@ export function BasicInformation({
   useEffect(() => {
     const validateErrors = () => {
       const currentDateTime = new Date();
-      const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
-      const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
-      const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+      const selectedStartDateTime = dateAndTimeInLocalToDate(startDate, startTime);
+      const selectedEndDateTime = dateAndTimeInLocalToDate(endDate, endTime);
+      const selectedRegistrationEndDateTime = dateAndTimeInLocalToDate(registrationEndDate, registrationEndTime);
 
       let hasDateError = false;
 
