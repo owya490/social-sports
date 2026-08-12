@@ -136,7 +136,7 @@ export function TopSalesDonutSection({ slices, loading }: TopSalesDonutSectionPr
   const hasData = totalCents > 0;
 
   const sliceColors = useMemo(() => {
-    const base = resolveProfileColour(user.profileColour);
+    const base = resolveProfileColour(user.profileColour) ?? "#0a0a0a";
     return accentShadeRamp(base, Math.max(slices.length, 1));
   }, [slices.length, user.profileColour]);
 

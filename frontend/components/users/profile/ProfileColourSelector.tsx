@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  DEFAULT_PROFILE_COLOUR,
-  lighterCompanionFor,
-  PROFILE_COLOUR_OPTIONS,
-  resolveProfileColour,
-} from "@/services/src/users/profileColour";
+import { isAllowedProfileColour, PROFILE_COLOUR_OPTIONS } from "@/services/src/users/profileColour";
 import type { CSSProperties } from "react";
 
 interface ProfileColourSelectorProps {
@@ -18,24 +13,20 @@ function swatchStyle(colour: string, isSelected: boolean): CSSProperties {
   if (!isSelected) {
     return { backgroundColor: colour };
   }
-  const light = lighterCompanionFor(colour);
-  // Tight ring: light companion around the selected fill.
+  // White gap keeps the black outline visible on dark swatches (grey/black).
   return {
     backgroundColor: colour,
-    boxShadow: `0 0 0 2px ${light}`,
+    boxShadow: "0 0 0 2px #ffffff, 0 0 0 4px #0a0a0a",
   };
 }
 
 export function ProfileColourSelector({ value, onChange, disabled = false }: ProfileColourSelectorProps) {
-  const selected = resolveProfileColour(value);
+  const selected = isAllowedProfileColour(value) ? value.toLowerCase() : null;
 
   return (
     <div>
       <strong className="text-xs md:text-md font-medium text-gray-700">Profile colour</strong>
-      <p className="text-xs font-light text-gray-500 mt-0.5 mb-2">
-        Used for accents in your Organiser Hub. Button text uses a lighter shade of the same colour.
-      </p>
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Profile colour">
+      <div className="mt-2 flex flex-wrap gap-2" role="radiogroup" aria-label="Profile colour">
         {PROFILE_COLOUR_OPTIONS.map((option) => {
           const isSelected = selected === option.value.toLowerCase();
           return (
@@ -59,16 +50,6 @@ export function ProfileColourSelector({ value, onChange, disabled = false }: Pro
           );
         })}
       </div>
-      {selected !== DEFAULT_PROFILE_COLOUR && (
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => void onChange(DEFAULT_PROFILE_COLOUR)}
-          className="mt-2 text-xs text-gray-600 hover:underline disabled:opacity-50"
-        >
-          Reset to yellow
-        </button>
-      )}
     </div>
   );
 }

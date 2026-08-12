@@ -1,26 +1,32 @@
-/** Default organiser accent — deep gold (readable with a light companion). */
-export const DEFAULT_PROFILE_COLOUR = "#a16207";
+/**
+ * Unset profile colour — Organiser Hub stays black/white until the user picks one.
+ * EmptyPublicUserData uses this so unset users do not inherit a brand yellow flash.
+ */
+export const UNSET_PROFILE_COLOUR = "";
+
+/** Neutral hub buttons while loading / when no profile colour is chosen. */
+export const NEUTRAL_HUB_ACCENT = "#0a0a0a";
+export const NEUTRAL_HUB_ACCENT_CONTRAST = "#ffffff";
 
 export type ProfileColourOption = {
   label: string;
   /** Strong fill used on primary buttons / chart accents. */
   value: string;
-  /** Lighter companion for button text and selection rings. */
+  /** Companion for button label text on the fill. */
   light: string;
 };
 
 /**
- * Seven rainbow accents. Bases are saturated enough that the light companion
- * reads clearly as button label text.
+ * Curated organiser accents. Bases are paired with readable light (or light-neutral) text.
  */
 export const PROFILE_COLOUR_OPTIONS: readonly ProfileColourOption[] = [
-  { label: "Red", value: "#c41e3a", light: "#fecdd3" },
-  { label: "Orange", value: "#c2410c", light: "#ffedd5" },
-  { label: "Yellow", value: "#a16207", light: "#fef08c" },
-  { label: "Green", value: "#15803d", light: "#bbf7d0" },
-  { label: "Blue", value: "#1d4ed8", light: "#bfdbfe" },
-  { label: "Indigo", value: "#4338ca", light: "#c7d2fe" },
-  { label: "Violet", value: "#7e22ce", light: "#e9d5ff" },
+  { label: "Empire Red", value: "#c41e3a", light: "#fecdd3" },
+  { label: "Royal Blue", value: "#1d4ed8", light: "#bfdbfe" },
+  { label: "Sports Hub Yellow", value: "#f2b705", light: "#0a0a0a" },
+  { label: "Forest Green", value: "#166534", light: "#bbf7d0" },
+  { label: "Purple", value: "#7e22ce", light: "#e9d5ff" },
+  { label: "Grey", value: "#6b7280", light: "#f3f4f6" },
+  { label: "Black", value: "#0a0a0a", light: "#f5f5f5" },
 ] as const;
 
 const PROFILE_COLOUR_BY_VALUE = new Map(
@@ -53,7 +59,10 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 }
 
 function rgbToHex(r: number, g: number, b: number): string {
-  const toHex = (channel: number) => Math.round(Math.min(255, Math.max(0, channel))).toString(16).padStart(2, "0");
+  const toHex = (channel: number) =>
+    Math.round(Math.min(255, Math.max(0, channel)))
+      .toString(16)
+      .padStart(2, "0");
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
@@ -102,18 +111,26 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
 function deriveLighterCompanion(hex: string): string {
   const { r, g, b } = hexToRgb(hex);
   const { h, s, l } = rgbToHsl(r, g, b);
-  // Soft pastel of the same hue — readable on the saturated base fill.
+  if (l < 0.2) return "#f5f5f5";
+  if (relativeLuminance(hex) > 0.55) return "#0a0a0a";
   const lightL = Math.min(0.92, Math.max(0.78, l + 0.45));
   const softS = Math.min(0.55, s * 0.55);
   const rgb = hslToRgb(h, softS, lightL);
   return rgbToHex(rgb.r, rgb.g, rgb.b);
 }
 
-/** Lighter companion for button text / selection rings (curated when available). */
+/** Companion for button text on the accent fill (curated when available). */
 export function lighterCompanionFor(hex: string): string {
   const option = PROFILE_COLOUR_BY_VALUE.get(hex.toLowerCase());
   if (option) return option.light;
   return deriveLighterCompanion(hex);
+}
+
+function mixHex(a: string, b: string, amount: number): string {
+  const ar = hexToRgb(a);
+  const br = hexToRgb(b);
+  const t = Math.min(1, Math.max(0, amount));
+  return rgbToHex(ar.r + (br.r - ar.r) * t, ar.g + (br.g - ar.g) * t, ar.b + (br.b - ar.b) * t);
 }
 
 /**
@@ -122,7 +139,7 @@ export function lighterCompanionFor(hex: string): string {
  */
 export function accentShadeRamp(base: string, count: number): string[] {
   if (count <= 0) return [];
-  const resolved = resolveProfileColour(base);
+  const resolved = resolveProfileColour(base) ?? NEUTRAL_HUB_ACCENT;
   const light = lighterCompanionFor(resolved);
   const { r, g, b } = hexToRgb(resolved);
   const { h, s, l } = rgbToHsl(r, g, b);
@@ -135,14 +152,13 @@ export function accentShadeRamp(base: string, count: number): string[] {
       shades.push(resolved);
       continue;
     }
-    // Alternate stepping toward the light companion, then darker variants.
     const t = i / (count - 1);
     if (t <= 0.55) {
       const mix = t / 0.55;
       shades.push(mixHex(resolved, light, 0.25 + mix * 0.55));
     } else {
       const darkT = (t - 0.55) / 0.45;
-      const darkened = Math.max(0.18, l * (1 - 0.18 - darkT * 0.35));
+      const darkened = Math.max(0.08, l * (1 - 0.18 - darkT * 0.35));
       const rgb = hslToRgb(h, Math.min(1, s * 1.05), darkened);
       shades.push(rgbToHex(rgb.r, rgb.g, rgb.b));
     }
@@ -150,16 +166,10 @@ export function accentShadeRamp(base: string, count: number): string[] {
   return shades;
 }
 
-function mixHex(a: string, b: string, amount: number): string {
-  const ar = hexToRgb(a);
-  const br = hexToRgb(b);
-  const t = Math.min(1, Math.max(0, amount));
-  return rgbToHex(ar.r + (br.r - ar.r) * t, ar.g + (br.g - ar.g) * t, ar.b + (br.b - ar.b) * t);
-}
-
 /** Soft muted fill for secondary chart bars (same hue, low intensity). */
 export function accentMutedFor(hex: string): string {
-  return mixHex(resolveProfileColour(hex), "#ebebeb", 0.72);
+  const resolved = resolveProfileColour(hex) ?? NEUTRAL_HUB_ACCENT;
+  return mixHex(resolved, "#ebebeb", 0.72);
 }
 
 export function isAllowedProfileColour(value: string | null | undefined): value is string {
@@ -167,8 +177,11 @@ export function isAllowedProfileColour(value: string | null | undefined): value 
   return PROFILE_COLOUR_BY_VALUE.has(value.toLowerCase());
 }
 
-/** Resolve a stored profile colour to a safe accent hex. */
-export function resolveProfileColour(value: string | null | undefined): string {
+/**
+ * Resolve a stored profile colour. Returns `null` when unset/invalid so the hub
+ * can keep neutral black/white buttons instead of forcing a brand colour.
+ */
+export function resolveProfileColour(value: string | null | undefined): string | null {
   if (isAllowedProfileColour(value)) return value.toLowerCase();
-  return DEFAULT_PROFILE_COLOUR;
+  return null;
 }

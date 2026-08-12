@@ -3,7 +3,7 @@ import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
-import { DEFAULT_PROFILE_COLOUR } from "@/services/src/users/profileColour";
+import { UNSET_PROFILE_COLOUR } from "@/services/src/users/profileColour";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { Timestamp } from "firebase/firestore";
 
@@ -28,7 +28,7 @@ export interface PublicUserData {
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
   publicEventCollections: EventCollectionId[];
-  /** Organiser Hub accent colour (`#rrggbb`). Defaults to sports yellow when unset. */
+  /** Organiser Hub accent colour (`#rrggbb`). Empty until the user picks one (hub stays black/white). */
   profileColour: string;
 }
 
@@ -91,7 +91,7 @@ export const EmptyPublicUserData: PublicUserData = {
   publicUpcomingOrganiserEvents: [],
   bio: "",
   publicEventCollections: [],
-  profileColour: DEFAULT_PROFILE_COLOUR,
+  profileColour: UNSET_PROFILE_COLOUR,
 };
 
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION
