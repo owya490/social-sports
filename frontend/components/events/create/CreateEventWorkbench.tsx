@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * THESIS: One-viewport create — thumbnail rail beside compact essentials — refuses scroll and the old wizard.
+ * THESIS: One-viewport create — full-bleed image header on small screens, thumbnail rail on md+ — refuses scroll and the old wizard.
  * OWN-WORLD: Honest Clubhouse tokens on white canvas, Satoshi, dense soft controls.
  * STORY: Organiser names the session, sets when/where/price, pauses registration by default, creates.
- * FIRST VIEWPORT: Thumbnail + sport + Public↔Private pill left; title; when/where; price+capacity then payments+recurring; Create.
+ * FIRST VIEWPORT: Event image (16:9 full-bleed <md / square thumbnail md+) + sport + Public↔Private; title; when/where; price+capacity; Create.
  * FORM: Luma create density inside organiser tokens; deep edits in EventHubPanel.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
@@ -17,6 +17,7 @@ import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel
 import { EventHubGhostButton } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { ShortDateBadge } from "@/components/organiser/v2/shared/ShortDateBadge";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
+import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
@@ -150,7 +151,7 @@ function VisibilityPill({
     <div
       role="group"
       aria-label="Event visibility"
-      className="relative flex w-full max-w-[13.5rem] items-stretch rounded-full border border-border bg-surface p-0.5"
+      className="relative flex w-full max-w-none items-stretch rounded-full border border-border bg-surface p-0.5"
     >
       <span
         aria-hidden
@@ -276,6 +277,13 @@ export function CreateEventWorkbench({
     if (typeof data.thumbnail === "string" && data.thumbnail) return data.thumbnail;
     return getThumbnailUrlsBySport(data.sport);
   }, [data.thumbnail, data.sport]);
+
+  // Mobile header shows the event image (16:9); fall back to thumbnail, then product default.
+  const eventImageUrl = useMemo(() => {
+    if (typeof data.image === "string" && data.image) return data.image;
+    if (thumbnailUrl) return thumbnailUrl;
+    return DEFAULT_EVENT_IMAGE_URL;
+  }, [data.image, thumbnailUrl]);
 
   const selectedSport = useMemo(() => {
     return Object.values(SPORTS_CONFIG).find((s) => s.value === data.sport) ?? SPORTS_CONFIG[data.sport];
@@ -446,90 +454,118 @@ export function CreateEventWorkbench({
       <div className="mx-auto w-full max-w-3xl px-4 sm:px-5 pt-8 sm:pt-10 pb-4 sm:pb-5">
         <form
           onSubmit={onSubmit}
-          className="lg:grid lg:grid-cols-[minmax(0,13.5rem)_minmax(0,1fr)] lg:gap-6 lg:items-start"
+          className="md:grid md:grid-cols-[minmax(0,13.5rem)_minmax(0,1fr)] md:gap-6 md:items-start"
         >
-          <aside className="space-y-2 mb-4 lg:mb-0 lg:sticky lg:top-4">
-            <button
-              type="button"
-              onClick={() => setPanel("photo")}
-              className="group relative block w-full max-w-[13.5rem] aspect-square overflow-hidden rounded-xl border border-border bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-              aria-label="Choose event thumbnail"
-            >
-              <Image
-                src={thumbnailUrl}
-                alt=""
-                fill
-                className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
-                sizes="13.5rem"
-              />
-              <span className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-sm text-foreground group-hover:bg-surface-hover transition-colors">
-                <CameraIcon className="h-3.5 w-3.5" aria-hidden />
-              </span>
-            </button>
-
-            <div className="relative max-w-[13.5rem]">
+          {/*
+            < md: stacked full-bleed 16:9 event image, then Sport + Public|Private below.
+            md+: square thumbnail rail (desktop create composition).
+          */}
+          <aside className="mb-4 md:mb-0 md:sticky md:top-4">
+            <div className="flex flex-col gap-2 md:max-w-[13.5rem]">
               <button
                 type="button"
-                onClick={() => setSportOpen((v) => !v)}
-                className="flex w-full min-w-0 items-center gap-2 rounded-xl border border-border bg-background px-2 py-1.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-                aria-expanded={sportOpen}
-                aria-haspopup="listbox"
+                onClick={() => setPanel("photo")}
+                className="group relative -mx-4 block w-[calc(100%+2rem)] aspect-video overflow-hidden rounded-none border-y border-x-0 border-border bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground sm:-mx-5 sm:w-[calc(100%+2.5rem)] md:hidden"
+                aria-label="Choose event photos"
               >
-                <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
-                  {sportIcon ? (
-                    <Image
-                      src={sportIcon}
-                      alt=""
-                      width={18}
-                      height={18}
-                      className="h-[18px] w-[18px] object-contain opacity-80"
-                    />
-                  ) : null}
+                <Image
+                  src={eventImageUrl}
+                  alt=""
+                  fill
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                  sizes="100vw"
+                />
+                <span className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-sm text-foreground group-hover:bg-surface-hover transition-colors">
+                  <CameraIcon className="h-3.5 w-3.5" aria-hidden />
                 </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-foreground-muted leading-none">Sport</p>
-                  <p className="text-xs font-medium text-foreground truncate mt-0.5">{sportName}</p>
-                </div>
-                <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-foreground-muted" aria-hidden />
               </button>
 
-              {sportOpen ? (
-                <div
-                  role="listbox"
-                  className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-background shadow-lg py-1"
-                >
-                  {Object.entries(SPORTS_CONFIG).map(([key, sportInfo]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      role="option"
-                      aria-selected={data.sport === sportInfo.value}
-                      onClick={() => {
-                        updateField({ sport: sportInfo.value });
-                        setSportOpen(false);
-                      }}
-                      className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs font-sans transition-colors hover:bg-surface-hover ${
-                        data.sport === sportInfo.value ? "bg-surface-muted text-foreground font-medium" : "text-foreground"
-                      }`}
-                    >
-                      <Image
-                        src={sportInfo.iconImage}
-                        alt=""
-                        width={14}
-                        height={14}
-                        className="h-3.5 w-3.5 object-contain opacity-70"
-                      />
-                      {sportInfo.name}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+              <button
+                type="button"
+                onClick={() => setPanel("photo")}
+                className="group relative hidden w-full max-w-[13.5rem] aspect-square overflow-hidden rounded-xl border border-border bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground md:block"
+                aria-label="Choose event thumbnail"
+              >
+                <Image
+                  src={thumbnailUrl}
+                  alt=""
+                  fill
+                  className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                  sizes="13.5rem"
+                />
+                <span className="absolute bottom-2.5 right-2.5 flex h-8 w-8 items-center justify-center rounded-full bg-background border border-border shadow-sm text-foreground group-hover:bg-surface-hover transition-colors">
+                  <CameraIcon className="h-3.5 w-3.5" aria-hidden />
+                </span>
+              </button>
 
-            <VisibilityPill
-              isPrivate={data.isPrivate}
-              onChange={(next) => updateField({ isPrivate: next })}
-            />
+              <div className="flex w-full flex-col gap-2 md:max-w-[13.5rem]">
+                <div className="relative w-full">
+                  <button
+                    type="button"
+                    onClick={() => setSportOpen((v) => !v)}
+                    className="flex w-full min-w-0 min-h-[2.75rem] items-center gap-2 rounded-xl border border-border bg-background px-2 py-1.5 text-left transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+                    aria-expanded={sportOpen}
+                    aria-haspopup="listbox"
+                  >
+                    <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                      {sportIcon ? (
+                        <Image
+                          src={sportIcon}
+                          alt=""
+                          width={18}
+                          height={18}
+                          className="h-[18px] w-[18px] object-contain opacity-80"
+                        />
+                      ) : null}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-medium text-foreground-muted leading-none">Sport</p>
+                      <p className="text-xs font-medium text-foreground truncate mt-0.5">{sportName}</p>
+                    </div>
+                    <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 text-foreground-muted" aria-hidden />
+                  </button>
+
+                  {sportOpen ? (
+                    <div
+                      role="listbox"
+                      className="absolute left-0 right-0 top-full z-20 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border bg-background shadow-lg py-1"
+                    >
+                      {Object.entries(SPORTS_CONFIG).map(([key, sportInfo]) => (
+                        <button
+                          key={key}
+                          type="button"
+                          role="option"
+                          aria-selected={data.sport === sportInfo.value}
+                          onClick={() => {
+                            updateField({ sport: sportInfo.value });
+                            setSportOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs font-sans transition-colors hover:bg-surface-hover ${
+                            data.sport === sportInfo.value
+                              ? "bg-surface-muted text-foreground font-medium"
+                              : "text-foreground"
+                          }`}
+                        >
+                          <Image
+                            src={sportInfo.iconImage}
+                            alt=""
+                            width={14}
+                            height={14}
+                            className="h-3.5 w-3.5 object-contain opacity-70"
+                          />
+                          {sportInfo.name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+
+                <VisibilityPill
+                  isPrivate={data.isPrivate}
+                  onChange={(next) => updateField({ isPrivate: next })}
+                />
+              </div>
+            </div>
           </aside>
 
           <div className="min-w-0 space-y-2.5">
@@ -544,7 +580,7 @@ export function CreateEventWorkbench({
                 value={data.name}
                 onChange={(e) => updateField({ name: e.target.value })}
                 placeholder="Event Name"
-                className="w-full bg-transparent border-0 px-0 py-0.5 text-2xl sm:text-3xl font-bold tracking-tight text-foreground placeholder:text-foreground-muted/60 outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                className="w-full bg-transparent border-0 px-0 py-0.5 text-3xl font-bold tracking-tight text-foreground placeholder:text-foreground-muted/60 outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 max-md:[font-size:2.75rem!important] max-md:leading-[1.1]"
               />
             </div>
 
@@ -569,7 +605,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.startDate}
                       onChange={(e) => updateField({ startDate: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1.5 py-0.5 text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                       aria-label={`Start ${formatShortWeekdayDate(data.startDate)}`}
                       ref={(input) => {
                         if (input) input.setCustomValidity(dateWarning?.includes("start") ? dateWarning : "");
@@ -585,7 +621,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.startTime}
                       onChange={(e) => updateField({ startTime: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1.5 py-0.5 text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                       aria-label={`Start ${formatClock(data.startTime)}`}
                     />
                   </div>
@@ -608,7 +644,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.endDate}
                       onChange={(e) => updateField({ endDate: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1.5 py-0.5 text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                       ref={(input) => {
                         if (input)
                           input.setCustomValidity(
@@ -626,7 +662,7 @@ export function CreateEventWorkbench({
                       required
                       value={data.endTime}
                       onChange={(e) => updateField({ endTime: e.target.value })}
-                      className="rounded-lg border border-border bg-surface px-1.5 py-0.5 text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                      className="rounded-lg border border-border bg-surface px-1 py-0 max-md:[font-size:0.625rem!important] md:px-1.5 md:py-0.5 md:text-xs font-medium text-foreground font-sans outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     />
                   </div>
                 </div>
@@ -674,7 +710,7 @@ export function CreateEventWorkbench({
                     }}
                     placeholder={isLoaded ? "Search a location or paste an address" : "Loading maps…"}
                     disabled={!isLoaded && !loadError}
-                    className="w-full bg-transparent border-0 p-0 mt-1 text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
+                    className="w-full bg-transparent border-0 p-0 mt-1 text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0 max-md:[font-size:0.625rem!important]"
                     aria-label="Event location"
                   />
                 </div>
