@@ -59,6 +59,14 @@ export default function CreateEvent() {
     });
   }
 
+  function onSubmitFailure(message: string) {
+    setLoading(false);
+    setHasError(true);
+    setHasAlert(true);
+    setAlertMessage(message);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function validateForm(): boolean {
     const form = document.querySelector("form") as HTMLFormElement | null;
     if (form && !form.reportValidity()) {
@@ -91,10 +99,11 @@ export default function CreateEvent() {
       if (eventId !== null) {
         router.push(`/organiser/v2/event/${eventId}`);
       }
+      // null: workflow already alerted (stay on page) or redirected (loading cleared, no alert)
     } catch (err) {
       createEventLogger.error(`Error creating event: ${err}`);
+      onSubmitFailure("Failed to create event. Please try again.");
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function createEventWorkflow(formData: CreateEventFormData, user: UserData): Promise<EventId | null> {
@@ -112,16 +121,19 @@ export default function CreateEvent() {
         newEventId = await createEvent(newEventData);
       }
       if (newEventId === null) {
+        onSubmitFailure("Failed to create event. Please try again.");
         return null;
       }
       await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
+        setLoading(false);
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
         return null;
       } else if (error == "Sendgrid failed") {
         return newEventId;
       } else {
+        setLoading(false);
         router.push("/error");
         return null;
       }
