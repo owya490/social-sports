@@ -4,7 +4,7 @@ import { TextSection } from "@/interfaces/FormTypes";
 import Image from "next/image";
 
 const fieldClass =
-  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base text-foreground font-sans placeholder:text-foreground-muted focus:outline-none focus-visible:border-focus focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:bg-surface disabled:text-foreground-muted";
+  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base text-foreground font-sans placeholder:text-foreground-muted focus:outline-none disabled:bg-surface disabled:text-foreground-muted";
 
 export function CompactTextSection({
   textSection,
@@ -30,13 +30,14 @@ export function CompactTextSection({
           className="h-32 w-auto max-w-full rounded-lg object-cover"
         />
       ) : null}
-      <textarea
-        rows={2}
+      <input
+        type="text"
         value={textSection.answer || ""}
         disabled={!canEdit}
         placeholder="Your answer"
+        autoComplete="off"
         onChange={(e) => answerOnChange(e.target.value)}
-        className={`${fieldClass} min-h-[2.75rem] resize-y`}
+        className={fieldClass}
       />
     </div>
   );

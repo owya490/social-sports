@@ -130,9 +130,9 @@ const FulfilmentEntityPage = ({
   };
 
   return (
-    <div className="relative min-h-screen bg-core-hover">
-      <div className="w-full flex justify-center pb-8 md:pb-16">
-        <div className="mt-8 mb-4 screen-width-primary">
+    <div className="relative min-h-screen bg-surface">
+      <div className="w-full flex justify-center">
+        <div className="mt-6 mb-2 screen-width-primary">
           <FulfilmentEntityStepper fulfilmentSessionInfo={fulfilmentSessionInfo} />
         </div>
       </div>

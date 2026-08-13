@@ -16,11 +16,11 @@ import {
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, CurrencyDollarIcon, MapPinIcon } from "@heroicons/react/24/outline";
-import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
 import { useState } from "react";
 import BookingButton from "../events/BookingButton";
 import ContactEventButton from "../events/ContactEventButton";
+import TicketCountSelect from "../events/TicketCountSelect";
 import TicketTypeSelect from "../events/TicketTypeSelect";
 import { EventTicketTypeCheckout } from "../events/useEventTicketTypeCheckout";
 
@@ -140,19 +140,16 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                     />
                   )}
                   <div className="mb-4 !text-black">
-                    <Select
-                      className="text-black"
+                    <TicketCountSelect
                       label={isFree ? "Number of Bookings" : "Number of Attendees"}
-                      size="lg"
-                      value={`${waitlistAttendeeCount}`}
+                      value={waitlistAttendeeCount}
+                      options={getTicketCountOptions(effectiveMax)}
                       onChange={handleWaitlistAttendeeCount}
-                    >
-                      {getTicketCountOptions(effectiveMax).map((count) => (
-                        <Option key={`attendee-option-${count}`} value={`${count}`}>
-                          {count} {isFree ? `Booking${count > 1 ? "s" : ""}` : `Attendee${count > 1 ? "s" : ""}`}
-                        </Option>
-                      ))}
-                    </Select>
+                      formatOption={(count) =>
+                        `${count} ${isFree ? `Booking${count > 1 ? "s" : ""}` : `Attendee${count > 1 ? "s" : ""}`}`
+                      }
+                      selectKey={`waitlist-${effectiveEventTicketTypeId}-${effectiveMax}`}
+                    />
                   </div>
                   <JoinWaitlistButton
                     eventId={props.eventId}
@@ -190,19 +187,14 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                   <>
                     <div className="flex gap-2">
                       <div className="w-3/5 shrink-0">
-                        <Select
-                          className="text-black"
+                        <TicketCountSelect
                           label={isFree ? "Bookings" : "Tickets"}
-                          size="lg"
-                          value={`${attendeeCount}`}
+                          value={attendeeCount}
+                          options={allCounts}
                           onChange={handleAttendeeCount}
-                        >
-                          {allCounts.map((count) => (
-                            <Option key={`attendee-option-${count}`} value={`${count}`}>
-                              {count}
-                            </Option>
-                          ))}
-                        </Select>
+                          formatOption={(count) => `${count}`}
+                          selectKey={`tickets-${effectiveEventTicketTypeId}-${allCounts.join(",")}`}
+                        />
                       </div>
                       <BookingButton
                         eventId={props.eventId}

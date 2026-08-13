@@ -421,9 +421,9 @@ Operate surfaces under `/organiser/v2/forms/[formId]/…`. Parallel to V1 (`/org
 
 ### Form answerer (public + embedded)
 
-Player-facing fill-out uses `FormResponder` with `variant="compact"`: paper on `bg-surface` (`max-w-3xl` on desktop, full-bleed padding on phone), question-as-label + native controls. No Save / return-to-top chrome—parents that persist (fulfilment, Event Hub Add answers) call `ref.save()`. Used by submit-form, public response view, fulfilment, V2 preview/viewer, and Event Hub Add answers. Default variant stays for Organiser Hub V1.
+Player-facing fill-out uses `FormResponder` with `variant="compact"`: grey `bg-surface` canvas (`max-w-3xl` on desktop, full-bleed padding on phone). Title + organiser + description sit on one outlined paper; each question is its own compact paper (`rounded-xl border-border`, `p-4`, `gap-3`) so start and end are obvious—Google Forms grouping at Clubhouse density. Question-as-label + native controls inside the paper. No Save / return-to-top chrome—parents that persist (fulfilment, Event Hub Add answers) call `ref.save()`. Used by submit-form, public response view, fulfilment, V2 preview/viewer, and Event Hub Add answers. Default variant stays for Organiser Hub V1.
 
-**The Thumb-Reach Rule.** On phone, questions stay compact and reachable—no stacked `p-8` cards or huge vertical gaps between questions.
+**The Thumb-Reach Rule.** On phone, questions stay compact and reachable—editor-matching papers (`p-4`, `gap-3`), not stacked `p-8` cards or huge vertical gaps.
 
 ### Entity hover preview
 
@@ -595,7 +595,7 @@ Image gallery library (thumbnails + event images) inside one outlined panel. Eve
 - **Don't** add kickers/eyebrows above catalogue page titles, or turn Event collections / Custom links / Settings into multi-card preview dashboards.
 - **Don't** revert Forms to divided catalogue rows or `EntityHoverPreview`—keep the paper-grid miniature gallery.
 - **Don't** restyle Hub V1 form editor/preview in place—ship parallel V2 components under `organiser/v2/forms`.
-- **Don't** ship the public answerer as stacked oversized cards with huge gutters—keep compact question-as-label density.
+- **Don't** ship the public answerer as one undifferentiated panel, or as stacked oversized V1 cards with huge gutters—use compact editor-matching papers (header paper + one paper per question).
 - **Don't** invent a second settings visual language—stacked outlined panels with header strip + body only (account Settings). Event hub Settings uses flush preference rows on the stage instead—do not mix the two shells on one surface.
 - **Don't** duplicate the list row inside the hover card, or add hover dossiers to custom links / top-events / Forms gallery cards.
 - **Don't** put nested bordered panels or fetch-on-hover data inside the mini-dossier—cover, three KPIs, short prose, middot flags only.

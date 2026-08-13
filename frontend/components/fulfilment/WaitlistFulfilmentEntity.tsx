@@ -136,18 +136,16 @@ const WaitlistFulfilmentEntity = ({
       isSaving={isSaving}
       fulfilmentSessionId={fulfilmentSessionId}
     >
-      <div className="bg-core-hover">
-        <div className="flex w-screen justify-center">
-          <div className="screen-width-primary space-y-8 md:px-32">
-            <JoinWaitlistForm
-              eventData={eventData}
-              fullName={fullName}
-              email={email}
-              errorMessage={errorMessage}
-              onFullNameChange={setFullName}
-              onEmailChange={handleEmailChange}
-            />
-          </div>
+      <div className="flex w-screen justify-center">
+        <div className="screen-width-primary space-y-8 md:px-32">
+          <JoinWaitlistForm
+            eventData={eventData}
+            fullName={fullName}
+            email={email}
+            errorMessage={errorMessage}
+            onFullNameChange={setFullName}
+            onEmailChange={handleEmailChange}
+          />
         </div>
       </div>
     </FulfilmentEntityPage>

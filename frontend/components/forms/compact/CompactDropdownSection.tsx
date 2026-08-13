@@ -4,7 +4,7 @@ import { DropdownSelectSection } from "@/interfaces/FormTypes";
 import Image from "next/image";
 
 const fieldClass =
-  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base text-foreground font-sans focus:outline-none focus-visible:border-focus focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:bg-surface disabled:text-foreground-muted";
+  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base text-foreground font-sans focus:outline-none disabled:bg-surface disabled:text-foreground-muted";
 
 export function CompactDropdownSection({
   dropdownSelectSection,

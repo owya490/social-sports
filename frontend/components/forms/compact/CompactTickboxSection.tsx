@@ -33,22 +33,22 @@ export function CompactTickboxSection({
           className="h-32 w-auto max-w-full rounded-lg object-cover"
         />
       ) : null}
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         {tickboxSection.options.map((option, idx) => {
           const isChecked = tickboxSection.answer?.includes(option) || false;
           return (
             <label
               key={idx}
-              className={`flex items-center gap-3 rounded-xl border border-border px-3 py-2.5 transition-colors ${
+              className={`flex min-h-11 items-center gap-3 rounded-lg px-1 py-2 transition-colors ${
                 canEdit ? "hover:bg-surface-hover cursor-pointer" : "opacity-70"
-              } ${isChecked ? "bg-surface" : "bg-background"}`}
+              }`}
             >
               <input
                 type="checkbox"
                 checked={isChecked}
                 disabled={!canEdit}
                 onChange={(e) => handleCheckboxChange(option, e.target.checked)}
-                className="h-4 w-4 shrink-0 rounded border-border text-foreground accent-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="h-4 w-4 shrink-0 rounded border-border text-foreground accent-foreground focus:outline-none"
               />
               <span className="text-sm text-foreground font-sans leading-snug">{option}</span>
             </label>

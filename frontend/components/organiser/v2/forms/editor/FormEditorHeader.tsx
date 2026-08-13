@@ -9,7 +9,7 @@ type FormEditorHeaderProps = {
   subtitle: string;
   previewHref: string | null;
   onSave: () => void;
-  isFormModified: boolean;
+  canSave: boolean;
   isSubmitting: boolean;
 };
 
@@ -17,7 +17,7 @@ export function FormEditorHeader({
   subtitle,
   previewHref,
   onSave,
-  isFormModified,
+  canSave,
   isSubmitting,
 }: FormEditorHeaderProps) {
   return (
@@ -34,7 +34,7 @@ export function FormEditorHeader({
           {previewHref ? (
             <Link
               href={previewHref}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus:outline-none"
             >
               <EyeIcon className="h-4 w-4" aria-hidden />
               Preview
@@ -43,8 +43,8 @@ export function FormEditorHeader({
           <button
             type="button"
             onClick={onSave}
-            disabled={!isFormModified || isSubmitting}
-            className="hidden md:inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-[filter,opacity] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            disabled={!canSave || isSubmitting}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-[filter,opacity] focus:outline-none"
           >
             {isSubmitting ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent-contrast/30 border-t-accent-contrast" />

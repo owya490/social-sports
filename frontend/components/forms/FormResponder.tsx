@@ -33,8 +33,10 @@ import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, ReactNode, useEffect, useImperativeHandle, useState } from "react";
 import { ImageSectionResponse } from "./sections/image-section/ImageSectionResponse";
+
+const compactQuestionPaperClass = "rounded-xl border border-border bg-background p-4";
 
 const formResponderLogger = new Logger("formResponderLogger");
 
@@ -347,6 +349,12 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       );
     }
 
+    const wrapCompactQuestion = (sectionId: SectionId, children: ReactNode) => (
+      <section key={sectionId} className={compactQuestionPaperClass}>
+        {children}
+      </section>
+    );
+
     const renderCompactSections = () => (
       <>
         {form.sectionsOrder.map((sectionId) => {
@@ -355,34 +363,34 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
 
           switch (section.type) {
             case FormSectionType.TEXT:
-              return (
+              return wrapCompactQuestion(
+                sectionId,
                 <CompactTextSection
-                  key={sectionId}
                   textSection={section}
                   answerOnChange={(newAnswer: string) => stringAnswerOnChange(sectionId, newAnswer)}
                   canEdit={canEdit}
                 />
               );
             case FormSectionType.DROPDOWN_SELECT:
-              return (
+              return wrapCompactQuestion(
+                sectionId,
                 <CompactDropdownSection
-                  key={sectionId}
                   dropdownSelectSection={section}
                   answerOnChange={(newAnswer: string) => stringAnswerOnChange(sectionId, newAnswer)}
                   canEdit={canEdit}
                 />
               );
             case FormSectionType.TICKBOX:
-              return (
+              return wrapCompactQuestion(
+                sectionId,
                 <CompactTickboxSection
-                  key={sectionId}
                   tickboxSection={section}
                   answerOnChange={(newAnswer: string[]) => arrayAnswerOnChange(sectionId, newAnswer)}
                   canEdit={canEdit}
                 />
               );
             case FormSectionType.IMAGE:
-              return <CompactImageSection key={sectionId} imageSection={section} />;
+              return wrapCompactQuestion(sectionId, <CompactImageSection imageSection={section} />);
             default:
               return null;
           }
@@ -437,19 +445,13 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       return (
         <div className={isEmbedded ? "w-full" : "bg-surface text-foreground"}>
           <div className={`mx-auto w-full ${isEmbedded ? "" : "max-w-3xl px-4 sm:px-6 py-6 sm:py-8"}`}>
-            <div
-              className={`rounded-xl border border-border bg-background ${
-                isEmbedded ? "border-0 bg-transparent" : "px-4 py-5 sm:px-6 sm:py-6"
-              }`}
-            >
-              <div className="space-y-5">
-                <CompactHeaderSection
-                  formTitle={form.title}
-                  formDescription={form.description}
-                  organiser={organiser}
-                />
-                <div className="space-y-5">{renderCompactSections()}</div>
-              </div>
+            <div className="flex flex-col gap-3">
+              <CompactHeaderSection
+                formTitle={form.title}
+                formDescription={form.description}
+                organiser={organiser}
+              />
+              {renderCompactSections()}
             </div>
           </div>
         </div>

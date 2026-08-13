@@ -22,7 +22,7 @@ export function FormSectionControls({
       <button
         type="button"
         onClick={onDelete}
-        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground-secondary font-sans hover:bg-surface-hover hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground-secondary font-sans hover:bg-surface-hover hover:text-foreground transition-colors focus:outline-none"
       >
         <TrashIcon className="h-3.5 w-3.5" aria-hidden />
         Delete
@@ -30,7 +30,7 @@ export function FormSectionControls({
       <button
         type="button"
         onClick={onDuplicate}
-        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground-secondary font-sans hover:bg-surface-hover hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-foreground-secondary font-sans hover:bg-surface-hover hover:text-foreground transition-colors focus:outline-none"
       >
         <DocumentDuplicateIcon className="h-3.5 w-3.5" aria-hidden />
         Duplicate
@@ -44,7 +44,7 @@ export function FormSectionControls({
             aria-checked={required}
             aria-label="Required"
             onClick={() => onRequiredChange(!required)}
-            className={`relative h-5 w-9 shrink-0 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+            className={`relative h-5 w-9 shrink-0 rounded-full transition-colors focus:outline-none ${
               required ? "bg-accent" : "bg-surface-muted"
             }`}
           >
@@ -62,4 +62,4 @@ export function FormSectionControls({
 }
 
 export const formEditorFieldClass =
-  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none focus-visible:border-focus focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none";

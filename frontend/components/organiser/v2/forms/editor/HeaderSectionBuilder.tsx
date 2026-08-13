@@ -1,9 +1,7 @@
 "use client";
 
-import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
-import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
+import { EventHubDescriptionEditor } from "@/components/organiser/v2/event-hub/EventHubDescriptionEditor";
 import { FormDescription, FormTitle } from "@/interfaces/FormTypes";
-import { useState } from "react";
 
 type HeaderSectionBuilderProps = {
   formTitle: FormTitle;
@@ -12,14 +10,21 @@ type HeaderSectionBuilderProps = {
   updateFormDescription: (formDescription: FormDescription) => void;
 };
 
+function normalizeDescription(html: string): FormDescription {
+  const emptied = html
+    .replace(/<p><br><\/p>/gi, "")
+    .replace(/<p><\/p>/gi, "")
+    .replace(/&nbsp;/gi, "")
+    .trim();
+  return (emptied === "" ? "" : html) as FormDescription;
+}
+
 export function HeaderSectionBuilder({
   formTitle,
   formDescription,
   updateFormTitle,
   updateFormDescription,
 }: HeaderSectionBuilderProps) {
-  const [editingDescription, setEditingDescription] = useState(false);
-
   return (
     <div className="rounded-xl border border-border bg-background px-4 py-4 sm:px-5 sm:py-5">
       <input
@@ -28,38 +33,22 @@ export function HeaderSectionBuilder({
         onChange={(e) => updateFormTitle(e.target.value as FormTitle)}
         placeholder="Untitled form"
         aria-label="Form title"
-        className="w-full border-0 border-b border-border bg-transparent pb-2 text-xl sm:text-2xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:outline-none focus:border-focus"
+        className="w-full border-0 border-b border-border bg-transparent pb-2 text-xl sm:text-2xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:outline-none"
       />
 
-      {editingDescription ? (
-        <div className="mt-3 space-y-2">
-          <DescriptionRichTextEditor
-            description={formDescription}
-            updateDescription={(value) => updateFormDescription(value as FormDescription)}
-          />
-          <button
-            type="button"
-            onClick={() => setEditingDescription(false)}
-            className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Done
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={() => setEditingDescription(true)}
-          className="mt-3 w-full rounded-xl border border-dashed border-border px-3 py-2.5 text-left text-sm text-foreground-secondary font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-        >
-          {formDescription ? (
-            <div className="[&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-relaxed [&_.ProseMirror_p]:my-1">
-              <RichTextEditorContent description={formDescription} />
-            </div>
-          ) : (
-            <span className="text-foreground-muted">Add a short description</span>
-          )}
-        </button>
-      )}
+      <div className="mt-4 space-y-2">
+        <span className="text-xs font-medium text-foreground-muted font-sans">Description</span>
+        <EventHubDescriptionEditor
+          description={formDescription}
+          updateDescription={(value) => {
+            const next = normalizeDescription(value);
+            if (next === formDescription) return;
+            updateFormDescription(next);
+          }}
+          placeholder="Add a short description"
+          compact
+        />
+      </div>
     </div>
   );
 }

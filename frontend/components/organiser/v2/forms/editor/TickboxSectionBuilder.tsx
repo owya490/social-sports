@@ -113,7 +113,7 @@ export function TickboxSectionBuilder({
               type="button"
               onClick={() => handleRemoveOption(index)}
               disabled={section.options.length === 1 && isLastOptionEmpty()}
-              className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-hover hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-hover hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none"
               aria-label={`Remove option ${index + 1}`}
             >
               ×
@@ -124,7 +124,7 @@ export function TickboxSectionBuilder({
           type="button"
           onClick={() => handleAddOption()}
           disabled={isLastOptionEmpty()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none"
         >
           <PlusIcon className="h-3.5 w-3.5" aria-hidden />
           Add option

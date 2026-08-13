@@ -14,17 +14,15 @@ export function CompactHeaderSection({
   organiser: PublicUserData;
 }) {
   return (
-    <header className="space-y-2">
-      <div>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans leading-tight">
-          {formTitle}
-        </h1>
-        <div className="mt-1.5 text-sm text-foreground-secondary">
-          <UserInlineDisplay organiser={organiser} />
-        </div>
+    <header className="rounded-xl border border-border bg-background px-4 py-4 sm:px-5 sm:py-5">
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-sans leading-tight">
+        {formTitle}
+      </h1>
+      <div className="mt-1.5 text-sm text-foreground-secondary">
+        <UserInlineDisplay organiser={organiser} />
       </div>
       {formDescription ? (
-        <div className="text-sm text-foreground-secondary font-sans [&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-relaxed [&_.ProseMirror_p]:my-1">
+        <div className="mt-4 text-sm text-foreground-secondary font-sans [&_.ProseMirror]:text-sm [&_.ProseMirror]:leading-relaxed [&_.ProseMirror_p]:my-1">
           <RichTextEditorContent description={formDescription} />
         </div>
       ) : null}

@@ -26,10 +26,9 @@ import {
 import { ImageType } from "@/interfaces/ImageTypes";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
 import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
-import { sleep } from "@/utilities/sleepUtil";
-import { ArrowDownIcon, ArrowUpIcon, Bars2Icon } from "@heroicons/react/24/outline";
+import { ArrowDownIcon, ArrowUpIcon, Bars2Icon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ReactSortable } from "react-sortablejs";
 import { v4 as uuidv4 } from "uuid";
 
@@ -94,9 +93,14 @@ export function FormEditor({ formId }: FormEditorProps) {
   const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isModalClosing, setIsModalClosing] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
   const isCreate = formId === CREATE_FORM_ID;
   const isFormModified = savedFingerprint !== null && formEditFingerprint(form) !== savedFingerprint;
+  const canSave = isCreate || isFormModified;
+  const pendingHrefRef = useRef(FORMS_GALLERY);
+  const isFormModifiedRef = useRef(isFormModified);
+  isFormModifiedRef.current = isFormModified;
 
   useOrganiserBreadcrumbTitle(isCreate ? "New form" : form.title?.trim() || "Edit form");
 
@@ -138,24 +142,56 @@ export function FormEditor({ formId }: FormEditorProps) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [isFormModified]);
 
-  const handleSubmitClick = async () => {
+  const requestLeave = useCallback(
+    (href: string) => {
+      if (!isFormModifiedRef.current) {
+        router.push(href);
+        return;
+      }
+      pendingHrefRef.current = href;
+      setShowLeaveModal(true);
+    },
+    [router]
+  );
+
+  useEffect(() => {
+    const onClick = (event: MouseEvent) => {
+      if (!isFormModifiedRef.current) return;
+      if (event.defaultPrevented || event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as HTMLElement | null)?.closest("a[href]");
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      if (anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      if (anchor.closest("[contenteditable='true'], .ProseMirror, [role='dialog']")) return;
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+      event.preventDefault();
+      event.stopPropagation();
+      requestLeave(`${url.pathname}${url.search}${url.hash}`);
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [requestLeave]);
+
+  const saveForm = async ({ redirectOnCreate = true }: { redirectOnCreate?: boolean } = {}): Promise<boolean> => {
     setIsSubmitting(true);
     setSaveError(null);
     try {
-      if (isFormModified) {
-        const formToSave = filterEmptyOptions(form);
-        if (isCreate) {
-          if (form.userId !== "") {
-            const newFormId = await createForm(formToSave);
-            router.push(`/organiser/v2/forms/${newFormId}/editor`);
-          }
-        } else {
-          await updateActiveForm(formToSave, formId);
-          setForm(formToSave);
-          setSavedFingerprint(formEditFingerprint(formToSave));
+      const formToSave = filterEmptyOptions(form);
+      if (isCreate) {
+        if (form.userId === "") return false;
+        const newFormId = await createForm(formToSave);
+        setSavedFingerprint(formEditFingerprint(formToSave));
+        if (redirectOnCreate) {
+          router.push(`/organiser/v2/forms/${newFormId}/editor`);
         }
+        return true;
       }
-      await sleep(1000);
+      await updateActiveForm(formToSave, formId);
+      setForm(formToSave);
+      setSavedFingerprint(formEditFingerprint(formToSave));
+      return true;
     } catch (error) {
       if (error instanceof Error) {
         setSaveError(error.message);
@@ -163,9 +199,31 @@ export function FormEditor({ formId }: FormEditorProps) {
         setSaveError("An unexpected error occurred while saving the form. Please try again.");
       }
       console.error("Form save error:", error);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleHeaderSave = () => {
+    if (!canSave || isSubmitting) return;
+    void saveForm();
+  };
+
+  const handleSaveAndLeave = async () => {
+    const dest = pendingHrefRef.current;
+    const saved = await saveForm({ redirectOnCreate: false });
+    setShowLeaveModal(false);
+    if (!saved) return;
+    router.push(dest);
+  };
+
+  const handleLeaveWithoutSaving = () => {
+    if (isSubmitting) return;
+    const dest = pendingHrefRef.current;
+    setShowLeaveModal(false);
+    setSavedFingerprint(formEditFingerprint(form));
+    router.push(dest);
   };
 
   const updateFormTitle = (newTitle: FormTitle) => {
@@ -315,10 +373,8 @@ export function FormEditor({ formId }: FormEditorProps) {
       <FormEditorHeader
         subtitle={subtitle}
         previewHref={previewHref}
-        onSave={() => {
-          void handleSubmitClick();
-        }}
-        isFormModified={isFormModified}
+        onSave={handleHeaderSave}
+        canSave={canSave}
         isSubmitting={isSubmitting}
       />
 
@@ -338,6 +394,53 @@ export function FormEditor({ formId }: FormEditorProps) {
         </div>
       </Modal>
 
+      <Modal
+        isOpen={showLeaveModal}
+        onClose={() => {
+          if (!isSubmitting) setShowLeaveModal(false);
+        }}
+        title="Unsaved changes"
+        state="warning"
+        customIcon={<ExclamationTriangleIcon />}
+        customIconBgColor="bg-transparent"
+        customIconTextColor="text-red-600"
+        maxWidth="md"
+      >
+        <div className="text-left">
+          <p className="text-sm text-foreground-secondary font-sans">
+            You have unsaved changes. Do you want to save?
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => setShowLeaveModal(false)}
+              className="inline-flex items-center justify-center rounded-xl px-3.5 py-2 text-sm font-medium text-foreground-secondary font-sans hover:bg-surface-hover hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={handleLeaveWithoutSaving}
+              className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus:outline-none"
+            >
+              Don&apos;t save
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => {
+                void handleSaveAndLeave();
+              }}
+              className="inline-flex items-center justify-center rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 disabled:opacity-40 disabled:cursor-not-allowed transition-[filter,opacity] focus:outline-none"
+            >
+              {isSubmitting ? "Saving…" : "Save"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       <div className="mx-auto flex max-w-3xl gap-3 px-4 sm:px-6">
         <FormEditorToolbar
           onAddTextSection={() =>
@@ -345,7 +448,7 @@ export function FormEditor({ formId }: FormEditorProps) {
               type: FormSectionType.TEXT,
               question: "",
               imageUrl: null,
-              required: true,
+              required: false,
             })
           }
           onAddDropdownSection={() =>
@@ -354,7 +457,7 @@ export function FormEditor({ formId }: FormEditorProps) {
               question: "",
               options: [""],
               imageUrl: null,
-              required: true,
+              required: false,
             })
           }
           onAddTickboxSection={() =>
@@ -363,15 +466,10 @@ export function FormEditor({ formId }: FormEditorProps) {
               question: "",
               options: [""],
               imageUrl: null,
-              required: true,
+              required: false,
             })
           }
           onAddImageSection={() => setShowImageSelectionDialog(true)}
-          onSaveForm={() => {
-            void handleSubmitClick();
-          }}
-          isFormModified={isFormModified}
-          isSubmitting={isSubmitting}
         />
 
         <div className="min-w-0 flex-1 space-y-3">
@@ -437,7 +535,7 @@ export function FormEditor({ formId }: FormEditorProps) {
 
           <button
             type="button"
-            onClick={() => router.push(FORMS_GALLERY)}
+            onClick={() => requestLeave(FORMS_GALLERY)}
             className="text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors"
           >
             ← Back to Forms
