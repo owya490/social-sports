@@ -11,7 +11,7 @@ export default function FinalCTASection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Link
-            href="/organiser/dashboard"
+            href="/organiser/v2/dashboard"
             className="inline-block bg-core-text text-white px-12 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-colors duration-200"
           >
             Start organizing today

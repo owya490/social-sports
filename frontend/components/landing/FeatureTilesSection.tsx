@@ -12,7 +12,7 @@ export default function FeatureTilesSection() {
             clubs, organisers and players.
           </p>
           <a
-            href="/organiser/dashboard"
+            href="/organiser/v2/dashboard"
             className="inline-flex items-center gap-2 text-core-text hover:text-black mt-4 text-sm"
           >
             Make the switch

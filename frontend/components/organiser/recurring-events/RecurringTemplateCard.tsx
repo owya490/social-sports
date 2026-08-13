@@ -42,7 +42,7 @@ export default function RecurringTemplateCard(props: RecurringTemplateCardProps)
   const url =
     disableLink || !("recurrenceTemplateId" in props)
       ? ""
-      : `/organiser/event/recurring-events/${props.recurrenceTemplateId}`;
+      : `/organiser/v2/event/recurring-events/${props.recurrenceTemplateId}`;
 
   const MaybeDisabledLink = ({
     children,

@@ -32,7 +32,7 @@ export default function Footer() {
           <Link href="/" className="mx-2">
             Dashboard
           </Link>
-          <Link href="/organiser/dashboard" className="mx-2">
+          <Link href="/organiser/v2/dashboard" className="mx-2">
             Organiser Hub
           </Link>
           <Link href="/landing" className="mx-2">
