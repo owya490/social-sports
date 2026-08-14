@@ -176,6 +176,21 @@ export function resolveOrganiserBreadcrumbs(
   }
 
   if (pathname.startsWith("/organiser/v2/forms")) {
+    const gallery = "/organiser/v2/forms/gallery";
+    if (pathname.includes("/editor")) {
+      return [
+        crumb("Forms", gallery, PencilSquareIcon),
+        crumb(pageTitle?.trim() || (pathname.includes("create-form") ? "New form" : "Edit form")),
+      ];
+    }
+    if (pathname.includes("/preview")) {
+      return [crumb("Forms", gallery, PencilSquareIcon), crumb(pageTitle?.trim() || "Preview")];
+    }
+    // Response viewer: /organiser/v2/forms/[formId]/[eventId]/[responseId]
+    const responseMatch = pathname.match(/^\/organiser\/v2\/forms\/[^/]+\/[^/]+\/[^/]+$/);
+    if (responseMatch) {
+      return [crumb("Forms", gallery, PencilSquareIcon), crumb("Response")];
+    }
     return [crumb("Forms", undefined, PencilSquareIcon)];
   }
 

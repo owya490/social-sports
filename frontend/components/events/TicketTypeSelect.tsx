@@ -34,6 +34,10 @@ export default function TicketTypeSelect({
         size="lg"
         value={selectedTypeId ?? ""}
         onChange={onChange}
+        selected={() => {
+          const selected = activeTypes.find((entry) => entry.eventTicketTypeId === selectedTypeId);
+          return selected ? formatTicketTypeOptionLabel(selected) : undefined;
+        }}
       >
         {activeTypes.map((entry) => (
           <Option key={entry.eventTicketTypeId} value={entry.eventTicketTypeId}>

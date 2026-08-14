@@ -10,6 +10,10 @@
   min-height: 7.5rem;
 }
 
+.event-hub-description-editor--compact .ProseMirror {
+  min-height: 5rem;
+}
+
 .event-hub-description-editor .ProseMirror ul {
   list-style: disc;
   padding-left: 1.25rem;
