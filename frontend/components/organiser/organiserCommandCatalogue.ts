@@ -130,7 +130,7 @@ function buildCatalogue(
         kind: "form" as const,
         label: (form.title as string)?.trim() || "Untitled form",
         subtitle: form.formActive ? "Active" : "Inactive",
-        href: `/organiser/forms/${form.formId}/editor?returnTo=/organiser/v2/forms/gallery`,
+        href: `/organiser/v2/forms/${form.formId}/editor`,
         keywords: [(form.description as string) ?? ""].filter(Boolean),
       }))
       .sort((a, b) => a.label.localeCompare(b.label)),

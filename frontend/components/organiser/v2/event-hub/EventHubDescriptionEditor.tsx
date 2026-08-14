@@ -18,6 +18,7 @@ type EventHubDescriptionEditorProps = {
   description: string;
   updateDescription: (html: string) => void;
   placeholder?: string;
+  compact?: boolean;
   editable?: boolean;
 };
 
@@ -25,6 +26,7 @@ export function EventHubDescriptionEditor({
   description,
   updateDescription,
   placeholder = "Who should come? What’s the event about?",
+  compact = false,
   editable = true,
 }: EventHubDescriptionEditorProps) {
   const editor = useEditor({
@@ -46,8 +48,7 @@ export function EventHubDescriptionEditor({
     content: description,
     editorProps: {
       attributes: {
-        class:
-          "event-hub-prose min-h-[7.5rem] max-w-none px-3 py-2.5 text-base sm:text-sm text-foreground font-sans leading-relaxed focus:outline-none",
+        class: `event-hub-prose ${compact ? "min-h-[5rem]" : "min-h-[7.5rem]"} max-w-none px-3 py-2.5 text-base sm:text-sm text-foreground font-sans leading-relaxed focus:outline-none`,
       },
     },
     onUpdate: ({ editor: ed }) => {
@@ -82,7 +83,7 @@ export function EventHubDescriptionEditor({
   };
 
   return (
-    <div className="relative rounded-xl border border-border bg-background focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
+    <div className="relative rounded-xl border border-border bg-background">
       {editable ? (
         <BubbleMenu
           editor={editor}
@@ -115,7 +116,10 @@ export function EventHubDescriptionEditor({
           </BubbleButton>
         </BubbleMenu>
       ) : null}
-      <EditorContent editor={editor} className="event-hub-description-editor" />
+      <EditorContent
+        editor={editor}
+        className={`event-hub-description-editor${compact ? " event-hub-description-editor--compact" : ""}`}
+      />
     </div>
   );
 }
@@ -138,7 +142,7 @@ function BubbleButton({
       aria-pressed={active}
       onMouseDown={(e) => e.preventDefault()}
       onClick={onClick}
-      className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus ${
+      className={`inline-flex h-7 w-7 items-center justify-center rounded-md text-sm font-sans transition-colors focus:outline-none ${
         active ? "bg-surface-muted text-foreground" : "text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
       }`}
     >

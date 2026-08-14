@@ -552,7 +552,11 @@ export const FormResponsesTable = ({
                     className={linkClass}
                     target="_blank"
                     rel="noopener noreferrer"
-                    href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
+                    href={
+                      flush
+                        ? `/organiser/v2/forms/${formId}/${eventId}/${response.formResponseId}`
+                        : `/organiser/forms/${formId}/${eventId}/${response.formResponseId}`
+                    }
                   >
                     {idx + 1}
                   </Link>
@@ -605,7 +609,11 @@ export const FormResponsesTable = ({
                     className={linkClass}
                     target="_blank"
                     rel="noopener noreferrer"
-                    href={`/organiser/forms/${formId}/${eventId}/${response.formResponseId}`}
+                    href={
+                      flush
+                        ? `/organiser/v2/forms/${formId}/${eventId}/${response.formResponseId}`
+                        : `/organiser/forms/${formId}/${eventId}/${response.formResponseId}`
+                    }
                   >
                     {formatTimestamp(response.submissionTime)}
                   </Link>
