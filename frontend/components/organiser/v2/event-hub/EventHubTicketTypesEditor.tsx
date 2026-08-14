@@ -11,6 +11,7 @@ import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import {
   applyCapacityChange,
   countSoldTicketsForType,
@@ -68,6 +69,7 @@ export function EventHubTicketTypesEditor({
           eventTicketTypes: nextTypes,
           ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
         });
+        bustOrganiserEventsCache();
       }
       setEventTicketTypes(nextTypes);
     } catch (e) {

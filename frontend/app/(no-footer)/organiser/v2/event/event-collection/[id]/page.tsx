@@ -28,7 +28,8 @@ import {
   updateEventCollection,
   updateEventCollectionAccessModifier,
 } from "@/services/src/eventCollections/eventCollectionsService";
-import { getEventById, getOrganiserEvents } from "@/services/src/events/eventsService";
+import { getEventById } from "@/services/src/events/eventsService";
+import { getOrganiserEvents } from "@/services/src/organiser/organiserEventsService";
 import {
   getOrganiserRecurrenceTemplates,
   getRecurrenceTemplate,
