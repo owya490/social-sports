@@ -4,7 +4,6 @@ import EventDescription from "@/components/events/EventDescription";
 import { EventAttendees } from "@/components/events/EventAttendees";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { useEffect } from "react";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
@@ -22,7 +21,6 @@ interface EventDetailsProps {
 
 export function EventDetails(props: EventDetailsProps) {
   const { eventData, eventTags, setLoading, onEffectiveVacancyChange } = props;
-  const eventTicketTypeId = resolveCheckoutTicketTypeId(eventData);
 
   const ticketCheckout = useEventTicketTypeCheckout({
     eventId: eventData.eventId,
@@ -30,7 +28,6 @@ export function EventDetails(props: EventDetailsProps) {
     vacancy: eventData.vacancy,
     price: eventData.price,
     maxTicketsPerTransaction: eventData.maxTicketsPerTransaction,
-    fallbackEventTicketTypeId: eventTicketTypeId,
   });
 
   useEffect(() => {

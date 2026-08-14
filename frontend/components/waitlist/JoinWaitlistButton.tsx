@@ -13,7 +13,7 @@ const logger = new Logger("JoinWaitlistButtonLogger");
 interface JoinWaitlistButtonProps {
   eventId: EventId;
   ticketCount: number;
-  eventTicketTypeId: EventTicketTypeId;
+  eventTicketTypeId: EventTicketTypeId | null;
   setLoading?: (value: boolean) => void;
   className?: string;
 }
@@ -27,8 +27,13 @@ export default function JoinWaitlistButton({
 }: JoinWaitlistButtonProps) {
   const router = useRouter();
   const [internalLoading, setInternalLoading] = useState(false);
+  const checkoutUnavailable = eventTicketTypeId === null;
 
   const handleJoinWaitlist = async () => {
+    if (checkoutUnavailable) {
+      return;
+    }
+
     setInternalLoading(true);
     setLoading?.(true);
 
@@ -63,9 +68,9 @@ export default function JoinWaitlistButton({
   return (
     <button 
       type="button" 
-      className={className} 
+      className={`${className} disabled:opacity-50 disabled:pointer-events-none`}
       onClick={handleJoinWaitlist} 
-      disabled={internalLoading}
+      disabled={internalLoading || checkoutUnavailable}
     >
       {internalLoading ? "Joining..." : "Join Waitlist"}
     </button>

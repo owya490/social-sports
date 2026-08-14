@@ -277,7 +277,7 @@ export function EventHubListing({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 sm:px-5 py-3">
           {isTemplate ? <span aria-hidden className="w-px" /> : <EventHubShareControl eventId={eventId} />}
           <div className="flex flex-wrap items-center gap-2">
-            <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={!isActive || loading}>
+            <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={loading}>
               <PencilSquareIcon className="h-4 w-4" aria-hidden />
               Edit details
             </EventHubGhostButton>
@@ -349,17 +349,29 @@ export function EventHubListing({
       <EventHubPanel
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        title={isTemplate ? "Edit template" : "Edit Event"}
+        title={
+          !isActive
+            ? isTemplate
+              ? "Template details"
+              : "Event details"
+            : isTemplate
+              ? "Edit template"
+              : "Edit Event"
+        }
         wide
         footer={
-          <EventHubPrimaryButton
-            type="submit"
-            form={EVENT_HUB_EDIT_FORM_ID}
-            disabled={savingEdit || !isActive || loading}
-          >
-            <CheckIcon className="h-4 w-4" aria-hidden />
-            {isTemplate ? "Update template" : "Update event"}
-          </EventHubPrimaryButton>
+          isActive ? (
+            <EventHubPrimaryButton
+              type="submit"
+              form={EVENT_HUB_EDIT_FORM_ID}
+              disabled={savingEdit || loading}
+            >
+              <CheckIcon className="h-4 w-4" aria-hidden />
+              {isTemplate ? "Update template" : "Update event"}
+            </EventHubPrimaryButton>
+          ) : (
+            <EventHubGhostButton onClick={() => setEditOpen(false)}>Close</EventHubGhostButton>
+          )
         }
       >
         {editOpen ? (
