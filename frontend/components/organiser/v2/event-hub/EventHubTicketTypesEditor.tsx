@@ -158,8 +158,8 @@ export function EventHubTicketTypesEditor({
             </p>
           </div>
         </div>
-        {sortedTypes.length > 0 ? (
-          <EventHubGhostButton onClick={openAdd} disabled={!isActive || saving}>
+        {sortedTypes.length > 0 && isActive ? (
+          <EventHubGhostButton onClick={openAdd} disabled={saving}>
             <PlusIcon className="h-4 w-4" aria-hidden />
             Add
           </EventHubGhostButton>
@@ -169,12 +169,16 @@ export function EventHubTicketTypesEditor({
       {sortedTypes.length === 0 ? (
         <div className="rounded-xl border border-border bg-background px-4 py-4 space-y-3">
           <p className="text-sm text-foreground-secondary font-sans">
-            Add a ticket type to set price and capacity for this event.
+            {isActive
+              ? "Add a ticket type to set price and capacity for this event."
+              : "This event has no ticket types. Price and capacity are set on the event."}
           </p>
-          <EventHubPrimaryButton onClick={openAdd} disabled={!isActive || saving}>
-            <PlusIcon className="h-4 w-4" aria-hidden />
-            Add ticket type
-          </EventHubPrimaryButton>
+          {isActive ? (
+            <EventHubPrimaryButton onClick={openAdd} disabled={saving}>
+              <PlusIcon className="h-4 w-4" aria-hidden />
+              Add ticket type
+            </EventHubPrimaryButton>
+          ) : null}
         </div>
       ) : (
         <ul className="space-y-2">
@@ -196,21 +200,23 @@ export function EventHubTicketTypesEditor({
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
-                  <EventHubGhostButton
-                    onClick={() => {
-                      setEditingId(eventTicketTypeId);
-                      setDialogOpen(true);
-                    }}
-                    disabled={!isActive || saving}
-                    className="whitespace-nowrap"
-                  >
-                    <PencilIcon className="h-4 w-4 shrink-0" aria-hidden />
-                    Edit
-                  </EventHubGhostButton>
-                  {canDelete ? (
+                  {isActive ? (
+                    <EventHubGhostButton
+                      onClick={() => {
+                        setEditingId(eventTicketTypeId);
+                        setDialogOpen(true);
+                      }}
+                      disabled={saving}
+                      className="whitespace-nowrap"
+                    >
+                      <PencilIcon className="h-4 w-4 shrink-0" aria-hidden />
+                      Edit
+                    </EventHubGhostButton>
+                  ) : null}
+                  {isActive && canDelete ? (
                     <EventHubGhostButton
                       onClick={() => void handleDelete(eventTicketTypeId)}
-                      disabled={!isActive || saving}
+                      disabled={saving}
                       className="whitespace-nowrap"
                     >
                       <TrashIcon className="h-4 w-4 shrink-0" aria-hidden />

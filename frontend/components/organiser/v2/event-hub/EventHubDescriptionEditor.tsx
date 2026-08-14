@@ -19,6 +19,7 @@ type EventHubDescriptionEditorProps = {
   updateDescription: (html: string) => void;
   placeholder?: string;
   compact?: boolean;
+  editable?: boolean;
 };
 
 export function EventHubDescriptionEditor({
@@ -26,9 +27,10 @@ export function EventHubDescriptionEditor({
   updateDescription,
   placeholder = "Who should come? What’s the event about?",
   compact = false,
+  editable = true,
 }: EventHubDescriptionEditorProps) {
   const editor = useEditor({
-    editable: true,
+    editable,
     extensions: [
       StarterKit.configure({
         heading: false,
@@ -62,6 +64,11 @@ export function EventHubDescriptionEditor({
     }
   }, [description, editor]);
 
+  useEffect(() => {
+    if (!editor) return;
+    editor.setEditable(editable);
+  }, [editable, editor]);
+
   if (!editor) return null;
 
   const setLink = () => {
@@ -77,36 +84,38 @@ export function EventHubDescriptionEditor({
 
   return (
     <div className="relative rounded-xl border border-border bg-background">
-      <BubbleMenu
-        editor={editor}
-        tippyOptions={{ duration: 120, placement: "top" }}
-        className="flex items-center gap-0.5 rounded-lg border border-border bg-background p-1 shadow-[0_8px_28px_rgba(10,10,10,0.12)]"
-      >
-        <BubbleButton
-          label="Bold"
-          active={editor.isActive("bold")}
-          onClick={() => editor.chain().focus().toggleBold().run()}
+      {editable ? (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 120, placement: "top" }}
+          className="flex items-center gap-0.5 rounded-lg border border-border bg-background p-1 shadow-[0_8px_28px_rgba(10,10,10,0.12)]"
         >
-          <span className="text-xs font-bold">B</span>
-        </BubbleButton>
-        <BubbleButton
-          label="Italic"
-          active={editor.isActive("italic")}
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <span className="text-xs italic">I</span>
-        </BubbleButton>
-        <BubbleButton
-          label="Bullet list"
-          active={editor.isActive("bulletList")}
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        >
-          <ListBulletIcon className="h-3.5 w-3.5" aria-hidden />
-        </BubbleButton>
-        <BubbleButton label="Link" active={editor.isActive("link")} onClick={setLink}>
-          <LinkIcon className="h-3.5 w-3.5" aria-hidden />
-        </BubbleButton>
-      </BubbleMenu>
+          <BubbleButton
+            label="Bold"
+            active={editor.isActive("bold")}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          >
+            <span className="text-xs font-bold">B</span>
+          </BubbleButton>
+          <BubbleButton
+            label="Italic"
+            active={editor.isActive("italic")}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <span className="text-xs italic">I</span>
+          </BubbleButton>
+          <BubbleButton
+            label="Bullet list"
+            active={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          >
+            <ListBulletIcon className="h-3.5 w-3.5" aria-hidden />
+          </BubbleButton>
+          <BubbleButton label="Link" active={editor.isActive("link")} onClick={setLink}>
+            <LinkIcon className="h-3.5 w-3.5" aria-hidden />
+          </BubbleButton>
+        </BubbleMenu>
+      ) : null}
       <EditorContent
         editor={editor}
         className={`event-hub-description-editor${compact ? " event-hub-description-editor--compact" : ""}`}

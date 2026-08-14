@@ -148,7 +148,7 @@ export function EventHubEditForm({
   ]);
 
   useEffect(() => {
-    if (!isLoaded || !locationInputRef.current) return;
+    if (!isActive || !isLoaded || !locationInputRef.current) return;
     if (autocompleteRef.current) {
       google.maps.event.clearInstanceListeners(autocompleteRef.current);
     }
@@ -159,7 +159,7 @@ export function EventHubEditForm({
         autocompleteRef.current = null;
       }
     };
-  }, [isLoaded]);
+  }, [isActive, isLoaded]);
 
   useEffect(() => {
     const prevStartDate = prevStartDateRef.current;
@@ -280,24 +280,35 @@ export function EventHubEditForm({
 
   const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
   const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
+  const readOnly = !isActive;
 
   return (
     <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-8">
+      {readOnly ? (
+        <p className="text-sm text-foreground-secondary font-sans">
+          These details are view-only. You can copy text, but changes can&apos;t be saved.
+        </p>
+      ) : null}
       <Section label="Basic Info">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={100}
           required
+          readOnly={readOnly}
           aria-label="Event title"
           placeholder="Event title"
-          className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none"
+          className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none read-only:cursor-text"
         />
         <div className="space-y-2 pt-4">
           <div className="flex items-center justify-between gap-2">
             <span className="text-xs font-medium text-foreground-muted font-sans">Description</span>
           </div>
-          <EventHubDescriptionEditor description={description} updateDescription={setDescription} />
+          <EventHubDescriptionEditor
+            description={description}
+            updateDescription={setDescription}
+            editable={isActive}
+          />
         </div>
       </Section>
 
@@ -310,6 +321,7 @@ export function EventHubEditForm({
             timeValue={formatTimeTo24Hour(startTime)}
             onDateChange={(v) => setStartDate(formatDateToString(v))}
             onTimeChange={(v) => setStartTime(formatTimeTo12Hour(v))}
+            readOnly={readOnly}
           />
           <TimeRow
             label="End"
@@ -318,6 +330,7 @@ export function EventHubEditForm({
             timeValue={formatTimeTo24Hour(endTime)}
             onDateChange={(v) => setEndDate(formatDateToString(v))}
             onTimeChange={(v) => setEndTime(formatTimeTo12Hour(v))}
+            readOnly={readOnly}
           />
           <div className="pt-1">
             <p className="text-xs font-medium text-foreground-muted font-sans mb-2">Registration deadline</p>
@@ -329,6 +342,7 @@ export function EventHubEditForm({
                   onChange={(e) => setRegistrationDeadlineDate(formatDateToString(e.target.value))}
                   className={fieldClass}
                   aria-label="Registration deadline date"
+                  readOnly={readOnly}
                 />
               </FieldWithIcon>
               <FieldWithIcon icon={<ClockIcon className="h-4 w-4" aria-hidden />}>
@@ -338,18 +352,19 @@ export function EventHubEditForm({
                   onChange={(e) => setRegistrationDeadlineTime(formatTimeTo12Hour(e.target.value))}
                   className={fieldClass}
                   aria-label="Registration deadline time"
+                  readOnly={readOnly}
                 />
               </FieldWithIcon>
             </div>
           </div>
         </div>
-        {dateWarning ? <Warning>{dateWarning}</Warning> : null}
-        {timeWarning ? <Warning>{timeWarning}</Warning> : null}
-        {registrationDeadlineWarning ? <Warning>{registrationDeadlineWarning}</Warning> : null}
+        {!readOnly && dateWarning ? <Warning>{dateWarning}</Warning> : null}
+        {!readOnly && timeWarning ? <Warning>{timeWarning}</Warning> : null}
+        {!readOnly && registrationDeadlineWarning ? <Warning>{registrationDeadlineWarning}</Warning> : null}
       </Section>
 
       <Section label="Location">
-        {loadError ? <Warning>Error loading maps</Warning> : null}
+        {!readOnly && loadError ? <Warning>Error loading maps</Warning> : null}
         <FieldWithIcon icon={<MapPinIcon className="h-4 w-4" aria-hidden />}>
           <input
             ref={locationInputRef}
@@ -359,17 +374,19 @@ export function EventHubEditForm({
               setSelectionMade(false);
             }}
             onBlur={() => {
+              if (readOnly) return;
               if (!selectionMade && location.trim() !== "") {
                 setLocationError("Please select a location from the dropdown");
               }
             }}
             placeholder={isLoaded ? "What’s the address?" : "Loading maps…"}
-            disabled={!isLoaded && !loadError}
+            disabled={!readOnly && !isLoaded && !loadError}
+            readOnly={readOnly}
             className={fieldClass}
             aria-label="Event location"
           />
         </FieldWithIcon>
-        {locationError ? <Warning>{locationError}</Warning> : null}
+        {!readOnly && locationError ? <Warning>{locationError}</Warning> : null}
       </Section>
 
       {canEditTicketTypes ? (
@@ -405,18 +422,27 @@ export function EventHubEditForm({
                 )
               }
             >
-              <select
-                value={sport}
-                onChange={(e) => setSport(e.target.value as SportId)}
-                className={fieldClass}
-                aria-label="Sport"
-              >
-                {Object.entries(SPORTS_CONFIG).map(([, sportInfo]) => (
-                  <option key={sportInfo.value} value={sportInfo.value}>
-                    {sportInfo.name}
-                  </option>
-                ))}
-              </select>
+              {readOnly ? (
+                <input
+                  readOnly
+                  value={SPORTS_CONFIG[sport]?.name ?? sport}
+                  className={fieldClass}
+                  aria-label="Sport"
+                />
+              ) : (
+                <select
+                  value={sport}
+                  onChange={(e) => setSport(e.target.value as SportId)}
+                  className={fieldClass}
+                  aria-label="Sport"
+                >
+                  {Object.entries(SPORTS_CONFIG).map(([, sportInfo]) => (
+                    <option key={sportInfo.value} value={sportInfo.value}>
+                      {sportInfo.name}
+                    </option>
+                  ))}
+                </select>
+              )}
             </FieldWithIcon>
           </label>
 
@@ -427,6 +453,7 @@ export function EventHubEditForm({
                 value={eventLink ?? ""}
                 onChange={(e) => setEventLink(e.target.value)}
                 placeholder="https://"
+                readOnly={readOnly}
                 className={fieldClass}
               />
             </FieldWithIcon>
@@ -443,7 +470,7 @@ export function EventHubEditForm({
 }
 
 const fieldClass =
-  "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 pl-9 pr-3 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none";
+  "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 pl-9 pr-3 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none read-only:cursor-text";
 
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -470,6 +497,7 @@ function TimeRow({
   timeValue,
   onDateChange,
   onTimeChange,
+  readOnly = false,
 }: {
   label: string;
   filled: boolean;
@@ -477,6 +505,7 @@ function TimeRow({
   timeValue: string;
   onDateChange: (v: string) => void;
   onTimeChange: (v: string) => void;
+  readOnly?: boolean;
 }) {
   return (
     <div className="flex items-start gap-3">
@@ -498,6 +527,7 @@ function TimeRow({
               onChange={(e) => onDateChange(e.target.value)}
               className={fieldClass}
               aria-label={`${label} date`}
+              readOnly={readOnly}
             />
           </FieldWithIcon>
           <FieldWithIcon icon={<ClockIcon className="h-4 w-4" aria-hidden />}>
@@ -507,6 +537,7 @@ function TimeRow({
               onChange={(e) => onTimeChange(e.target.value)}
               className={fieldClass}
               aria-label={`${label} time`}
+              readOnly={readOnly}
             />
           </FieldWithIcon>
         </div>
