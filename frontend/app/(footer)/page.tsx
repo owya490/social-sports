@@ -298,7 +298,6 @@ function DashboardContent() {
                         price={event.price}
                         vacancy={event.vacancy}
                         loading={loading}
-                        imagePriority={eventIdx < 4}
                         key={eventIdx}
                       />
                     );
