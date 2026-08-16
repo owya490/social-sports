@@ -1,5 +1,6 @@
 import { handleSignOut } from "@/services/src/auth/authService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsCache";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItems, Transition } from "@headlessui/react";
 import {
@@ -43,6 +44,7 @@ export default function ProfilePic() {
       // clearing all caches to prevent stale data
       bustEventsLocalStorageCache();
       bustUserLocalStorageCache();
+      bustOrganiserEventsCache();
       // Navigate to home and trigger a fresh state
       router.push("/");
       router.refresh();

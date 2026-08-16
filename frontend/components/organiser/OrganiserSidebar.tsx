@@ -18,6 +18,7 @@ import { useUser } from "@/components/utility/UserContext";
 import Logo from "@/public/images/BlackLogo.svg";
 import { handleSignOut } from "@/services/src/auth/authService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsCache";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -210,6 +211,7 @@ function UserAccountMenu({
       await handleSignOut(setUser);
       bustEventsLocalStorageCache();
       bustUserLocalStorageCache();
+      bustOrganiserEventsCache();
       router.push("/");
       router.refresh();
     } catch (error) {
