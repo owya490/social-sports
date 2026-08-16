@@ -48,7 +48,7 @@ const nextConfig = {
       },
       {
         source: "/organiser",
-        destination: "/organiser/dashboard",
+        destination: "/organiser/v2/dashboard",
         permanent: true,
       },
     ];

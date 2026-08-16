@@ -14,7 +14,7 @@ const logger = new Logger("BookingButtonLogger");
 interface BookingButtonProps {
   eventId: EventId;
   ticketCount: number;
-  eventTicketTypeId: EventTicketTypeId;
+  eventTicketTypeId: EventTicketTypeId | null;
   setLoading?: (value: boolean) => void;
   className?: string;
   bookingApprovalEnabled?: boolean;
@@ -30,9 +30,10 @@ export default function BookingButton({
 }: BookingButtonProps) {
   const router = useRouter();
   const [internalLoading, setInternalLoading] = useState(false);
+  const checkoutUnavailable = eventTicketTypeId === null;
 
   const handleBookNow = async () => {
-    if (isBookingMaintenanceActive()) {
+    if (checkoutUnavailable || isBookingMaintenanceActive()) {
       return;
     }
 
@@ -73,10 +74,10 @@ export default function BookingButton({
   return (
     <button
       type="button"
-      className={className}
+      className={`${className} disabled:opacity-50 disabled:pointer-events-none`}
       onClick={handleBookNow}
-      disabled={internalLoading || maintenanceActive}
-      aria-disabled={maintenanceActive}
+      disabled={internalLoading || maintenanceActive || checkoutUnavailable}
+      aria-disabled={maintenanceActive || checkoutUnavailable}
     >
       {internalLoading ? "Booking..." : label}
     </button>

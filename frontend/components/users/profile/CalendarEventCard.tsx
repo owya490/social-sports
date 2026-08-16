@@ -3,7 +3,7 @@ import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import { findGeneralAdmissionTicketType } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
@@ -28,10 +28,17 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
     }
   };
 
+  const eventTicketTypeId = findGeneralAdmissionTicketType(event.eventTicketTypes)?.id ?? null;
+
   const renderTicketBooking = () => (
     <div className="flex gap-3 items-center">
       <div className="flex-shrink-0 md:min-w-64">
-        <Select value={ticketCount.toString()} onChange={handleTicketCountChange} label="Tickets" disabled={loading}>
+        <Select
+          value={ticketCount.toString()}
+          onChange={handleTicketCountChange}
+          label="Tickets"
+          disabled={loading || eventTicketTypeId === null}
+        >
           {getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction).map((num) => (
             <Option key={num} value={num.toString()}>
               {num}
@@ -43,7 +50,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
       <BookingButton
         eventId={event.eventId}
         ticketCount={ticketCount}
-        eventTicketTypeId={resolveCheckoutTicketTypeId(event)}
+        eventTicketTypeId={eventTicketTypeId}
         setLoading={setLoading}
         className="flex-1 font-semibold rounded-xl border bg-black text-white hover:bg-white hover:text-black hover:border-core-outline py-2 transition-all duration-300"
       />

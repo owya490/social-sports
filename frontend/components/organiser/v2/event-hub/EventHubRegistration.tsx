@@ -578,6 +578,7 @@ export function EventHubRegistration({
             canEditForm={true}
             isEmbedded={true}
             hideSaveButton={true}
+            variant="compact"
           />
         </div>
       </EventHubPanel>

@@ -38,13 +38,10 @@ export interface FormEditorParams {
 }
 
 const CREATE_FORM_ID = "create-form";
-const DEFAULT_FORMS_GALLERY = "/organiser/forms/gallery";
-const V2_FORMS_GALLERY = "/organiser/v2/forms/gallery";
+const FORMS_GALLERY_PATH = "/organiser/v2/forms/gallery";
 
 function getFormsGalleryPath(): string {
-  if (typeof window === "undefined") return DEFAULT_FORMS_GALLERY;
-  const returnTo = new URLSearchParams(window.location.search).get("returnTo");
-  return returnTo === V2_FORMS_GALLERY ? V2_FORMS_GALLERY : DEFAULT_FORMS_GALLERY;
+  return FORMS_GALLERY_PATH;
 }
 
 const FormEditor = ({ formId }: FormEditorParams) => {
@@ -151,9 +148,7 @@ const FormEditor = ({ formId }: FormEditorParams) => {
         if (formId === CREATE_FORM_ID) {
           if (form.userId !== "") {
             const newFormId = await createForm(formToSave);
-            const returnQuery =
-              getFormsGalleryPath() === V2_FORMS_GALLERY ? "?returnTo=/organiser/v2/forms/gallery" : "";
-            router.push(`/organiser/forms/${newFormId}/editor${returnQuery}`);
+            router.push(`/organiser/forms/${newFormId}/editor?returnTo=${FORMS_GALLERY_PATH}`);
           }
         } else {
           await updateActiveForm(formToSave, formId);

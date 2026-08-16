@@ -114,7 +114,7 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
             )}
           </motion.button>
 
-          <Link href="/organiser/dashboard" className="min-w-[240px]">
+          <Link href="/organiser/v2/dashboard" className="min-w-[240px]">
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

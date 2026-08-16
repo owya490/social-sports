@@ -3,11 +3,21 @@ import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicket
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
-  resolveCheckoutTicketTypeId,
+  SortedEventTicketType,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getBuyerTicketCountOptionsWithStoredSessions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getStoredFulfilmentSessionId } from "@/services/src/fulfilment/fulfilmentUtils/fulfilmentUtils";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+
+function pickDefaultTicketTypeId(
+  usesTicketTypes: boolean,
+  activeTypes: SortedEventTicketType[]
+): EventTicketTypeId | null {
+  if (!usesTicketTypes || activeTypes.length === 0) {
+    return null;
+  }
+  return (activeTypes.find((t) => t.eventTicketType.vacancy > 0) ?? activeTypes[0]).eventTicketTypeId;
+}
 
 export function useEventTicketTypeCheckout(params: {
   eventId: EventId;
@@ -15,8 +25,6 @@ export function useEventTicketTypeCheckout(params: {
   vacancy: number;
   price: number;
   maxTicketsPerTransaction?: number;
-  /** Fallback type id when the event has a single known type (e.g. General Admission). */
-  fallbackEventTicketTypeId: EventTicketTypeId;
 }) {
   const usesTicketTypes = hasEventTicketTypes({ eventTicketTypes: params.eventTicketTypes });
   const activeTypes = useMemo(
@@ -25,27 +33,22 @@ export function useEventTicketTypeCheckout(params: {
   );
   const showTypeSelector = usesTicketTypes && activeTypes.length > 1;
 
-  const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(null);
-
-  useEffect(() => {
-    if (!usesTicketTypes || activeTypes.length === 0) {
-      setSelectedTypeId(null);
-      return;
-    }
-    const firstAvailable = activeTypes.find((t) => t.eventTicketType.vacancy > 0) ?? activeTypes[0];
-    setSelectedTypeId(firstAvailable.eventTicketTypeId);
-  }, [usesTicketTypes, activeTypes]);
+  const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(() =>
+    pickDefaultTicketTypeId(usesTicketTypes, activeTypes)
+  );
+  const resolvedTypeId =
+    selectedTypeId !== null && activeTypes.some((type) => type.eventTicketTypeId === selectedTypeId)
+      ? selectedTypeId
+      : pickDefaultTicketTypeId(usesTicketTypes, activeTypes);
 
   const selectedType = useMemo(
-    () => activeTypes.find((t) => t.eventTicketTypeId === selectedTypeId),
-    [activeTypes, selectedTypeId]
+    () => activeTypes.find((t) => t.eventTicketTypeId === resolvedTypeId),
+    [activeTypes, resolvedTypeId]
   );
 
   const effectiveVacancy = usesTicketTypes ? (selectedType?.eventTicketType.vacancy ?? 0) : params.vacancy;
   const effectivePrice = usesTicketTypes ? (selectedType?.eventTicketType.price ?? params.price) : params.price;
-  const effectiveEventTicketTypeId: EventTicketTypeId = usesTicketTypes
-    ? (selectedTypeId ?? params.fallbackEventTicketTypeId)
-    : params.fallbackEventTicketTypeId;
+  const effectiveEventTicketTypeId: EventTicketTypeId | null = usesTicketTypes ? resolvedTypeId : null;
 
   const allCounts = useMemo(
     () =>
@@ -53,16 +56,15 @@ export function useEventTicketTypeCheckout(params: {
         effectiveVacancy,
         params.maxTicketsPerTransaction,
         (ticketCount) =>
+          effectiveEventTicketTypeId !== null &&
           getStoredFulfilmentSessionId(params.eventId, ticketCount, effectiveEventTicketTypeId) !== null
       ),
     [effectiveVacancy, params.maxTicketsPerTransaction, params.eventId, effectiveEventTicketTypeId]
   );
 
   const [attendeeCount, setAttendeeCount] = useState<number>(1);
-
-  useEffect(() => {
-    setAttendeeCount(allCounts[0] ?? 1);
-  }, [allCounts.join(",")]);
+  const resolvedAttendeeCount =
+    allCounts.length === 0 || allCounts.includes(attendeeCount) ? attendeeCount : allCounts[0];
 
   const handleTicketTypeChange = (value?: string) => {
     if (value) {
@@ -76,7 +78,7 @@ export function useEventTicketTypeCheckout(params: {
     usesTicketTypes,
     showTypeSelector,
     activeTypes,
-    selectedTypeId,
+    selectedTypeId: resolvedTypeId,
     setSelectedTypeId,
     handleTicketTypeChange,
     selectedType,
@@ -84,19 +86,10 @@ export function useEventTicketTypeCheckout(params: {
     effectivePrice,
     effectiveEventTicketTypeId,
     allCounts,
-    attendeeCount,
+    attendeeCount: resolvedAttendeeCount,
     setAttendeeCount,
     typeSoldOut,
   };
 }
 
 export type EventTicketTypeCheckout = ReturnType<typeof useEventTicketTypeCheckout>;
-
-export function resolveFallbackTicketTypeId(event: {
-  eventTicketTypes?: EventTicketTypesMap;
-  price?: number;
-  capacity?: number;
-  vacancy?: number;
-}): EventTicketTypeId {
-  return resolveCheckoutTicketTypeId(event);
-}

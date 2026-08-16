@@ -148,7 +148,7 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
 
       if (loadedEventData.organiserId !== user.userId) {
         setError("You are not authorised to view this event");
-        router.push("/organiser/dashboard");
+        router.push("/organiser/v2/dashboard");
         return;
       }
 

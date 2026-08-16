@@ -55,7 +55,7 @@ export default function StripeSetup(props: {
           window.scrollTo(0, 0);
           const link = await getStripeStandardAccountLink(
             props.userId,
-            getUrlWithCurrentHostname("/organiser/dashboard"),
+            getUrlWithCurrentHostname("/organiser/v2/dashboard"),
             getRefreshAccountLinkUrl()
           );
           router.push(link);

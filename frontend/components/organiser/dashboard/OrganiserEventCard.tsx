@@ -62,7 +62,7 @@ export default function OrganiserEventCard(props: OrganiserEventCardProps) {
     <MaybeDisabledLink
       disabled={props.disabled}
       openInNewTab={props.openInNewTab}
-      url={`/organiser/event/${props.eventId}`}
+      url={`/organiser/v2/event/${props.eventId}`}
     >
       <div className="bg-background rounded-xl text-left border-border border w-full hover:cursor-pointer hover:bg-surface-hover transition-colors">
         {props.loading ? (

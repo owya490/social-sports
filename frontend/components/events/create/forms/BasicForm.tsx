@@ -6,6 +6,7 @@ import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
 import {
   clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
@@ -269,14 +270,14 @@ export function BasicInformation({
   useEffect(() => {
     const validateErrors = () => {
       const currentDateTime = new Date();
-      const selectedStartDateTime = new Date(`${startDate}T${startTime}`);
-      const selectedEndDateTime = new Date(`${endDate}T${endTime}`);
-      const selectedRegistrationEndDateTime = new Date(`${registrationEndDate}T${registrationEndTime}`);
+      const selectedStartDateTime = dateAndTimeInLocalToDate(startDate, startTime);
+      const selectedEndDateTime = dateAndTimeInLocalToDate(endDate, endTime);
+      const selectedRegistrationEndDateTime = dateAndTimeInLocalToDate(registrationEndDate, registrationEndTime);
 
       let hasDateError = false;
 
-      if (currentDateTime > selectedStartDateTime) {
-        setDateWarning("Event start date and time is in the past!");
+      if (currentDateTime > selectedEndDateTime) {
+        setDateWarning("Event end date and time is in the past!");
         hasDateError = true;
       } else {
         setDateWarning(null);
@@ -394,7 +395,7 @@ export function BasicInformation({
                 date={endDate}
                 placeholder="End Date"
                 handleChange={handleEndDateChange}
-                errorMessage={dateWarning?.includes("end date") ? dateWarning : timeWarning ?? ""}
+                errorMessage={dateWarning?.includes("Event end date") ? dateWarning : timeWarning ?? ""}
               />
             </div>
             <div className="basis-1/4">
@@ -402,7 +403,7 @@ export function BasicInformation({
                 value={endTime}
                 placeholder="End Time"
                 handleChange={handleEndTimeChange}
-                errorMessage={timeWarning || ""}
+                errorMessage={dateWarning?.includes("Event end date") ? dateWarning : timeWarning || ""}
               />
             </div>
           </div>
@@ -609,7 +610,7 @@ export function BasicInformation({
                   window.scrollTo(0, 0);
                   const link = await getStripeStandardAccountLink(
                     user.userId,
-                    getUrlWithCurrentHostname("/organiser/dashboard"),
+                    getUrlWithCurrentHostname("/organiser/v2/dashboard"),
                     getRefreshAccountLinkUrl()
                   );
                   router.push(link);

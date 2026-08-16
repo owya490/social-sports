@@ -92,7 +92,7 @@ export default function EventPage() {
           return;
         }
         if (event.organiserId !== user.userId) {
-          router.push("/organiser/dashboard");
+          router.push("/organiser/v2/dashboard");
           return;
         }
 

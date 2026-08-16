@@ -9,8 +9,8 @@ const ViewForm = () => {
   const formId = params.formId as FormId;
   const eventId = params.eventId as EventId;
   return (
-    <div className="py-20">
-      <FormResponder formId={formId} eventId={eventId} formResponseId={null} canEditForm={true} />;
+    <div className="min-h-[calc(100vh-var(--footer-height))] bg-surface">
+      <FormResponder formId={formId} eventId={eventId} formResponseId={null} canEditForm={true} variant="compact" />
     </div>
   );
 };
