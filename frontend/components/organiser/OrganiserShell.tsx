@@ -33,6 +33,13 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
     };
   }, [isV2Shell]);
 
+  useEffect(() => {
+    if (!isV2Shell) return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute("content", ORGANISER_V2_CANVAS);
+    });
+  }, [isV2Shell, mobileOpen]);
+
   if (isV2Shell) {
     return (
       <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
