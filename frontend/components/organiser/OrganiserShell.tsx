@@ -45,7 +45,7 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
       <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
         <div className="min-h-screen bg-surface">
           <OrganiserSidebar mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange} />
-          <div className="min-h-screen transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
+          <div className="min-h-screen transition-[padding] duration-200 max-lg:pt-[env(safe-area-inset-top,0px)] lg:pl-[var(--organiser-sidebar-width)]">
             {children}
           </div>
         </div>

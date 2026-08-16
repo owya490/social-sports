@@ -508,14 +508,14 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 lg:hidden"
+          className="fixed inset-x-0 z-40 bg-black/50 lg:hidden top-[env(safe-area-inset-top,0px)] bottom-[env(safe-area-inset-bottom,0px)]"
           aria-label="Close menu"
           onClick={() => onMobileOpenChange(false)}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden top-[env(safe-area-inset-top,0px)] bottom-[env(safe-area-inset-bottom,0px)] ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Organiser sidebar"
