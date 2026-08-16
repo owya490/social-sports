@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
 type EntityRowThumbnailProps = {
@@ -10,29 +10,11 @@ type EntityRowThumbnailProps = {
 
 /**
  * Square list-row cover: skeleton while the remote image resolves, then a short fade-in.
+ * Uses native lazy-loading so long event lists do not download every Storage image at once.
  */
 export function EntityRowThumbnail({ src, className = "" }: EntityRowThumbnailProps) {
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setLoaded(false);
-    if (!src) return;
-
-    let cancelled = false;
-    const img = new window.Image();
-    const markLoaded = () => {
-      if (!cancelled) setLoaded(true);
-    };
-
-    img.onload = markLoaded;
-    img.onerror = markLoaded;
-    img.src = src;
-    if (img.complete) markLoaded();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [src]);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const loaded = Boolean(src) && loadedSrc === src;
 
   return (
     <div
@@ -47,13 +29,17 @@ export function EntityRowThumbnail({ src, className = "" }: EntityRowThumbnailPr
         />
       ) : null}
       {src ? (
-        <div
-          className={`absolute inset-0 bg-cover bg-center transition-opacity duration-300 ease-out motion-reduce:transition-none ${
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setLoadedSrc(src)}
+          onError={() => setLoadedSrc(src)}
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300 ease-out motion-reduce:transition-none ${
             loaded ? "opacity-100" : "opacity-0"
           }`}
-          style={{ backgroundImage: loaded ? `url(${src})` : undefined }}
-          role="img"
-          aria-hidden
         />
       ) : null}
     </div>

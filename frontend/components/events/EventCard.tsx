@@ -6,7 +6,7 @@ import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 import { UserInlineDisplay } from "../users/UserInlineDisplay";
 
@@ -20,6 +20,8 @@ interface EventCardBaseProps {
   price: number;
   vacancy: number;
   loading: boolean;
+  /** First-viewport cards should load eagerly; the rest must not contend with Firestore. */
+  imagePriority?: boolean;
 }
 
 type ClickableEventCardProps = EventCardBaseProps & {
@@ -44,20 +46,12 @@ export default function EventCard(props: EventCardProps) {
     location,
     price,
     loading,
+    imagePriority = false,
   } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
   const isCardClickable = props.isClickable !== false;
-
-  // Preload images for better performance
-  useEffect(() => {
-    const imageToLoad = thumbnail || image;
-    if (imageToLoad) {
-      const img = new window.Image();
-      img.onload = () => setImageLoaded(true);
-      img.src = imageToLoad;
-    }
-  }, [image, thumbnail]);
+  const imageSrc = thumbnail || image;
 
   const cardContent = (
     <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
@@ -67,16 +61,24 @@ export default function EventCard(props: EventCardProps) {
         </div>
       ) : (
         <>
-          <div
-            className={`w-full ${imageLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
-            style={{
-              backgroundImage: imageLoaded ? `url(${thumbnail || image})` : "none",
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
-              aspectRatio: "1/1",
-              borderRadius: "1rem",
-            }}
-          ></div>
+          <div className="relative w-full aspect-square rounded-[1rem] overflow-hidden bg-gray-100">
+            {imageSrc ? (
+              // Native lazy-load so offscreen Firebase Storage images do not saturate mobile connections.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={imageSrc}
+                alt=""
+                loading={imagePriority ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={imagePriority ? "high" : "auto"}
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageLoaded(true)}
+                className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-300 ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            ) : null}
+          </div>
           <div className="p-4">
             <div className="flex">
               <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>

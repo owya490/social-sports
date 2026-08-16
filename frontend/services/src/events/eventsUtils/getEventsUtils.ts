@@ -1,9 +1,7 @@
 import {
-  EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
-  DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import {
@@ -20,26 +18,20 @@ import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
-import { clampMaxTicketsPerTransaction } from "./ticketLimits";
+import { hydrateEventsWithOrganisers } from "./hydrateEventsWithOrganisers";
 
 // const router = useRouter();
 
 export async function findEventDoc(eventId: EventId): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
   try {
-    // Search through the paths
-    for (const path of EVENT_PATHS) {
-      // Attempt to retrieve the document from the current subcollection
-      const eventDocRef = doc(db, path, eventId);
-      const eventDoc = await getDoc(eventDocRef);
-
-      // Check if the document exists in the current subcollection
-      if (eventDoc.exists()) {
-        eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
-        return eventDoc;
-      }
+    // Probe all event partitions in one round-trip; keep EVENT_PATHS order if several exist.
+    const snapshots = await Promise.all(EVENT_PATHS.map((path) => getDoc(doc(db, path, eventId))));
+    const eventDoc = snapshots.find((snapshot) => snapshot.exists());
+    if (eventDoc) {
+      eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
+      return eventDoc;
     }
 
-    // If no document found, log and throw an error
     eventServiceLogger.debug(`Event document not found in any subcollection for eventId: ${eventId}`);
     console.log("Event not found in any subcollection.");
     throw new Error("No event found in any subcollection");
@@ -85,28 +77,16 @@ export async function getAllEventsFromCollectionRef(
     console.log("Getting events from DB");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
-    const eventsData: EventData[] = [];
 
-    eventsSnapshot.forEach((doc) => {
-      const eventData = doc.data() as EventDataWithoutOrganiser;
-      eventData.eventId = doc.id as EventId;
+    eventsSnapshot.forEach((docSnapshot) => {
+      const eventData = docSnapshot.data() as EventDataWithoutOrganiser;
+      eventData.eventId = docSnapshot.id as EventId;
       eventsDataWithoutOrganiser.push(eventData);
     });
 
-    for (const event of eventsDataWithoutOrganiser) {
-      try {
-        const organiser = await getPublicUserById(event.organiserId);
-        eventsData.push(
-          applyGeneralAdmissionInventoryFields({
-            ...EmptyEventData, // initiate default values
-            ...event,
-            organiser: organiser,
-          })
-        );
-      } catch {
-        // this is a no op, we don't include this event in the eventsData list and don't display to frontend.
-      }
-    }
+    const eventsData = await hydrateEventsWithOrganisers(eventsDataWithoutOrganiser, (organiserId) =>
+      getPublicUserById(organiserId)
+    );
     eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
     return eventsData;
   } catch (error) {

@@ -153,19 +153,10 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
   }
   try {
     const publicDocRef = doc(db, "Users", "Active", "Public", userId);
-    let publicDoc;
-    if (transaction) {
-      publicDoc = await transaction.get(publicDocRef);
-    } else {
-      publicDoc = await getDoc(publicDocRef);
-    }
     const privateDocRef = doc(db, "Users", "Active", "Private", userId);
-    let privateDoc;
-    if (transaction) {
-      privateDoc = await transaction.get(privateDocRef);
-    } else {
-      privateDoc = await getDoc(privateDocRef);
-    }
+    const [publicDoc, privateDoc] = transaction
+      ? await Promise.all([transaction.get(publicDocRef), transaction.get(privateDocRef)])
+      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef)]);
 
     if (!publicDoc.exists() || publicDoc === undefined || !privateDoc.exists() || privateDoc === undefined) {
       throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data

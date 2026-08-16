@@ -2,6 +2,7 @@ import { TicketId } from "@/interfaces/EventTypes";
 import { EMPTY_TICKET, Ticket, TicketsCollectionPath } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "@/services/src/firebase";
+import { getDocumentsByIds } from "@/services/src/firebase/getDocumentsByIds";
 import { doc, getDoc } from "firebase/firestore";
 
 const ticketServiceLogger = new Logger("ticketServiceLogger");
@@ -23,10 +24,14 @@ export async function getTicketById(ticketId: TicketId): Promise<Ticket> {
 }
 
 export async function getTicketsByIds(ticketIds: TicketId[]): Promise<Ticket[]> {
-  ticketServiceLogger.info(`getTicketsByIds, ${ticketIds}`);
+  ticketServiceLogger.info(`getTicketsByIds, ${ticketIds.length}`);
   try {
-    const tickets = await Promise.all(ticketIds.map((ticketId) => getTicketById(ticketId)));
-    return tickets;
+    return await getDocumentsByIds(
+      TicketsCollectionPath,
+      ticketIds,
+      (ticketId, data) => ({ ...EMPTY_TICKET, ...(data as Ticket), ticketId: ticketId as TicketId }),
+      (ticketId) => new Error(`Ticket not found, ${ticketId}`)
+    );
   } catch (error) {
     ticketServiceLogger.error(`getTicketsByIds ${error}`);
     throw error;
