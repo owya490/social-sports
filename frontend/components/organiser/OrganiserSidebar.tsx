@@ -9,6 +9,12 @@ import {
   type OrganiserNavItem,
 } from "@/components/organiser/organiserNav";
 import {
+  lockOrganiserV2Chrome,
+  nudgeOrganiserV2Chrome,
+  overlayFrameStyle,
+  useVisualViewportOverlayFrame,
+} from "@/components/organiser/organiserV2Chrome";
+import {
   isWelcomeFlowPath,
   WELCOME_CLOSE_MENU_EVENT,
   WELCOME_OPEN_MENU_EVENT,
@@ -474,6 +480,14 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
     };
   }, [pathname, onMobileOpenChange]);
 
+  const overlayFrame = useVisualViewportOverlayFrame(mobileOpen);
+  const overlayStyle = overlayFrame
+    ? overlayFrameStyle(overlayFrame)
+    : { top: 0, left: 0, width: "100%", height: "100dvh" as const };
+  const drawerStyle = overlayFrame
+    ? { top: overlayFrame.top, height: overlayFrame.height }
+    : { top: 0, height: "100dvh" as const };
+
   useEffect(() => {
     if (!mobileOpen) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -481,9 +495,14 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
     };
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
+    lockOrganiserV2Chrome();
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
+      requestAnimationFrame(() => {
+        nudgeOrganiserV2Chrome();
+        requestAnimationFrame(() => nudgeOrganiserV2Chrome());
+      });
     };
   }, [mobileOpen, onMobileOpenChange]);
 
@@ -505,21 +524,21 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
 
   return (
     <>
-      {/* 1px inset keeps Clubhouse Grey at the viewport edges so iOS Safari
-          does not retint the status bar / URL bar from this dim overlay. */}
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-x-0 top-px bottom-px z-40 bg-black/50 lg:hidden"
+          className="fixed z-40 bg-black/50 lg:hidden"
+          style={overlayStyle}
           aria-label="Close menu"
           onClick={() => onMobileOpenChange(false)}
         />
       )}
 
       <aside
-        className={`fixed top-px bottom-px left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
+        style={drawerStyle}
         aria-label="Organiser sidebar"
         aria-hidden={!mobileOpen}
         data-tour="organiser-sidebar"
