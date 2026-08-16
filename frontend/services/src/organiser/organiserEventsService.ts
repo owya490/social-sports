@@ -22,6 +22,7 @@ export {
   bustOrganiserEventsCache,
   getOrganiserEventsCacheGeneration,
   onOrganiserEventsCacheBust,
+  tryGetOrganiserEventsCacheHit,
   tryGetOrganiserEventsFromCache,
 } from "./organiserEventsCache";
 
