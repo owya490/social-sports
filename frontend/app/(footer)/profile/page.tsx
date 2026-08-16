@@ -5,7 +5,7 @@ import { ProfileColourSelector } from "@/components/users/profile/ProfileColourS
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import { useUser } from "@/components/utility/UserContext";
-import { isAllowedProfileColour } from "@/services/src/users/profileColour";
+import { isValidProfileColourHex } from "@/services/src/users/profileColour";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
@@ -56,7 +56,8 @@ const Profile = () => {
   };
 
   const handleProfileColourUpdate = async (colour: string) => {
-    if (!isAllowedProfileColour(colour) || savingColour) return;
+    // Persist `#rrggbb` so custom colours can be supported later.
+    if (!isValidProfileColourHex(colour) || savingColour) return;
     setSavingColour(true);
     try {
       await handleUserProfileUpdate("profileColour", colour.toLowerCase());

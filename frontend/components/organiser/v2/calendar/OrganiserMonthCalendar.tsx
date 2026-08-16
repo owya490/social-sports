@@ -78,7 +78,7 @@ function DayCell({
       data-today={today || undefined}
       data-outside={outside || undefined}
       className={`relative flex min-h-[5.5rem] min-w-0 flex-col overflow-hidden border-b border-e border-border sm:min-h-[7.5rem] ${
-        today ? "border-b-2 border-b-accent/50 bg-accent/[0.04]" : ""
+        today ? "border-b-2 border-b-accent/50 bg-accent-soft/40" : ""
       } ${outside ? "bg-surface/60" : "bg-background"}`}
     >
       <div className="flex items-center justify-end px-1.5 pt-1.5">

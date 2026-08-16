@@ -6,10 +6,12 @@ import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
 import { useUser } from "@/components/utility/UserContext";
 import {
-  lighterCompanionFor,
+  buttonContrastFor,
   NEUTRAL_HUB_ACCENT,
   NEUTRAL_HUB_ACCENT_CONTRAST,
+  NEUTRAL_HUB_ACCENT_SOFT,
   resolveProfileColour,
+  softAccentFor,
 } from "@/services/src/users/profileColour";
 import { usePathname } from "next/navigation";
 import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
@@ -21,6 +23,7 @@ function neutralAccentStyle(): CSSProperties {
   return {
     ["--color-accent" as string]: NEUTRAL_HUB_ACCENT,
     ["--color-accent-contrast" as string]: NEUTRAL_HUB_ACCENT_CONTRAST,
+    ["--color-accent-soft" as string]: NEUTRAL_HUB_ACCENT_SOFT,
     ["--color-focus" as string]: NEUTRAL_HUB_ACCENT,
   };
 }
@@ -34,7 +37,7 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
   const isV2Shell = usesOrganiserV2Shell(pathname);
 
   const accentStyle = useMemo((): CSSProperties => {
-    // Black/white until the organiser profile is loaded and a colour is chosen.
+    // Black/white until the organiser profile is loaded and a colour hex is chosen.
     if (userLoading || !user.userId) return neutralAccentStyle();
 
     const accent = resolveProfileColour(user.profileColour);
@@ -42,7 +45,8 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
 
     return {
       ["--color-accent" as string]: accent,
-      ["--color-accent-contrast" as string]: lighterCompanionFor(accent),
+      ["--color-accent-contrast" as string]: buttonContrastFor(accent),
+      ["--color-accent-soft" as string]: softAccentFor(accent),
       ["--color-focus" as string]: accent,
     };
   }, [user.profileColour, user.userId, userLoading]);

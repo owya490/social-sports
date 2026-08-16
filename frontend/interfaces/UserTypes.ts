@@ -28,7 +28,7 @@ export interface PublicUserData {
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
   publicEventCollections: EventCollectionId[];
-  /** Organiser Hub accent colour (`#rrggbb`). Empty until the user picks one (hub stays black/white). */
+  /** Organiser Hub accent as `#rrggbb` hex. Empty until chosen (hub stays black/white). */
   profileColour: string;
 }
 

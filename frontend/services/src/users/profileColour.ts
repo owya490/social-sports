@@ -1,32 +1,37 @@
 /**
  * Unset profile colour — Organiser Hub stays black/white until the user picks one.
  * EmptyPublicUserData uses this so unset users do not inherit a brand yellow flash.
+ *
+ * Stored values are `#rrggbb` hex strings so custom colours can be added later.
  */
 export const UNSET_PROFILE_COLOUR = "";
 
 /** Neutral hub buttons while loading / when no profile colour is chosen. */
 export const NEUTRAL_HUB_ACCENT = "#0a0a0a";
 export const NEUTRAL_HUB_ACCENT_CONTRAST = "#ffffff";
+export const NEUTRAL_HUB_ACCENT_SOFT = "#d4d4d4";
 
 export type ProfileColourOption = {
   label: string;
-  /** Strong fill used on primary buttons / chart accents. */
+  /** Strong fill used on primary buttons / hover accents (`#rrggbb`). */
   value: string;
-  /** Companion for button label text on the fill. */
-  light: string;
+  /** Soft/light accent for charts, chips, and non-button accents. */
+  soft: string;
+  /** Button label text on the accent fill. */
+  onAccent: string;
 };
 
 /**
- * Curated organiser accents. Bases are paired with readable light (or light-neutral) text.
+ * Curated organiser accents. Button text is white except yellow (black) and grey (light).
  */
 export const PROFILE_COLOUR_OPTIONS: readonly ProfileColourOption[] = [
-  { label: "Empire Red", value: "#c41e3a", light: "#fecdd3" },
-  { label: "Royal Blue", value: "#1d4ed8", light: "#bfdbfe" },
-  { label: "Sports Hub Yellow", value: "#f2b705", light: "#0a0a0a" },
-  { label: "Forest Green", value: "#166534", light: "#bbf7d0" },
-  { label: "Purple", value: "#7e22ce", light: "#e9d5ff" },
-  { label: "Grey", value: "#6b7280", light: "#f3f4f6" },
-  { label: "Black", value: "#0a0a0a", light: "#f5f5f5" },
+  { label: "Empire Red", value: "#c41e3a", soft: "#fecdd3", onAccent: "#ffffff" },
+  { label: "Royal Blue", value: "#1d4ed8", soft: "#bfdbfe", onAccent: "#ffffff" },
+  { label: "Sports Hub Yellow", value: "#f2b705", soft: "#fef08c", onAccent: "#0a0a0a" },
+  { label: "Forest Green", value: "#166534", soft: "#bbf7d0", onAccent: "#ffffff" },
+  { label: "Purple", value: "#7e22ce", soft: "#e9d5ff", onAccent: "#ffffff" },
+  { label: "Grey", value: "#6b7280", soft: "#e5e7eb", onAccent: "#f3f4f6" },
+  { label: "Black", value: "#0a0a0a", soft: "#d4d4d4", onAccent: "#ffffff" },
 ] as const;
 
 const PROFILE_COLOUR_BY_VALUE = new Map(
@@ -108,24 +113,6 @@ function hslToRgb(h: number, s: number, l: number): { r: number; g: number; b: n
   };
 }
 
-function deriveLighterCompanion(hex: string): string {
-  const { r, g, b } = hexToRgb(hex);
-  const { h, s, l } = rgbToHsl(r, g, b);
-  if (l < 0.2) return "#f5f5f5";
-  if (relativeLuminance(hex) > 0.55) return "#0a0a0a";
-  const lightL = Math.min(0.92, Math.max(0.78, l + 0.45));
-  const softS = Math.min(0.55, s * 0.55);
-  const rgb = hslToRgb(h, softS, lightL);
-  return rgbToHex(rgb.r, rgb.g, rgb.b);
-}
-
-/** Companion for button text on the accent fill (curated when available). */
-export function lighterCompanionFor(hex: string): string {
-  const option = PROFILE_COLOUR_BY_VALUE.get(hex.toLowerCase());
-  if (option) return option.light;
-  return deriveLighterCompanion(hex);
-}
-
 function mixHex(a: string, b: string, amount: number): string {
   const ar = hexToRgb(a);
   const br = hexToRgb(b);
@@ -133,14 +120,53 @@ function mixHex(a: string, b: string, amount: number): string {
   return rgbToHex(ar.r + (br.r - ar.r) * t, ar.g + (br.g - ar.g) * t, ar.b + (br.b - ar.b) * t);
 }
 
+function deriveSoftAccent(hex: string): string {
+  const { r, g, b } = hexToRgb(hex);
+  const { h, s, l } = rgbToHsl(r, g, b);
+  if (l < 0.2) return "#d4d4d4";
+  const lightL = Math.min(0.92, Math.max(0.78, l + 0.45));
+  const softS = Math.min(0.55, s * 0.55);
+  const rgb = hslToRgb(h, softS, lightL);
+  return rgbToHex(rgb.r, rgb.g, rgb.b);
+}
+
+function deriveButtonContrast(hex: string): string {
+  // Light fills (yellow-like) keep dark text; mid greys keep a light companion; else white.
+  const luminance = relativeLuminance(hex);
+  if (luminance > 0.55) return "#0a0a0a";
+  const { r, g, b } = hexToRgb(hex);
+  const { s } = rgbToHsl(r, g, b);
+  if (s < 0.12 && luminance > 0.2) return "#f3f4f6";
+  return "#ffffff";
+}
+
+/** Soft/light accent for charts and non-button accents (curated when available). */
+export function softAccentFor(hex: string): string {
+  const option = PROFILE_COLOUR_BY_VALUE.get(hex.toLowerCase());
+  if (option) return option.soft;
+  return deriveSoftAccent(hex);
+}
+
+/** @deprecated Prefer softAccentFor — kept for call-site compatibility. */
+export function lighterCompanionFor(hex: string): string {
+  return softAccentFor(hex);
+}
+
+/** Button label colour on the accent fill (white except yellow / grey). */
+export function buttonContrastFor(hex: string): string {
+  const option = PROFILE_COLOUR_BY_VALUE.get(hex.toLowerCase());
+  if (option) return option.onAccent;
+  return deriveButtonContrast(hex);
+}
+
 /**
  * Distinct same-hue shades for multi-slice charts (top sales donut, etc.).
- * Index 0 is closest to the base; later indices step lighter then darker.
+ * Index 0 is closest to the base; later indices step toward soft then darker.
  */
 export function accentShadeRamp(base: string, count: number): string[] {
   if (count <= 0) return [];
   const resolved = resolveProfileColour(base) ?? NEUTRAL_HUB_ACCENT;
-  const light = lighterCompanionFor(resolved);
+  const soft = softAccentFor(resolved);
   const { r, g, b } = hexToRgb(resolved);
   const { h, s, l } = rgbToHsl(r, g, b);
 
@@ -155,7 +181,7 @@ export function accentShadeRamp(base: string, count: number): string[] {
     const t = i / (count - 1);
     if (t <= 0.55) {
       const mix = t / 0.55;
-      shades.push(mixHex(resolved, light, 0.25 + mix * 0.55));
+      shades.push(mixHex(resolved, soft, 0.25 + mix * 0.55));
     } else {
       const darkT = (t - 0.55) / 0.45;
       const darkened = Math.max(0.08, l * (1 - 0.18 - darkT * 0.35));
@@ -172,16 +198,27 @@ export function accentMutedFor(hex: string): string {
   return mixHex(resolved, "#ebebeb", 0.72);
 }
 
-export function isAllowedProfileColour(value: string | null | undefined): value is string {
-  if (!value || !HEX_COLOUR_PATTERN.test(value)) return false;
+/** True for any `#rrggbb` hex (palette or future custom colours). */
+export function isValidProfileColourHex(value: string | null | undefined): value is string {
+  return Boolean(value && HEX_COLOUR_PATTERN.test(value));
+}
+
+/** True when the value is one of the curated selector swatches. */
+export function isPaletteProfileColour(value: string | null | undefined): value is string {
+  if (!isValidProfileColourHex(value)) return false;
   return PROFILE_COLOUR_BY_VALUE.has(value.toLowerCase());
 }
 
+/** @deprecated Prefer isPaletteProfileColour / isValidProfileColourHex. */
+export function isAllowedProfileColour(value: string | null | undefined): value is string {
+  return isPaletteProfileColour(value);
+}
+
 /**
- * Resolve a stored profile colour. Returns `null` when unset/invalid so the hub
- * can keep neutral black/white buttons instead of forcing a brand colour.
+ * Resolve a stored profile colour hex. Returns `null` when unset/invalid so the hub
+ * can keep neutral black/white buttons. Accepts any `#rrggbb` for future custom colours.
  */
 export function resolveProfileColour(value: string | null | undefined): string | null {
-  if (isAllowedProfileColour(value)) return value.toLowerCase();
-  return null;
+  if (!isValidProfileColourHex(value)) return null;
+  return value.toLowerCase();
 }
