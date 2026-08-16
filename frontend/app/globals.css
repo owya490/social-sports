@@ -258,21 +258,28 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
-/* Prevent mobile zoom on input focus by ensuring minimum 16px font size */
-@media screen and (max-width: 768px) {
-  input,
-  textarea,
-  select,
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="number"],
-  input[type="password"],
-  input[type="date"],
-  input[type="datetime-local"],
-  input[type="time"],
-  input[type="search"],
-  input[type="url"] {
-    font-size: 16px !important;
+/* Prevent mobile zoom on input focus with a 16px floor.
+   Must NOT use !important: with cascade layers, base !important beats
+   utilities !important (important order is reversed), which locked every
+   input at 16px and blocked title sizes like text-3xl. Unlayered !important
+   also beats all utility layers. Plain base lets utilities override; use
+   !text-* only when intentionally going below 16px (accepts iOS zoom). */
+@layer base {
+  @media screen and (max-width: 767px) {
+    input,
+    textarea,
+    select,
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="password"],
+    input[type="date"],
+    input[type="datetime-local"],
+    input[type="time"],
+    input[type="search"],
+    input[type="url"] {
+      font-size: 16px;
+    }
   }
 }

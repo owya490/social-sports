@@ -10,25 +10,39 @@ import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import {
+  getAttachedFormIdsForEvent,
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+  resolveCheckoutTicketTypeId,
+  resolveEventInventory,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getForm, getFormResponse } from "@/services/src/forms/formsServices";
+import { getForm, loadAttendeeFormResponse } from "@/services/src/forms/formsServices";
+import {
+  collectAttendeeFormResponseLookups,
+  filterOrderTicketsMapByTicketType,
+  ticketMatchesEventTicketType,
+} from "@/services/src/forms/formsUtils/formsUtils";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
+import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import {
   ArrowPathIcon,
   CheckIcon,
   ChevronDownIcon,
   ExclamationCircleIcon,
   PlusIcon,
+  TicketIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
+import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventHubPanel } from "./EventHubPanel";
 import {
   EventHubEmpty,
@@ -42,12 +56,34 @@ import {
 type TabType = "approved" | "pending" | "declined";
 type DeepPanel = "formResponses" | "editTickets" | null;
 
+function countTicketsInOrderMap(
+  orderTicketsMap: Map<Order, Ticket[]>,
+  eventTicketTypeId?: EventTicketTypeId | null,
+  ticketTypeName?: string | null
+): number {
+  let count = 0;
+  orderTicketsMap.forEach((tickets) => {
+    for (const ticket of tickets) {
+      if (
+        eventTicketTypeId &&
+        !ticketMatchesEventTicketType(ticket, eventTicketTypeId, ticketTypeName)
+      ) {
+        continue;
+      }
+      count += 1;
+    }
+  });
+  return count;
+}
+
 type EventHubAttendeesProps = {
   eventMetadata: EventMetadata;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
+  /** Refresh hub inventory after attendee mutations that reload the event. */
+  onEventRefresh?: (event: EventData) => void;
   orderTicketsMap: Map<Order, Ticket[]>;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
 };
@@ -91,30 +127,34 @@ function AttendeeFormResponsesPanel({
   const logger = useMemo(() => new Logger("AttendeeFormResponsesPanel"), []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
-  const [formId, setFormId] = useState<FormId | null>(null);
-  const [form, setForm] = useState<Form | null>(null);
+  const [groups, setGroups] = useState<
+    { formId: FormId; form: Form; formResponses: FormResponse[] }[]
+  >([]);
 
   const scopedMap = useMemo(() => {
     const entry = getEntryFromOrderTicketsMapByOrderId(orderTicketsMap, order.orderId);
     return entry ? new Map([entry]) : new Map<Order, Ticket[]>();
   }, [order.orderId, orderTicketsMap]);
 
-  const orderFormResponseIds = useMemo(() => {
-    const ids = new Set<FormResponseId>();
+  const lookups = useMemo(() => {
+    const collected: ReturnType<typeof collectAttendeeFormResponseLookups> = [];
+    const seen = new Set<FormResponseId>();
     scopedMap.forEach((tickets, scopedOrder) => {
-      tickets
-        .map((ticket) => ticket.formResponseId)
-        .filter((formResponseId): formResponseId is FormResponseId => formResponseId !== null)
-        .forEach((formResponseId) => ids.add(formResponseId));
-
       const legacyAttendee =
-        eventMetadata.purchaserMap?.[getPurchaserEmailHash(scopedOrder.email)]?.attendees?.[scopedOrder.fullName];
-      const legacyFormResponseIds = legacyAttendee?.formResponseIds ?? [];
-      legacyFormResponseIds.forEach((formResponseId: string) => ids.add(formResponseId as FormResponseId));
+        eventMetadata.purchaserMap?.[getPurchaserEmailHash(scopedOrder.email)]?.attendees?.[
+          scopedOrder.fullName
+        ];
+      const legacyIds = legacyAttendee?.formResponseIds ?? [];
+      for (const lookup of collectAttendeeFormResponseLookups(eventData, tickets, legacyIds)) {
+        if (seen.has(lookup.formResponseId)) {
+          continue;
+        }
+        seen.add(lookup.formResponseId);
+        collected.push(lookup);
+      }
     });
-    return ids;
-  }, [eventMetadata.purchaserMap, scopedMap]);
+    return collected;
+  }, [eventData, eventMetadata.purchaserMap, scopedMap]);
 
   useEffect(() => {
     const fetchFormResponses = async () => {
@@ -122,24 +162,34 @@ function AttendeeFormResponsesPanel({
         setLoading(true);
         setError(null);
 
-        if (!eventData.formId) {
-          setFormId(null);
-          setForm(null);
-          setFormResponses([]);
+        if (lookups.length === 0) {
+          setGroups([]);
           setLoading(false);
           return;
         }
 
-        setFormId(eventData.formId);
-        const loadedForm = await getForm(eventData.formId);
-        setForm(loadedForm);
-
-        const fetchedFormResponses = await Promise.all(
-          Array.from(orderFormResponseIds).map((formResponseId) =>
-            getFormResponse(eventData.formId as FormId, eventData.eventId, formResponseId)
+        const loaded = await Promise.all(
+          lookups.map((lookup) =>
+            loadAttendeeFormResponse(eventData, eventData.eventId, lookup.formResponseId, lookup.formId)
           )
         );
-        setFormResponses(fetchedFormResponses);
+
+        const byFormId = new Map<FormId, FormResponse[]>();
+        for (const item of loaded) {
+          if (!item) {
+            continue;
+          }
+          const existing = byFormId.get(item.formId) ?? [];
+          existing.push(item.formResponse);
+          byFormId.set(item.formId, existing);
+        }
+
+        const nextGroups: { formId: FormId; form: Form; formResponses: FormResponse[] }[] = [];
+        for (const [formId, formResponses] of byFormId) {
+          const form = await getForm(formId);
+          nextGroups.push({ formId, form, formResponses });
+        }
+        setGroups(nextGroups);
       } catch (err) {
         logger.error(`Failed to load form responses: ${err}`);
         setError("Failed to load form responses");
@@ -149,7 +199,9 @@ function AttendeeFormResponsesPanel({
     };
 
     void fetchFormResponses();
-  }, [eventData.eventId, eventData.formId, logger, orderFormResponseIds]);
+  }, [eventData, lookups, logger]);
+
+  const hasAnyAttachedForm = getAttachedFormIdsForEvent(eventData).length > 0;
 
   if (loading) {
     return <p className="text-sm text-foreground-muted font-sans py-8 text-center">Loading form responses…</p>;
@@ -157,40 +209,38 @@ function AttendeeFormResponsesPanel({
   if (error) {
     return <p className="text-sm text-danger font-sans py-8 text-center">{error}</p>;
   }
-  if (!formId) {
-    return <p className="text-sm text-foreground-muted font-sans py-8 text-center">No form is attached to this event.</p>;
-  }
-  if (!form) {
-    return (
-      <div className="py-8 text-center space-y-1">
-        <p className="text-sm text-foreground-muted font-sans">No form found for this event.</p>
-        <p className="text-xs text-foreground-muted font-sans">Please contact SPORTSHUB support.</p>
-      </div>
-    );
-  }
-  if (formResponses.length === 0) {
+
+  if (groups.length === 0) {
     return (
       <p className="text-sm text-foreground-muted font-sans py-8 text-center">
-        No form responses found for this attendee.
+        {lookups.length === 0
+          ? hasAnyAttachedForm
+            ? "No form responses found for this attendee."
+            : "No form is attached to this event."
+          : "No form responses found for this attendee."}
       </p>
     );
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-foreground-muted font-sans">
-        {order.fullName || "Attendee"}
-        {form.title ? ` · ${form.title}` : ""}
-      </p>
-      <FormResponsesTable
-        formResponses={formResponses}
-        formId={formId}
-        form={form}
-        eventId={eventData.eventId}
-        orderTicketsMap={scopedMap}
-        showPurchaserColumn={false}
-        flush
-      />
+    <div className="space-y-6">
+      <p className="text-xs text-foreground-muted font-sans">{order.fullName || "Attendee"}</p>
+      {groups.map((group) => (
+        <div key={group.formId} className="space-y-2">
+          {group.form.title ? (
+            <p className="text-xs text-foreground-muted font-sans">Form: {group.form.title}</p>
+          ) : null}
+          <FormResponsesTable
+            formResponses={group.formResponses}
+            formId={group.formId}
+            form={group.form}
+            eventId={eventData.eventId}
+            orderTicketsMap={scopedMap}
+            showPurchaserColumn={false}
+            flush
+          />
+        </div>
+      ))}
     </div>
   );
 }
@@ -202,6 +252,7 @@ function AttendeeEditTicketsPanel({
   eventData,
   setEventMetadata,
   setEventVacancy,
+  onEventRefresh,
   setOrderTicketsMap,
   onClose,
 }: {
@@ -211,6 +262,7 @@ function AttendeeEditTicketsPanel({
   eventData: EventData;
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
+  onEventRefresh?: (event: EventData) => void;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
   onClose: () => void;
 }) {
@@ -233,7 +285,8 @@ function AttendeeEditTicketsPanel({
         eventId,
         orderId: order.orderId,
         numTickets: parseInt(newNumTickets, 10),
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId:
+          tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
       const updatedOrder = await getOrderById(order.orderId);
       const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
@@ -245,7 +298,11 @@ function AttendeeEditTicketsPanel({
         return next;
       });
       const updatedEventData = await getEventById(eventId);
-      setEventVacancy(updatedEventData.vacancy);
+      if (onEventRefresh) {
+        onEventRefresh(updatedEventData);
+      } else {
+        setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
+      }
       setEventMetadata((prev) => ({
         ...prev,
         completeTicketCount: prev.completeTicketCount - numTickets + parseInt(newNumTickets, 10),
@@ -258,6 +315,12 @@ function AttendeeEditTicketsPanel({
       setSaving(false);
     }
   };
+
+  const ticketTypeId = tickets[0]?.eventTicketTypeId;
+  const matchingTicketType =
+    ticketTypeId != null ? eventData.eventTicketTypes?.[ticketTypeId] : undefined;
+  const inventoryVacancy =
+    matchingTicketType?.vacancy ?? resolveEventInventory(eventData).vacancy;
 
   return (
     <form id="event-hub-edit-tickets" className="space-y-4" onSubmit={handleSubmit}>
@@ -282,12 +345,12 @@ function AttendeeEditTicketsPanel({
               type="number"
               required
               min={0}
-              max={numTickets + eventData.vacancy}
+              max={numTickets + inventoryVacancy}
               value={newNumTickets}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);
                 if (!isNaN(value)) {
-                  setNewNumTickets(String(clampTicketQuantity(value, 0, numTickets + eventData.vacancy)));
+                  setNewNumTickets(String(clampTicketQuantity(value, 0, numTickets + inventoryVacancy)));
                 } else {
                   setNewNumTickets("0");
                 }
@@ -308,6 +371,7 @@ export function EventHubAttendees({
   eventId,
   eventData,
   setEventVacancy,
+  onEventRefresh,
   orderTicketsMap,
   setOrderTicketsMap,
 }: EventHubAttendeesProps) {
@@ -319,7 +383,64 @@ export function EventHubAttendees({
   const [addTickets, setAddTickets] = useState("1");
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>("approved");
+  const ticketTypes = useMemo(
+    () => getSortedEventTicketTypes(eventData.eventTicketTypes),
+    [eventData.eventTicketTypes]
+  );
+  const eventInventory = useMemo(() => resolveEventInventory(eventData), [eventData]);
+  const usesTicketTypes = hasEventTicketTypes(eventData);
+  const showTypeSelector = usesTicketTypes && ticketTypes.length > 1;
+  const showListTypeFilter = usesTicketTypes && ticketTypes.length > 1;
+  const availableTicketTypes = useMemo(
+    () => ticketTypes.filter((t) => t.eventTicketType.vacancy > 0),
+    [ticketTypes]
+  );
+  const [addTicketTypeId, setAddTicketTypeId] = useState<EventTicketTypeId | null>(null);
+  /** null = All ticket types */
+  const [listTicketTypeId, setListTicketTypeId] = useState<EventTicketTypeId | null>(null);
+
+  useEffect(() => {
+    if (!showTypeSelector) {
+      setAddTicketTypeId(null);
+      return;
+    }
+    setAddTicketTypeId((prev) => {
+      if (prev && availableTicketTypes.some((t) => t.eventTicketTypeId === prev)) {
+        return prev;
+      }
+      return availableTicketTypes[0]?.eventTicketTypeId ?? null;
+    });
+  }, [showTypeSelector, availableTicketTypes]);
+
+  useEffect(() => {
+    if (!listTicketTypeId) {
+      return;
+    }
+    if (!ticketTypes.some((t) => t.eventTicketTypeId === listTicketTypeId)) {
+      setListTicketTypeId(null);
+    }
+  }, [listTicketTypeId, ticketTypes]);
+
+  const selectedListTicketType = ticketTypes.find((t) => t.eventTicketTypeId === listTicketTypeId);
+
+  const addTypeVacancy = showTypeSelector
+    ? ticketTypes.find((t) => t.eventTicketTypeId === addTicketTypeId)?.eventTicketType.vacancy ?? 0
+    : eventInventory.vacancy;
+  const canAddAttendee = addTypeVacancy > 0;
+
+  useEffect(() => {
+    if (!canAddAttendee) {
+      setAddTickets("0");
+      return;
+    }
+    setAddTickets((prev) => {
+      const current = parseInt(prev, 10);
+      if (isNaN(current) || current < 1) return "1";
+      return String(clampTicketQuantity(current, 1, addTypeVacancy));
+    });
+  }, [canAddAttendee, addTypeVacancy]);
+
+  const [activeTab, setActiveTab] = useState<TabType>("pending");
   const [approvedMap, setApprovedMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [pendingMap, setPendingMap] = useState<Map<Order, Ticket[]>>(new Map());
   const [declinedMap, setDeclinedMap] = useState<Map<Order, Ticket[]>>(new Map());
@@ -443,6 +564,9 @@ export function EventHubAttendees({
     setAddPhone("");
     setAddTickets("1");
     setAddError(null);
+    if (showTypeSelector) {
+      setAddTicketTypeId(availableTicketTypes[0]?.eventTicketTypeId ?? null);
+    }
   };
 
   const closeAddPanel = () => {
@@ -460,7 +584,15 @@ export function EventHubAttendees({
     setAddSaving(true);
     setAddError(null);
     try {
-      const qty = parseInt(addTickets, 10) || 1;
+      const qty = parseInt(addTickets, 10) || 0;
+      if (addTypeVacancy <= 0 || qty <= 0 || qty > addTypeVacancy) {
+        setAddError("No tickets available for the selected type");
+        return;
+      }
+      const eventTicketTypeId =
+        showTypeSelector && addTicketTypeId
+          ? addTicketTypeId
+          : resolveCheckoutTicketTypeId(eventData);
       const { orderId, ticketIds } = await addAttendee({
         eventId,
         email: addEmail,
@@ -468,7 +600,7 @@ export function EventHubAttendees({
         phone: addPhone,
         numTickets: qty,
         price: 0,
-        eventTicketTypeId: resolveCheckoutTicketTypeId(eventData),
+        eventTicketTypeId,
       });
       const now = Timestamp.now();
       const newOrder: Order = {
@@ -490,9 +622,19 @@ export function EventHubAttendees({
         purchaseDate: now,
         status: OrderAndTicketStatus.APPROVED,
         type: OrderAndTicketType.MANUAL,
+        eventTicketTypeId,
       }));
       setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
-      setEventVacancy(eventData.vacancy - qty);
+      try {
+        const updatedEventData = await getEventById(eventId);
+        if (onEventRefresh) {
+          onEventRefresh(updatedEventData);
+        } else {
+          setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
+        }
+      } catch {
+        setEventVacancy((prev) => Math.max(0, prev - qty));
+      }
       setEventMetadata((prev) => ({
         ...prev,
         completeTicketCount: prev.completeTicketCount + qty,
@@ -506,8 +648,39 @@ export function EventHubAttendees({
     }
   };
 
+  const filteredApprovedMap = useMemo(() => {
+    if (!usesTicketTypes || !listTicketTypeId) return approvedMap;
+    return filterOrderTicketsMapByTicketType(
+      approvedMap,
+      listTicketTypeId,
+      selectedListTicketType?.eventTicketType.name
+    );
+  }, [approvedMap, listTicketTypeId, selectedListTicketType, usesTicketTypes]);
+
+  const filteredPendingMap = useMemo(() => {
+    if (!usesTicketTypes || !listTicketTypeId) return pendingMap;
+    return filterOrderTicketsMapByTicketType(
+      pendingMap,
+      listTicketTypeId,
+      selectedListTicketType?.eventTicketType.name
+    );
+  }, [listTicketTypeId, pendingMap, selectedListTicketType, usesTicketTypes]);
+
+  const filteredDeclinedMap = useMemo(() => {
+    if (!usesTicketTypes || !listTicketTypeId) return declinedMap;
+    return filterOrderTicketsMapByTicketType(
+      declinedMap,
+      listTicketTypeId,
+      selectedListTicketType?.eventTicketType.name
+    );
+  }, [declinedMap, listTicketTypeId, selectedListTicketType, usesTicketTypes]);
+
   const activeMap =
-    activeTab === "approved" ? approvedMap : activeTab === "pending" ? pendingMap : declinedMap;
+    activeTab === "approved"
+      ? filteredApprovedMap
+      : activeTab === "pending"
+        ? filteredPendingMap
+        : filteredDeclinedMap;
 
   const orders = useMemo(() => {
     return Array.from(activeMap.keys()).sort((a, b) => a.fullName.localeCompare(b.fullName));
@@ -519,8 +692,39 @@ export function EventHubAttendees({
       []
     : [];
 
-  const capacity = eventData.capacity || 0;
-  const goingCount = approvedMap.size;
+  const approvedTicketCount = useMemo(
+    () =>
+      countTicketsInOrderMap(
+        filteredApprovedMap,
+        listTicketTypeId,
+        selectedListTicketType?.eventTicketType.name
+      ),
+    [filteredApprovedMap, listTicketTypeId, selectedListTicketType]
+  );
+  const pendingTicketCount = useMemo(
+    () =>
+      countTicketsInOrderMap(
+        filteredPendingMap,
+        listTicketTypeId,
+        selectedListTicketType?.eventTicketType.name
+      ),
+    [filteredPendingMap, listTicketTypeId, selectedListTicketType]
+  );
+  const declinedTicketCount = useMemo(
+    () =>
+      countTicketsInOrderMap(
+        filteredDeclinedMap,
+        listTicketTypeId,
+        selectedListTicketType?.eventTicketType.name
+      ),
+    [filteredDeclinedMap, listTicketTypeId, selectedListTicketType]
+  );
+
+  const capacity = selectedListTicketType
+    ? selectedListTicketType.eventTicketType.capacity
+    : eventInventory.capacity;
+  // Match the Approved tab — capacity−vacancy also counts pending holds and can drift across types.
+  const goingCount = approvedTicketCount;
   const fillPercent = capacity > 0 ? Math.min(100, Math.round((goingCount / capacity) * 100)) : 0;
   const statusLabel =
     activeTab === "approved" ? "Going" : activeTab === "pending" ? "Pending" : "Declined";
@@ -544,7 +748,11 @@ export function EventHubAttendees({
         <p className="text-sm font-semibold text-foreground font-sans tabular-nums">
           {goingCount} Going
           {capacity > 0 ? (
-            <span className="text-foreground-muted font-normal"> · {capacity} capacity</span>
+            <span className="text-foreground-muted font-normal">
+              {" "}
+              · {capacity} capacity
+              {selectedListTicketType ? ` · ${selectedListTicketType.eventTicketType.name}` : ""}
+            </span>
           ) : null}
         </p>
         <div
@@ -569,15 +777,42 @@ export function EventHubAttendees({
           setExpandedOrderId(null);
         }}
         tabs={[
-          { id: "approved", label: "Approved", count: approvedMap.size },
-          { id: "pending", label: "Pending", count: pendingMap.size },
-          { id: "declined", label: "Declined", count: declinedMap.size },
+          { id: "approved", label: "Approved", count: approvedTicketCount },
+          { id: "pending", label: "Pending", count: pendingTicketCount },
+          { id: "declined", label: "Declined", count: declinedTicketCount },
         ]}
         action={
-          <EventHubPrimaryButton onClick={() => setIsAddOpen(true)}>
-            <PlusIcon className="h-4 w-4" aria-hidden />
-            Add attendee
-          </EventHubPrimaryButton>
+          <div className="flex items-center gap-2">
+            {showListTypeFilter ? (
+              <label className="relative inline-flex items-center">
+                <span className="sr-only">Filter by ticket type</span>
+                <TicketIcon
+                  className="pointer-events-none absolute left-2.5 h-4 w-4 text-foreground-muted"
+                  aria-hidden
+                />
+                <select
+                  value={listTicketTypeId ?? ""}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setListTicketTypeId(next ? (next as EventTicketTypeId) : null);
+                    setExpandedOrderId(null);
+                  }}
+                  className="max-w-[10.5rem] appearance-none rounded-xl border border-border bg-background py-2 pl-8 pr-7 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                >
+                  <option value="">All</option>
+                  {ticketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                    <option key={eventTicketTypeId} value={eventTicketTypeId}>
+                      {eventTicketType.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <EventHubPrimaryButton onClick={() => setIsAddOpen(true)}>
+              <PlusIcon className="h-4 w-4" aria-hidden />
+              Add attendee
+            </EventHubPrimaryButton>
+          </div>
         }
       />
 
@@ -593,10 +828,16 @@ export function EventHubAttendees({
         ) : orders.length === 0 ? (
           <EventHubEmpty>
             {activeTab === "approved"
-              ? "No approved attendees yet. Add someone, or wait for bookings to come in."
+              ? selectedListTicketType
+                ? `No approved attendees for "${selectedListTicketType.eventTicketType.name}" yet.`
+                : "No approved attendees yet. Add someone, or wait for bookings to come in."
               : activeTab === "pending"
-                ? "No pending bookings. New requests that need approval will show up here."
-                : "No declined bookings."}
+                ? selectedListTicketType
+                  ? `No pending bookings for "${selectedListTicketType.eventTicketType.name}".`
+                  : "No pending bookings. New requests that need approval will show up here."
+                : selectedListTicketType
+                  ? `No declined bookings for "${selectedListTicketType.eventTicketType.name}".`
+                  : "No declined bookings."}
           </EventHubEmpty>
         ) : (
           <ul className="divide-y divide-border -mx-1">
@@ -628,6 +869,11 @@ export function EventHubAttendees({
                       <p className="text-sm font-semibold text-foreground font-sans truncate">
                         {order.fullName || "Attendee"}
                       </p>
+                      {order.type === OrderAndTicketType.MANUAL ? (
+                        <p className="text-[10px] text-foreground-muted font-sans leading-tight">
+                          Direct Addition
+                        </p>
+                      ) : null}
                       <p className="text-xs text-foreground-muted font-sans truncate">
                         {order.email || "—"}
                       </p>
@@ -661,7 +907,21 @@ export function EventHubAttendees({
                       <dl className="space-y-2">
                         <div className="min-w-0">
                           <dt className="text-xs font-medium text-foreground-muted font-sans">Order ID</dt>
-                          <dd className="mt-0.5 text-xs text-foreground font-mono break-all">{order.orderId}</dd>
+                          <dd className="mt-0.5 text-xs text-foreground font-mono break-all">
+                            {!order.orderId.startsWith("legacy-") && !order.orderId.startsWith("manual-") ? (
+                              <a
+                                href={`/order/${order.orderId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hover:underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {order.orderId}
+                              </a>
+                            ) : (
+                              order.orderId
+                            )}
+                          </dd>
                         </div>
                         <div className="min-w-0">
                           <dt className="text-xs font-medium text-foreground-muted font-sans">
@@ -788,6 +1048,7 @@ export function EventHubAttendees({
             eventData={eventData}
             setEventMetadata={setEventMetadata}
             setEventVacancy={setEventVacancy}
+            onEventRefresh={onEventRefresh}
             setOrderTicketsMap={setOrderTicketsMap}
             onClose={closeDeepPanel}
           />
@@ -799,7 +1060,11 @@ export function EventHubAttendees({
         onClose={closeAddPanel}
         title="Add attendee"
         footer={
-          <EventHubPrimaryButton type="submit" form="event-hub-add-attendee" disabled={addSaving}>
+          <EventHubPrimaryButton
+            type="submit"
+            form="event-hub-add-attendee"
+            disabled={addSaving || !canAddAttendee}
+          >
             <CheckIcon className="h-4 w-4" aria-hidden />
             {addSaving ? "Adding…" : "Add attendee"}
           </EventHubPrimaryButton>
@@ -840,23 +1105,50 @@ export function EventHubAttendees({
               className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             />
           </label>
+          {showTypeSelector && (
+            <label className="block space-y-1.5">
+              <span className="text-xs font-medium text-foreground-muted font-sans">Ticket type</span>
+              <select
+                required
+                value={addTicketTypeId ?? ""}
+                disabled={availableTicketTypes.length === 0}
+                onChange={(e) => setAddTicketTypeId(e.target.value as EventTicketTypeId)}
+                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+              >
+                {availableTicketTypes.length === 0 ? (
+                  <option value="">No tickets available</option>
+                ) : (
+                  availableTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                    <option key={eventTicketTypeId} value={eventTicketTypeId}>
+                      {eventTicketType.name} — {getEventPriceDisplay(eventTicketType.price)} ·{" "}
+                      {eventTicketType.vacancy} left
+                    </option>
+                  ))
+                )}
+              </select>
+            </label>
+          )}
+          {!canAddAttendee ? (
+            <p className="text-sm text-danger font-sans">No tickets available to add.</p>
+          ) : null}
           <label className="block space-y-1.5">
             <span className="text-xs font-medium text-foreground-muted font-sans">Tickets</span>
             <input
               type="number"
               required
               min={1}
-              max={Math.max(1, eventData.vacancy)}
+              max={addTypeVacancy}
               value={addTickets}
+              disabled={!canAddAttendee}
               onChange={(e) => {
                 const value = parseInt(e.target.value, 10);
-                if (!isNaN(value)) {
-                  setAddTickets(String(clampTicketQuantity(value, 1, eventData.vacancy)));
+                if (!isNaN(value) && addTypeVacancy > 0) {
+                  setAddTickets(String(clampTicketQuantity(value, 1, addTypeVacancy)));
                 } else {
-                  setAddTickets("1");
+                  setAddTickets(canAddAttendee ? "1" : "0");
                 }
               }}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
             />
           </label>
           {addError ? <p className="text-sm text-danger font-sans">{addError}</p> : null}

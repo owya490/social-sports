@@ -21,7 +21,7 @@ export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => 
         <button
           type="button"
           onClick={() => setIsModalOpen(true)}
-          className="relative h-24 w-24 rounded-xl overflow-hidden border border-border group shrink-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="relative h-24 w-24 rounded-xl overflow-hidden border border-border group shrink-0"
           aria-label="Change profile photo"
         >
           <Image
@@ -51,7 +51,7 @@ export const ProfilePhotoPanel = ({ user, setUser }: ProfilePhotoPanelProps) => 
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              className="inline-flex items-center rounded-xl border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground font-sans hover:bg-surface-hover"
             >
               Upload
             </button>

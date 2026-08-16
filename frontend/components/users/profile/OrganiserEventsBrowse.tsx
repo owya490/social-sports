@@ -37,7 +37,7 @@ function groupEventsByDay(events: EventData[]): { day: Date; events: EventData[]
   const map = new Map<string, { day: Date; events: EventData[] }>();
   for (const event of events) {
     const day = startOfDay(event.startDate.toDate());
-    const key = day.toISOString();
+    const key = format(day, "yyyy-MM-dd");
     const existing = map.get(key);
     if (existing) {
       existing.events.push(event);
@@ -46,6 +46,10 @@ function groupEventsByDay(events: EventData[]): { day: Date; events: EventData[]
     }
   }
   return Array.from(map.values());
+}
+
+function dayKey(date: Date): string {
+  return format(startOfDay(date), "yyyy-MM-dd");
 }
 
 export default function OrganiserEventsBrowse({
@@ -73,8 +77,8 @@ export default function OrganiserEventsBrowse({
       });
   }, [events, rangeMode, today]);
 
-  const eventDates = useMemo(
-    () => filteredByRange.map((event) => startOfDay(event.startDate.toDate())),
+  const eventDateKeys = useMemo(
+    () => new Set(filteredByRange.map((event) => dayKey(event.startDate.toDate()))),
     [filteredByRange]
   );
 
@@ -95,7 +99,8 @@ export default function OrganiserEventsBrowse({
 
   const timelineEvents = useMemo(() => {
     if (!selectedDate) return filteredByRange;
-    return filteredByRange.filter((event) => isSameDay(event.startDate.toDate(), selectedDate));
+    const selectedKey = dayKey(selectedDate);
+    return filteredByRange.filter((event) => dayKey(event.startDate.toDate()) === selectedKey);
   }, [filteredByRange, selectedDate]);
 
   const grouped = useMemo(() => groupEventsByDay(timelineEvents), [timelineEvents]);
@@ -109,13 +114,13 @@ export default function OrganiserEventsBrowse({
   const startWeekday = startOfMonth(month).getDay();
 
   const handleSelectDate = (date: Date) => {
-    const hasEvent = eventDates.some((d) => isSameDay(d, date));
-    if (!hasEvent) return;
-    if (selectedDate && isSameDay(selectedDate, date)) {
+    const key = dayKey(date);
+    if (!eventDateKeys.has(key)) return;
+    if (selectedDate && dayKey(selectedDate) === key) {
       setSelectedDate(undefined);
       return;
     }
-    setSelectedDate(date);
+    setSelectedDate(startOfDay(date));
   };
 
   return (
@@ -129,7 +134,7 @@ export default function OrganiserEventsBrowse({
         ) : (
           <div className="space-y-8">
             {grouped.map(({ day, events: dayEvents }) => (
-              <section key={day.toISOString()} className="relative pl-6">
+              <section key={dayKey(day)} className="relative pl-6">
                 <div className="absolute left-0 top-1.5 bottom-0 w-px bg-border" aria-hidden />
                 <span
                   className="absolute left-[-3.5px] top-1.5 h-2 w-2 rounded-full bg-foreground"
@@ -186,8 +191,8 @@ export default function OrganiserEventsBrowse({
               <div key={`pad-${idx}`} className="h-9" />
             ))}
             {daysInMonth.map((day) => {
-              const hasEvent = eventDates.some((d) => isSameDay(d, day));
-              const selected = selectedDate ? isSameDay(selectedDate, day) : false;
+              const hasEvent = eventDateKeys.has(dayKey(day));
+              const selected = selectedDate ? dayKey(selectedDate) === dayKey(day) : false;
               const isToday = isSameDay(day, today);
               const inMonth = isSameMonth(day, month);
               const outOfRange =
@@ -197,22 +202,26 @@ export default function OrganiserEventsBrowse({
 
               return (
                 <button
-                  key={day.toISOString()}
+                  key={dayKey(day)}
                   type="button"
-                  disabled={!hasEvent}
+                  aria-pressed={selected}
                   onClick={() => handleSelectDate(day)}
                   className={[
                     "relative h-9 w-full rounded-lg text-xs font-sans transition-colors",
-                    "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
-                    !inMonth || outOfRange ? "text-foreground-muted/50" : "text-foreground",
-                    selected ? "bg-foreground text-background font-semibold" : hasEvent ? "hover:bg-surface-hover font-semibold" : "",
+                    selected
+                      ? "bg-foreground text-white font-semibold"
+                      : hasEvent
+                        ? "text-foreground hover:bg-surface-hover font-semibold"
+                        : !inMonth || outOfRange
+                          ? "text-foreground-muted/50"
+                          : "text-foreground",
                     isToday && !selected ? "ring-1 ring-border" : "",
-                    !hasEvent ? "cursor-default" : "cursor-pointer",
+                    hasEvent ? "cursor-pointer" : "cursor-default",
                   ].join(" ")}
                 >
                   {format(day, "d")}
                   {hasEvent && !selected ? (
-                    <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-accent" aria-hidden />
+                    <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-foreground" aria-hidden />
                   ) : null}
                 </button>
               );

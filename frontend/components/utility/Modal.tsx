@@ -92,8 +92,9 @@ export default function Modal({
 
   // Use custom values if provided, otherwise use state defaults
   const finalIcon = customIcon || currentConfig.icon;
-  const finalIconBgColor = customIconBgColor || currentConfig.iconBgColor;
+  const finalIconBgColor = customIconBgColor ?? currentConfig.iconBgColor;
   const finalIconTextColor = customIconTextColor || currentConfig.iconTextColor;
+  const hasIconWell = Boolean(finalIconBgColor) && !finalIconBgColor.includes("transparent");
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
@@ -110,8 +111,14 @@ export default function Modal({
           >
             <div>
               {finalIcon && (
-                <div className={`mx-auto flex size-12 items-center justify-center rounded-full ${finalIconBgColor}`}>
-                  <div className={`size-6 ${finalIconTextColor}`}>{finalIcon}</div>
+                <div
+                  className={
+                    hasIconWell
+                      ? `mx-auto flex size-12 items-center justify-center rounded-full ${finalIconBgColor}`
+                      : "mx-auto flex items-center justify-center"
+                  }
+                >
+                  <div className={`${hasIconWell ? "size-6" : "size-8"} ${finalIconTextColor}`}>{finalIcon}</div>
                 </div>
               )}
               <div className={`${finalIcon ? "mt-3" : ""} text-center sm:mt-5`}>

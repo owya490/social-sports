@@ -1,21 +1,17 @@
 "use client";
-import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
-import CreateEventStepper from "@/components/events/create/CreateEventStepper";
-import { BasicInformation } from "@/components/events/create/forms/BasicForm";
-import { DescriptionForm } from "@/components/events/create/forms/DescriptionForm";
-import { FormWrapper } from "@/components/events/create/forms/FormWrapper";
-import { ImageForm } from "@/components/events/create/forms/ImageForm";
-import { PreviewForm } from "@/components/events/create/forms/PreviewForm";
-import { useMultistepForm } from "@/components/events/create/forms/useMultistepForm";
+
+import { CreateEventWorkbench } from "@/components/events/create/CreateEventWorkbench";
+import {
+  createEventInitialData,
+  CreateEventFormData,
+} from "@/components/events/create/createEventFormTypes";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
-import { SPORTS_CONFIG } from "@/config/SportsConfig";
-import { DEFAULT_MAX_TICKETS_PER_ORDER, EventId, NewEventData } from "@/interfaces/EventTypes";
-import { FormId } from "@/interfaces/FormTypes";
-import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
+import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import { buildNewEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import {
@@ -25,78 +21,15 @@ import {
 } from "@/services/src/images/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { Alert } from "@material-tailwind/react";
+import { dateAndTimeInLocalToTimestamp } from "@/services/src/datetimeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 const createEventLogger = new Logger("CreateEvent");
 
-export type FormData = {
-  startDate: string;
-  endDate: string;
-  registrationEndDate: string;
-  location: string;
-  sport: string;
-  price: number;
-  capacity: number;
-  name: string;
-  description: string;
-  image: string | undefined;
-  thumbnail: string | undefined;
-  tags: string[];
-  isPrivate: boolean;
-  startTime: string;
-  endTime: string;
-  registrationEndTime: string;
-  paymentsActive: boolean;
-  lat: number;
-  lng: number;
-  stripeFeeToCustomer: boolean;
-  promotionalCodesEnabled: boolean;
-  paused: boolean;
-  eventLink: string;
-  newRecurrenceData: NewRecurrenceFormData;
-  hideVacancy: boolean;
-  formId: FormId | null;
-  waitlistEnabled: boolean;
-  bookingApprovalEnabled: boolean;
-  showAttendeesOnEventPage: boolean;
-  maxTicketsPerTransaction: number;
-};
-
-const INITIAL_DATA: FormData = {
-  startDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
-  endDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
-  registrationEndDate: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString().slice(0, 10),
-  location: "",
-  sport: SPORTS_CONFIG.volleyball.value,
-  price: 1500, // $15 default price, set to 1500 as it is in cents
-  capacity: 20,
-  name: "",
-  description: "",
-  image: undefined,
-  thumbnail: undefined,
-  tags: [],
-  isPrivate: false,
-  startTime: "10:00",
-  endTime: "10:00",
-  registrationEndTime: "10:00",
-  paymentsActive: false,
-  lat: 0,
-  lng: 0,
-  stripeFeeToCustomer: true,
-  promotionalCodesEnabled: false,
-  paused: false,
-  eventLink: "",
-  newRecurrenceData: DEFAULT_RECURRENCE_FORM_DATA,
-  hideVacancy: false,
-  formId: null,
-  waitlistEnabled: true,
-  bookingApprovalEnabled: false,
-  showAttendeesOnEventPage: false,
-  maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
-};
+/** @deprecated Use CreateEventFormData from createEventFormTypes */
+export type FormData = CreateEventFormData;
 
 export default function CreateEvent() {
   const { user } = useUser();
@@ -108,7 +41,7 @@ export default function CreateEvent() {
   const [hasAlert, setHasAlert] = useState(false);
   const [AlertMessage, setAlertMessage] = useState("");
 
-  const [data, setData] = useState(INITIAL_DATA);
+  const [data, setData] = useState(createEventInitialData);
 
   const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
@@ -121,89 +54,60 @@ export default function CreateEvent() {
     fetchUserImages();
   }, [user]);
 
-  const { step, currentStep, isFirstStep, isLastStep, back, next, goTo } = useMultistepForm([
-    <BasicInformation
-      key="basic-form"
-      {...data}
-      updateField={updateFields}
-      user={user}
-      setLoading={setLoading}
-      setHasError={setHasError}
-    />,
-    <FormWrapper key="image-form-wrapper">
-      <ImageForm
-        key="image-form"
-        {...data}
-        user={user}
-        updateField={updateFields}
-        eventThumbnailsUrls={eventThumbnailsUrls}
-        eventImageUrls={eventImageUrls}
-        setThumbnailUrls={setEventThumbnailUrls}
-        setImageUrls={setEventImageUrls}
-      />
-    </FormWrapper>,
-    <DescriptionForm key="description-image-form" {...data} updateField={updateFields} user={user} />,
-    <PreviewForm key="preview-form" form={data} user={user} updateField={updateFields} />,
-  ]);
-
-  function updateFields(fields: Partial<FormData>) {
+  function updateFields(fields: Partial<CreateEventFormData>) {
     setData((prev) => {
       return { ...prev, ...fields };
     });
   }
 
+  function onSubmitFailure(message: string) {
+    setLoading(false);
+    setHasError(true);
+    setHasAlert(true);
+    setAlertMessage(message);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
   function validateForm(): boolean {
-    let formHasError = false;
-    let errorMessage = "";
-    const form = document.querySelector("form") as HTMLFormElement;
-    if (!form.reportValidity()) {
+    const form = document.querySelector("form") as HTMLFormElement | null;
+    if (form && !form.reportValidity()) {
       return false;
     }
-    if (isFirstStep) {
-      if (data.location === "") {
-        formHasError = true;
-        errorMessage = "Location is required.";
-      }
-    }
-
-    if (formHasError) {
+    if (data.location === "") {
       setHasError(true);
-      setAlertMessage(errorMessage);
+      setAlertMessage("Location is required.");
       setHasAlert(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return false;
+    }
+    if (hasError) {
+      setHasAlert(true);
+      setAlertMessage(AlertMessage || "Please fix the highlighted fields.");
       window.scrollTo({ top: 0, behavior: "smooth" });
       return false;
     }
     return true;
   }
 
-  async function submit(e: FormEvent, stepIndex?: number) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     if (!validateForm()) {
-      return;
-    }
-
-    if (!isLastStep) {
-      if (stepIndex !== undefined) {
-        goTo(stepIndex);
-      } else {
-        next();
-      }
-      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
     try {
       const eventId = await createEventWorkflow(data, user);
       if (eventId !== null) {
-        router.push(`/event/${eventId}`);
+        router.push(`/organiser/v2/event/${eventId}`);
       }
-    } catch (e) {
-      createEventLogger.error(`Error creating event: ${e}`);
+      // null: workflow already alerted (stay on page) or redirected (loading cleared, no alert)
+    } catch (err) {
+      createEventLogger.error(`Error creating event: ${err}`);
+      onSubmitFailure("Failed to create event. Please try again.");
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function createEventWorkflow(formData: FormData, user: UserData): Promise<EventId | null> {
+  async function createEventWorkflow(formData: CreateEventFormData, user: UserData): Promise<EventId | null> {
     setLoading(true);
     const [imageUrl, thumbnailUrl] = getImageAndThumbnailUrlsWithDefaults({ ...formData });
 
@@ -212,25 +116,26 @@ export default function CreateEvent() {
     let newEventId: EventId | null = null;
     try {
       if (newRecurrenceData.recurrenceEnabled) {
-        const [firstEventId, _newRecurrenceTemplateId] = await createRecurrenceTemplate(
-          newEventData,
-          newRecurrenceData
-        );
+        const [firstEventId] = await createRecurrenceTemplate(newEventData, newRecurrenceData);
         newEventId = firstEventId;
       } else {
         newEventId = await createEvent(newEventData);
       }
       if (newEventId === null) {
+        onSubmitFailure("Failed to create event. Please try again.");
         return null;
       }
+      bustOrganiserEventsCache();
       await sendEmailOnCreateEventV2(newEventId, newEventData.isPrivate ? "Private" : "Public");
     } catch (error) {
       if (error === "Rate Limited") {
+        setLoading(false);
         router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
         return null;
       } else if (error == "Sendgrid failed") {
         return newEventId;
       } else {
+        setLoading(false);
         router.push("/error");
         return null;
       }
@@ -239,7 +144,7 @@ export default function CreateEvent() {
   }
 
   function convertFormDataToEventData(
-    formData: FormData,
+    formData: CreateEventFormData,
     user: UserData,
     imageUrl: string,
     thumbnailUrl: string
@@ -287,71 +192,46 @@ export default function CreateEvent() {
   }
 
   function convertDateAndTimeStringToTimestamp(date: string, time: string): Timestamp {
-    const dateObject = new Date(date);
-    const timeArr = time.split(":");
-    dateObject.setHours(parseInt(timeArr[0]));
-    dateObject.setMinutes(parseInt(timeArr[1]));
-    return Timestamp.fromDate(dateObject);
+    return dateAndTimeInLocalToTimestamp(date, time);
   }
+
   const handleAlertClose = () => {
     setHasError(false);
     setHasAlert(false);
     setAlertMessage("");
   };
 
-  const handleStepClick = (stepIndex: number) => {
-    if (validateForm()) {
-      goTo(stepIndex);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
   return loading ? (
     <Loading />
   ) : (
-    <div className="flex justify-center">
+    <>
+      {/*
+        THESIS: Compact create — thumbnail rail beside essentials on the footer shell.
+        OWN-WORLD: Honest Clubhouse on white canvas; Satoshi; dense soft controls.
+        STORY: Organiser names the session, sets when/where/price, creates with bookings open by default.
+        FIRST VIEWPORT: Thumbnail + sport + Public|Private left; title; when/where; side-by-side options; Create.
+        FORM: Luma density inside organiser tokens; site footer layout; deep edits in EventHubPanel.
+      */}
       {!showForm ? (
-        <div className="h-screen w-full flex justify-center items-center">Please Login/ Register to Access</div>
-      ) : (
-        <div className="screen-width-primary pt-10 sm:pt-16 pb-10">
-          <form onSubmit={submit}>
-            <div className="px-6 lg:px-12">
-              <CreateEventStepper activeStep={currentStep} onStepClick={handleStepClick} />
-            </div>
-            <div className="absolute top-2 right-2">{/* {currentStep + 1} / {steps.length} */}</div>
-            {step}
-            <Alert
-              open={hasAlert}
-              onClose={() => handleAlertClose()}
-              color="red"
-              className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
-            >
-              {AlertMessage !== "" ? AlertMessage : "Error Submitting Form"}
-            </Alert>
-            <div className="flex mt-8 w-11/12 lg:w-2/3 xl:w-full m-auto">
-              {!isFirstStep && (
-                <InvertedHighlightButton type="button" className="px-7" onClick={back}>
-                  Back
-                </InvertedHighlightButton>
-              )}
-              {!isLastStep && (
-                //TODO: Add service layer protection
-                <InvertedHighlightButton
-                  type="submit"
-                  className={`px-7 ml-auto lg:mr-2 ${hasError ? "opacity-50" : ""}`}
-                >
-                  Next
-                </InvertedHighlightButton>
-              )}
-              {isLastStep && (
-                <InvertedHighlightButton type="submit" className="px-7 ml-auto">
-                  Create Event
-                </InvertedHighlightButton>
-              )}
-            </div>
-          </form>
+        <div className="h-screen w-full flex justify-center items-center bg-background text-foreground font-sans">
+          Please Login/ Register to Access
         </div>
+      ) : (
+        <CreateEventWorkbench
+          data={data}
+          user={user}
+          updateField={updateFields}
+          eventThumbnailsUrls={eventThumbnailsUrls}
+          eventImageUrls={eventImageUrls}
+          setThumbnailUrls={setEventThumbnailUrls}
+          setImageUrls={setEventImageUrls}
+          setHasError={setHasError}
+          hasAlert={hasAlert}
+          alertMessage={AlertMessage}
+          onAlertClose={handleAlertClose}
+          onSubmit={submit}
+        />
       )}
-    </div>
+    </>
   );
 }

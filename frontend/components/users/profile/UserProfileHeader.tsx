@@ -1,67 +1,48 @@
 "use client";
 
 /**
- * THESIS: Public organiser header mirrors Luma’s hero → overlapping avatar → white identity band.
- * OWN-WORLD: Flat hero from profile-picture dominant colour (no cover image); Clubhouse white band + Satoshi.
- * STORY: Visitor lands on a profile, reads who they are, then scrolls into events on the grey stage.
- * FIRST VIEWPORT: Colour hero, overlapping square avatar, name / @handle / contact / bio on white.
- * FORM: Luma organiser composition inside Honest Clubhouse tokens.
+ * THESIS: Public organiser header is a quiet white identity band — photo, name, contact, bio.
+ * OWN-WORLD: Honest Clubhouse tokens, Satoshi, no colour hero; contact sits under the handle (card on desktop).
+ * STORY: Visitor lands on a profile, sees who they are and how to reach them, then scrolls to events.
+ * FIRST VIEWPORT: Square avatar, name, @handle, email/phone, bio.
+ * FORM: Luma organiser composition inside Clubhouse light tokens, without a cover banner.
  */
 
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
-import { useImageDominantColor } from "@/components/users/profile/useImageDominantColor";
 import { PublicUserData } from "@/interfaces/UserTypes";
-import { getCurrentTimezoneShort } from "@/services/src/datetimeUtils";
-import { ClockIcon, EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
+import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 
 type UserProfileHeaderProps = {
   user: PublicUserData;
 };
 
-function formatLocalTimeLabel(): string {
-  const now = new Date();
-  const time = now.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  return `Times in ${getCurrentTimezoneShort()} — ${time}`;
-}
-
-function subscribeLocalTime(onStoreChange: () => void): () => void {
-  const id = window.setInterval(onStoreChange, 60_000);
-  return () => window.clearInterval(id);
-}
-
 export function UserProfileHeader({ user }: UserProfileHeaderProps) {
-  const heroColor = useImageDominantColor(user.profilePicture);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
-  const localTimeLabel = useSyncExternalStore(subscribeLocalTime, formatLocalTimeLabel, () => "");
   const fullName = `${user.firstName} ${user.surname}`.trim();
   const hasBio = Boolean(user.bio && user.bio !== "<p></p>");
-  const email = user.publicContactInformation?.email;
-  const mobile = user.publicContactInformation?.mobile;
+  const email = user.publicContactInformation?.email?.trim();
+  const mobile = user.publicContactInformation?.mobile?.trim();
+  const hasContact = Boolean(email || mobile);
 
   return (
     <header className="bg-background">
-      {/* Flat colour hero — stand-in for a cover image, tinted from the profile picture */}
-      <div className="relative h-28 sm:h-36 w-full" style={{ backgroundColor: heroColor }} aria-hidden />
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="relative -mt-10 sm:-mt-12 pb-6 sm:pb-8">
-          <div className="flex items-end justify-between gap-3">
-            <div className="relative h-20 w-20 sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-xl border-[3px] sm:border-4 border-background bg-surface-muted shadow-sm">
-              <Image
-                priority
-                src={user.profilePicture}
-                alt=""
-                fill
-                className="object-cover"
-                sizes="112px"
-              />
-            </div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 pb-6 sm:pb-8">
+        <div className="flex flex-col md:flex-row md:items-start gap-5 md:gap-8">
+          <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 overflow-hidden rounded-xl border border-border bg-surface-muted">
+            <Image
+              priority
+              src={user.profilePicture}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="96px"
+            />
           </div>
 
-          <div className="mt-4 sm:mt-5 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight font-sans leading-tight">
                 {fullName || "Organiser"}
@@ -71,38 +52,32 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
               ) : null}
             </div>
 
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-foreground-secondary font-sans">
-              {user.username ? <span>@{user.username}</span> : null}
-              {localTimeLabel ? (
-                <span className="inline-flex items-center gap-1">
-                  <ClockIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  {localTimeLabel}
-                </span>
-              ) : null}
-            </div>
+            {user.username ? (
+              <p className="mt-1 text-sm text-foreground-secondary font-sans">@{user.username}</p>
+            ) : null}
 
-            {(email || mobile) && (
-              <div className="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-4">
+            {hasContact ? (
+              <div className="mt-3 flex flex-col gap-1.5 md:hidden">
                 {email ? (
                   <a
                     href={`mailto:${email}`}
-                    className="inline-flex items-center gap-2 text-xs text-foreground-secondary hover:text-foreground font-sans"
+                    className="inline-flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground font-sans"
                   >
-                    <EnvelopeIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <EnvelopeIcon className="h-4 w-4 shrink-0" aria-hidden />
                     <span className="truncate">{email}</span>
                   </a>
                 ) : null}
                 {mobile ? (
                   <a
                     href={`tel:${mobile}`}
-                    className="inline-flex items-center gap-2 text-xs text-foreground-secondary hover:text-foreground font-sans"
+                    className="inline-flex items-center gap-2 text-sm text-foreground-secondary hover:text-foreground font-sans"
                   >
-                    <PhoneIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <PhoneIcon className="h-4 w-4 shrink-0" aria-hidden />
                     <span>{mobile}</span>
                   </a>
                 ) : null}
               </div>
-            )}
+            ) : null}
 
             <div className="mt-4 max-w-2xl">
               <div
@@ -116,13 +91,39 @@ export function UserProfileHeader({ user }: UserProfileHeaderProps) {
                 <button
                   type="button"
                   onClick={() => setIsBioExpanded((v) => !v)}
-                  className="mt-2 text-xs font-semibold text-foreground font-sans hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-sm"
+                  className="mt-2 text-xs font-semibold text-foreground font-sans hover:underline"
                 >
                   {isBioExpanded ? "Show less" : "Read more"}
                 </button>
               ) : null}
             </div>
           </div>
+
+          {hasContact ? (
+            <aside className="hidden md:block w-full md:w-64 shrink-0 rounded-xl border border-border bg-background p-4">
+              <p className="text-xs font-semibold text-foreground font-sans">Contact</p>
+              <div className="mt-3 space-y-2.5">
+                {email ? (
+                  <a
+                    href={`mailto:${email}`}
+                    className="flex items-start gap-2 text-sm text-foreground-secondary hover:text-foreground font-sans"
+                  >
+                    <EnvelopeIcon className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
+                    <span className="break-all">{email}</span>
+                  </a>
+                ) : null}
+                {mobile ? (
+                  <a
+                    href={`tel:${mobile}`}
+                    className="flex items-start gap-2 text-sm text-foreground-secondary hover:text-foreground font-sans"
+                  >
+                    <PhoneIcon className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
+                    <span>{mobile}</span>
+                  </a>
+                ) : null}
+              </div>
+            </aside>
+          ) : null}
         </div>
       </div>
     </header>

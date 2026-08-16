@@ -4,7 +4,7 @@ import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToTimeOfDay } from "@/services/src/datetimeUtils";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import { findGeneralAdmissionTicketType } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
@@ -20,6 +20,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
   const [ticketCount, setTicketCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const ticketOptions = getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction);
+  const eventTicketTypeId = findGeneralAdmissionTicketType(event.eventTicketTypes)?.id ?? null;
   const priceLabel = getEventPriceDisplay(event.price);
   const timeLabel = timestampToTimeOfDay(event.startDate);
 
@@ -66,21 +67,21 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
         </Link>
       </div>
 
-      <div className="border-t border-border px-4 py-3">
+      <div className="border-t border-border px-4 py-3 flex justify-end">
         {event.paymentsActive ? (
           event.vacancy === 0 ? (
             <p className="text-xs text-foreground-muted font-sans">Sold out — check back later.</p>
           ) : (
-            <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+            <div className="flex items-center gap-2">
               <label className="sr-only" htmlFor={`tickets-${event.eventId}`}>
                 Number of tickets
               </label>
               <select
                 id={`tickets-${event.eventId}`}
                 value={ticketCount}
-                disabled={loading}
+                disabled={loading || eventTicketTypeId === null}
                 onChange={(e) => setTicketCount(parseInt(e.target.value, 10))}
-                className="w-full sm:w-28 rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="w-[6.5rem] rounded-xl border border-border bg-background px-2.5 py-2 text-sm text-foreground font-sans"
               >
                 {ticketOptions.map((num) => (
                   <option key={num} value={num}>
@@ -91,20 +92,18 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
               <BookingButton
                 eventId={event.eventId}
                 ticketCount={ticketCount}
-                eventTicketTypeId={resolveCheckoutTicketTypeId(event)}
+                eventTicketTypeId={eventTicketTypeId}
                 setLoading={setLoading}
-                className="flex-1 rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+                className="shrink-0 rounded-xl bg-foreground px-3.5 py-2 text-sm font-semibold text-background font-sans hover:opacity-90 disabled:opacity-60"
               />
             </div>
           )
         ) : (
-          <div className="flex justify-end">
-            <ContactEventButton
-              eventLink={event.eventLink}
-              fallbackLink={`/event/${event.eventId}`}
-              className="rounded-xl border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            />
-          </div>
+          <ContactEventButton
+            eventLink={event.eventLink}
+            fallbackLink={`/event/${event.eventId}`}
+            className="rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-semibold text-foreground font-sans hover:bg-surface-hover"
+          />
         )}
       </div>
     </article>

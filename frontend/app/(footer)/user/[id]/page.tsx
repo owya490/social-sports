@@ -82,11 +82,9 @@ export default function UserProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-surface text-foreground pb-16">
-      {/* White organiser identity band (Luma: hero + profile sit on white) */}
+    <div className="min-h-screen bg-background text-foreground pb-16">
       <UserProfileHeader user={publicUserProfile} />
 
-      {/* Grey stage for events / collections */}
       <div className="border-t border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-6">
           <div

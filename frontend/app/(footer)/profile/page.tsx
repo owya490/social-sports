@@ -17,6 +17,7 @@ import { Logger } from "@/observability/logger";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
+import { convertDateToInput, convertInputToDate } from "@/utilities/profileDateUtils";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -53,24 +54,6 @@ function draftFromUser(user: UserData): ProfileDraft {
   };
 }
 
-function dobToInput(dateStr: string): string {
-  if (!dateStr) return "";
-  const parts = dateStr.includes("/") ? dateStr.split("/") : dateStr.split("-");
-  if (parts.length !== 3) return "";
-  // Stored as DD/MM/YYYY
-  if (dateStr.includes("/")) {
-    const [day, month, year] = parts;
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-  }
-  return dateStr;
-}
-
-function inputToDob(dateStr: string): string {
-  if (!dateStr) return "";
-  const [year, month, day] = dateStr.split("-");
-  return `${day.padStart(2, "0")}/${month.padStart(2, "0")}/${year}`;
-}
-
 const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
@@ -80,7 +63,6 @@ const Profile = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [usernameWarning, setUsernameWarning] = useState(false);
   const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
-  const [bioEditing, setBioEditing] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -105,7 +87,6 @@ const Profile = () => {
 
   const handleReset = () => {
     setDraft(draftFromUser(user));
-    setBioEditing(false);
     setSaveError("");
     setSaveSuccess(false);
     setUsernameWarning(false);
@@ -162,7 +143,6 @@ const Profile = () => {
         contactInformation: patch.contactInformation!,
       });
       bustUserLocalStorageCache();
-      setBioEditing(false);
       setSaveSuccess(true);
     } catch (error) {
       logger.error(`Failed to save profile: ${error}`);
@@ -185,7 +165,7 @@ const Profile = () => {
               Profile
             </h1>
             {user.isVerifiedOrganiser ? (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-accent/20 px-2 py-1 text-xs font-semibold text-foreground font-sans">
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-surface-muted px-2 py-1 text-xs font-semibold text-foreground font-sans">
                 <Image src={Tick} alt="" className="h-4 w-4" />
                 Verified organiser
               </span>
@@ -233,8 +213,8 @@ const Profile = () => {
                 <ProfileTextInput
                   id="profile-dob"
                   type="date"
-                  value={dobToInput(draft.dob)}
-                  onChange={(v) => updateDraft("dob", inputToDob(v))}
+                  value={convertDateToInput(draft.dob)}
+                  onChange={(v) => updateDraft("dob", convertInputToDate(v))}
                 />
               </ProfileField>
               <ProfileField label="Gender" htmlFor="profile-gender" className="sm:col-span-2">
@@ -281,12 +261,7 @@ const Profile = () => {
               </ProfileField>
               <div className="sm:col-span-2 space-y-1.5">
                 <p className="text-xs font-medium text-foreground-muted font-sans">Bio</p>
-                <ProfileBioEditor
-                  value={draft.bio}
-                  onChange={(v) => updateDraft("bio", v)}
-                  editing={bioEditing}
-                  onEditingChange={setBioEditing}
-                />
+                <ProfileBioEditor value={draft.bio} onChange={(v) => updateDraft("bio", v)} />
               </div>
             </div>
           </ProfileSection>
@@ -347,8 +322,8 @@ const Profile = () => {
                 aria-checked={draft.isSearchable}
                 aria-label="Publicly searchable"
                 onClick={() => updateDraft("isSearchable", !draft.isSearchable)}
-                className={`relative shrink-0 h-5 w-9 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                  draft.isSearchable ? "bg-accent" : "bg-surface-muted"
+                className={`relative shrink-0 h-5 w-9 rounded-full transition-colors ${
+                  draft.isSearchable ? "bg-foreground" : "bg-surface-muted"
                 }`}
               >
                 <span
@@ -378,14 +353,14 @@ const Profile = () => {
                 type="button"
                 onClick={handleReset}
                 disabled={!isDirty || saving}
-                className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground font-sans hover:bg-surface-hover disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground font-sans hover:bg-surface-hover disabled:opacity-50"
               >
                 Reset
               </button>
               <button
                 type="submit"
                 disabled={!isDirty || saving}
-                className="rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 disabled:opacity-50 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                className="rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background font-sans hover:opacity-90 disabled:opacity-50"
               >
                 {saving ? "Saving…" : "Save changes"}
               </button>

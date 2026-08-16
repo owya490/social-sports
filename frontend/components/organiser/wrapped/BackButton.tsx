@@ -12,7 +12,7 @@ export function BackButton() {
       className="fixed top-4 left-4 md:top-6 md:left-6 z-50"
     >
       <Link
-        href="/organiser/dashboard"
+        href="/organiser/v2/dashboard"
         className="flex items-center gap-1.5 p-2 md:px-3 md:py-1.5 rounded-full text-black/60 hover:text-black bg-white/50 hover:bg-white/80 backdrop-blur-sm transition-all duration-200 group text-xs"
       >
         <svg

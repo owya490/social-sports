@@ -10,7 +10,7 @@ import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumb
 import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
+import { getOrganiserEvents, tryGetOrganiserEventsFromCache } from "@/services/src/organiser/organiserEventsService";
 import { addMonths, subMonths } from "date-fns";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
@@ -30,6 +30,13 @@ export function OrganiserEventsCalendarView() {
   useEffect(() => {
     const fetchEvents = async () => {
       if (user.userId === "") return;
+      const cached = tryGetOrganiserEventsFromCache(user.userId);
+      if (cached) {
+        setAllEvents(cached);
+        setError(false);
+        setLoading(false);
+        return;
+      }
       setError(false);
       setLoading(true);
       try {
@@ -92,7 +99,7 @@ export function OrganiserEventsCalendarView() {
               onClick={() => {
                 setError(false);
                 setLoading(true);
-                getOrganiserEvents(user.userId)
+                getOrganiserEvents(user.userId, { bypassCache: true })
                   .then(setAllEvents)
                   .catch((fetchError) => {
                     logger.error(`Retry failed: ${fetchError}`);

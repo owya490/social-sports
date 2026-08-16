@@ -22,10 +22,8 @@ export default function PublicFormResponsePreviewPage() {
   const responseId = paramString(params.responseId) as FormResponseId;
 
   return (
-    <div className="min-h-[calc(100vh-var(--footer-height))] overflow-hidden bg-core-hover">
-      <div className="h-full max-h-[calc(100vh-var(--footer-height))] overflow-y-auto pt-10 pb-24 sm:pb-20">
-        <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} />
-      </div>
+    <div className="min-h-[calc(100vh-var(--footer-height))] bg-surface">
+      <FormResponder formId={formId} eventId={eventId} formResponseId={responseId} variant="compact" />
     </div>
   );
 }

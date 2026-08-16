@@ -105,7 +105,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
 
         // 1. FORMS entities - one for each ticket
         try {
-            Optional<String> formId = Optional.ofNullable(eventData.getFormId());
+            Optional<String> formId = EventTicketTypeService.resolveFormId(eventData, eventTicketTypeId);
             if (formId.isPresent()) {
                 for (int i = 0; i < numTickets; i++) {
                     tempEntities.add(

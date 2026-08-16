@@ -66,7 +66,7 @@ export default function Dashboard() {
                   </div>
                 </Link>
                 <Link
-                  href={`/organiser/forms/create-form/editor`}
+                  href={`/organiser/forms/create-form/editor?returnTo=/organiser/v2/forms/gallery`}
                   className="flex-1 min-h-full type-body bg-surface rounded-xl hover:bg-accent hover:text-accent-contrast transition-colors"
                 >
                   <div className="h-full flex justify-center items-center p-6">
@@ -74,7 +74,7 @@ export default function Dashboard() {
                   </div>
                 </Link>
                 <Link
-                  href="/organiser/event/dashboard"
+                  href="/organiser/v2/event/dashboard"
                   className="flex-1 min-h-full type-body bg-surface rounded-xl hover:bg-accent hover:text-accent-contrast transition-colors"
                 >
                   <div className="h-full flex justify-center items-center p-6">

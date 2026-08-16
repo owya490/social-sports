@@ -1,4 +1,7 @@
 import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { FormId } from "@/interfaces/FormTypes";
+import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 
 export const GENERAL_TICKET_TYPE_NAME = "General Admission";
 
@@ -9,6 +12,12 @@ type EventWithInventory = {
   price?: number;
   capacity?: number;
   vacancy?: number;
+  formId?: FormId | null;
+};
+
+export type SortedEventTicketType = {
+  eventTicketTypeId: EventTicketTypeId;
+  eventTicketType: EventTicketType;
 };
 
 export function createEventTicketTypeId(): EventTicketTypeId {
@@ -20,6 +29,7 @@ export function createEventTicketType(params: {
   price: number;
   capacity: number;
   vacancy?: number;
+  formId?: FormId | null;
 }): EventTicketType {
   const id = createEventTicketTypeId();
   return {
@@ -28,16 +38,49 @@ export function createEventTicketType(params: {
     price: params.price,
     capacity: params.capacity,
     vacancy: params.vacancy ?? params.capacity,
+    formId: params.formId ?? null,
   };
 }
 
+export function hasEventTicketTypes(event: EventWithInventory): boolean {
+  return event.eventTicketTypes != null && Object.keys(event.eventTicketTypes).length > 0;
+}
+
+/** Sorted list for organiser UI; General Admission first, then name. */
+export function getSortedEventTicketTypes(
+  eventTicketTypes: EventTicketTypesMap | null | undefined
+): SortedEventTicketType[] {
+  if (!eventTicketTypes) {
+    return [];
+  }
+  return Object.entries(eventTicketTypes)
+    .map(([eventTicketTypeId, eventTicketType]) => ({
+      eventTicketTypeId: (eventTicketType.id || eventTicketTypeId) as EventTicketTypeId,
+      eventTicketType: {
+        ...eventTicketType,
+        id: (eventTicketType.id || eventTicketTypeId) as EventTicketTypeId,
+        formId: eventTicketType.formId ?? null,
+      },
+    }))
+    .sort((a, b) => {
+      if (a.eventTicketType.name === GENERAL_TICKET_TYPE_NAME) return -1;
+      if (b.eventTicketType.name === GENERAL_TICKET_TYPE_NAME) return 1;
+      return a.eventTicketType.name.localeCompare(b.eventTicketType.name);
+    });
+}
+
 /** New events: write top-level fields and a matching General Admission ticket type. */
-export function buildNewEventInventory(price: number, capacity: number) {
+export function buildNewEventInventory(price: number, capacity: number, formId: FormId | null = null) {
   return {
     price,
     capacity,
     vacancy: capacity,
-    eventTicketTypes: buildEventTicketTypesFromLegacyEvent({ price, capacity, vacancy: capacity }),
+    eventTicketTypes: buildEventTicketTypesFromLegacyEvent({
+      price,
+      capacity,
+      vacancy: capacity,
+      formId,
+    }),
   };
 }
 
@@ -45,6 +88,7 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
   price: number;
   capacity: number;
   vacancy: number;
+  formId?: FormId | null;
   name?: string;
 }): EventTicketTypesMap {
   const eventTicketType = createEventTicketType({
@@ -52,6 +96,7 @@ export function buildEventTicketTypesFromLegacyEvent(params: {
     price: params.price,
     capacity: params.capacity,
     vacancy: params.vacancy,
+    formId: params.formId ?? null,
   });
   return { [eventTicketType.id]: eventTicketType };
 }
@@ -100,10 +145,194 @@ export function resolveGeneralAdmissionInventory(event: EventWithInventory) {
   };
 }
 
+/**
+ * Listing / fill-bar inventory for an event.
+ * Ticket types are the source of truth; top-level price/capacity/vacancy are legacy-only.
+ */
+export function resolveEventInventory(event: EventWithInventory): {
+  price: number;
+  capacity: number;
+  vacancy: number;
+} {
+  if (hasEventTicketTypes(event)) {
+    return syncEventAggregatesFromTicketTypes(event.eventTicketTypes!);
+  }
+  return {
+    price: event.price ?? 0,
+    capacity: event.capacity ?? 0,
+    vacancy: event.vacancy ?? 0,
+  };
+}
+
 /** Copies resolved inventory onto top-level fields for UI components. */
 export function applyGeneralAdmissionInventoryFields<T extends object>(event: T): T {
-  const { price, capacity, vacancy } = resolveGeneralAdmissionInventory(event as EventWithInventory);
-  return { ...event, price, capacity, vacancy };
+  const withInventory = event as EventWithInventory;
+  return { ...event, ...resolveEventInventory(withInventory) };
+}
+
+/**
+ * Top-level listing aggregates when multiple ticket types exist:
+ * price = minimum across types, capacity/vacancy = sums.
+ */
+export function syncEventAggregatesFromTicketTypes(eventTicketTypes: EventTicketTypesMap): {
+  price: number;
+  capacity: number;
+  vacancy: number;
+} {
+  const types = Object.values(eventTicketTypes);
+  if (types.length === 0) {
+    return { price: 0, capacity: 0, vacancy: 0 };
+  }
+  return {
+    price: Math.min(...types.map((t) => t.price)),
+    capacity: types.reduce((sum, t) => sum + t.capacity, 0),
+    vacancy: types.reduce((sum, t) => sum + t.vacancy, 0),
+  };
+}
+
+/** When increasing/decreasing capacity, preserve sold count via vacancy math. */
+export function applyCapacityChange(current: EventTicketType, newCapacity: number): EventTicketType {
+  const sold = Math.max(0, current.capacity - current.vacancy);
+  if (newCapacity < sold) {
+    throw new Error(`Capacity cannot be lower than tickets already sold (${sold}).`);
+  }
+  return {
+    ...current,
+    capacity: newCapacity,
+    vacancy: newCapacity - sold,
+  };
+}
+
+/**
+ * Approved tickets sold for a ticket type.
+ * General Admission also counts tickets with a null/missing type id, or a type id that
+ * does not match any current event ticket type (legacy / orphaned).
+ */
+export function countSoldTicketsForType(
+  orderTicketsMap: Map<Order, Ticket[]>,
+  eventTicketTypeId: EventTicketTypeId,
+  eventTicketTypes?: EventTicketTypesMap | null
+): number {
+  const ticketType = findEventTicketType(eventTicketTypes, eventTicketTypeId);
+  const isGeneralAdmission = ticketType?.name === GENERAL_TICKET_TYPE_NAME;
+  const knownTypeIds = isGeneralAdmission ? collectKnownEventTicketTypeIds(eventTicketTypes) : null;
+
+  let count = 0;
+  orderTicketsMap.forEach((tickets, order) => {
+    if (order.status !== OrderAndTicketStatus.APPROVED) {
+      return;
+    }
+    tickets.forEach((ticket) => {
+      if (ticket.status !== OrderAndTicketStatus.APPROVED) {
+        return;
+      }
+      if (ticket.eventTicketTypeId === eventTicketTypeId) {
+        count += 1;
+        return;
+      }
+      if (!isGeneralAdmission || !knownTypeIds) {
+        return;
+      }
+      if (!ticket.eventTicketTypeId || !knownTypeIds.has(ticket.eventTicketTypeId)) {
+        count += 1;
+      }
+    });
+  });
+  return count;
+}
+
+function collectKnownEventTicketTypeIds(
+  eventTicketTypes: EventTicketTypesMap | null | undefined
+): Set<string> {
+  const ids = new Set<string>();
+  if (!eventTicketTypes) {
+    return ids;
+  }
+  for (const [key, type] of Object.entries(eventTicketTypes)) {
+    ids.add(key);
+    if (type?.id) {
+      ids.add(type.id);
+    }
+  }
+  return ids;
+}
+
+function findEventTicketType(
+  eventTicketTypes: EventTicketTypesMap | null | undefined,
+  eventTicketTypeId: EventTicketTypeId
+): EventTicketType | null {
+  if (!eventTicketTypes) {
+    return null;
+  }
+  const byKey = eventTicketTypes[eventTicketTypeId];
+  if (byKey) {
+    return byKey;
+  }
+  return Object.values(eventTicketTypes).find((type) => type?.id === eventTicketTypeId) ?? null;
+}
+
+/**
+ * Form for a ticket type. Prefer the type's formId; only General Admission falls back to
+ * event.formId when unset. Other types with a null formId use no form.
+ */
+export function resolveFormIdForTicketType(
+  event: EventWithInventory,
+  eventTicketTypeId: EventTicketTypeId | null | undefined
+): FormId | null {
+  const eventFormId = (event.formId as FormId | null | undefined) ?? null;
+  if (!eventTicketTypeId) {
+    return eventFormId;
+  }
+
+  const ticketType = findEventTicketType(event.eventTicketTypes, eventTicketTypeId);
+  if (!ticketType) {
+    return eventFormId;
+  }
+
+  if (ticketType.formId) {
+    return ticketType.formId as FormId;
+  }
+
+  if (ticketType.name === GENERAL_TICKET_TYPE_NAME) {
+    return eventFormId;
+  }
+
+  return null;
+}
+
+/** True if formId is the event-level form or any ticket type's form. */
+export function isFormAttachedToEvent(event: EventWithInventory, formId: FormId): boolean {
+  if (event.formId === formId) {
+    return true;
+  }
+
+  const ticketTypes = event.eventTicketTypes;
+  if (!ticketTypes) {
+    return false;
+  }
+
+  return Object.values(ticketTypes).some((ticketType) => ticketType?.formId === formId);
+}
+
+/** All formIds attached at event level or on any ticket type (deduped). */
+export function getAttachedFormIdsForEvent(event: EventWithInventory): FormId[] {
+  const ids: FormId[] = [];
+  const seen = new Set<string>();
+  const add = (formId: FormId | null | undefined) => {
+    if (!formId || seen.has(formId)) {
+      return;
+    }
+    seen.add(formId);
+    ids.push(formId);
+  };
+
+  add((event.formId as FormId | null | undefined) ?? null);
+  if (event.eventTicketTypes) {
+    for (const ticketType of Object.values(event.eventTicketTypes)) {
+      add((ticketType?.formId as FormId | null | undefined) ?? null);
+    }
+  }
+  return ids;
 }
 
 /** Firestore updates: nested when eventTicketTypes exists, otherwise top-level. */

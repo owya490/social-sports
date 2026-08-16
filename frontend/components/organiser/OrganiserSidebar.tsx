@@ -18,6 +18,7 @@ import { useUser } from "@/components/utility/UserContext";
 import Logo from "@/public/images/BlackLogo.svg";
 import { handleSignOut } from "@/services/src/auth/authService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsCache";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -110,7 +111,8 @@ function NavGroup({
     item.isActive(pathname) ||
     children.some((child) => child.isActive(pathname)) ||
     (item.href.includes("/event/dashboard") && isEventsNavGroupPath(pathname));
-  const [expanded, setExpanded] = useState(inGroup);
+  // Default open so nested items (e.g. Calendar under Events) are visible without a click.
+  const [expanded, setExpanded] = useState(true);
 
   useEffect(() => {
     if (inGroup) setExpanded(true);
@@ -209,6 +211,7 @@ function UserAccountMenu({
       await handleSignOut(setUser);
       bustEventsLocalStorageCache();
       bustUserLocalStorageCache();
+      bustOrganiserEventsCache();
       router.push("/");
       router.refresh();
     } catch (error) {
@@ -325,7 +328,7 @@ function SidebarContent({
     <div className={`flex h-full flex-col py-3 transition-[padding] duration-200 ${collapsed ? "px-1.5" : "px-2.5"}`}>
       <div className={collapsed ? "flex justify-center pb-3" : "pb-2"}>
         {!collapsed ? (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-1.5">
             <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
             <p className="font-sans text-md font-semibold leading-tight text-foreground">
               ORGANISER HUB

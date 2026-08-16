@@ -1,11 +1,14 @@
+"use client";
+
 import EventDescription from "@/components/events/EventDescription";
 import { EventAttendees } from "@/components/events/EventAttendees";
 import { EventData } from "@/interfaces/EventTypes";
 import { Tag } from "@/interfaces/TagTypes";
-import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import { useEffect } from "react";
 import { TagGroup } from "../TagGroup";
 import MobileEventPayment from "../mobile/MobileEventPayment";
 import EventPayment from "./EventPayment";
+import { useEventTicketTypeCheckout } from "./useEventTicketTypeCheckout";
 
 export { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 
@@ -13,11 +16,23 @@ interface EventDetailsProps {
   eventData: EventData;
   eventTags: Tag[];
   setLoading: (value: boolean) => void;
+  onEffectiveVacancyChange?: (vacancy: number) => void;
 }
 
 export function EventDetails(props: EventDetailsProps) {
-  const { eventData, eventTags, setLoading } = props;
-  const eventTicketTypeId = resolveCheckoutTicketTypeId(eventData);
+  const { eventData, eventTags, setLoading, onEffectiveVacancyChange } = props;
+
+  const ticketCheckout = useEventTicketTypeCheckout({
+    eventId: eventData.eventId,
+    eventTicketTypes: eventData.eventTicketTypes,
+    vacancy: eventData.vacancy,
+    price: eventData.price,
+    maxTicketsPerTransaction: eventData.maxTicketsPerTransaction,
+  });
+
+  useEffect(() => {
+    onEffectiveVacancyChange?.(ticketCheckout.effectiveVacancy);
+  }, [ticketCheckout.effectiveVacancy, onEffectiveVacancyChange]);
 
   return (
     <div className="flex justify-center w-full px-2 md:px-0">
@@ -29,11 +44,9 @@ export function EventDetails(props: EventDetailsProps) {
               endDate={eventData.endDate}
               registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
-              price={eventData.price}
               vacancy={eventData.vacancy}
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
-              isPrivate={eventData.isPrivate}
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
@@ -41,7 +54,7 @@ export function EventDetails(props: EventDetailsProps) {
               waitlistEnabled={eventData.waitlistEnabled}
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
               bookingApprovalEnabled={eventData.bookingApprovalEnabled}
-              eventTicketTypeId={eventTicketTypeId}
+              ticketCheckout={ticketCheckout}
             />
           </div>
 
@@ -64,11 +77,9 @@ export function EventDetails(props: EventDetailsProps) {
               endDate={eventData.endDate}
               registrationEndDate={eventData.registrationDeadline}
               location={eventData.location}
-              price={eventData.price}
               vacancy={eventData.vacancy}
               isPaymentsActive={eventData.paymentsActive}
               eventId={eventData.eventId}
-              isPrivate={eventData.isPrivate}
               paused={eventData.paused}
               setLoading={setLoading}
               eventLink={eventData.eventLink}
@@ -76,7 +87,7 @@ export function EventDetails(props: EventDetailsProps) {
               waitlistEnabled={eventData.waitlistEnabled}
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
               bookingApprovalEnabled={eventData.bookingApprovalEnabled}
-              eventTicketTypeId={eventTicketTypeId}
+              ticketCheckout={ticketCheckout}
             />
           </div>
         </div>

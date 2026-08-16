@@ -12,6 +12,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
 import {
   fetchOrganiserDashboardMetrics,
+  tryGetCachedOrganiserDashboardMetrics,
   OrganiserDashboardMetrics,
 } from "@/services/src/organiser/organiserDashboardMetricsService";
 import Link from "next/link";
@@ -43,6 +44,13 @@ export function OrganiserDashboardView() {
       if (user.userId === "") {
         return;
       }
+      const cached = tryGetCachedOrganiserDashboardMetrics(user.userId);
+      if (cached) {
+        setMetrics(cached);
+        setError(false);
+        setLoading(false);
+        return;
+      }
       setError(false);
       try {
         const data = await fetchOrganiserDashboardMetrics(user.userId);
@@ -55,7 +63,7 @@ export function OrganiserDashboardView() {
       }
     };
     loadMetrics();
-  }, [user]);
+  }, [user.userId]);
 
   const upcoming = useMemo(() => {
     if (!metrics) return [];
@@ -80,7 +88,7 @@ export function OrganiserDashboardView() {
               onClick={() => {
                 setLoading(true);
                 setError(false);
-                fetchOrganiserDashboardMetrics(user.userId)
+                fetchOrganiserDashboardMetrics(user.userId, { bypassCache: true })
                   .then(setMetrics)
                   .catch((loadError) => {
                     logger.error("fetchOrganiserDashboardMetrics() retry Error: " + loadError);

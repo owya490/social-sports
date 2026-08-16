@@ -9,7 +9,7 @@ import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel
 import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
+import { getOrganiserEvents, tryGetOrganiserEventsFromCache } from "@/services/src/organiser/organiserEventsService";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 const logger = new Logger("OrganiserEventsDashboardV2");
@@ -53,6 +53,13 @@ export function OrganiserEventsDashboardView() {
       if (user.userId === "") {
         return;
       }
+      const cached = tryGetOrganiserEventsFromCache(user.userId);
+      if (cached) {
+        setAllEvents(cached);
+        setError(false);
+        setLoading(false);
+        return;
+      }
       setError(false);
       setLoading(true);
       try {
@@ -85,7 +92,7 @@ export function OrganiserEventsDashboardView() {
               onClick={() => {
                 setLoading(true);
                 setError(false);
-                getOrganiserEvents(user.userId)
+                getOrganiserEvents(user.userId, { bypassCache: true })
                   .then(setAllEvents)
                   .catch((fetchError) => {
                     logger.error(`Failed to get organiser events: ${fetchError}`);

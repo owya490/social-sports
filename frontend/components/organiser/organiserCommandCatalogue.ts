@@ -1,5 +1,8 @@
 import { getAllOrganiserCustomEventLinks } from "@/services/src/events/customEventLinks/customEventLinksService";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
+import {
+  getOrganiserEvents,
+  onOrganiserEventsCacheBust,
+} from "@/services/src/organiser/organiserEventsService";
 import { getOrganiserCollections } from "@/services/src/eventCollections/eventCollectionsService";
 import { getFormsForUser } from "@/services/src/forms/formsServices";
 import { getOrganiserRecurrenceTemplates } from "@/services/src/recurringEvents/recurringEventsService";
@@ -130,7 +133,7 @@ function buildCatalogue(
         kind: "form" as const,
         label: (form.title as string)?.trim() || "Untitled form",
         subtitle: form.formActive ? "Active" : "Inactive",
-        href: `/organiser/forms/${form.formId}/editor?returnTo=/organiser/v2/forms/gallery`,
+        href: `/organiser/v2/forms/${form.formId}/editor`,
         keywords: [(form.description as string) ?? ""].filter(Boolean),
       }))
       .sort((a, b) => a.label.localeCompare(b.label)),
@@ -148,6 +151,10 @@ export function bustOrganiserCommandCatalogueCache(userId?: string) {
     cache = null;
   }
 }
+
+onOrganiserEventsCacheBust(() => {
+  bustOrganiserCommandCatalogueCache();
+});
 
 export async function loadOrganiserCommandCatalogue(userId: UserId): Promise<OrganiserCommandCatalogue> {
   if (!userId) {

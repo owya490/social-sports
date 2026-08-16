@@ -150,14 +150,14 @@ export const FormPreviewCard = ({
                 {/* Form Editor */}
                 <Link
                   className="w-full py-3 px-4 border border-core-outline rounded-lg text-xs hover:bg-core-hover transition-colors duration-200 text-center"
-                  href={`/organiser/forms/${formId}/editor`}
+                  href={`/organiser/forms/${formId}/editor?returnTo=/organiser/v2/forms/gallery`}
                 >
                   Edit
                 </Link>
 
                 {/* View as Responder */}
                 <Link
-                  href={`/organiser/forms/${formId}/preview`}
+                  href={`/organiser/forms/${formId}/preview?returnTo=/organiser/v2/forms/gallery`}
                   className="w-full py-3 px-4 hover:bg-core-hover border border-core-outline rounded-lg text-xs transition-colors duration-200 text-center"
                   onClick={(e) => e.stopPropagation()}
                 >

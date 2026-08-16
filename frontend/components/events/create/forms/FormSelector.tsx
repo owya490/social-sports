@@ -86,7 +86,7 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
           <div className="ml-2">
             <InvertedHighlightButton
               type="button"
-              onClick={() => window.open("/organiser/forms/create-form/editor", "_blank")}
+              onClick={() => window.open("/organiser/forms/create-form/editor?returnTo=/organiser/v2/forms/gallery", "_blank")}
             >
               Create Form
             </InvertedHighlightButton>

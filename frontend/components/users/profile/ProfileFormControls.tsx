@@ -1,14 +1,13 @@
 "use client";
 
-import DescriptionRichTextEditor from "@/components/editor/DescriptionRichTextEditor";
-import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
+import { EventHubDescriptionEditor } from "@/components/organiser/v2/event-hub/EventHubDescriptionEditor";
 import { InputHTMLAttributes, ReactNode } from "react";
 
 export const profileFieldClass =
   "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 px-3 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none disabled:opacity-60";
 
 export const profileFieldShellClass =
-  "relative flex items-center rounded-xl border border-border bg-background focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus";
+  "relative flex items-center rounded-xl border border-border bg-background";
 
 type ProfileSectionProps = {
   title: string;
@@ -144,46 +143,15 @@ export function ProfileReadonlyField({ label, value, action }: ProfileReadonlyPr
 type ProfileBioEditorProps = {
   value: string;
   onChange: (value: string) => void;
-  editing: boolean;
-  onEditingChange: (editing: boolean) => void;
 };
 
-export function ProfileBioEditor({ value, onChange, editing, onEditingChange }: ProfileBioEditorProps) {
-  if (!editing) {
-    return (
-      <div className="space-y-2">
-        <div className="rounded-xl border border-border bg-surface px-3 py-2.5 min-h-[4.5rem]">
-          {value ? (
-            <div className="text-sm text-foreground font-sans">
-              <RichTextEditorContent description={value} />
-            </div>
-          ) : (
-            <p className="text-sm text-foreground-muted font-sans">No bio yet — add a short introduction.</p>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={() => onEditingChange(true)}
-          className="text-xs font-semibold text-foreground font-sans hover:underline"
-        >
-          Edit bio
-        </button>
-      </div>
-    );
-  }
-
+export function ProfileBioEditor({ value, onChange }: ProfileBioEditorProps) {
   return (
-    <div className="space-y-2">
-      <div className="rounded-xl border border-border bg-background overflow-hidden focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
-        <DescriptionRichTextEditor description={value} updateDescription={onChange} />
-      </div>
-      <button
-        type="button"
-        onClick={() => onEditingChange(false)}
-        className="text-xs font-semibold text-foreground-secondary font-sans hover:text-foreground"
-      >
-        Done editing
-      </button>
-    </div>
+    <EventHubDescriptionEditor
+      description={value}
+      updateDescription={onChange}
+      placeholder="A short introduction for your public profile."
+      compact
+    />
   );
 }

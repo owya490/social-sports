@@ -11,7 +11,7 @@
 
 import { EventHubAttendees } from "@/components/organiser/v2/event-hub/EventHubAttendees";
 import { EventHubHeader } from "@/components/organiser/v2/event-hub/EventHubHeader";
-import { EventHubForms } from "@/components/organiser/v2/event-hub/EventHubForms";
+import { EventHubRegistration } from "@/components/organiser/v2/event-hub/EventHubRegistration";
 import { EventHubListing } from "@/components/organiser/v2/event-hub/EventHubListing";
 import { EventHubNav } from "@/components/organiser/v2/event-hub/EventHubNav";
 import { EventHubSettings } from "@/components/organiser/v2/event-hub/EventHubSettings";
@@ -26,20 +26,21 @@ import {
   EventMetadata,
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
-import { FormId } from "@/interfaces/FormTypes";
-import { Order } from "@/interfaces/OrderTypes";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
+import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
-import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Shared event hub body — production route + welcome twin.
@@ -52,6 +53,7 @@ export function OrganiserEventHubView() {
 
   const [section, setSection] = useState<EventHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
+  const hasAppliedPendingLandingRef = useRef(false);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState(true);
   const [pauseUpdating, setPauseUpdating] = useState(false);
@@ -82,17 +84,22 @@ export function OrganiserEventHubView() {
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
-  const [eventFormId, setEventFormId] = useState<FormId | null>(null);
+  const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
 
   useEffect(() => {
     if (!user.userId) return;
 
     let isActive = true;
+    hasAppliedPendingLandingRef.current = false;
+    setSection("Details");
 
     const fetchEvent = async () => {
       try {
-        const event = await getEventById(eventId);
+        const [event, nextEventMetadata] = await Promise.all([
+          getEventById(eventId),
+          getEventsMetadataByEventId(eventId),
+        ]);
         if (!isActive) return;
 
         if (event.organiserId !== user.userId) {
@@ -104,23 +111,24 @@ export function OrganiserEventHubView() {
         setEventName(event.name);
         setEventStartDate(event.startDate);
         setEventEndDate(event.endDate);
-        setEventVacancy(event.vacancy);
+        const inventory = resolveEventInventory(event);
+        setEventVacancy(inventory.vacancy);
         setEventDescription(event.description);
         setEventLocation(event.location);
         setEventSport(event.sport);
-        setEventPrice(event.price);
+        setEventPrice(inventory.price);
         setEventImage(event.image);
         setEventThumbnail(event.thumbnail);
-        setEventCapacity(event.capacity);
+        setEventCapacity(inventory.capacity);
         setEventPaused(event.paused);
         setEventPaymentsActive(event.paymentsActive);
         setEventRegistrationDeadline(event.registrationDeadline);
-        setEventEventLink(event.eventLink);
+        setEventEventLink(event.eventLink ?? "");
         setEventStripeFeeToCustomer(event.stripeFeeToCustomer);
         setEventPromotionalCodesEnabled(event.promotionalCodesEnabled);
         setEventIsActive(event.isActive);
         setEventIsPrivate(event.isPrivate);
-        setEventFormId(event.formId);
+        setEventTicketTypes(event.eventTicketTypes);
         setEventHideVacancy(event.hideVacancy);
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
@@ -128,13 +136,12 @@ export function OrganiserEventHubView() {
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
             event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
-            event.capacity
+            inventory.capacity
           )
         );
 
-        const nextEventMetadata = await getEventsMetadataByEventId(eventId);
-        if (!isActive) return;
         setEventMetadata(nextEventMetadata);
+        if (isActive) setLoading(false);
 
         const allOrders = await getOrdersByIds(nextEventMetadata.orderIds);
         const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
@@ -148,6 +155,16 @@ export function OrganiserEventHubView() {
         if (!isActive) return;
         setOrderTicketsMap(nextOrderTicketsMap);
 
+        if (!hasAppliedPendingLandingRef.current) {
+          hasAppliedPendingLandingRef.current = true;
+          const hasPendingBooking = allOrders.some(
+            (order) => order.status === OrderAndTicketStatus.PENDING
+          );
+          if (hasPendingBooking) {
+            setSection("Registrations");
+          }
+        }
+
         try {
           await calculateNetSales(nextOrderTicketsMap);
         } catch (error) {
@@ -158,7 +175,6 @@ export function OrganiserEventHubView() {
         eventServiceLogger.error(`Error fetching event for organiser v2 event hub: ${error}`);
         router.push("/error");
       } finally {
-        await sleep(400);
         if (isActive) setLoading(false);
       }
     };
@@ -176,6 +192,7 @@ export function OrganiserEventHubView() {
     try {
       await updateEventById(eventId, { paused: next });
       bustEventsLocalStorageCache();
+      bustOrganiserEventsCache();
     } catch (error) {
       setEventPaused(!next);
       eventServiceLogger.error(`Failed to toggle pause on event hub: ${error}`);
@@ -236,24 +253,30 @@ export function OrganiserEventHubView() {
             eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
             isPrivate={eventIsPrivate}
-            eventFormId={eventFormId}
+            eventTicketTypes={eventTicketTypes}
+            orderTicketsMap={orderTicketsMap}
+            setEventTicketTypes={(types) => {
+              setEventTicketTypes(types);
+              setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+              const inventory = resolveEventInventory({ eventTicketTypes: types });
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
+            }}
             updateData={async (id, data) => {
               await updateEventById(id, data);
               bustEventsLocalStorageCache();
+              bustOrganiserEventsCache();
               if (data.name !== undefined) setEventName(data.name);
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);
               if (data.sport !== undefined) setEventSport(data.sport);
-              if (data.price !== undefined) setEventPrice(data.price);
-              if (data.capacity !== undefined) setEventCapacity(data.capacity);
-              if (data.vacancy !== undefined) setEventVacancy(data.vacancy);
               if (data.startDate !== undefined) setEventStartDate(data.startDate);
               if (data.endDate !== undefined) setEventEndDate(data.endDate);
               if (data.registrationDeadline !== undefined) {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
-              if (data.eventLink !== undefined) setEventEventLink(data.eventLink);
-              if (data.formId !== undefined) setEventFormId(data.formId);
+              if (data.eventLink !== undefined) setEventEventLink(data.eventLink ?? "");
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);
@@ -269,12 +292,32 @@ export function OrganiserEventHubView() {
             eventId={eventId}
             orderTicketsMap={orderTicketsMap}
             setEventVacancy={setEventVacancy}
+            onEventRefresh={(event) => {
+              setEventData(event);
+              setEventTicketTypes(event.eventTicketTypes);
+              const inventory = resolveEventInventory(event);
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
+            }}
             setOrderTicketsMap={setOrderTicketsMap}
           />
         )}
 
         {section === "Forms" && (
-          <EventHubForms eventId={eventId} orderTicketsMap={orderTicketsMap} />
+          <EventHubRegistration
+            eventId={eventId}
+            orderTicketsMap={orderTicketsMap}
+            eventTicketTypes={eventTicketTypes}
+            setEventTicketTypes={(types) => {
+              setEventTicketTypes(types);
+              setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
+              const inventory = resolveEventInventory({ eventTicketTypes: types });
+              setEventCapacity(inventory.capacity);
+              setEventVacancy(inventory.vacancy);
+              setEventPrice(inventory.price);
+            }}
+          />
         )}
 
         {section === "Settings" && (

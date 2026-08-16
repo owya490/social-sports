@@ -45,7 +45,7 @@ const FormsGallery = () => {
         <div className="flex justify-between">
           <h1 className="text-3xl md:text-4xl lg:text-5xl">Form Gallery</h1>
           <div className="flex justify-end mb-4">
-            <Link href="/organiser/forms/create-form/editor">
+            <Link href="/organiser/forms/create-form/editor?returnTo=/organiser/v2/forms/gallery">
               <InvertedHighlightButton text="Create Form" className="px-4 py-2" />
             </Link>
           </div>

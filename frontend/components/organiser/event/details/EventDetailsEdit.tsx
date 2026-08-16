@@ -25,11 +25,13 @@ import { Form, FormDescription, FormId, FormTitle } from "@/interfaces/FormTypes
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
+  addCalendarDaysToYmd,
+  dateAndTimeInLocalToDate,
+  dateAndTimeInLocalToTimestamp,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
-  parseDateTimeStringToTimestamp,
   timestampToDateString,
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
@@ -127,8 +129,14 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   const [endTime, setEndTime] = useState("");
 
   const handleDateTimeUpdate = (): Partial<EventData> => {
-    const updatedStartTimestamp = parseDateTimeStringToTimestamp(`${newEditStartDate} ${newEditStartTime}`);
-    const updatedEndTimestamp = parseDateTimeStringToTimestamp(`${newEditEndDate} ${newEditEndTime}`);
+    const updatedStartTimestamp = dateAndTimeInLocalToTimestamp(
+      formatStringToDate(newEditStartDate),
+      formatTimeTo24Hour(newEditStartTime)
+    );
+    const updatedEndTimestamp = dateAndTimeInLocalToTimestamp(
+      formatStringToDate(newEditEndDate),
+      formatTimeTo24Hour(newEditEndTime)
+    );
     return {
       startDate: updatedStartTimestamp,
       endDate: updatedEndTimestamp,
@@ -143,8 +151,9 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
   const [registrationDeadlineTime, setRegistrationDeadlineTime] = useState("");
 
   const handleRegistrationDeadlineUpdate = (): Partial<EventData> => {
-    const updatedRegistrationDeadline = parseDateTimeStringToTimestamp(
-      `${newEditRegistrationDeadlineDate} ${newEditRegistrationDeadlineTime}`
+    const updatedRegistrationDeadline = dateAndTimeInLocalToTimestamp(
+      formatStringToDate(newEditRegistrationDeadlineDate),
+      formatTimeTo24Hour(newEditRegistrationDeadlineTime)
     );
     return {
       registrationDeadline: updatedRegistrationDeadline,
@@ -232,11 +241,31 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
     };
   };
 
-  // Keep end datetime and registration deadline in sync with start date.
+  // When the organiser changes start date, preserve multi-day span; keep registration deadline on start.
+  const prevEditStartDateRef = useRef<string | null>(null);
   useEffect(() => {
-    setNewEditEndDate(newEditStartDate);
+    const prevStartDate = prevEditStartDateRef.current;
+    prevEditStartDateRef.current = newEditStartDate;
+
+    if (prevStartDate === null || prevStartDate === "" || newEditStartDate === "" || prevStartDate === newEditStartDate) {
+      return;
+    }
+
+    const prevYmd = formatStringToDate(prevStartDate);
+    const nextYmd = formatStringToDate(newEditStartDate);
+    const [prevY, prevM, prevD] = prevYmd.split("-").map(Number);
+    const [nextY, nextM, nextD] = nextYmd.split("-").map(Number);
+    const dayDelta = Math.round(
+      (Date.UTC(nextY, nextM - 1, nextD) - Date.UTC(prevY, prevM - 1, prevD)) / (24 * 60 * 60 * 1000)
+    );
+    if (dayDelta !== 0) {
+      const shiftedEndYmd = addCalendarDaysToYmd(formatStringToDate(newEditEndDate), dayDelta);
+      setNewEditEndDate(formatDateToString(shiftedEndYmd < nextYmd ? nextYmd : shiftedEndYmd));
+    }
+
     setNewEditRegistrationDeadlineDate(newEditStartDate);
     setNewEditRegistrationDeadlineTime(newEditStartTime);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [newEditStartDate]);
 
   // Sport
@@ -296,8 +325,9 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
 
   // loading useEffect to populate states
   useEffect(() => {
-    setNewEditStartDate(timestampToDateString(eventStartDate));
-    setStartDate(timestampToDateString(eventStartDate));
+    const nextStartDate = timestampToDateString(eventStartDate);
+    setNewEditStartDate(nextStartDate);
+    setStartDate(nextStartDate);
     setNewEditStartTime(timestampToTimeOfDay(eventStartDate));
     setStartTime(timestampToTimeOfDay(eventStartDate));
     setNewEditEndDate(timestampToDateString(eventEndDate));
@@ -328,21 +358,28 @@ export const EventDetailsEdit = <T extends EventId | RecurrenceTemplateId>({
 
     setNewEditAttachFormId(eventFormId);
     setAttachFormId(eventFormId);
+    // Hydration is not a user start-date change — keep the event's real end date.
+    prevEditStartDateRef.current = nextStartDate;
   }, [loading]);
 
   // UseEffect triggered on certain field mutations to ensure entry is valid
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = new Date(
-      `${formatStringToDate(newEditStartDate)}T${formatTimeTo24Hour(newEditStartTime)}`
+    const selectedStartDateTime = dateAndTimeInLocalToDate(
+      formatStringToDate(newEditStartDate),
+      formatTimeTo24Hour(newEditStartTime)
     );
-    const selectedEndDateTime = new Date(`${formatStringToDate(newEditEndDate)}T${formatTimeTo24Hour(newEditEndTime)}`);
-    const selectedRegistrationDeadline = new Date(
-      `${formatStringToDate(newEditRegistrationDeadlineDate)}T${formatTimeTo24Hour(newEditRegistrationDeadlineTime)}`
+    const selectedEndDateTime = dateAndTimeInLocalToDate(
+      formatStringToDate(newEditEndDate),
+      formatTimeTo24Hour(newEditEndTime)
+    );
+    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
+      formatStringToDate(newEditRegistrationDeadlineDate),
+      formatTimeTo24Hour(newEditRegistrationDeadlineTime)
     );
 
-    if (currentDateTime > selectedStartDateTime) {
-      setDateWarning("Event start date and time is in the past!");
+    if (currentDateTime > selectedEndDateTime) {
+      setDateWarning("Event end date and time is in the past!");
     } else {
       setDateWarning(null);
     }

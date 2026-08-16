@@ -1,5 +1,10 @@
 "use client";
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
+import { CompactDropdownSection } from "@/components/forms/compact/CompactDropdownSection";
+import { CompactHeaderSection } from "@/components/forms/compact/CompactHeaderSection";
+import { CompactImageSection } from "@/components/forms/compact/CompactImageSection";
+import { CompactTextSection } from "@/components/forms/compact/CompactTextSection";
+import { CompactTickboxSection } from "@/components/forms/compact/CompactTickboxSection";
 import { DropdownSelectSectionResponse } from "@/components/forms/sections/dropdown-select-section/DropdownSelectSectionResponse";
 import { HeaderSectionResponse } from "@/components/forms/sections/header-section/HeaderSectionResponse";
 import { TextSectionResponse } from "@/components/forms/sections/text-section/TextSectionResponse";
@@ -10,25 +15,28 @@ import { Form, FormId, FormResponseId, FormSectionType, SectionId } from "@/inte
 import { FulfilmentEntityId, FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { isFormAttachedToEvent } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
+import { getEventById } from "@/services/src/events/eventsService";
 import { FormResponsePaths } from "@/services/src/forms/formsConstants";
 import {
   formsServiceLogger,
   getForm,
-  getFormIdByEventId,
   getFormResponse,
   saveTempFormResponse,
   updateTempFormResponse,
+  updateFulfilmentEntityWithFormResponseId,
 } from "@/services/src/forms/formsServices";
 import { extractFormResponseFromForm } from "@/services/src/forms/formsUtils/createFormResponseUtils";
 import { findFormResponseDocRef } from "@/services/src/forms/formsUtils/formsUtils";
-import { updateFulfilmentEntityWithFormResponseId } from "@/services/src/forms/formsServices";
 import { getPublicUserById } from "@/services/src/users/usersService";
 import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, ReactNode, useEffect, useImperativeHandle, useState } from "react";
 import { ImageSectionResponse } from "./sections/image-section/ImageSectionResponse";
+
+const compactQuestionPaperClass = "rounded-xl border border-border bg-background p-4";
 
 const formResponderLogger = new Logger("formResponderLogger");
 
@@ -51,6 +59,8 @@ interface FormResponderCommonProps {
   onSaveLoadingChange?: (isLoading: boolean) => void;
   isEmbedded?: boolean;
   hideSaveButton?: boolean;
+  /** Compact Clubhouse layout for public answerer + Organiser V2 surfaces */
+  variant?: "default" | "compact";
 }
 
 type FormResponderPreviewProps = FormResponderCommonProps & {
@@ -78,8 +88,10 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       onSaveLoadingChange,
       isEmbedded = false,
       hideSaveButton = false,
+      variant = "default",
     } = props;
     const eventId = isPreview ? undefined : props.eventId;
+    const isCompact = variant === "compact";
 
     // if we are in preview mode, we can't edit the form
     const resolvedCanEditForm = isPreview === true ? false : canEditForm;
@@ -171,9 +183,9 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
             router.push("/error");
             return;
           }
-          // check the form is actually attached to the event as we are not in preview mode
-          const expectedFormId = await getFormIdByEventId(eventId);
-          if (expectedFormId !== formId) {
+          // Allow event.formId or any ticket-type formId (non-GA types use their own form).
+          const event = await getEventById(eventId);
+          if (!isFormAttachedToEvent(event, formId)) {
             router.push("/error");
             return;
           }
@@ -337,55 +349,121 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
       );
     }
 
+    const wrapCompactQuestion = (sectionId: SectionId, children: ReactNode) => (
+      <section key={sectionId} className={compactQuestionPaperClass}>
+        {children}
+      </section>
+    );
+
+    const renderCompactSections = () => (
+      <>
+        {form.sectionsOrder.map((sectionId) => {
+          const section = form.sectionsMap[sectionId];
+          if (!section) return null;
+
+          switch (section.type) {
+            case FormSectionType.TEXT:
+              return wrapCompactQuestion(
+                sectionId,
+                <CompactTextSection
+                  textSection={section}
+                  answerOnChange={(newAnswer: string) => stringAnswerOnChange(sectionId, newAnswer)}
+                  canEdit={canEdit}
+                />
+              );
+            case FormSectionType.DROPDOWN_SELECT:
+              return wrapCompactQuestion(
+                sectionId,
+                <CompactDropdownSection
+                  dropdownSelectSection={section}
+                  answerOnChange={(newAnswer: string) => stringAnswerOnChange(sectionId, newAnswer)}
+                  canEdit={canEdit}
+                />
+              );
+            case FormSectionType.TICKBOX:
+              return wrapCompactQuestion(
+                sectionId,
+                <CompactTickboxSection
+                  tickboxSection={section}
+                  answerOnChange={(newAnswer: string[]) => arrayAnswerOnChange(sectionId, newAnswer)}
+                  canEdit={canEdit}
+                />
+              );
+            case FormSectionType.IMAGE:
+              return wrapCompactQuestion(sectionId, <CompactImageSection imageSection={section} />);
+            default:
+              return null;
+          }
+        })}
+      </>
+    );
+
+    const renderDefaultSections = () => (
+      <>
+        {form.sectionsOrder.map((sectionId) => {
+          const section = form.sectionsMap[sectionId];
+          if (!section) return null;
+
+          switch (section.type) {
+            case FormSectionType.TEXT:
+              return (
+                <TextSectionResponse
+                  key={sectionId}
+                  textSection={section}
+                  answerOnChange={(newAnswer: string) => stringAnswerOnChange(sectionId, newAnswer)}
+                  canEdit={canEdit}
+                />
+              );
+            case FormSectionType.DROPDOWN_SELECT:
+              return (
+                <DropdownSelectSectionResponse
+                  key={sectionId}
+                  dropdownSelectSection={section}
+                  answerOnChange={(newAnswer: string) => stringAnswerOnChange(sectionId, newAnswer)}
+                  canEdit={canEdit}
+                />
+              );
+            case FormSectionType.TICKBOX:
+              return (
+                <TickboxSectionResponse
+                  key={sectionId}
+                  tickboxSection={section}
+                  answerOnChange={(newAnswer: string[]) => arrayAnswerOnChange(sectionId, newAnswer)}
+                  canEdit={canEdit}
+                />
+              );
+            case FormSectionType.IMAGE:
+              return <ImageSectionResponse key={sectionId} imageSection={section} />;
+            default:
+              return null;
+          }
+        })}
+      </>
+    );
+
+    if (isCompact) {
+      return (
+        <div className={isEmbedded ? "w-full" : "bg-surface text-foreground"}>
+          <div className={`mx-auto w-full ${isEmbedded ? "" : "max-w-3xl px-4 sm:px-6 py-6 sm:py-8"}`}>
+            <div className="flex flex-col gap-3">
+              <CompactHeaderSection
+                formTitle={form.title}
+                formDescription={form.description}
+                organiser={organiser}
+              />
+              {renderCompactSections()}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className={`${isEmbedded ? "w-full" : "bg-core-hover"}`}>
         <div className={`flex ${isEmbedded ? "w-full" : "w-screen"} justify-center`}>
           <div className={`${isEmbedded ? "w-full space-y-4" : "screen-width-primary space-y-8 md:px-32"}`}>
             <HeaderSectionResponse formTitle={form.title} formDescription={form.description} organiser={organiser} />
-            {form.sectionsOrder.map((sectionId) => {
-              const section = form.sectionsMap[sectionId];
-              if (!section) return null; // Skip if section not found
-
-              switch (section.type) {
-                case FormSectionType.TEXT:
-                  return (
-                    <TextSectionResponse
-                      key={sectionId}
-                      textSection={section}
-                      answerOnChange={(newAnswer: string) => {
-                        stringAnswerOnChange(sectionId, newAnswer);
-                      }}
-                      canEdit={canEdit}
-                    />
-                  );
-                case FormSectionType.DROPDOWN_SELECT:
-                  return (
-                    <DropdownSelectSectionResponse
-                      key={sectionId}
-                      dropdownSelectSection={section}
-                      answerOnChange={(newAnswer: string) => {
-                        stringAnswerOnChange(sectionId, newAnswer);
-                      }}
-                      canEdit={canEdit}
-                    />
-                  );
-                case FormSectionType.TICKBOX:
-                  return (
-                    <TickboxSectionResponse
-                      key={sectionId}
-                      tickboxSection={section}
-                      answerOnChange={(newAnswer: string[]) => {
-                        arrayAnswerOnChange(sectionId, newAnswer);
-                      }}
-                      canEdit={canEdit}
-                    />
-                  );
-                case FormSectionType.IMAGE:
-                  return <ImageSectionResponse key={sectionId} imageSection={section} />;
-                default:
-                  return null;
-              }
-            })}
+            {renderDefaultSections()}
             {!hideSaveButton && (
               <div className={`w-full ${canEdit ? "flex" : "hidden"}`}>
                 <div className="w-fit ml-auto bg-white py-2 px-4 rounded-lg flex justify-between gap-4">

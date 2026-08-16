@@ -293,7 +293,7 @@ export default function CollectionPage() {
   const handleDeleteCollection = async () => {
     try {
       await deleteEventCollection(collectionId, user.userId, collection.isPrivate);
-      router.push("/organiser/event/event-collection");
+      router.push("/organiser/v2/event/event-collection");
     } catch (error) {
       logger.error(`Failed to delete collection: ${error}`);
       router.push(getErrorUrl(error));
@@ -325,7 +325,7 @@ export default function CollectionPage() {
         {/* Header */}
         <div className="mb-6">
           <Link
-            href="/organiser/event/event-collection"
+            href="/organiser/v2/event/event-collection"
             className="inline-flex items-center text-gray-600 hover:text-core-text mb-4"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />

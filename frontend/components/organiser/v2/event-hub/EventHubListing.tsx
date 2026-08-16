@@ -2,9 +2,16 @@
 
 import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { useUser } from "@/components/utility/UserContext";
+import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { FormId } from "@/interfaces/FormTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import {
+  getSortedEventTicketTypes,
+  hasEventTicketTypes,
+  resolveEventInventory,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { AllImageData, getUsersEventImagesUrls, getUsersEventThumbnailsUrls } from "@/services/src/images/imageService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -17,13 +24,15 @@ import {
   MapPinIcon,
   PencilSquareIcon,
   PhotoIcon,
+  TicketIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { ImagePickerReveal } from "../shared/ImagePickerLoading";
+import { ShortDateBadge } from "../shared/ShortDateBadge";
 import { EVENT_HUB_EDIT_FORM_ID, EventHubEditForm } from "./EventHubEditForm";
 import { EventHubPanel } from "./EventHubPanel";
 import { EventHubShareControl } from "./EventHubShareControl";
@@ -38,6 +47,7 @@ type EventHubListingProps = {
   eventDescription: string;
   eventLocation: string;
   eventSport: string;
+  /** Legacy-only fallbacks when the event has no ticket types. */
   eventCapacity: number;
   eventVacancy: number;
   eventPrice: number;
@@ -47,7 +57,10 @@ type EventHubListingProps = {
   eventThumbnail: string;
   isActive: boolean;
   isPrivate: boolean;
-  eventFormId: FormId | null;
+  eventTicketTypes?: EventTicketTypesMap;
+  orderTicketsMap?: Map<Order, Ticket[]>;
+  setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
+  onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
   mode?: "event" | "template";
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
@@ -71,7 +84,10 @@ export function EventHubListing({
   eventThumbnail,
   isActive,
   isPrivate,
-  eventFormId,
+  eventTicketTypes,
+  orderTicketsMap,
+  setEventTicketTypes,
+  onPersistTicketTypes,
   mode = "event",
   updateData,
 }: EventHubListingProps) {
@@ -86,12 +102,28 @@ export function EventHubListing({
   const cover = eventImage || eventThumbnail;
   const hostName = [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "You";
   const hostEmail = user.contactInformation?.email || "";
-  const monthShort = loading ? "" : eventStartDate.toDate().toLocaleString("en-AU", { month: "short" }).toUpperCase();
-  const dayNum = loading ? "" : String(eventStartDate.toDate().getDate());
-  const filled = Math.max(0, eventCapacity - eventVacancy);
-  const priceLabel = getEventPriceDisplay(eventPrice, true);
-  const capacityLabel = eventCapacity > 0 ? `${filled} / ${eventCapacity} spots` : "Capacity not set";
+  const inventory = useMemo(
+    () =>
+      resolveEventInventory({
+        eventTicketTypes,
+        price: eventPrice,
+        capacity: eventCapacity,
+        vacancy: eventVacancy,
+      }),
+    [eventCapacity, eventPrice, eventTicketTypes, eventVacancy]
+  );
+  const filled = Math.max(0, inventory.capacity - inventory.vacancy);
+  const priceLabel = getEventPriceDisplay(inventory.price, true);
+  const capacityLabel = inventory.capacity > 0 ? `${filled} / ${inventory.capacity} spots` : "Capacity not set";
   const publicHost = publicUrl.replace(/^https?:\/\//, "");
+  const showPriceRow = !(
+    hasEventTicketTypes({ eventTicketTypes }) && getSortedEventTicketTypes(eventTicketTypes).length > 1
+  );
+  const sortedTicketTypes = getSortedEventTicketTypes(eventTicketTypes);
+  const showTicketTypesRow = hasEventTicketTypes({ eventTicketTypes }) && sortedTicketTypes.length > 0;
+  const startDateLabel = timestampToDateString(eventStartDate);
+  const endDateLabel = timestampToDateString(eventEndDate);
+  const isMultiDay = startDateLabel !== endDateLabel;
 
   useEffect(() => {
     if (isTemplate) {
@@ -161,20 +193,10 @@ export function EventHubListing({
             ) : (
               <ul className="space-y-4">
                 <li className="flex gap-3 items-start">
-                  <div
-                    className="flex h-11 w-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border text-center"
-                    aria-hidden
-                  >
-                    <span className="bg-[#FF3B30] text-white flex items-center justify-center leading-none">
-                      <span className="text-xs font-semibold tracking-wide scale-75 origin-center">{monthShort}</span>
-                    </span>
-                    <span className="flex-1 flex items-center justify-center bg-background text-base font-bold text-foreground tabular-nums leading-none">
-                      {dayNum}
-                    </span>
-                  </div>
+                  <ShortDateBadge date={eventStartDate.toDate()} />
                   <div className="min-w-0 pt-0.5">
                     <p className="text-sm font-semibold text-foreground font-sans">
-                      {timestampToDateString(eventStartDate)}
+                      {isMultiDay ? `${startDateLabel} – ${endDateLabel}` : startDateLabel}
                     </p>
                     <p className="text-sm text-foreground-secondary font-sans">
                       {timestampToTimeOfDay(eventStartDate)} – {timestampToTimeOfDay(eventEndDate)}
@@ -206,26 +228,47 @@ export function EventHubListing({
                     className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
                     aria-hidden
                   >
-                    <UserGroupIcon className="h-5 w-5" />
+                    {showTicketTypesRow ? <TicketIcon className="h-5 w-5" /> : <UserGroupIcon className="h-5 w-5" />}
                   </span>
                   <div className="min-w-0 pt-0.5">
-                    <p className="text-sm font-semibold text-foreground font-sans">Capacity</p>
-                    <p className="text-sm text-foreground-secondary font-sans">{capacityLabel}</p>
+                    {showTicketTypesRow ? (
+                      <>
+                        <p className="text-sm font-semibold text-foreground font-sans">Ticket types</p>
+                        <ul className="mt-1 space-y-0.5">
+                          {sortedTicketTypes.map(({ eventTicketTypeId, eventTicketType }) => (
+                            <li key={eventTicketTypeId} className="text-sm text-foreground-secondary font-sans">
+                              {eventTicketType.name}
+                              <span className="text-foreground-muted">
+                                {" "}
+                                · {getEventPriceDisplay(eventTicketType.price, true)} · {eventTicketType.capacity} spots
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-foreground font-sans">Capacity</p>
+                        <p className="text-sm text-foreground-secondary font-sans">{capacityLabel}</p>
+                      </>
+                    )}
                   </div>
                 </li>
 
-                <li className="flex gap-3 items-start">
-                  <span
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
-                    aria-hidden
-                  >
-                    <CurrencyDollarIcon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0 pt-0.5">
-                    <p className="text-sm font-semibold text-foreground font-sans">Price</p>
-                    <p className="text-sm text-foreground-secondary font-sans">{priceLabel}</p>
-                  </div>
-                </li>
+                {!showTicketTypesRow && showPriceRow ? (
+                  <li className="flex gap-3 items-start">
+                    <span
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-foreground-muted"
+                      aria-hidden
+                    >
+                      <CurrencyDollarIcon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 pt-0.5">
+                      <p className="text-sm font-semibold text-foreground font-sans">Price</p>
+                      <p className="text-sm text-foreground-secondary font-sans">{priceLabel}</p>
+                    </div>
+                  </li>
+                ) : null}
               </ul>
             )}
           </div>
@@ -234,7 +277,7 @@ export function EventHubListing({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 sm:px-5 py-3">
           {isTemplate ? <span aria-hidden className="w-px" /> : <EventHubShareControl eventId={eventId} />}
           <div className="flex flex-wrap items-center gap-2">
-            <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={!isActive || loading}>
+            <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={loading}>
               <PencilSquareIcon className="h-4 w-4" aria-hidden />
               Edit details
             </EventHubGhostButton>
@@ -306,17 +349,29 @@ export function EventHubListing({
       <EventHubPanel
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        title={isTemplate ? "Edit template" : "Edit Event"}
+        title={
+          !isActive
+            ? isTemplate
+              ? "Template details"
+              : "Event details"
+            : isTemplate
+              ? "Edit template"
+              : "Edit Event"
+        }
         wide
         footer={
-          <EventHubPrimaryButton
-            type="submit"
-            form={EVENT_HUB_EDIT_FORM_ID}
-            disabled={savingEdit || !isActive || loading}
-          >
-            <CheckIcon className="h-4 w-4" aria-hidden />
-            {isTemplate ? "Update template" : "Update event"}
-          </EventHubPrimaryButton>
+          isActive ? (
+            <EventHubPrimaryButton
+              type="submit"
+              form={EVENT_HUB_EDIT_FORM_ID}
+              disabled={savingEdit || loading}
+            >
+              <CheckIcon className="h-4 w-4" aria-hidden />
+              {isTemplate ? "Update template" : "Update event"}
+            </EventHubPrimaryButton>
+          ) : (
+            <EventHubGhostButton onClick={() => setEditOpen(false)}>Close</EventHubGhostButton>
+          )
         }
       >
         {editOpen ? (
@@ -328,13 +383,14 @@ export function EventHubListing({
             eventEndDate={eventEndDate}
             eventLocation={eventLocation}
             eventSport={eventSport}
-            eventCapacity={eventCapacity}
-            eventVacancy={eventVacancy}
-            eventPrice={eventPrice}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
-            eventFormId={eventFormId}
             isActive={isActive}
+            eventTicketTypes={eventTicketTypes}
+            orderTicketsMap={orderTicketsMap}
+            setEventTicketTypes={setEventTicketTypes}
+            onPersistTicketTypes={onPersistTicketTypes}
+            hideTicketTypeFormSelector={!isTemplate}
             updateData={updateData}
             onSaved={() => setEditOpen(false)}
             onSavingChange={setSavingEdit}
