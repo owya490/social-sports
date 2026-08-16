@@ -508,7 +508,7 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-x-0 top-0 z-40 h-[100dvh] bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 lg:hidden"
           aria-label="Close menu"
           onClick={() => onMobileOpenChange(false)}
         />
