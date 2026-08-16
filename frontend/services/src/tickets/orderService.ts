@@ -2,7 +2,6 @@ import { OrderId } from "@/interfaces/EventTypes";
 import { EMPTY_ORDER_DEFAULTS, Order, OrdersCollectionPath } from "@/interfaces/OrderTypes";
 import { Logger } from "@/observability/logger";
 import { db } from "@/services/src/firebase";
-import { getDocumentsByIds } from "@/services/src/firebase/getDocumentsByIds";
 import { doc, getDoc } from "firebase/firestore";
 
 const orderServiceLogger = new Logger("orderServiceLogger");
@@ -24,14 +23,10 @@ export async function getOrderById(orderId: OrderId): Promise<Order> {
 }
 
 export async function getOrdersByIds(orderIds: OrderId[]): Promise<Order[]> {
-  orderServiceLogger.info(`getOrdersByIds, ${orderIds.length}`);
+  orderServiceLogger.info(`getOrdersByIds, ${orderIds}`);
   try {
-    return await getDocumentsByIds(
-      OrdersCollectionPath,
-      orderIds,
-      (orderId, data) => ({ ...EMPTY_ORDER_DEFAULTS, ...(data as Order), orderId: orderId as OrderId }),
-      (orderId) => new Error(`Order not found, ${orderId}`)
-    );
+    const orders = await Promise.all(orderIds.map((orderId) => getOrderById(orderId)));
+    return orders;
   } catch (error) {
     orderServiceLogger.error(`getOrdersByIds ${error}`);
     throw error;
