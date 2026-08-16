@@ -26,10 +26,11 @@ export async function findEventDoc(eventId: EventId): Promise<QueryDocumentSnaps
   try {
     // Probe all event partitions in one round-trip; keep EVENT_PATHS order if several exist.
     const snapshots = await Promise.all(EVENT_PATHS.map((path) => getDoc(doc(db, path, eventId))));
-    const eventDoc = snapshots.find((snapshot) => snapshot.exists());
-    if (eventDoc) {
-      eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
-      return eventDoc;
+    for (const eventDoc of snapshots) {
+      if (eventDoc.exists()) {
+        eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
+        return eventDoc;
+      }
     }
 
     eventServiceLogger.debug(`Event document not found in any subcollection for eventId: ${eventId}`);

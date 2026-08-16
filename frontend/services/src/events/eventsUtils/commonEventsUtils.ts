@@ -1,4 +1,5 @@
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 
 import {
   CollectionReference,
@@ -79,7 +80,7 @@ export async function fetchEventTokenMatches(
 export async function processEventData(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData> | Firestore,
   eventTokenMatchCount: Map<string, number>
-) {
+): Promise<(EventData & { tokenMatchCount: number })[]> {
   const eventEntries = [...eventTokenMatchCount.entries()];
   const eventDocs = await Promise.all(
     eventEntries.map(async ([eventId, count]) => {
@@ -97,7 +98,7 @@ export async function processEventData(
       eventDocs
         .filter(({ eventDoc }) => eventDoc.exists())
         .map(({ eventDoc }) => eventDoc.data()?.organiserId)
-        .filter((organiserId): organiserId is string => Boolean(organiserId))
+        .filter((organiserId): organiserId is UserId => Boolean(organiserId))
     ),
   ];
   const organiserEntries = await Promise.all(
@@ -126,7 +127,7 @@ export async function processEventData(
       applyGeneralAdmissionInventoryFields({
         ...EmptyEventData,
         ...eventData,
-        eventId,
+        eventId: eventId as EventId,
         tokenMatchCount: count,
         organiser,
       })
