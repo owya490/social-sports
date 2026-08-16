@@ -505,17 +505,19 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
 
   return (
     <>
+      {/* 1px inset keeps Clubhouse Grey at the viewport edges so iOS Safari
+          does not retint the status bar / URL bar from this dim overlay. */}
       {mobileOpen && (
         <button
           type="button"
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-x-0 top-px bottom-px z-40 bg-black/50 lg:hidden"
           aria-label="Close menu"
           onClick={() => onMobileOpenChange(false)}
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed top-px bottom-px left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Organiser sidebar"
