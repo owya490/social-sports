@@ -1,9 +1,10 @@
 import {
+  EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
   EventId,
 } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
+import { PublicUserData, UserId } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,
@@ -18,7 +19,6 @@ import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
-import { hydrateEventsWithOrganisers } from "./hydrateEventsWithOrganisers";
 
 // const router = useRouter();
 
@@ -77,6 +77,7 @@ export async function getAllEventsFromCollectionRef(
     console.log("Getting events from DB");
     const eventsSnapshot = await getDocs(eventCollectionRef);
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
+    const eventsData: EventData[] = [];
 
     eventsSnapshot.forEach((docSnapshot) => {
       const eventData = docSnapshot.data() as EventDataWithoutOrganiser;
@@ -84,9 +85,23 @@ export async function getAllEventsFromCollectionRef(
       eventsDataWithoutOrganiser.push(eventData);
     });
 
-    const eventsData = await hydrateEventsWithOrganisers(eventsDataWithoutOrganiser, (organiserId) =>
-      getPublicUserById(organiserId)
+    const organiserById = await getOrganisersById(
+      eventsDataWithoutOrganiser.map((event) => event.organiserId)
     );
+
+    for (const event of eventsDataWithoutOrganiser) {
+      const organiser = organiserById.get(event.organiserId);
+      if (!organiser) {
+        continue;
+      }
+      eventsData.push(
+        applyGeneralAdmissionInventoryFields({
+          ...EmptyEventData,
+          ...event,
+          organiser,
+        })
+      );
+    }
     eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
     return eventsData;
   } catch (error) {
@@ -94,6 +109,28 @@ export async function getAllEventsFromCollectionRef(
     eventServiceLogger.error(`getAllEventsFromCollectionRef ${error}`);
     throw error;
   }
+}
+
+async function getOrganisersById(organiserIds: UserId[]): Promise<Map<UserId, PublicUserData>> {
+  const uniqueOrganiserIds = [...new Set(organiserIds.filter((organiserId) => Boolean(organiserId)))];
+  const organiserEntries = await Promise.all(
+    uniqueOrganiserIds.map(async (organiserId) => {
+      try {
+        const organiser = await getPublicUserById(organiserId);
+        return [organiserId, organiser] as const;
+      } catch {
+        return [organiserId, null] as const;
+      }
+    })
+  );
+
+  const organiserById = new Map<UserId, PublicUserData>();
+  for (const [organiserId, organiser] of organiserEntries) {
+    if (organiser) {
+      organiserById.set(organiserId, organiser);
+    }
+  }
+  return organiserById;
 }
 
 function getEventsDataFromLocalStorage(): EventData[] {
