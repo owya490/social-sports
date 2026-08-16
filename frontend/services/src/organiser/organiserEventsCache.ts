@@ -81,7 +81,12 @@ function isFresh(fetchedAt: number): boolean {
   return Date.now() - fetchedAt < ORGANISER_EVENTS_REFRESH_MILLIS;
 }
 
-export function tryGetOrganiserEventsFromCache(userId: UserId): EventData[] | null {
+export type OrganiserEventsCacheHit = {
+  events: EventData[];
+  fetchedAt: number;
+};
+
+export function tryGetOrganiserEventsCacheHit(userId: UserId): OrganiserEventsCacheHit | null {
   if (!userId) {
     return null;
   }
@@ -92,7 +97,7 @@ export function tryGetOrganiserEventsFromCache(userId: UserId): EventData[] | nu
     memoryCache.generation === cacheGeneration &&
     isFresh(memoryCache.fetchedAt)
   ) {
-    return memoryCache.events;
+    return { events: memoryCache.events, fetchedAt: memoryCache.fetchedAt };
   }
 
   const stored = readLocalStoragePayload();
@@ -107,7 +112,11 @@ export function tryGetOrganiserEventsFromCache(userId: UserId): EventData[] | nu
     generation: cacheGeneration,
     events,
   };
-  return events;
+  return { events, fetchedAt: stored.fetchedAt };
+}
+
+export function tryGetOrganiserEventsFromCache(userId: UserId): EventData[] | null {
+  return tryGetOrganiserEventsCacheHit(userId)?.events ?? null;
 }
 
 export function setOrganiserEventsIntoCache(userId: UserId, events: EventData[], generation: number): void {

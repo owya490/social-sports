@@ -4,6 +4,11 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { tryGetOrganiserEventsCacheHit } from "@/services/src/organiser/organiserEventsCache";
+import {
+  setOrganiserOrdersTicketsIntoCache,
+  tryGetOrganiserOrdersTicketsFromCache,
+} from "@/services/src/organiser/organiserOrdersTicketsCache";
 import {
   getOrganiserEvents,
   getOrganiserEventsCacheGeneration,
@@ -11,7 +16,6 @@ import {
 } from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
-import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { Timestamp } from "firebase/firestore";
 
 const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60;
@@ -260,6 +264,58 @@ function buildSalesByEvent30d(
   }));
 }
 
+function netSalesCents(orderTicketsMap: Map<Order, Ticket[]>): number {
+  const orderResults = Array.from(orderTicketsMap.keys()).map((order) => {
+    const tickets = orderTicketsMap.get(order);
+    const ticketSales = tickets?.reduce((sum, ticket) => sum + ticket.price, 0) ?? 0;
+    return { ticketSales, discounts: order.discounts };
+  });
+  const totalTicketSales = orderResults.reduce((sum, result) => sum + result.ticketSales, 0);
+  const totalDiscounts = orderResults.reduce((sum, result) => sum + result.discounts, 0);
+  return totalTicketSales - totalDiscounts;
+}
+
+function buildOrganiserDashboardMetrics(
+  events: EventData[],
+  orders: Order[],
+  tickets: Ticket[]
+): OrganiserDashboardMetrics {
+  const nowSeconds = Timestamp.now().seconds;
+  const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
+
+  const approvedOrders = orders.filter(isApprovedOrder);
+  const approvedTickets = tickets.filter(isApprovedTicket);
+  const recentOrders = approvedOrders.filter((order) => order.datePurchased.seconds >= thirtyDaysAgo);
+  const recentTickets = approvedTickets.filter((ticket) => ticket.purchaseDate.seconds >= thirtyDaysAgo);
+
+  const last10Events = [...events]
+    .sort((a, b) => b.startDate.seconds - a.startDate.seconds)
+    .slice(0, 10);
+  const last10EventIds = new Set(last10Events.map((event) => event.eventId));
+  const last10Tickets = approvedTickets.filter((ticket) => last10EventIds.has(ticket.eventId));
+
+  const totalPageViews = last10Events.reduce((sum, event) => sum + (event.accessCount || 0), 0);
+  const conversionRate =
+    totalPageViews > 0 ? Math.round((last10Tickets.length / totalPageViews) * 1000) / 10 : 0;
+
+  return {
+    netSales30dCents: netSalesCents(buildOrderTicketsMap(recentOrders, recentTickets)),
+    ticketsSold30d: recentTickets.length,
+    totalPageViews,
+    conversionRate,
+    weekTickets: buildWeekTicketBuckets(approvedTickets, events),
+    monthTickets: buildMonthTicketBuckets(approvedTickets, events),
+    salesByEvent30d: buildSalesByEvent30d(recentTickets, events),
+    recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
+    events,
+  };
+}
+
+type LoadedDashboardMetrics = {
+  metrics: OrganiserDashboardMetrics;
+  fetchedAt: number;
+};
+
 type MetricsCacheEntry = {
   userId: UserId;
   fetchedAt: number;
@@ -281,66 +337,84 @@ onOrganiserEventsCacheBust(() => {
   metricsInflight = null;
 });
 
-export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
-  if (!metricsCache || metricsCache.userId !== userId) {
-    return null;
+function rememberMetrics(
+  userId: UserId,
+  fetchedAt: number,
+  generation: number,
+  metrics: OrganiserDashboardMetrics
+): OrganiserDashboardMetrics {
+  if (generation === getOrganiserEventsCacheGeneration()) {
+    metricsCache = { userId, fetchedAt, generation, metrics };
   }
-  if (metricsCache.generation !== getOrganiserEventsCacheGeneration()) {
-    return null;
-  }
-  if (Date.now() - metricsCache.fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
-    return null;
-  }
-  return metricsCache.metrics;
+  return metrics;
 }
 
-async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
+export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
+  const generation = getOrganiserEventsCacheGeneration();
+  if (
+    metricsCache &&
+    metricsCache.userId === userId &&
+    metricsCache.generation === generation &&
+    Date.now() - metricsCache.fetchedAt < ORGANISER_EVENTS_REFRESH_MILLIS
+  ) {
+    return metricsCache.metrics;
+  }
+
+  const eventsHit = tryGetOrganiserEventsCacheHit(userId);
+  if (!eventsHit) {
+    return null;
+  }
+  const eventIds = eventsHit.events.map((event) => event.eventId);
+  const ordersHit = tryGetOrganiserOrdersTicketsFromCache(userId, eventIds);
+  if (!ordersHit) {
+    return null;
+  }
+
+  const fetchedAt = Math.min(eventsHit.fetchedAt, ordersHit.fetchedAt);
+  if (Date.now() - fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
+    return null;
+  }
+
+  const metrics = buildOrganiserDashboardMetrics(eventsHit.events, ordersHit.orders, ordersHit.tickets);
+  return rememberMetrics(userId, fetchedAt, generation, metrics);
+}
+
+async function loadOrganiserDashboardMetrics(
+  userId: UserId,
+  options?: { bypassCache?: boolean }
+): Promise<LoadedDashboardMetrics> {
   const events = await getOrganiserEvents(userId);
-  const nowSeconds = Timestamp.now().seconds;
-  const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
+  const eventIds = events.map((event) => event.eventId);
+  const generation = getOrganiserEventsCacheGeneration();
+
+  if (!options?.bypassCache) {
+    const cachedOrders = tryGetOrganiserOrdersTicketsFromCache(userId, eventIds);
+    if (cachedOrders) {
+      return {
+        metrics: buildOrganiserDashboardMetrics(events, cachedOrders.orders, cachedOrders.tickets),
+        fetchedAt: cachedOrders.fetchedAt,
+      };
+    }
+  }
 
   const metadataList = await Promise.all(events.map((event) => getEventsMetadataByEventId(event.eventId)));
 
   const allOrderIds = new Set<string>();
-
   metadataList.forEach((metadata) => {
     metadata.orderIds.forEach((orderId) => allOrderIds.add(orderId));
   });
 
   const orders = allOrderIds.size > 0 ? await getOrdersByIds([...allOrderIds] as OrderId[]) : [];
   const approvedOrders = orders.filter(isApprovedOrder);
-  const allTickets =
+  const tickets =
     approvedOrders.length > 0
       ? await getTicketsByIds(approvedOrders.flatMap((order) => order.tickets))
       : [];
 
-  const approvedTickets = allTickets.filter(isApprovedTicket);
-  const recentOrders = approvedOrders.filter((order) => order.datePurchased.seconds >= thirtyDaysAgo);
-  const recentTickets = approvedTickets.filter((ticket) => ticket.purchaseDate.seconds >= thirtyDaysAgo);
-
-  const recentOrderTicketsMap = buildOrderTicketsMap(recentOrders, recentTickets);
-  const netSales30dCents = await calculateNetSales(recentOrderTicketsMap);
-
-  const last10Events = [...events]
-    .sort((a, b) => b.startDate.seconds - a.startDate.seconds)
-    .slice(0, 10);
-  const last10EventIds = new Set(last10Events.map((event) => event.eventId));
-  const last10Tickets = approvedTickets.filter((ticket) => last10EventIds.has(ticket.eventId));
-
-  const totalPageViews = last10Events.reduce((sum, event) => sum + (event.accessCount || 0), 0);
-  const conversionRate =
-    totalPageViews > 0 ? Math.round((last10Tickets.length / totalPageViews) * 1000) / 10 : 0;
-
+  const fetchedAt = setOrganiserOrdersTicketsIntoCache(userId, eventIds, orders, tickets, generation);
   return {
-    netSales30dCents,
-    ticketsSold30d: recentTickets.length,
-    totalPageViews,
-    conversionRate,
-    weekTickets: buildWeekTicketBuckets(approvedTickets, events),
-    monthTickets: buildMonthTicketBuckets(approvedTickets, events),
-    salesByEvent30d: buildSalesByEvent30d(recentTickets, events),
-    recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
-    events,
+    metrics: buildOrganiserDashboardMetrics(events, orders, tickets),
+    fetchedAt,
   };
 }
 
@@ -360,11 +434,8 @@ export async function fetchOrganiserDashboardMetrics(
   }
 
   const promise = (async () => {
-    const metrics = await loadOrganiserDashboardMetrics(userId);
-    if (generation === getOrganiserEventsCacheGeneration()) {
-      metricsCache = { userId, fetchedAt: Date.now(), generation, metrics };
-    }
-    return metrics;
+    const loaded = await loadOrganiserDashboardMetrics(userId, options);
+    return rememberMetrics(userId, loaded.fetchedAt, generation, loaded.metrics);
   })();
 
   metricsInflight = { userId, generation, promise };
