@@ -2,8 +2,13 @@ import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
+import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { getOrganiserEvents } from "@/services/src/events/eventsService";
+import {
+  getOrganiserEvents,
+  getOrganiserEventsCacheGeneration,
+  onOrganiserEventsCacheBust,
+} from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -255,7 +260,41 @@ function buildSalesByEvent30d(
   }));
 }
 
-export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
+type MetricsCacheEntry = {
+  userId: UserId;
+  fetchedAt: number;
+  generation: number;
+  metrics: OrganiserDashboardMetrics;
+};
+
+type MetricsInflight = {
+  userId: UserId;
+  generation: number;
+  promise: Promise<OrganiserDashboardMetrics>;
+};
+
+let metricsCache: MetricsCacheEntry | null = null;
+let metricsInflight: MetricsInflight | null = null;
+
+onOrganiserEventsCacheBust(() => {
+  metricsCache = null;
+  metricsInflight = null;
+});
+
+export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
+  if (!metricsCache || metricsCache.userId !== userId) {
+    return null;
+  }
+  if (metricsCache.generation !== getOrganiserEventsCacheGeneration()) {
+    return null;
+  }
+  if (Date.now() - metricsCache.fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
+    return null;
+  }
+  return metricsCache.metrics;
+}
+
+async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
   const events = await getOrganiserEvents(userId);
   const nowSeconds = Timestamp.now().seconds;
   const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
@@ -303,4 +342,37 @@ export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<Or
     recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
     events,
   };
+}
+
+export async function fetchOrganiserDashboardMetrics(
+  userId: UserId,
+  options?: { bypassCache?: boolean }
+): Promise<OrganiserDashboardMetrics> {
+  const generation = getOrganiserEventsCacheGeneration();
+  if (!options?.bypassCache) {
+    const cached = tryGetCachedOrganiserDashboardMetrics(userId);
+    if (cached) {
+      return cached;
+    }
+    if (metricsInflight && metricsInflight.userId === userId && metricsInflight.generation === generation) {
+      return metricsInflight.promise;
+    }
+  }
+
+  const promise = (async () => {
+    const metrics = await loadOrganiserDashboardMetrics(userId);
+    if (generation === getOrganiserEventsCacheGeneration()) {
+      metricsCache = { userId, fetchedAt: Date.now(), generation, metrics };
+    }
+    return metrics;
+  })();
+
+  metricsInflight = { userId, generation, promise };
+  try {
+    return await promise;
+  } finally {
+    if (metricsInflight?.promise === promise) {
+      metricsInflight = null;
+    }
+  }
 }

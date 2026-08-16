@@ -32,6 +32,7 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
@@ -95,7 +96,10 @@ export function OrganiserEventHubView() {
 
     const fetchEvent = async () => {
       try {
-        const event = await getEventById(eventId);
+        const [event, nextEventMetadata] = await Promise.all([
+          getEventById(eventId),
+          getEventsMetadataByEventId(eventId),
+        ]);
         if (!isActive) return;
 
         if (event.organiserId !== user.userId) {
@@ -136,9 +140,8 @@ export function OrganiserEventHubView() {
           )
         );
 
-        const nextEventMetadata = await getEventsMetadataByEventId(eventId);
-        if (!isActive) return;
         setEventMetadata(nextEventMetadata);
+        if (isActive) setLoading(false);
 
         const allOrders = await getOrdersByIds(nextEventMetadata.orderIds);
         const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
@@ -189,6 +192,7 @@ export function OrganiserEventHubView() {
     try {
       await updateEventById(eventId, { paused: next });
       bustEventsLocalStorageCache();
+      bustOrganiserEventsCache();
     } catch (error) {
       setEventPaused(!next);
       eventServiceLogger.error(`Failed to toggle pause on event hub: ${error}`);
@@ -262,6 +266,7 @@ export function OrganiserEventHubView() {
             updateData={async (id, data) => {
               await updateEventById(id, data);
               bustEventsLocalStorageCache();
+              bustOrganiserEventsCache();
               if (data.name !== undefined) setEventName(data.name);
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);
