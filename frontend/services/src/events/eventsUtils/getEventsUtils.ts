@@ -3,9 +3,8 @@ import {
   EventData,
   EventDataWithoutOrganiser,
   EventId,
-  DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
-import { PublicUserData } from "@/interfaces/UserTypes";
+import { PublicUserData, UserId } from "@/interfaces/UserTypes";
 import {
   CollectionReference,
   DocumentData,
@@ -20,26 +19,29 @@ import { getPublicUserById } from "../../users/usersService";
 import { EVENTS_REFRESH_MILLIS, EVENT_PATHS, LocalStorageKeys } from "../eventsConstants";
 import { eventServiceLogger } from "../eventsService";
 import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
-import { clampMaxTicketsPerTransaction } from "./ticketLimits";
 
 // const router = useRouter();
 
 export async function findEventDoc(eventId: EventId): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
   try {
-    // Search through the paths
-    for (const path of EVENT_PATHS) {
-      // Attempt to retrieve the document from the current subcollection
-      const eventDocRef = doc(db, path, eventId);
-      const eventDoc = await getDoc(eventDocRef);
-
-      // Check if the document exists in the current subcollection
-      if (eventDoc.exists()) {
+    // Probe all event partitions in one round-trip; keep EVENT_PATHS order if several exist.
+    const snapshots = await Promise.all(
+      EVENT_PATHS.map(async (path) => {
+        try {
+          return await getDoc(doc(db, path, eventId));
+        } catch (error) {
+          eventServiceLogger.error(`Error probing event path ${path} for eventId: ${eventId}, ${error}`);
+          return null;
+        }
+      })
+    );
+    for (const eventDoc of snapshots) {
+      if (eventDoc?.exists()) {
         eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
         return eventDoc;
       }
     }
 
-    // If no document found, log and throw an error
     eventServiceLogger.debug(`Event document not found in any subcollection for eventId: ${eventId}`);
     console.log("Event not found in any subcollection.");
     throw new Error("No event found in any subcollection");
@@ -87,25 +89,28 @@ export async function getAllEventsFromCollectionRef(
     const eventsDataWithoutOrganiser: EventDataWithoutOrganiser[] = [];
     const eventsData: EventData[] = [];
 
-    eventsSnapshot.forEach((doc) => {
-      const eventData = doc.data() as EventDataWithoutOrganiser;
-      eventData.eventId = doc.id as EventId;
+    eventsSnapshot.forEach((docSnapshot) => {
+      const eventData = docSnapshot.data() as EventDataWithoutOrganiser;
+      eventData.eventId = docSnapshot.id as EventId;
       eventsDataWithoutOrganiser.push(eventData);
     });
 
+    const organiserById = await getOrganisersById(
+      eventsDataWithoutOrganiser.map((event) => event.organiserId)
+    );
+
     for (const event of eventsDataWithoutOrganiser) {
-      try {
-        const organiser = await getPublicUserById(event.organiserId);
-        eventsData.push(
-          applyGeneralAdmissionInventoryFields({
-            ...EmptyEventData, // initiate default values
-            ...event,
-            organiser: organiser,
-          })
-        );
-      } catch {
-        // this is a no op, we don't include this event in the eventsData list and don't display to frontend.
+      const organiser = organiserById.get(event.organiserId);
+      if (!organiser) {
+        continue;
       }
+      eventsData.push(
+        applyGeneralAdmissionInventoryFields({
+          ...EmptyEventData,
+          ...event,
+          organiser,
+        })
+      );
     }
     eventServiceLogger.debug("getAllEventsFromCollectionRef Success");
     return eventsData;
@@ -114,6 +119,28 @@ export async function getAllEventsFromCollectionRef(
     eventServiceLogger.error(`getAllEventsFromCollectionRef ${error}`);
     throw error;
   }
+}
+
+async function getOrganisersById(organiserIds: UserId[]): Promise<Map<UserId, PublicUserData>> {
+  const uniqueOrganiserIds = [...new Set(organiserIds.filter((organiserId) => Boolean(organiserId)))];
+  const organiserEntries = await Promise.all(
+    uniqueOrganiserIds.map(async (organiserId) => {
+      try {
+        const organiser = await getPublicUserById(organiserId);
+        return [organiserId, organiser] as const;
+      } catch {
+        return [organiserId, null] as const;
+      }
+    })
+  );
+
+  const organiserById = new Map<UserId, PublicUserData>();
+  for (const [organiserId, organiser] of organiserEntries) {
+    if (organiser) {
+      organiserById.set(organiserId, organiser);
+    }
+  }
+  return organiserById;
 }
 
 function getEventsDataFromLocalStorage(): EventData[] {

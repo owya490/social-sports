@@ -1,4 +1,5 @@
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 
 import {
   CollectionReference,
@@ -27,20 +28,24 @@ export function tokenizeText(text: string): string[] {
 
 export async function findEventDocRef(eventId: EventId): Promise<DocumentReference<DocumentData, DocumentData>> {
   try {
-    // Search through all the paths
-    for (const path of EVENT_PATHS) {
-      // Attempt to retrieve the document from the current subcollection
-      const eventDocRef = doc(db, path, eventId);
-      const eventDoc = await getDoc(eventDocRef);
-
-      // Check if the document exists in the current subcollection
-      if (eventDoc.exists()) {
-        eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
-        return eventDocRef;
-      }
+    const lookups = await Promise.all(
+      EVENT_PATHS.map(async (path) => {
+        try {
+          const eventDocRef = doc(db, path, eventId);
+          const eventDoc = await getDoc(eventDocRef);
+          return { eventDocRef, exists: eventDoc.exists() };
+        } catch (error) {
+          eventServiceLogger.error(`Error probing event path ${path} for eventId: ${eventId}, ${error}`);
+          return { eventDocRef: null, exists: false };
+        }
+      })
+    );
+    const found = lookups.find((lookup) => lookup.exists && lookup.eventDocRef);
+    if (found?.eventDocRef) {
+      eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
+      return found.eventDocRef;
     }
 
-    // If no document found, log and throw an error
     console.log(`Event not found in any subcollection for eventId: ${eventId}`);
     eventServiceLogger.error(`No event found in any subcollection for eventId: ${eventId}`);
     throw new Error(`No event found in any subcollection for eventId: ${eventId}`);
@@ -58,10 +63,20 @@ export async function fetchEventTokenMatches(
   try {
     const eventTokenMatchCount: Map<string, number> = new Map();
 
-    for (const token of searchKeywords) {
-      const q = query(eventCollectionRef, where("nameTokens", "array-contains", token));
-      const querySnapshot = await getDocs(q);
-
+    const tokenSnapshots = await Promise.all(
+      searchKeywords.map(async (token) => {
+        try {
+          return await getDocs(query(eventCollectionRef, where("nameTokens", "array-contains", token)));
+        } catch (error) {
+          eventServiceLogger.error(`Error fetching event token matches for token "${token}": ${error}`);
+          return null;
+        }
+      })
+    );
+    for (const querySnapshot of tokenSnapshots) {
+      if (!querySnapshot) {
+        continue;
+      }
       querySnapshot.forEach((eventDoc) => {
         const eventId = eventDoc.id;
         eventTokenMatchCount.set(eventId, (eventTokenMatchCount.get(eventId) || 0) + 1);
@@ -80,40 +95,64 @@ export async function fetchEventTokenMatches(
 export async function processEventData(
   eventCollectionRef: CollectionReference<DocumentData, DocumentData> | Firestore,
   eventTokenMatchCount: Map<string, number>
-) {
-  const eventsData = [];
-
-  for (const [eventId, count] of eventTokenMatchCount) {
-    let eventDocRef;
-    if (eventCollectionRef instanceof Firestore) {
-      eventDocRef = doc(eventCollectionRef, CollectionPaths.Events, eventId); // Replace 'your_collection_name' with actual collection name
-    } else {
-      eventDocRef = doc(eventCollectionRef, eventId);
-    }
-
-    const eventDoc = await getDoc(eventDocRef);
-    if (eventDoc.exists()) {
-      const eventData = eventDoc.data();
-      const extendedEventData = {
-        ...eventData,
-        eventId,
-        tokenMatchCount: count,
-        organiser: {},
-      };
+): Promise<(EventData & { tokenMatchCount: number })[]> {
+  const eventEntries = [...eventTokenMatchCount.entries()];
+  const eventDocs = await Promise.all(
+    eventEntries.map(async ([eventId, count]) => {
       try {
-        const organiser = await getPublicUserById(eventData.organiserId);
-        eventsData.push(
-          applyGeneralAdmissionInventoryFields({
-            ...extendedEventData,
-            organiser,
-          })
-        );
-      } catch {
-        // this is a no op, we don't want to process fault events with undefined organisers
-        continue;
+        const eventDocRef =
+          eventCollectionRef instanceof Firestore
+            ? doc(eventCollectionRef, CollectionPaths.Events, eventId)
+            : doc(eventCollectionRef, eventId);
+        const eventDoc = await getDoc(eventDocRef);
+        return { eventId, count, eventDoc };
+      } catch (error) {
+        eventServiceLogger.error(`Failed to fetch event document for eventId: ${eventId}, ${error}`);
+        return { eventId, count, eventDoc: null };
       }
-      eventServiceLogger.debug(`Processed event data for eventId: ${eventId}`);
+    })
+  );
+
+  const uniqueOrganiserIds = [
+    ...new Set(
+      eventDocs
+        .filter(({ eventDoc }) => eventDoc?.exists())
+        .map(({ eventDoc }) => eventDoc?.data()?.organiserId)
+        .filter((organiserId): organiserId is UserId => Boolean(organiserId))
+    ),
+  ];
+  const organiserEntries = await Promise.all(
+    uniqueOrganiserIds.map(async (organiserId) => {
+      try {
+        const organiser = await getPublicUserById(organiserId);
+        return [organiserId, organiser] as const;
+      } catch {
+        return [organiserId, null] as const;
+      }
+    })
+  );
+  const organiserById = new Map(organiserEntries);
+
+  const eventsData = [];
+  for (const { eventId, count, eventDoc } of eventDocs) {
+    if (!eventDoc?.exists()) {
+      continue;
     }
+    const eventData = eventDoc.data();
+    const organiser = organiserById.get(eventData.organiserId);
+    if (!organiser) {
+      continue;
+    }
+    eventsData.push(
+      applyGeneralAdmissionInventoryFields({
+        ...EmptyEventData,
+        ...eventData,
+        eventId: eventId as EventId,
+        tokenMatchCount: count,
+        organiser,
+      })
+    );
+    eventServiceLogger.debug(`Processed event data for eventId: ${eventId}`);
   }
   eventServiceLogger.debug(`Processed event data: ${JSON.stringify(eventsData)}`);
   return eventsData;
