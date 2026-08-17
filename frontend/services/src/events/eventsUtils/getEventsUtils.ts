@@ -25,9 +25,18 @@ import { applyGeneralAdmissionInventoryFields } from "./eventTicketTypesUtils";
 export async function findEventDoc(eventId: EventId): Promise<QueryDocumentSnapshot<DocumentData, DocumentData>> {
   try {
     // Probe all event partitions in one round-trip; keep EVENT_PATHS order if several exist.
-    const snapshots = await Promise.all(EVENT_PATHS.map((path) => getDoc(doc(db, path, eventId))));
+    const snapshots = await Promise.all(
+      EVENT_PATHS.map(async (path) => {
+        try {
+          return await getDoc(doc(db, path, eventId));
+        } catch (error) {
+          eventServiceLogger.error(`Error probing event path ${path} for eventId: ${eventId}, ${error}`);
+          return null;
+        }
+      })
+    );
     for (const eventDoc of snapshots) {
-      if (eventDoc.exists()) {
+      if (eventDoc?.exists()) {
         eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
         return eventDoc;
       }

@@ -30,13 +30,18 @@ export async function findEventDocRef(eventId: EventId): Promise<DocumentReferen
   try {
     const lookups = await Promise.all(
       EVENT_PATHS.map(async (path) => {
-        const eventDocRef = doc(db, path, eventId);
-        const eventDoc = await getDoc(eventDocRef);
-        return { eventDocRef, exists: eventDoc.exists() };
+        try {
+          const eventDocRef = doc(db, path, eventId);
+          const eventDoc = await getDoc(eventDocRef);
+          return { eventDocRef, exists: eventDoc.exists() };
+        } catch (error) {
+          eventServiceLogger.error(`Error probing event path ${path} for eventId: ${eventId}, ${error}`);
+          return { eventDocRef: null, exists: false };
+        }
       })
     );
-    const found = lookups.find((lookup) => lookup.exists);
-    if (found) {
+    const found = lookups.find((lookup) => lookup.exists && lookup.eventDocRef);
+    if (found?.eventDocRef) {
       eventServiceLogger.debug(`Found event document reference for eventId: ${eventId}`);
       return found.eventDocRef;
     }
@@ -59,9 +64,19 @@ export async function fetchEventTokenMatches(
     const eventTokenMatchCount: Map<string, number> = new Map();
 
     const tokenSnapshots = await Promise.all(
-      searchKeywords.map((token) => getDocs(query(eventCollectionRef, where("nameTokens", "array-contains", token))))
+      searchKeywords.map(async (token) => {
+        try {
+          return await getDocs(query(eventCollectionRef, where("nameTokens", "array-contains", token)));
+        } catch (error) {
+          eventServiceLogger.error(`Error fetching event token matches for token "${token}": ${error}`);
+          return null;
+        }
+      })
     );
     for (const querySnapshot of tokenSnapshots) {
+      if (!querySnapshot) {
+        continue;
+      }
       querySnapshot.forEach((eventDoc) => {
         const eventId = eventDoc.id;
         eventTokenMatchCount.set(eventId, (eventTokenMatchCount.get(eventId) || 0) + 1);
@@ -84,20 +99,25 @@ export async function processEventData(
   const eventEntries = [...eventTokenMatchCount.entries()];
   const eventDocs = await Promise.all(
     eventEntries.map(async ([eventId, count]) => {
-      const eventDocRef =
-        eventCollectionRef instanceof Firestore
-          ? doc(eventCollectionRef, CollectionPaths.Events, eventId)
-          : doc(eventCollectionRef, eventId);
-      const eventDoc = await getDoc(eventDocRef);
-      return { eventId, count, eventDoc };
+      try {
+        const eventDocRef =
+          eventCollectionRef instanceof Firestore
+            ? doc(eventCollectionRef, CollectionPaths.Events, eventId)
+            : doc(eventCollectionRef, eventId);
+        const eventDoc = await getDoc(eventDocRef);
+        return { eventId, count, eventDoc };
+      } catch (error) {
+        eventServiceLogger.error(`Failed to fetch event document for eventId: ${eventId}, ${error}`);
+        return { eventId, count, eventDoc: null };
+      }
     })
   );
 
   const uniqueOrganiserIds = [
     ...new Set(
       eventDocs
-        .filter(({ eventDoc }) => eventDoc.exists())
-        .map(({ eventDoc }) => eventDoc.data()?.organiserId)
+        .filter(({ eventDoc }) => eventDoc?.exists())
+        .map(({ eventDoc }) => eventDoc?.data()?.organiserId)
         .filter((organiserId): organiserId is UserId => Boolean(organiserId))
     ),
   ];
@@ -115,7 +135,7 @@ export async function processEventData(
 
   const eventsData = [];
   for (const { eventId, count, eventDoc } of eventDocs) {
-    if (!eventDoc.exists()) {
+    if (!eventDoc?.exists()) {
       continue;
     }
     const eventData = eventDoc.data();
