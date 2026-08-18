@@ -1,3 +1,7 @@
+jest.mock("@/services/src/firebase", () => ({
+  db: {},
+}));
+
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
