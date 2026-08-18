@@ -3,6 +3,7 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   DocumentTextIcon,
@@ -179,37 +180,7 @@ export const ApprovedAttendeeTab = ({
         .filter((ticket): ticket is Ticket => ticket !== undefined) ?? [],
   }));
 
-  const allAttendeesCsvData = sortedOrders.flatMap((order) => {
-    const rows = [
-      {
-        "Ticket Count": `${order.tickets.length}`,
-        "Attendee Name": order.fullName,
-        Email: order.email,
-        "Phone Number": order.phone ? `${order.phone}` : "N/A",
-      },
-    ];
-
-    // Add additional rows for tickets beyond the first one
-    if (order.tickets.length > 1) {
-      for (let i = 1; i < order.tickets.length; i++) {
-        rows.push({
-          "Ticket Count": "",
-          "Attendee Name": `${order.fullName} +${i}`,
-          Email: order.email,
-          "Phone Number": order.phone ? `${order.phone}` : "N/A",
-        });
-      }
-    }
-
-    return rows;
-  });
-
-  const csvHeaders = [
-    { label: "Ticket Count", key: "Ticket Count" },
-    { label: "Attendee Name", key: "Attendee Name" },
-    { label: "Email", key: "Email" },
-    { label: "Phone Number", key: "Phone Number" },
-  ];
+  const allAttendeesCsvData = buildAttendeeCsvData(approvedOrderTicketsMap);
 
   const renderActions = (item: (typeof tableData)[0]) => {
     const { order, tickets } = item;
@@ -231,7 +202,11 @@ export const ApprovedAttendeeTab = ({
       <div className="flex justify-between">
         <div className="text-2xl md:text-4xl font-extrabold">Approved Attendees</div>
         <div className="flex items-center space-x-4">
-          <DownloadCsvButton data={allAttendeesCsvData} headers={csvHeaders} filename={`Attendees_${eventId}.csv`} />
+          <DownloadCsvButton
+            data={allAttendeesCsvData}
+            headers={ATTENDEE_CSV_HEADERS}
+            filename={`Attendees_${eventId}.csv`}
+          />
           <div
             className="inline-flex justify-center rounded-md bg-organiser-dark-gray-text px-2 md:px-4 py-1.5 md:py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 hover:cursor-pointer"
             onClick={() => setIsFilterModalOpen(true)}

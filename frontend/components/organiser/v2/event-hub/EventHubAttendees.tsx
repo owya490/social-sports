@@ -1,5 +1,6 @@
 "use client";
 
+import DownloadCsvButton from "@/components/DownloadCsvButton";
 import Loading from "@/components/loading/Loading";
 import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAttendeeDialog";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
@@ -8,6 +9,7 @@ import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTyp
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
+import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
@@ -728,6 +730,10 @@ export function EventHubAttendees({
   const fillPercent = capacity > 0 ? Math.min(100, Math.round((goingCount / capacity) * 100)) : 0;
   const statusLabel =
     activeTab === "approved" ? "Going" : activeTab === "pending" ? "Pending" : "Declined";
+  const approvedAttendeesCsvData = useMemo(
+    () => buildAttendeeCsvData(filteredApprovedMap),
+    [filteredApprovedMap]
+  );
 
   return (
     <EventHubStage>
@@ -745,16 +751,24 @@ export function EventHubAttendees({
       </Toaster>
 
       <div className="pb-4 space-y-2">
-        <p className="text-sm font-semibold text-foreground font-sans tabular-nums">
-          {goingCount} Going
-          {capacity > 0 ? (
-            <span className="text-foreground-muted font-normal">
-              {" "}
-              · {capacity} capacity
-              {selectedListTicketType ? ` · ${selectedListTicketType.eventTicketType.name}` : ""}
-            </span>
-          ) : null}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-foreground font-sans tabular-nums">
+            {goingCount} Going
+            {capacity > 0 ? (
+              <span className="text-foreground-muted font-normal">
+                {" "}
+                · {capacity} capacity
+                {selectedListTicketType ? ` · ${selectedListTicketType.eventTicketType.name}` : ""}
+              </span>
+            ) : null}
+          </p>
+          <DownloadCsvButton
+            compact
+            data={approvedAttendeesCsvData}
+            headers={ATTENDEE_CSV_HEADERS}
+            filename={`Attendees_${eventId}.csv`}
+          />
+        </div>
         <div
           className="h-1 w-full rounded-full bg-surface-muted overflow-hidden"
           role="progressbar"

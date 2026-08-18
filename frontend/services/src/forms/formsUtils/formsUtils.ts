@@ -38,7 +38,8 @@ export function ticketMatchesEventTicketType(
 
 /**
  * Orders that include at least one ticket of the selected type.
- * Keeps the full ticket list for each matching order (approve/reject still needs the whole order).
+ * The ticket list is reduced to matching tickets so counts and CSV export
+ * do not include other types on the same order.
  */
 export function filterOrderTicketsMapByTicketType(
   orderTicketsMap: Map<Order, Ticket[]>,
@@ -47,8 +48,11 @@ export function filterOrderTicketsMapByTicketType(
 ): Map<Order, Ticket[]> {
   const filtered = new Map<Order, Ticket[]>();
   orderTicketsMap.forEach((tickets, order) => {
-    if (tickets.some((ticket) => ticketMatchesEventTicketType(ticket, eventTicketTypeId, ticketTypeName))) {
-      filtered.set(order, tickets);
+    const matchingTickets = tickets.filter((ticket) =>
+      ticketMatchesEventTicketType(ticket, eventTicketTypeId, ticketTypeName)
+    );
+    if (matchingTickets.length > 0) {
+      filtered.set(order, matchingTickets);
     }
   });
   return filtered;

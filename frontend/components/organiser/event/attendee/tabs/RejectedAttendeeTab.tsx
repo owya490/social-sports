@@ -1,6 +1,7 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import { DocumentTextIcon, EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { Fragment } from "react";
@@ -75,37 +76,7 @@ export const RejectedAttendeeTab = ({
     order,
   }));
 
-  const allAttendeesCsvData = sortedOrders.flatMap((order) => {
-    const rows = [
-      {
-        "Ticket Count": `${order.tickets.length}`,
-        "Attendee Name": order.fullName,
-        Email: order.email,
-        "Phone Number": order.phone ? `${order.phone}` : "N/A",
-      },
-    ];
-
-    // Add additional rows for tickets beyond the first one
-    if (order.tickets.length > 1) {
-      for (let i = 1; i < order.tickets.length; i++) {
-        rows.push({
-          "Ticket Count": "",
-          "Attendee Name": `${order.fullName} +${i}`,
-          Email: order.email,
-          "Phone Number": order.phone ? `${order.phone}` : "N/A",
-        });
-      }
-    }
-
-    return rows;
-  });
-
-  const csvHeaders = [
-    { label: "Ticket Count", key: "Ticket Count" },
-    { label: "Attendee Name", key: "Attendee Name" },
-    { label: "Email", key: "Email" },
-    { label: "Phone Number", key: "Phone Number" },
-  ];
+  const allAttendeesCsvData = buildAttendeeCsvData(rejectedOrderTicketsMap);
 
   const renderActions = (item: (typeof tableData)[0]) => {
     const { order } = item;
@@ -121,7 +92,7 @@ export const RejectedAttendeeTab = ({
         <div className="flex items-center space-x-4">
           <DownloadCsvButton
             data={allAttendeesCsvData}
-            headers={csvHeaders}
+            headers={ATTENDEE_CSV_HEADERS}
             filename={`Rejected_Attendees_${eventId}.csv`}
           />
         </div>
