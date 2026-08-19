@@ -3,6 +3,7 @@
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import { useUser } from "@/components/utility/UserContext";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
@@ -20,7 +21,6 @@ import { getForm, getFormResponsesForEvent } from "@/services/src/forms/formsSer
 import {
   filterFormResponsesForApprovedOrders,
   filterFormResponsesForTicketType,
-  getApprovedOrderTicketsMap,
   getFormSectionAnswerDisplay,
 } from "@/services/src/forms/formsUtils/formsUtils";
 import { PlusIcon } from "@heroicons/react/24/outline";
@@ -32,7 +32,6 @@ import { FormResponsesTable } from "./FormResponsesTable";
 
 interface EventDrilldownFormsPageProps {
   eventId: EventId;
-  orderTicketsMap: Map<Order, Ticket[]>;
 }
 
 const formatTimestamp = (ts: Timestamp | null): string => {
@@ -63,9 +62,10 @@ const createFormResponseMap = (orderTicketsMap: Map<Order, Ticket[]>): Map<strin
   return formResponseToPurchaser;
 };
 
-export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrilldownFormsPageProps) => {
+export const EventDrilldownFormsPage = ({ eventId }: EventDrilldownFormsPageProps) => {
   const logger = useMemo(() => new Logger("EventDrilldownFormsPageLogger"), []);
   const { user, userLoading } = useUser();
+  const { orderTicketsMap, approvedOrderTicketsMap } = useEventOrderAndTickets(eventId);
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(null);
   const [formResponses, setFormResponses] = useState<FormResponse[]>([]);
@@ -80,7 +80,6 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
   const [isAddFormResponseDialogOpen, setIsAddFormResponseDialogOpen] = useState(false);
   const orderTicketsMapRef = useRef(orderTicketsMap);
   orderTicketsMapRef.current = orderTicketsMap;
-  const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
   const usesTicketTypes = hasEventTicketTypes(eventData ?? {});
   const sortedTicketTypes = useMemo(
     () => getSortedEventTicketTypes(eventData?.eventTicketTypes),
@@ -457,7 +456,6 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
         form={form!}
         formId={formId!}
         eventId={eventId}
-        orderTicketsMap={approvedOrderTicketsMap}
         showPurchaserColumn={true}
       />
 

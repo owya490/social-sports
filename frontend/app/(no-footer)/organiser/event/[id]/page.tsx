@@ -22,16 +22,13 @@ import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { EmptyPublicUserData, PublicUserData } from "@/interfaces/UserTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getOrdersByIds } from "@/services/src/tickets/orderService";
-import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { sleep } from "@/utilities/sleepUtil";
 import { Timestamp } from "firebase/firestore";
@@ -72,12 +69,13 @@ export default function EventPage() {
   const [eventFormId, setEventFormId] = useState<FormId | null>(null);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [totalNetSales, setTotalNetSales] = useState<number>(0);
-  const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
   const router = useRouter();
 
   const { user } = useUser();
 
   const eventId = params.id as EventId;
+  const { loading: ordersLoading, orderTicketsMap } = useEventOrderAndTickets(eventId);
+
   useEffect(() => {
     if (!user.userId) {
       return;
@@ -132,34 +130,6 @@ export default function EventPage() {
           return;
         }
         setEventMetadata(nextEventMetadata);
-
-        const allOrders = await getOrdersByIds(nextEventMetadata.orderIds);
-        const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
-        const nextOrderTicketsMap = new Map<Order, Ticket[]>();
-        allOrders.forEach((order) => {
-          nextOrderTicketsMap.set(
-            order,
-            allTickets.filter((ticket) => ticket.orderId === order.orderId)
-          );
-        });
-        if (!isActive) {
-          return;
-        }
-        setOrderTicketsMap(nextOrderTicketsMap);
-
-        try {
-          const netSales = await calculateNetSales(nextOrderTicketsMap);
-          if (!isActive) {
-            return;
-          }
-          setTotalNetSales(netSales);
-        } catch (error) {
-          eventServiceLogger.error(`Error calculating net sales: ${error}`);
-          if (!isActive) {
-            return;
-          }
-          setTotalNetSales(nextEventMetadata.completeTicketCount * event.price);
-        }
       } catch (error) {
         if (!isActive) {
           return;
@@ -180,6 +150,30 @@ export default function EventPage() {
       isActive = false;
     };
   }, [eventId, router, user.userId]);
+
+  useEffect(() => {
+    if (ordersLoading) {
+      return;
+    }
+    let isActive = true;
+    const run = async () => {
+      try {
+        const netSales = await calculateNetSales(orderTicketsMap);
+        if (isActive) {
+          setTotalNetSales(netSales);
+        }
+      } catch (error) {
+        eventServiceLogger.error(`Error calculating net sales: ${error}`);
+        if (isActive) {
+          setTotalNetSales(eventMetadata.completeTicketCount * eventPrice);
+        }
+      }
+    };
+    void run();
+    return () => {
+      isActive = false;
+    };
+  }, [eventMetadata.completeTicketCount, eventPrice, orderTicketsMap, ordersLoading]);
 
   return (
     <>
@@ -246,13 +240,11 @@ export default function EventPage() {
                 eventMetadata={eventMetadata}
                 setEventMetadata={setEventMetadata}
                 eventId={eventId}
-                orderTicketsMap={orderTicketsMap}
                 setEventVacancy={setEventVacancy}
-                setOrderTicketsMap={setOrderTicketsMap}
               />
             )}
             {currSidebarPage === "Forms" && (
-              <EventDrilldownFormsPage eventId={eventId} orderTicketsMap={orderTicketsMap} />
+              <EventDrilldownFormsPage eventId={eventId} />
             )}
             {currSidebarPage === "Images" && (
               <EventDrilldownImagesPage
@@ -268,7 +260,6 @@ export default function EventPage() {
             )}
             {currSidebarPage === "Settings" && (
               <EventDrilldownSettingsPage
-                orderTicketsMap={orderTicketsMap}
                 eventName={eventName}
                 eventStartDate={eventStartDate}
                 router={router}

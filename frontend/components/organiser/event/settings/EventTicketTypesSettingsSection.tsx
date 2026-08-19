@@ -2,11 +2,10 @@
 
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventId } from "@/interfaces/EventTypes";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { FormId } from "@/interfaces/FormTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
 import {
   applyCapacityChange,
@@ -35,7 +34,6 @@ export type EventTicketTypesLegacyEventData = {
 interface EventTicketTypesSettingsSectionProps {
   eventId: EventId;
   eventData: EventTicketTypesLegacyEventData;
-  orderTicketsMap: Map<Order, Ticket[]>;
   eventTicketTypes: EventTicketTypesMap | undefined;
   setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
   setEventCapacity: (capacity: number) => void;
@@ -49,7 +47,6 @@ interface EventTicketTypesSettingsSectionProps {
 export function EventTicketTypesSettingsSection({
   eventId,
   eventData,
-  orderTicketsMap,
   eventTicketTypes,
   setEventTicketTypes,
   setEventCapacity,
@@ -59,6 +56,7 @@ export function EventTicketTypesSettingsSection({
   onPersistTicketTypes,
 }: EventTicketTypesSettingsSectionProps) {
   const { user } = useUser();
+  const { orderTicketsMap } = useEventOrderAndTickets(eventId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<EventTicketTypeId | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -1,8 +1,6 @@
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
@@ -25,7 +23,6 @@ import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 
 interface EventDrilldownSettingsPageProps {
   eventId: EventId;
-  orderTicketsMap: Map<Order, Ticket[]>;
   eventName: string;
   eventStartDate: Timestamp;
   router: ReturnType<typeof useRouter>;
@@ -59,7 +56,6 @@ interface EventDrilldownSettingsPageProps {
 
 const EventDrilldownSettingsPage = ({
   eventId,
-  orderTicketsMap,
   eventName,
   eventStartDate,
   router,
@@ -145,7 +141,6 @@ const EventDrilldownSettingsPage = ({
       <EventTicketTypesSettingsSection
         eventId={eventId}
         eventData={eventData}
-        orderTicketsMap={orderTicketsMap}
         eventTicketTypes={eventTicketTypes}
         setEventTicketTypes={setEventTicketTypes}
         setEventCapacity={setEventCapacity}
@@ -292,9 +287,9 @@ const EventDrilldownSettingsPage = ({
         className="w-32 mt-5"
       />
       <DeleteEventModal
+        eventId={eventId}
         eventName={eventName}
         eventStartDate={eventStartDate}
-        orderTicketsMap={orderTicketsMap}
         modalOpen={modalOpen}
         onClose={onClose}
         onConfirm={onConfirm}

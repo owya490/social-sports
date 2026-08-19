@@ -25,7 +25,6 @@ interface ApprovedAttendeeActionsProps {
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setSelectedOrderForFormResponses: (order: Order) => void;
-  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 export const ApprovedAttendeeActions = ({
@@ -36,7 +35,6 @@ export const ApprovedAttendeeActions = ({
   setEventMetadata,
   setEventVacancy,
   setSelectedOrderForFormResponses,
-  setOrderTicketsMap,
 }: ApprovedAttendeeActionsProps) => {
   const [isRemoveAttendeeModalOpen, setIsRemoveAttendeeModalOpen] = useState<boolean>(false);
   const [isEditAttendeeTicketsDialogModalOpen, setIsEditAttendeeTicketsDialogModalOpen] = useState<boolean>(false);
@@ -111,7 +109,6 @@ export const ApprovedAttendeeActions = ({
           eventData={eventData}
           setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
-          setOrderTicketsMap={setOrderTicketsMap}
         />
       </div>
       <div className="grow">
@@ -125,7 +122,6 @@ export const ApprovedAttendeeActions = ({
           eventData={eventData}
           setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
-          setOrderTicketsMap={setOrderTicketsMap}
         />
       </div>
     </>
@@ -141,7 +137,6 @@ interface ApprovedAttendeeTabProps {
   setEventVacancy: Dispatch<SetStateAction<number>>;
   setIsFilterModalOpen: Dispatch<SetStateAction<boolean>>;
   setSelectedOrderForFormResponses: (order: Order) => void;
-  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 function getOrderTickets(order: Order, approvedOrderTicketsMap: Map<Order, Ticket[]>) {
@@ -157,7 +152,6 @@ export const ApprovedAttendeeTab = ({
   setEventVacancy,
   setIsFilterModalOpen,
   setSelectedOrderForFormResponses,
-  setOrderTicketsMap,
 }: ApprovedAttendeeTabProps) => {
   const allOrders = Array.from(approvedOrderTicketsMap.keys());
 
@@ -193,7 +187,6 @@ export const ApprovedAttendeeTab = ({
         setEventMetadata={setEventMetadata}
         setEventVacancy={setEventVacancy}
         setSelectedOrderForFormResponses={setSelectedOrderForFormResponses}
-        setOrderTicketsMap={setOrderTicketsMap}
       />
     );
   };
