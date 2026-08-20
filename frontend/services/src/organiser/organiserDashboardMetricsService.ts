@@ -1,14 +1,20 @@
-import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
+import { EventData, EventId, OrderId, TicketId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
-import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import {
+  getOrganiserEventMetadataThroughCache,
   getOrganiserEvents,
   getOrganiserEventsCacheGeneration,
   onOrganiserEventsCacheBust,
 } from "@/services/src/organiser/organiserEventsService";
+import {
+  setOrganiserOrderIntoCache,
+  setOrganiserTicketIntoCache,
+  tryGetOrganiserOrderFromCache,
+  tryGetOrganiserTicketFromCache,
+} from "@/services/src/organiser/organiserOrdersTicketsCache";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -281,6 +287,48 @@ onOrganiserEventsCacheBust(() => {
   metricsInflight = null;
 });
 
+async function getOrdersThroughCache(orderIds: OrderId[], bypassCache?: boolean): Promise<Order[]> {
+  const hits: Order[] = [];
+  const missing: OrderId[] = [];
+  for (const orderId of orderIds) {
+    if (!bypassCache) {
+      const cached = tryGetOrganiserOrderFromCache(orderId);
+      if (cached) {
+        hits.push(cached);
+        continue;
+      }
+    }
+    missing.push(orderId);
+  }
+  if (missing.length === 0) {
+    return hits;
+  }
+  const fetched = await getOrdersByIds(missing);
+  fetched.forEach(setOrganiserOrderIntoCache);
+  return [...hits, ...fetched];
+}
+
+async function getTicketsThroughCache(ticketIds: TicketId[], bypassCache?: boolean): Promise<Ticket[]> {
+  const hits: Ticket[] = [];
+  const missing: TicketId[] = [];
+  for (const ticketId of ticketIds) {
+    if (!bypassCache) {
+      const cached = tryGetOrganiserTicketFromCache(ticketId);
+      if (cached) {
+        hits.push(cached);
+        continue;
+      }
+    }
+    missing.push(ticketId);
+  }
+  if (missing.length === 0) {
+    return hits;
+  }
+  const fetched = await getTicketsByIds(missing);
+  fetched.forEach(setOrganiserTicketIntoCache);
+  return [...hits, ...fetched];
+}
+
 export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
   if (!metricsCache || metricsCache.userId !== userId) {
     return null;
@@ -294,12 +342,17 @@ export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): Organiser
   return metricsCache.metrics;
 }
 
-async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
-  const events = await getOrganiserEvents(userId);
+async function loadOrganiserDashboardMetrics(
+  userId: UserId,
+  options?: { bypassCache?: boolean }
+): Promise<OrganiserDashboardMetrics> {
+  const events = await getOrganiserEvents(userId, options);
   const nowSeconds = Timestamp.now().seconds;
   const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
 
-  const metadataList = await Promise.all(events.map((event) => getEventsMetadataByEventId(event.eventId)));
+  const metadataList = await Promise.all(
+    events.map((event) => getOrganiserEventMetadataThroughCache(event.eventId, options))
+  );
 
   const allOrderIds = new Set<string>();
 
@@ -307,11 +360,17 @@ async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserD
     metadata.orderIds.forEach((orderId) => allOrderIds.add(orderId));
   });
 
-  const orders = allOrderIds.size > 0 ? await getOrdersByIds([...allOrderIds] as OrderId[]) : [];
+  const orders =
+    allOrderIds.size > 0
+      ? await getOrdersThroughCache([...allOrderIds] as OrderId[], options?.bypassCache)
+      : [];
   const approvedOrders = orders.filter(isApprovedOrder);
   const allTickets =
     approvedOrders.length > 0
-      ? await getTicketsByIds(approvedOrders.flatMap((order) => order.tickets))
+      ? await getTicketsThroughCache(
+          approvedOrders.flatMap((order) => order.tickets),
+          options?.bypassCache
+        )
       : [];
 
   const approvedTickets = allTickets.filter(isApprovedTicket);
@@ -360,7 +419,7 @@ export async function fetchOrganiserDashboardMetrics(
   }
 
   const promise = (async () => {
-    const metrics = await loadOrganiserDashboardMetrics(userId);
+    const metrics = await loadOrganiserDashboardMetrics(userId, options);
     if (generation === getOrganiserEventsCacheGeneration()) {
       metricsCache = { userId, fetchedAt: Date.now(), generation, metrics };
     }

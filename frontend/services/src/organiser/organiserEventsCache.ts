@@ -1,24 +1,48 @@
-import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
-import { Timestamp } from "firebase/firestore";
 import { applyGeneralAdmissionInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
-import { ORGANISER_EVENTS_REFRESH_MILLIS, OrganiserLocalStorageKeys } from "./organiserConstants";
+import {
+  canUseLocalStorage,
+  isOrganiserCacheFresh,
+  readJsonLocalStorage,
+  removeLocalStorageKey,
+  toCacheTimestamp,
+  writeJsonLocalStorage,
+} from "./organiserCacheUtils";
+import { OrganiserLocalStorageKeys } from "./organiserConstants";
+
+type CachedEventEntry = {
+  fetchedAt: number;
+  event: EventData;
+};
+
+type CachedMetadataEntry = {
+  fetchedAt: number;
+  metadata: EventMetadata;
+};
 
 type OrganiserEventsCachePayload = {
   userId: UserId;
-  fetchedAt: number;
-  events: EventData[];
+  idsFetchedAt: number;
+  eventIds: EventId[];
+  eventsById: Record<string, CachedEventEntry>;
+  metadataById: Record<string, CachedMetadataEntry>;
 };
 
-type MemoryCacheEntry = {
+type MemoryEventEntry = CachedEventEntry & { generation: number };
+type MemoryMetadataEntry = CachedMetadataEntry & { generation: number };
+
+type MemoryIdIndex = {
   userId: UserId;
   fetchedAt: number;
   generation: number;
-  events: EventData[];
+  eventIds: EventId[];
 };
 
 let cacheGeneration = 0;
-let memoryCache: MemoryCacheEntry | null = null;
+let memoryIds: MemoryIdIndex | null = null;
+const memoryEvents = new Map<EventId, MemoryEventEntry>();
+const memoryMetadata = new Map<EventId, MemoryMetadataEntry>();
 const bustListeners: Array<() => void> = [];
 
 export function getOrganiserEventsCacheGeneration(): number {
@@ -29,84 +53,189 @@ export function onOrganiserEventsCacheBust(listener: () => void): void {
   bustListeners.push(listener);
 }
 
-function canUseLocalStorage(): boolean {
-  try {
-    return typeof localStorage !== "undefined";
-  } catch {
-    return false;
-  }
-}
-
-function toTimestamp(value: unknown): Timestamp {
-  if (value instanceof Timestamp) {
-    return value;
-  }
-  if (value && typeof value === "object" && "seconds" in value) {
-    const stamp = value as { seconds: number; nanoseconds?: number };
-    return new Timestamp(stamp.seconds, stamp.nanoseconds ?? 0);
-  }
-  return new Timestamp(0, 0);
-}
-
 export function hydrateStoredOrganiserEvent(event: EventData): EventData {
   return applyGeneralAdmissionInventoryFields({
     ...EmptyEventData,
     ...event,
-    startDate: toTimestamp(event.startDate),
-    endDate: toTimestamp(event.endDate),
-    registrationDeadline: toTimestamp(event.registrationDeadline),
+    startDate: toCacheTimestamp(event.startDate),
+    endDate: toCacheTimestamp(event.endDate),
+    registrationDeadline: toCacheTimestamp(event.registrationDeadline),
   });
 }
 
+function emptyPayload(userId: UserId = "" as UserId): OrganiserEventsCachePayload {
+  return {
+    userId,
+    idsFetchedAt: 0,
+    eventIds: [],
+    eventsById: {},
+    metadataById: {},
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function readLocalStoragePayload(): OrganiserEventsCachePayload | null {
+  const parsed = readJsonLocalStorage<Partial<OrganiserEventsCachePayload>>(
+    OrganiserLocalStorageKeys.OrganiserEventsData
+  );
+  if (
+    !parsed ||
+    typeof parsed.userId !== "string" ||
+    typeof parsed.idsFetchedAt !== "number" ||
+    !Array.isArray(parsed.eventIds) ||
+    !isRecord(parsed.eventsById) ||
+    !isRecord(parsed.metadataById)
+  ) {
+    return null;
+  }
+  return {
+    userId: parsed.userId,
+    idsFetchedAt: parsed.idsFetchedAt,
+    eventIds: parsed.eventIds,
+    eventsById: parsed.eventsById as OrganiserEventsCachePayload["eventsById"],
+    metadataById: parsed.metadataById as OrganiserEventsCachePayload["metadataById"],
+  };
+}
+
+function persistPayload(mutator: (payload: OrganiserEventsCachePayload) => void): void {
   if (!canUseLocalStorage()) {
-    return null;
+    return;
   }
-  try {
-    const raw = localStorage.getItem(OrganiserLocalStorageKeys.OrganiserEventsData);
-    if (!raw) {
-      return null;
-    }
-    const parsed = JSON.parse(raw) as OrganiserEventsCachePayload;
-    if (!parsed?.userId || typeof parsed.fetchedAt !== "number" || !Array.isArray(parsed.events)) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
+  const payload = readLocalStoragePayload() ?? emptyPayload(memoryIds?.userId ?? ("" as UserId));
+  mutator(payload);
+  writeJsonLocalStorage(OrganiserLocalStorageKeys.OrganiserEventsData, payload);
 }
 
-function isFresh(fetchedAt: number): boolean {
-  return Date.now() - fetchedAt < ORGANISER_EVENTS_REFRESH_MILLIS;
+function rememberEvent(event: EventData, fetchedAt: number, generation: number): EventData {
+  const hydrated = hydrateStoredOrganiserEvent(event);
+  memoryEvents.set(hydrated.eventId, { fetchedAt, generation, event: hydrated });
+  return hydrated;
 }
 
-export function tryGetOrganiserEventsFromCache(userId: UserId): EventData[] | null {
+function rememberMetadata(eventId: EventId, metadata: EventMetadata, fetchedAt: number, generation: number): EventMetadata {
+  const hydrated = { ...EmptyEventMetadata, ...metadata };
+  memoryMetadata.set(eventId, { fetchedAt, generation, metadata: hydrated });
+  return hydrated;
+}
+
+export function tryGetOrganiserEventFromCache(eventId: EventId): EventData | null {
+  if (!eventId) {
+    return null;
+  }
+
+  const memoryHit = memoryEvents.get(eventId);
+  if (memoryHit && memoryHit.generation === cacheGeneration && isOrganiserCacheFresh(memoryHit.fetchedAt)) {
+    return memoryHit.event;
+  }
+
+  const stored = readLocalStoragePayload()?.eventsById[eventId];
+  if (!stored || typeof stored.fetchedAt !== "number" || !stored.event || !isOrganiserCacheFresh(stored.fetchedAt)) {
+    return null;
+  }
+  return rememberEvent(stored.event, stored.fetchedAt, cacheGeneration);
+}
+
+export function setOrganiserEventIntoCache(event: EventData, generation: number): void {
+  if (!event?.eventId || generation !== cacheGeneration) {
+    return;
+  }
+  const fetchedAt = Date.now();
+  const hydrated = rememberEvent(event, fetchedAt, generation);
+  persistPayload((payload) => {
+    payload.eventsById[hydrated.eventId] = { fetchedAt, event: hydrated };
+  });
+}
+
+export function tryGetOrganiserEventIdsFromCache(userId: UserId): EventId[] | null {
   if (!userId) {
     return null;
   }
 
   if (
-    memoryCache &&
-    memoryCache.userId === userId &&
-    memoryCache.generation === cacheGeneration &&
-    isFresh(memoryCache.fetchedAt)
+    memoryIds &&
+    memoryIds.userId === userId &&
+    memoryIds.generation === cacheGeneration &&
+    isOrganiserCacheFresh(memoryIds.fetchedAt)
   ) {
-    return memoryCache.events;
+    return memoryIds.eventIds;
   }
 
   const stored = readLocalStoragePayload();
-  if (!stored || stored.userId !== userId || !isFresh(stored.fetchedAt)) {
+  if (!stored || stored.userId !== userId || !isOrganiserCacheFresh(stored.idsFetchedAt)) {
     return null;
   }
 
-  const events = stored.events.map(hydrateStoredOrganiserEvent);
-  memoryCache = {
+  memoryIds = {
     userId,
-    fetchedAt: stored.fetchedAt,
+    fetchedAt: stored.idsFetchedAt,
     generation: cacheGeneration,
-    events,
+    eventIds: stored.eventIds,
   };
+  return stored.eventIds;
+}
+
+export function setOrganiserEventIdsIntoCache(userId: UserId, eventIds: EventId[], generation: number): void {
+  if (!userId || generation !== cacheGeneration) {
+    return;
+  }
+  const fetchedAt = Date.now();
+  memoryIds = { userId, fetchedAt, generation, eventIds };
+  persistPayload((payload) => {
+    payload.userId = userId;
+    payload.idsFetchedAt = fetchedAt;
+    payload.eventIds = eventIds;
+  });
+}
+
+export function tryGetOrganiserEventMetadataFromCache(eventId: EventId): EventMetadata | null {
+  if (!eventId) {
+    return null;
+  }
+
+  const memoryHit = memoryMetadata.get(eventId);
+  if (memoryHit && memoryHit.generation === cacheGeneration && isOrganiserCacheFresh(memoryHit.fetchedAt)) {
+    return memoryHit.metadata;
+  }
+
+  const stored = readLocalStoragePayload()?.metadataById[eventId];
+  if (!stored || typeof stored.fetchedAt !== "number" || !stored.metadata || !isOrganiserCacheFresh(stored.fetchedAt)) {
+    return null;
+  }
+  return rememberMetadata(eventId, stored.metadata, stored.fetchedAt, cacheGeneration);
+}
+
+export function setOrganiserEventMetadataIntoCache(
+  eventId: EventId,
+  metadata: EventMetadata,
+  generation: number
+): void {
+  if (!eventId || generation !== cacheGeneration) {
+    return;
+  }
+  const fetchedAt = Date.now();
+  const hydrated = rememberMetadata(eventId, metadata, fetchedAt, generation);
+  persistPayload((payload) => {
+    payload.metadataById[eventId] = { fetchedAt, metadata: hydrated };
+  });
+}
+
+export function tryGetOrganiserEventsFromCache(userId: UserId): EventData[] | null {
+  const eventIds = tryGetOrganiserEventIdsFromCache(userId);
+  if (!eventIds) {
+    return null;
+  }
+
+  const events: EventData[] = [];
+  for (const eventId of eventIds) {
+    const event = tryGetOrganiserEventFromCache(eventId);
+    if (!event) {
+      return null;
+    }
+    events.push(event);
+  }
   return events;
 }
 
@@ -114,31 +243,28 @@ export function setOrganiserEventsIntoCache(userId: UserId, events: EventData[],
   if (!userId || generation !== cacheGeneration) {
     return;
   }
-
   const fetchedAt = Date.now();
-  memoryCache = { userId, fetchedAt, generation, events };
-
-  if (!canUseLocalStorage()) {
-    return;
+  const eventIds = events.map((event) => event.eventId);
+  memoryIds = { userId, fetchedAt, generation, eventIds };
+  const eventsById: Record<string, CachedEventEntry> = {};
+  for (const event of events) {
+    const hydrated = rememberEvent(event, fetchedAt, generation);
+    eventsById[hydrated.eventId] = { fetchedAt, event: hydrated };
   }
-  try {
-    const payload: OrganiserEventsCachePayload = { userId, fetchedAt, events };
-    localStorage.setItem(OrganiserLocalStorageKeys.OrganiserEventsData, JSON.stringify(payload));
-  } catch {
-    // Quota or private-mode writes can fail; memory cache still serves this session.
-  }
+  persistPayload((payload) => {
+    payload.userId = userId;
+    payload.idsFetchedAt = fetchedAt;
+    payload.eventIds = eventIds;
+    payload.eventsById = { ...payload.eventsById, ...eventsById };
+  });
 }
 
 export function bustOrganiserEventsCache(): void {
   cacheGeneration += 1;
-  memoryCache = null;
-  if (canUseLocalStorage()) {
-    try {
-      localStorage.removeItem(OrganiserLocalStorageKeys.OrganiserEventsData);
-    } catch {
-      // Ignore storage access failures on bust.
-    }
-  }
+  memoryIds = null;
+  memoryEvents.clear();
+  memoryMetadata.clear();
+  removeLocalStorageKey(OrganiserLocalStorageKeys.OrganiserEventsData);
   for (const listener of bustListeners) {
     listener();
   }
