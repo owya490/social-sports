@@ -33,12 +33,19 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
     };
   }, [isV2Shell]);
 
+  useEffect(() => {
+    if (!isV2Shell) return;
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
+      meta.setAttribute("content", ORGANISER_V2_CANVAS);
+    });
+  }, [isV2Shell, mobileOpen]);
+
   if (isV2Shell) {
     return (
       <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
         <div className="min-h-screen bg-surface">
           <OrganiserSidebar mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange} />
-          <div className="min-h-screen transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
+          <div className="min-h-screen transition-[padding] duration-200 max-lg:pt-[env(safe-area-inset-top,0px)] lg:pl-[var(--organiser-sidebar-width)]">
             {children}
           </div>
         </div>

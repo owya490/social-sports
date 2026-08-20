@@ -8,7 +8,12 @@ import type { Viewport } from "next";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f7f7f7",
+  viewportFit: "cover",
+  colorScheme: "light",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f7f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#f7f7f7" },
+  ],
 };
 
 export default function OrganiserV2Layout({ children }: { children: React.ReactNode }) {
