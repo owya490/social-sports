@@ -1,8 +1,6 @@
 import Loading from "@/components/loading/Loading";
-import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
-import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
-import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
-import { addAttendee } from "@/services/src/attendee/attendeeService";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
+import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { getEventById } from "@/services/src/events/eventsService";
 import {
   getSortedEventTicketTypes,
@@ -15,7 +13,6 @@ import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLim
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input, Option, Select } from "@material-tailwind/react";
-import { Timestamp } from "firebase/firestore";
 import React, { Fragment, useEffect, useMemo, useState } from "react";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -28,7 +25,6 @@ interface InviteAttendeeDialogProps {
   isFilterModalOpen: boolean;
   eventId: EventId;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
-  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 const InviteAttendeeDialog = ({
@@ -38,8 +34,8 @@ const InviteAttendeeDialog = ({
   isFilterModalOpen,
   eventId,
   setEventVacancy,
-  setOrderTicketsMap,
 }: InviteAttendeeDialogProps) => {
+  const { addAttendee } = useEventOrderAndTickets(eventId);
   const [attendeeEmail, setAttendeeEmail] = useState<string>("");
   const [attendeeName, setAttendeeName] = useState<string>("");
   const [attendeePhoneNumber, setAttendeePhoneNumber] = useState<string>("");
@@ -126,8 +122,7 @@ const InviteAttendeeDialog = ({
         showTypeSelector && selectedTicketTypeId
           ? selectedTicketTypeId
           : resolveCheckoutTicketTypeId(eventData);
-      const { orderId, ticketIds } = await addAttendee({
-        eventId,
+      await addAttendee({
         email: attendeeEmail,
         fullName: attendeeName,
         phone: attendeePhoneNumber,
@@ -135,29 +130,6 @@ const InviteAttendeeDialog = ({
         price: 0, // price is free as it is being added manually
         eventTicketTypeId,
       });
-      const now = Timestamp.now();
-      const newOrder: Order = {
-        ...EMPTY_ORDER_DEFAULTS,
-        orderId: orderId as OrderId,
-        email: attendeeEmail,
-        fullName: attendeeName,
-        phone: attendeePhoneNumber,
-        tickets: ticketIds as TicketId[],
-        datePurchased: now,
-        status: OrderAndTicketStatus.APPROVED,
-        type: OrderAndTicketType.MANUAL,
-      };
-      const newTickets: Ticket[] = ticketIds.map((ticketId) => ({
-        ...EMPTY_TICKET,
-        ticketId: ticketId as TicketId,
-        eventId,
-        orderId: orderId as OrderId,
-        purchaseDate: now,
-        status: OrderAndTicketStatus.APPROVED,
-        type: OrderAndTicketType.MANUAL,
-        eventTicketTypeId,
-      }));
-      setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
       setTicketTypes((prev) =>
         prev.map((entry) =>
           entry.eventTicketTypeId === eventTicketTypeId

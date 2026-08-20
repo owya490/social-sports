@@ -1,6 +1,7 @@
 "use client";
 import { BlackHighlightButton } from "@/components/elements/HighlightButton";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventData, EventMetadata } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -10,12 +11,13 @@ import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import { getAttachedFormIdsForEvent } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getForm, loadAttendeeFormResponse } from "@/services/src/forms/formsServices";
 import { collectAttendeeFormResponseLookups } from "@/services/src/forms/formsUtils/formsUtils";
+import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { useEffect, useMemo, useState } from "react";
 
 interface ViewAttendeeFormResponsesDialogProps {
   onClose: () => void;
-  orderTicketsMap: Map<Order, Ticket[]>;
+  orderId: Order["orderId"];
   eventData: EventData;
   eventMetadata: EventMetadata;
 }
@@ -28,7 +30,7 @@ type FormResponseGroup = {
 
 export const ViewAttendeeFormResponsesDialog = ({
   onClose,
-  orderTicketsMap,
+  orderId,
   eventData,
   eventMetadata,
 }: ViewAttendeeFormResponsesDialogProps) => {
@@ -36,6 +38,11 @@ export const ViewAttendeeFormResponsesDialog = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [groups, setGroups] = useState<FormResponseGroup[]>([]);
+  const { orderTicketsMap: eventOrderTicketsMap } = useEventOrderAndTickets(eventData.eventId);
+  const orderTicketsMap = useMemo(() => {
+    const entry = getEntryFromOrderTicketsMapByOrderId(eventOrderTicketsMap, orderId);
+    return entry ? new Map([entry]) : new Map<Order, Ticket[]>();
+  }, [eventOrderTicketsMap, orderId]);
 
   const lookups = useMemo(() => {
     const collected: ReturnType<typeof collectAttendeeFormResponseLookups> = [];
@@ -153,7 +160,6 @@ export const ViewAttendeeFormResponsesDialog = ({
                   formId={group.formId}
                   form={group.form}
                   eventId={eventData.eventId}
-                  orderTicketsMap={orderTicketsMap}
                   showPurchaserColumn={false}
                 />
               </div>

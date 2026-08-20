@@ -1,14 +1,12 @@
 "use client";
 import Loading from "@/components/loading/Loading";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampTicketQuantity } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventById } from "@/services/src/events/eventsService";
-import { getOrderById } from "@/services/src/tickets/orderService";
-import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert, Input } from "@material-tailwind/react";
@@ -24,7 +22,6 @@ interface EditAttendeeTicketsDialogProps {
   eventData: EventData;
   setEventMetadata: React.Dispatch<React.SetStateAction<EventMetadata>>;
   setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
-  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 export const EditAttendeeTicketsDialog = ({
@@ -36,8 +33,8 @@ export const EditAttendeeTicketsDialog = ({
   eventData,
   setEventMetadata,
   setEventVacancy,
-  setOrderTicketsMap,
 }: EditAttendeeTicketsDialogProps) => {
+  const { setAttendeeTickets } = useEventOrderAndTickets(eventId);
   const numTickets = tickets.length;
   const [newNumTickets, setNewNumTickets] = useState<string>(numTickets.toString());
 
@@ -61,19 +58,9 @@ export const EditAttendeeTicketsDialog = ({
     try {
       setLoading(true);
       await setAttendeeTickets({
-        eventId,
         orderId: order.orderId,
         numTickets: parseInt(newNumTickets),
         eventTicketTypeId: tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
-      });
-      const updatedOrder = await getOrderById(order.orderId);
-      const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
-      setOrderTicketsMap((prev) => {
-        const next = new Map(prev);
-        const [oldOrder] = Array.from(next.entries()).find(([o]) => o.orderId === order.orderId) ?? [];
-        if (oldOrder) next.delete(oldOrder);
-        next.set(updatedOrder, updatedTickets);
-        return next;
       });
       const updatedEventData = await getEventById(eventId);
       setEventVacancy(updatedEventData.vacancy);

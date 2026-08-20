@@ -5,6 +5,7 @@ import { FormSelector } from "@/components/events/create/forms/FormSelector";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { useUser } from "@/components/utility/UserContext";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/interfaces/FormTypes";
@@ -22,7 +23,6 @@ import { getForm, getFormResponsesForEvent, submitManualFormResponse } from "@/s
 import {
   filterFormResponsesForApprovedOrders,
   filterFormResponsesForTicketType,
-  getApprovedOrderTicketsMap,
   getFormSectionAnswerDisplay,
 } from "@/services/src/forms/formsUtils/formsUtils";
 import { CheckIcon, PlusIcon, TicketIcon } from "@heroicons/react/24/outline";
@@ -41,7 +41,6 @@ import {
 
 type EventHubRegistrationProps = {
   eventId: EventId;
-  orderTicketsMap: Map<Order, Ticket[]>;
   eventTicketTypes: EventTicketTypesMap | undefined;
   setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
 };
@@ -70,12 +69,12 @@ const createFormResponseMap = (orderTicketsMap: Map<Order, Ticket[]>): Map<strin
 
 export function EventHubRegistration({
   eventId,
-  orderTicketsMap,
   eventTicketTypes,
   setEventTicketTypes,
 }: EventHubRegistrationProps) {
   const logger = useMemo(() => new Logger("EventHubRegistration"), []);
   const { user, userLoading } = useUser();
+  const { orderTicketsMap, approvedOrderTicketsMap } = useEventOrderAndTickets(eventId);
   const router = useRouter();
   const [eventData, setEventData] = useState<EventData | null>(null);
   const [selectedTypeId, setSelectedTypeId] = useState<EventTicketTypeId | null>(null);
@@ -94,7 +93,6 @@ export function EventHubRegistration({
   const formResponderRef = useRef<FormResponderRef>(null);
   const orderTicketsMapRef = useRef(orderTicketsMap);
   orderTicketsMapRef.current = orderTicketsMap;
-  const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
 
   const resolvedTicketTypes = eventTicketTypes ?? eventData?.eventTicketTypes;
   const usesTicketTypes = hasEventTicketTypes({ eventTicketTypes: resolvedTicketTypes });
@@ -512,7 +510,6 @@ export function EventHubRegistration({
           form={form}
           formId={formId}
           eventId={eventId}
-          orderTicketsMap={approvedOrderTicketsMap}
           showPurchaserColumn={true}
           flush
         />

@@ -22,14 +22,12 @@ import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
   EventId,
 } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
 import {
   DEFAULT_RECURRENCE_FORM_DATA,
   Frequency,
   NewRecurrenceFormData,
   RecurrenceTemplateId,
 } from "@/interfaces/RecurringEventTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import {
@@ -49,7 +47,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 const logger = new Logger("RecurringHubV2Page");
-const EMPTY_ORDER_TICKETS_MAP = new Map<Order, Ticket[]>();
 
 export default function OrganiserRecurringHubV2Page() {
   const params = useParams<{ id: string }>();
@@ -252,7 +249,6 @@ export default function OrganiserRecurringHubV2Page() {
             isActive={eventIsActive}
             isPrivate={eventIsPrivate}
             eventTicketTypes={eventTicketTypes}
-            orderTicketsMap={EMPTY_ORDER_TICKETS_MAP}
             setEventTicketTypes={(types) => {
               setEventTicketTypes(types);
               const inventory = resolveEventInventory({ eventTicketTypes: types });

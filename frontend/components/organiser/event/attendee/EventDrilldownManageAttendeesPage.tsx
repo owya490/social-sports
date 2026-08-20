@@ -1,15 +1,13 @@
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
-import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
+import { Order } from "@/interfaces/OrderTypes";
 import { Logger } from "@/observability/logger";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
 } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { filterOrderTicketsMapByTicketType } from "@/services/src/forms/formsUtils/formsUtils";
-import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
-import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import React, { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
@@ -25,8 +23,6 @@ interface EventDrilldownManageAttendeesPageProps {
   eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
-  orderTicketsMap: Map<Order, Ticket[]>;
-  setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 type TabType = "approved" | "pending" | "rejected";
@@ -66,18 +62,18 @@ export const EventDrilldownManageAttendeesPage = ({
   eventId,
   eventData,
   setEventVacancy,
-  orderTicketsMap,
-  setOrderTicketsMap,
 }: EventDrilldownManageAttendeesPageProps) => {
   const logger = new Logger("EventDrilldownManageAttendeesPage");
+  const {
+    loading,
+    approvedOrderTicketsMap,
+    pendingOrderTicketsMap,
+    rejectedOrderTicketsMap,
+    approveOrder,
+    rejectOrder,
+  } = useEventOrderAndTickets(eventId);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<TabType>("approved");
-  const [approvedOrderTicketsMap, setApprovedOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
-  const [loadingApprovedOrders, setLoadingApprovedOrders] = useState<boolean>(false);
-  const [pendingOrderTicketsMap, setPendingOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
-  const [loadingPendingOrders, setLoadingPendingOrders] = useState<boolean>(false);
-  const [rejectedOrderTicketsMap, setRejectedOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
-  const [loadingRejectedOrders, setLoadingRejectedOrders] = useState<boolean>(false);
   const [selectedOrderForFormResponses, setSelectedOrderForFormResponses] = useState<Order | null>(null);
   const hasInitializedTabRef = useRef<boolean>(false);
   const usesTicketTypes = hasEventTicketTypes(eventData);
@@ -106,147 +102,22 @@ export const EventDrilldownManageAttendeesPage = ({
   }
 
   useEffect(() => {
-    const fetchPendingOrders = () => {
-      if (orderTicketsMap.size === 0) {
-        setPendingOrderTicketsMap(new Map());
-        if (!hasInitializedTabRef.current) {
-          setActiveTab("approved");
-          hasInitializedTabRef.current = true;
-        }
-        return;
-      }
-
-      setLoadingPendingOrders(true);
-      try {
-        const pendingMap = new Map<Order, Ticket[]>();
-        orderTicketsMap.forEach((tickets, order) => {
-          if (order.status === OrderAndTicketStatus.PENDING) {
-            pendingMap.set(order, tickets);
-          }
-        });
-        setPendingOrderTicketsMap(pendingMap);
-
-        if (!hasInitializedTabRef.current) {
-          setActiveTab(pendingMap.size > 0 ? "pending" : "approved");
-          hasInitializedTabRef.current = true;
-        }
-      } catch (error) {
-        logger.error(`Error fetching pending orders: ${error}`);
-        setPendingOrderTicketsMap(new Map());
-        if (!hasInitializedTabRef.current) {
-          setActiveTab("approved");
-          hasInitializedTabRef.current = true;
-        }
-      } finally {
-        setLoadingPendingOrders(false);
-      }
-    };
-
-    const fetchApprovedOrders = () => {
-      if (orderTicketsMap.size === 0) {
-        setApprovedOrderTicketsMap(new Map());
-        return;
-      }
-
-      setLoadingApprovedOrders(true);
-      try {
-        const approvedMap = new Map<Order, Ticket[]>();
-        orderTicketsMap.forEach((tickets, order) => {
-          if (order.status === OrderAndTicketStatus.APPROVED) {
-            approvedMap.set(
-              order,
-              tickets.filter((ticket) => ticket.status === OrderAndTicketStatus.APPROVED)
-            );
-          }
-        });
-        setApprovedOrderTicketsMap(approvedMap);
-      } catch (error) {
-        logger.error(`Error fetching approved orders: ${error}`);
-        setApprovedOrderTicketsMap(new Map());
-      } finally {
-        setLoadingApprovedOrders(false);
-      }
-    };
-
-    const fetchRejectedOrders = () => {
-      if (orderTicketsMap.size === 0) {
-        setRejectedOrderTicketsMap(new Map());
-        return;
-      }
-
-      setLoadingRejectedOrders(true);
-      try {
-        const rejectedMap = new Map<Order, Ticket[]>();
-        orderTicketsMap.forEach((tickets, order) => {
-          if (order.status === OrderAndTicketStatus.REJECTED) {
-            rejectedMap.set(order, tickets);
-          }
-        });
-        setRejectedOrderTicketsMap(rejectedMap);
-      } catch (error) {
-        logger.error(`Error fetching rejected orders: ${error}`);
-        setRejectedOrderTicketsMap(new Map());
-      } finally {
-        setLoadingRejectedOrders(false);
-      }
-    };
-
-    fetchPendingOrders();
-    fetchApprovedOrders();
-    fetchRejectedOrders();
-  }, [orderTicketsMap]);
-
-  const deleteFromMapByOrderId = (map: Map<Order, Ticket[]>, orderId: string): Map<Order, Ticket[]> => {
-    const newMap = new Map(map);
-    for (const [key] of newMap) {
-      if (key.orderId === orderId) {
-        newMap.delete(key);
-        break;
-      }
+    if (loading || hasInitializedTabRef.current) {
+      return;
     }
-    return newMap;
-  };
-
-  const moveOrderFromPending = (order: Order, tickets: Ticket[], targetStatus: OrderAndTicketStatus) => {
-    setPendingOrderTicketsMap((prev) => deleteFromMapByOrderId(prev, order.orderId));
-
-    const updatedOrder: Order = { ...order, status: targetStatus };
-    const ticketsWithStatus = tickets.map((t) => ({ ...t, status: targetStatus }));
-
-    if (targetStatus === OrderAndTicketStatus.APPROVED) {
-      setApprovedOrderTicketsMap((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(updatedOrder, ticketsWithStatus);
-        return newMap;
-      });
-    } else if (targetStatus === OrderAndTicketStatus.REJECTED) {
-      setRejectedOrderTicketsMap((prev) => {
-        const newMap = new Map(prev);
-        newMap.set(updatedOrder, ticketsWithStatus);
-        return newMap;
-      });
-      setEventVacancy((prev) => prev + order.tickets.length);
-    }
-
-    setOrderTicketsMap((prev) => {
-      const newMap = deleteFromMapByOrderId(prev, order.orderId);
-      newMap.set(updatedOrder, ticketsWithStatus);
-      return newMap;
-    });
-  };
+    setActiveTab(pendingOrderTicketsMap.size > 0 ? "pending" : "approved");
+    hasInitializedTabRef.current = true;
+  }, [loading, pendingOrderTicketsMap.size]);
 
   const handleApproveOrder = async (order: Order) => {
     logger.info(`Approving order: ${order.orderId}`);
     const toastId = toast.loading("Approving order...");
     try {
-      const response = await approveBooking(eventId, eventData.organiserId, order.orderId);
-      const tickets = pendingOrderTicketsMap.get(order) ?? [];
-
+      const response = await approveOrder(eventData.organiserId, order.orderId);
       if (response.success) {
-        moveOrderFromPending(order, tickets, OrderAndTicketStatus.APPROVED);
         toast.success("Order approved successfully", { id: toastId });
       } else {
-        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
+        setEventVacancy((prev) => prev + order.tickets.length);
         showFailureToastWithRefresh(
           response.message || "Order could not be approved and has been moved to rejected.",
           toastId
@@ -265,14 +136,11 @@ export const EventDrilldownManageAttendeesPage = ({
     logger.info(`Rejecting order: ${order.orderId}`);
     const toastId = toast.loading("Rejecting order...");
     try {
-      const response = await rejectBooking(eventId, eventData.organiserId, order.orderId);
-      const tickets = pendingOrderTicketsMap.get(order) ?? [];
-
+      const response = await rejectOrder(eventData.organiserId, order.orderId);
+      setEventVacancy((prev) => prev + order.tickets.length);
       if (response.success) {
-        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
         toast.success("Order rejected successfully", { id: toastId });
       } else {
-        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
         toast(response.message || "Order was already rejected due to payment expiry.", {
           id: toastId,
           icon: "⚠️",
@@ -400,11 +268,10 @@ export const EventDrilldownManageAttendeesPage = ({
         <ApprovedAttendeeTab
           approvedOrderTicketsMap={filteredApprovedOrderTicketsMap}
           eventId={eventId}
-          loadingApprovedOrders={loadingApprovedOrders}
+          loadingApprovedOrders={loading}
           eventData={eventData}
           setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
-          setOrderTicketsMap={setOrderTicketsMap}
           setIsFilterModalOpen={setIsFilterModalOpen}
           setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
         />
@@ -413,7 +280,7 @@ export const EventDrilldownManageAttendeesPage = ({
       {activeTab === "pending" && (
         <PendingAttendeeTab
           pendingOrderTicketsMap={filteredPendingOrderTicketsMap}
-          loadingPendingOrders={loadingPendingOrders}
+          loadingPendingOrders={loading}
           onApproveOrder={handleApproveOrder}
           onRejectOrder={handleRejectOrder}
           setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
@@ -424,7 +291,7 @@ export const EventDrilldownManageAttendeesPage = ({
         <RejectedAttendeeTab
           rejectedOrderTicketsMap={filteredRejectedOrderTicketsMap}
           eventId={eventId}
-          loadingRejectedOrders={loadingRejectedOrders}
+          loadingRejectedOrders={loading}
           setSelectedOrderForFormResponses={(order: Order) => setSelectedOrderForFormResponses(order)}
         />
       )}
@@ -437,7 +304,6 @@ export const EventDrilldownManageAttendeesPage = ({
           closeModal={closeModal}
           isFilterModalOpen={isFilterModalOpen}
           eventId={eventId}
-          setOrderTicketsMap={setOrderTicketsMap}
           setEventVacancy={setEventVacancy}
         />
         {selectedOrderForFormResponses && (
@@ -445,9 +311,7 @@ export const EventDrilldownManageAttendeesPage = ({
             onClose={() => {
               setSelectedOrderForFormResponses(null);
             }}
-            orderTicketsMap={
-              new Map([getEntryFromOrderTicketsMapByOrderId(orderTicketsMap, selectedOrderForFormResponses.orderId)!])
-            }
+            orderId={selectedOrderForFormResponses.orderId}
             eventData={eventData}
             eventMetadata={eventMetadata}
           />
