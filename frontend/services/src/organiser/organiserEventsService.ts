@@ -3,26 +3,18 @@ import {
   EventData,
   EventDataWithoutOrganiser,
   EventId,
-  EventMetadata,
 } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { EVENT_PATHS } from "../events/eventsConstants";
-import { getEventsMetadataByEventId } from "../events/eventsMetadata/eventsMetadataService";
 import { getEventById } from "../events/eventsService";
 import { applyGeneralAdmissionInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 import {
   getOrganiserEventsCacheGeneration,
-  setOrganiserEventIdsIntoCache,
-  setOrganiserEventIntoCache,
-  setOrganiserEventMetadataIntoCache,
   setOrganiserEventsIntoCache,
-  tryGetOrganiserEventFromCache,
-  tryGetOrganiserEventIdsFromCache,
-  tryGetOrganiserEventMetadataFromCache,
   tryGetOrganiserEventsFromCache,
 } from "./organiserEventsCache";
 
@@ -30,7 +22,6 @@ export {
   bustOrganiserEventsCache,
   getOrganiserEventsCacheGeneration,
   onOrganiserEventsCacheBust,
-  tryGetOrganiserEventFromCache,
   tryGetOrganiserEventsFromCache,
 } from "./organiserEventsCache";
 
@@ -118,52 +109,6 @@ async function fetchOrganiserEventsFromFirestore(userId: UserId): Promise<EventD
   return eventDataList;
 }
 
-async function fetchOrganiserEventIds(userId: UserId): Promise<EventId[]> {
-  const privateDoc = await getPrivateUserById(userId);
-  return (privateDoc.organiserEvents || []) as EventId[];
-}
-
-async function fetchMissingOrganiserEvents(eventIds: EventId[]): Promise<EventData[]> {
-  const fetched = await Promise.all(
-    eventIds.map((eventId) =>
-      getEventById(eventId, false).catch(() => {
-        organiserEventsServiceLogger.warn(
-          `Organiser cannot find an event which is present in their personal event list. eventId=${eventId}`
-        );
-        return null;
-      })
-    )
-  );
-  return fetched.filter((event): event is EventData => event !== null);
-}
-
-function eventsInIdOrder(events: EventData[], eventIds: EventId[]): EventData[] {
-  const byId = new Map(events.map((event) => [event.eventId, event]));
-  const ordered: EventData[] = [];
-  for (const eventId of eventIds) {
-    const event = byId.get(eventId);
-    if (event) {
-      ordered.push(event);
-    }
-  }
-  return ordered;
-}
-
-export async function getOrganiserEventMetadataThroughCache(
-  eventId: EventId,
-  options?: { bypassCache?: boolean }
-): Promise<EventMetadata> {
-  if (!options?.bypassCache) {
-    const cached = tryGetOrganiserEventMetadataFromCache(eventId);
-    if (cached) {
-      return cached;
-    }
-  }
-  const metadata = await getEventsMetadataByEventId(eventId);
-  setOrganiserEventMetadataIntoCache(eventId, metadata, getOrganiserEventsCacheGeneration());
-  return metadata;
-}
-
 export async function getOrganiserEvents(
   userId: UserId,
   options?: { bypassCache?: boolean }
@@ -186,53 +131,9 @@ export async function getOrganiserEvents(
 
   const fetchSeq = ++organiserEventsFetchSeq;
   const promise = (async () => {
-    const eventIds = options?.bypassCache
-      ? await fetchOrganiserEventIds(userId)
-      : (tryGetOrganiserEventIdsFromCache(userId) ?? (await fetchOrganiserEventIds(userId)));
-
-    if (eventIds.length === 0) {
-      if (fetchSeq === organiserEventsFetchSeq) {
-        setOrganiserEventIdsIntoCache(userId, [], generation);
-      }
-      return [];
-    }
-
-    if (options?.bypassCache) {
-      const events = await fetchOrganiserEventsFromFirestore(userId);
-      if (fetchSeq === organiserEventsFetchSeq) {
-        setOrganiserEventsIntoCache(userId, events, generation);
-      }
-      return events;
-    }
-
-    const hits: EventData[] = [];
-    const missingIds: EventId[] = [];
-    for (const eventId of eventIds) {
-      const cachedEvent = tryGetOrganiserEventFromCache(eventId);
-      if (cachedEvent) {
-        hits.push(cachedEvent);
-      } else {
-        missingIds.push(eventId);
-      }
-    }
-
-    let fetched: EventData[] = [];
-    if (missingIds.length === eventIds.length) {
-      fetched = await fetchOrganiserEventsFromFirestore(userId);
-    } else if (missingIds.length > 0) {
-      fetched = await fetchMissingOrganiserEvents(missingIds);
-    }
-
-    const events = eventsInIdOrder([...hits, ...fetched], eventIds);
+    const events = await fetchOrganiserEventsFromFirestore(userId);
     if (fetchSeq === organiserEventsFetchSeq) {
-      setOrganiserEventIdsIntoCache(
-        userId,
-        events.map((event) => event.eventId),
-        generation
-      );
-      for (const event of fetched) {
-        setOrganiserEventIntoCache(event, generation);
-      }
+      setOrganiserEventsIntoCache(userId, events);
     }
     return events;
   })();

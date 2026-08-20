@@ -1,16 +1,29 @@
-import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import {
+  EmptyEventData,
+  EmptyEventMetadata,
+  EventData,
+  EventId,
+  EventMetadata,
+  OrderId,
+  TicketId,
+} from "@/interfaces/EventTypes";
+import { EMPTY_ORDER_DEFAULTS, Order } from "@/interfaces/OrderTypes";
+import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Timestamp } from "firebase/firestore";
 import { ORGANISER_EVENTS_REFRESH_MILLIS, OrganiserLocalStorageKeys } from "../src/organiser/organiserConstants";
 import {
   bustOrganiserEventsCache,
-  getOrganiserEventsCacheGeneration,
-  setOrganiserEventIdsIntoCache,
   setOrganiserEventIntoCache,
   setOrganiserEventMetadataIntoCache,
+  setOrganiserEventsIntoCache,
+  setOrganiserOrderIntoCache,
+  setOrganiserTicketIntoCache,
   tryGetOrganiserEventFromCache,
   tryGetOrganiserEventMetadataFromCache,
   tryGetOrganiserEventsFromCache,
+  tryGetOrganiserOrderFromCache,
+  tryGetOrganiserTicketFromCache,
 } from "../src/organiser/organiserEventsCache";
 
 const storage = new Map<string, string>();
@@ -39,69 +52,94 @@ function event(eventId: string, name: string): EventData {
   };
 }
 
+function order(orderId: string): Order {
+  return {
+    ...EMPTY_ORDER_DEFAULTS,
+    orderId: orderId as OrderId,
+    fullName: "Ada Lovelace",
+    datePurchased: new Timestamp(123, 0),
+  };
+}
+
+function ticket(ticketId: string): Ticket {
+  return {
+    ...EMPTY_TICKET,
+    ticketId: ticketId as TicketId,
+    purchaseDate: new Timestamp(456, 0),
+    price: 1500,
+  };
+}
+
 describe("organiserEventsCache", () => {
   beforeEach(() => {
     storage.clear();
     bustOrganiserEventsCache();
   });
 
-  it("returns a cached event by id and misses unknown ids", () => {
-    const generation = getOrganiserEventsCacheGeneration();
-    setOrganiserEventIntoCache(event("event-1", "Saturday social"), generation);
+  it("caches events, orders, and tickets by uuid", () => {
+    setOrganiserEventIntoCache(event("event-1", "Saturday social"));
+    setOrganiserOrderIntoCache(order("order-1"));
+    setOrganiserTicketIntoCache(ticket("ticket-1"));
 
     expect(tryGetOrganiserEventFromCache("event-1" as EventId)?.name).toBe("Saturday social");
-    expect(tryGetOrganiserEventFromCache("event-missing" as EventId)).toBeNull();
+    expect(tryGetOrganiserOrderFromCache("order-1" as OrderId)?.fullName).toBe("Ada Lovelace");
+    expect(tryGetOrganiserTicketFromCache("ticket-1" as TicketId)?.price).toBe(1500);
+    expect(tryGetOrganiserEventFromCache("missing" as EventId)).toBeNull();
   });
 
-  it("only returns the organiser event list when every id is cached", () => {
-    const generation = getOrganiserEventsCacheGeneration();
+  it("only returns the event list when every listed id is cached", () => {
     const userId = "user-1" as UserId;
-    setOrganiserEventIntoCache(event("event-1", "One"), generation);
-    setOrganiserEventIdsIntoCache(userId, ["event-1" as EventId, "event-2" as EventId], generation);
-
+    setOrganiserEventIntoCache(event("event-1", "One"));
     expect(tryGetOrganiserEventsFromCache(userId)).toBeNull();
 
-    setOrganiserEventIntoCache(event("event-2", "Two"), generation);
+    setOrganiserEventsIntoCache(userId, [event("event-1", "One"), event("event-2", "Two")]);
     expect(tryGetOrganiserEventsFromCache(userId)?.map((item) => item.eventId)).toEqual(["event-1", "event-2"]);
   });
 
   it("hydrates timestamps after a localStorage round trip", () => {
-    const generation = getOrganiserEventsCacheGeneration();
-    setOrganiserEventIntoCache(event("event-1", "Cached"), generation);
-    setOrganiserEventIdsIntoCache("user-1" as UserId, ["event-1" as EventId], generation);
-
+    setOrganiserEventsIntoCache("user-1" as UserId, [event("event-1", "Cached")]);
+    setOrganiserOrderIntoCache(order("order-1"));
     const raw = storage.get(OrganiserLocalStorageKeys.OrganiserEventsData);
     expect(raw).toBeTruthy();
+
     bustOrganiserEventsCache();
     storage.set(OrganiserLocalStorageKeys.OrganiserEventsData, raw as string);
 
-    const cached = tryGetOrganiserEventFromCache("event-1" as EventId);
-    expect(cached?.name).toBe("Cached");
-    expect(cached?.startDate).toBeInstanceOf(Timestamp);
-    expect(cached?.startDate.seconds).toBe(100);
+    expect(tryGetOrganiserEventFromCache("event-1" as EventId)?.startDate).toBeInstanceOf(Timestamp);
+    expect(tryGetOrganiserEventFromCache("event-1" as EventId)?.startDate.seconds).toBe(100);
+    expect(tryGetOrganiserOrderFromCache("order-1" as OrderId)?.datePurchased.seconds).toBe(123);
   });
 
-  it("expires a document after the organiser cache ttl", () => {
+  it("expires documents after the organiser cache ttl", () => {
     const now = 1_700_000_000_000;
     const nowSpy = jest.spyOn(Date, "now").mockReturnValue(now);
-    const generation = getOrganiserEventsCacheGeneration();
-    setOrganiserEventIntoCache(event("event-1", "Stale"), generation);
+    setOrganiserEventIntoCache(event("event-1", "Stale"));
+    setOrganiserOrderIntoCache(order("order-1"));
 
     nowSpy.mockReturnValue(now + ORGANISER_EVENTS_REFRESH_MILLIS);
     expect(tryGetOrganiserEventFromCache("event-1" as EventId)).toBeNull();
+    expect(tryGetOrganiserOrderFromCache("order-1" as OrderId)).toBeNull();
     nowSpy.mockRestore();
   });
 
-  it("caches event metadata by event id separately from the event document", () => {
-    const generation = getOrganiserEventsCacheGeneration();
-    const metadata: EventMetadata = {
+  it("caches event metadata by event id", () => {
+    const eventMetadata: EventMetadata = {
       ...EmptyEventMetadata,
       eventId: "event-1" as EventId,
-      orderIds: ["order-1" as EventMetadata["orderIds"][number]],
+      orderIds: ["order-1" as OrderId],
     };
-    setOrganiserEventMetadataIntoCache("event-1" as EventId, metadata, generation);
+    setOrganiserEventMetadataIntoCache("event-1" as EventId, eventMetadata);
 
     expect(tryGetOrganiserEventMetadataFromCache("event-1" as EventId)?.orderIds).toEqual(["order-1"]);
     expect(tryGetOrganiserEventFromCache("event-1" as EventId)).toBeNull();
+  });
+
+  it("clears all documents on bust", () => {
+    setOrganiserEventsIntoCache("user-1" as UserId, [event("event-1", "One")]);
+    setOrganiserOrderIntoCache(order("order-1"));
+    bustOrganiserEventsCache();
+
+    expect(tryGetOrganiserEventsFromCache("user-1" as UserId)).toBeNull();
+    expect(tryGetOrganiserOrderFromCache("order-1" as OrderId)).toBeNull();
   });
 });

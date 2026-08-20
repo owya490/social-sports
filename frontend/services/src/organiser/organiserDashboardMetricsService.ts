@@ -1,20 +1,21 @@
-import { EventData, EventId, OrderId, TicketId } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
+import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
 import {
-  getOrganiserEventMetadataThroughCache,
-  getOrganiserEvents,
+  getOrganiserDocsThroughCache,
   getOrganiserEventsCacheGeneration,
   onOrganiserEventsCacheBust,
-} from "@/services/src/organiser/organiserEventsService";
-import {
+  setOrganiserEventMetadataIntoCache,
   setOrganiserOrderIntoCache,
   setOrganiserTicketIntoCache,
+  tryGetOrganiserEventMetadataFromCache,
   tryGetOrganiserOrderFromCache,
   tryGetOrganiserTicketFromCache,
-} from "@/services/src/organiser/organiserOrdersTicketsCache";
+} from "@/services/src/organiser/organiserEventsCache";
+import { getOrganiserEvents } from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -287,48 +288,6 @@ onOrganiserEventsCacheBust(() => {
   metricsInflight = null;
 });
 
-async function getOrdersThroughCache(orderIds: OrderId[], bypassCache?: boolean): Promise<Order[]> {
-  const hits: Order[] = [];
-  const missing: OrderId[] = [];
-  for (const orderId of orderIds) {
-    if (!bypassCache) {
-      const cached = tryGetOrganiserOrderFromCache(orderId);
-      if (cached) {
-        hits.push(cached);
-        continue;
-      }
-    }
-    missing.push(orderId);
-  }
-  if (missing.length === 0) {
-    return hits;
-  }
-  const fetched = await getOrdersByIds(missing);
-  fetched.forEach(setOrganiserOrderIntoCache);
-  return [...hits, ...fetched];
-}
-
-async function getTicketsThroughCache(ticketIds: TicketId[], bypassCache?: boolean): Promise<Ticket[]> {
-  const hits: Ticket[] = [];
-  const missing: TicketId[] = [];
-  for (const ticketId of ticketIds) {
-    if (!bypassCache) {
-      const cached = tryGetOrganiserTicketFromCache(ticketId);
-      if (cached) {
-        hits.push(cached);
-        continue;
-      }
-    }
-    missing.push(ticketId);
-  }
-  if (missing.length === 0) {
-    return hits;
-  }
-  const fetched = await getTicketsByIds(missing);
-  fetched.forEach(setOrganiserTicketIntoCache);
-  return [...hits, ...fetched];
-}
-
 export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
   if (!metricsCache || metricsCache.userId !== userId) {
     return null;
@@ -351,25 +310,41 @@ async function loadOrganiserDashboardMetrics(
   const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
 
   const metadataList = await Promise.all(
-    events.map((event) => getOrganiserEventMetadataThroughCache(event.eventId, options))
+    events.map(async (event) => {
+      if (!options?.bypassCache) {
+        const cached = tryGetOrganiserEventMetadataFromCache(event.eventId);
+        if (cached) {
+          return cached;
+        }
+      }
+      const eventMetadata = await getEventsMetadataByEventId(event.eventId);
+      setOrganiserEventMetadataIntoCache(event.eventId, eventMetadata);
+      return eventMetadata;
+    })
   );
 
-  const allOrderIds = new Set<string>();
-
-  metadataList.forEach((metadata) => {
-    metadata.orderIds.forEach((orderId) => allOrderIds.add(orderId));
-  });
+  const allOrderIds = [...new Set(metadataList.flatMap((eventMetadata) => eventMetadata.orderIds))];
 
   const orders =
-    allOrderIds.size > 0
-      ? await getOrdersThroughCache([...allOrderIds] as OrderId[], options?.bypassCache)
+    allOrderIds.length > 0
+      ? await getOrganiserDocsThroughCache(
+          allOrderIds,
+          options?.bypassCache,
+          tryGetOrganiserOrderFromCache,
+          getOrdersByIds,
+          setOrganiserOrderIntoCache
+        )
       : [];
   const approvedOrders = orders.filter(isApprovedOrder);
+  const ticketIds = approvedOrders.flatMap((order) => order.tickets);
   const allTickets =
-    approvedOrders.length > 0
-      ? await getTicketsThroughCache(
-          approvedOrders.flatMap((order) => order.tickets),
-          options?.bypassCache
+    ticketIds.length > 0
+      ? await getOrganiserDocsThroughCache(
+          ticketIds,
+          options?.bypassCache,
+          tryGetOrganiserTicketFromCache,
+          getTicketsByIds,
+          setOrganiserTicketIntoCache
         )
       : [];
 
