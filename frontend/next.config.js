@@ -69,6 +69,36 @@ const nextConfig = {
         destination: "/organiser/v2/dashboard",
         permanent: true,
       },
+      {
+        source: "/organiser/dashboard",
+        destination: "/organiser/v2/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/organiser/metrics",
+        destination: "/organiser/v2/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/organiser/gallery",
+        destination: "/organiser/v2/gallery",
+        permanent: true,
+      },
+      {
+        source: "/organiser/settings",
+        destination: "/organiser/v2/settings",
+        permanent: true,
+      },
+      {
+        source: "/organiser/event/:path*",
+        destination: "/organiser/v2/event/:path*",
+        permanent: true,
+      },
+      {
+        source: "/organiser/forms/:path*",
+        destination: "/organiser/v2/forms/:path*",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {
