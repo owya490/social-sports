@@ -55,6 +55,7 @@
     "framer-motion": "^12.23.26",
     "geofire-common": "^6.0.0",
     "grafana": "^1.0.1",
+    "jsqr": "^1.4.0",
     "react": "^18.2.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-csv": "^2.2.2",
