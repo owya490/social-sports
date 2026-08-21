@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.fulfilment.services.WaitlistFulfilmentService;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
@@ -34,7 +35,7 @@ public class UpdateFulfilmentEntityWithWaitlistDataHandler implements
 
     @Override
     public UpdateFulfilmentEntityWithWaitlistDataResponse handle(
-            UpdateFulfilmentEntityWithWaitlistDataRequest request) {
+            UpdateFulfilmentEntityWithWaitlistDataRequest request, AuthContext authContext) {
         // check for null request and null values
         if (request == null || request.getEmail() == null || request.getName() == null
                 || request.getFulfilmentSessionId() == null || request.getFulfilmentEntityId() == null) {

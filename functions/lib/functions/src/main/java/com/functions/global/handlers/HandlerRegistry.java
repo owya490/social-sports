@@ -45,7 +45,10 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_FULFILMENT_SESSION_INFO, new GetFulfilmentSessionInfoHandler());
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
         handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
-        handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, new GetWrappedHandler());
+        // Same handler, two auth levels: it branches on AuthContext.level().
+        GetWrappedHandler getWrappedHandler = new GetWrappedHandler();
+        handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, getWrappedHandler);
+        handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED_BY_SHARE_ID, getWrappedHandler);
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA,
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());

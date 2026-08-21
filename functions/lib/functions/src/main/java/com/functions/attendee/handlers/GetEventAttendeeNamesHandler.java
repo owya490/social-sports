@@ -13,6 +13,7 @@ import com.functions.attendee.models.EventAttendeeNameAndTicketCount;
 import com.functions.attendee.models.requests.GetEventAttendeeNamesRequest;
 import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.events.models.EventData;
+import com.functions.global.models.AuthContext;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.global.models.Handler;
@@ -35,7 +36,7 @@ public class GetEventAttendeeNamesHandler implements Handler<GetEventAttendeeNam
     }
 
     @Override
-    public GetEventAttendeeNamesResponse handle(GetEventAttendeeNamesRequest request) {
+    public GetEventAttendeeNamesResponse handle(GetEventAttendeeNamesRequest request, AuthContext authContext) {
         String eventId = request.eventId();
         if (eventId == null || eventId.isBlank()) {
             logger.warn("GetEventAttendeeNames rejected: eventId is null or blank");
