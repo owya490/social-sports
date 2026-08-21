@@ -4,6 +4,12 @@ import { usesOrganiserV2Shell } from "@/components/navbar/navbarVisibility";
 import { OrganiserBreadcrumbProvider } from "@/components/organiser/OrganiserBreadcrumbContext";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
+import { useUser } from "@/components/utility/UserContext";
+import {
+  applyOrganiserAccentCssVars,
+  clearOrganiserAccentCssVars,
+  readCachedOrganiserAccent,
+} from "@/utilities/organiserAccentColour";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -12,6 +18,7 @@ const ORGANISER_V2_CANVAS = "#f7f7f7";
 
 export default function OrganiserShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const onMobileOpenChange = useCallback((open: boolean) => setMobileOpen(open), []);
   const openMobileNav = useCallback(() => setMobileOpen(true), []);
@@ -32,6 +39,17 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
       body.style.backgroundColor = prevBodyBg;
     };
   }, [isV2Shell]);
+
+  // Accent is sampled client-side from the local file at profile-photo upload,
+  // then cached for a day — hub load only restores that cache.
+  useEffect(() => {
+    if (!isV2Shell || !user.userId || !user.profilePicture) return;
+    const cached = readCachedOrganiserAccent(user.userId, user.profilePicture);
+    if (cached) applyOrganiserAccentCssVars(cached);
+    return () => {
+      clearOrganiserAccentCssVars();
+    };
+  }, [isV2Shell, user.profilePicture, user.userId]);
 
   if (isV2Shell) {
     return (
