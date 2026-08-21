@@ -103,6 +103,7 @@
 &lt;a href="#key-features" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
 &lt;li>&lt;strong>Event Dashboard&lt;/strong>: View all your events at a glance with real-time status updates&lt;/li>
 &lt;li>&lt;strong>Event Management&lt;/strong>: One view to manage all your events, change locations, update description and more&lt;/li>
+&lt;li>&lt;strong>Ticket Types&lt;/strong>: Offer multiple booking options with separate prices, capacities, and forms&lt;/li>
 &lt;li>&lt;strong>Participant Management&lt;/strong>: Monitor registrations, payments, and attendee communications&lt;/li>
 &lt;li>&lt;strong>Settings Management&lt;/strong>: Configure your organizer preferences and Stripe details&lt;/li>
 &lt;/ul>

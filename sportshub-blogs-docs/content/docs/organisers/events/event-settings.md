@@ -1,8 +1,8 @@
 ---
 title: Event Settings
 weight: 5
-prev: /docs/organiser/events/event-collections
-next: /docs/organiser/events/booking-approval
+prev: /docs/organisers/events/event-collections
+next: /docs/organisers/events/ticket-types
 ---
 
 ## Overview
@@ -56,6 +56,18 @@ Consider enabling this when:
 - You run regular events where participants like to see who else is coming
 
 You can toggle the setting on or off at any time, and the change takes effect immediately.
+
+## Ticket Types
+
+The **Ticket Types** section in Settings lets you offer multiple booking options on one event. Each type has its own name, price, capacity, and optional registration form.
+
+1. Open the event in your Organiser Hub and go to the **Settings** tab.
+2. Under **Ticket Types**, click **Add Type** (or edit an existing type).
+3. Set the name, price, capacity, and optional form, then save.
+
+New events start with a single **General Admission** type. Buyers only see a ticket type selector when more than one type exists.
+
+For the full workflow - including forms per type, capacity rules, and deletion limits - see [Ticket Types](/docs/organisers/events/ticket-types).
 
 ## Enable Booking Approval
 

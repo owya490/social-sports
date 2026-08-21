@@ -15,6 +15,7 @@ The Organiser Hub is a specialized interface designed exclusively for event orga
 
 - **Event Dashboard**: View all your events at a glance with real-time status updates
 - **Event Management**: One view to manage all your events, change locations, update description and more
+- **Ticket Types**: Offer multiple booking options with separate prices, capacities, and forms
 - **Participant Management**: Monitor registrations, payments, and attendee communications
 - **Settings Management**: Configure your organizer preferences and Stripe details
 

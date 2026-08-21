@@ -33,6 +33,7 @@
 &lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
 &lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>Configure registration settings&lt;/li>
+&lt;li>Manage &lt;a href="https://www.sportshub.net.au/docs/organisers/events/ticket-types/" >ticket types&lt;/a> (price, capacity, and forms per option)&lt;/li>
 &lt;li>Set up payment options and coupons&lt;/li>
 &lt;li>Manage communication preferences&lt;/li>
 &lt;li>Update cancellation policies&lt;/li>
