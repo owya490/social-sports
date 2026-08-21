@@ -24,6 +24,7 @@ public class UsersUtils {
 		publicUserData.setPublicUpcomingOrganiserEvents(data.getPublicUpcomingOrganiserEvents());
 		publicUserData.setUsername(data.getUsername());
 		publicUserData.setPublicEventCollections(data.getPublicEventCollections());
+		publicUserData.setProfileColour(data.getProfileColour());
 
 		return publicUserData;
 	}

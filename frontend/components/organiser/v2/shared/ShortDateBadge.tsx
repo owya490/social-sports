@@ -19,7 +19,7 @@ function toDate(value: Date | string | null | undefined): Date | null {
 }
 
 /**
- * Compact calendar chip: coral month strip + day number (Organiser V2 Event Hub look).
+ * Compact calendar chip: accent month strip + day number (Organiser V2 Event Hub look).
  * Month uses en-AU short form, uppercased (e.g. JUN).
  */
 export function ShortDateBadge({ date, className = "" }: ShortDateBadgeProps) {
@@ -34,7 +34,7 @@ export function ShortDateBadge({ date, className = "" }: ShortDateBadgeProps) {
       className={`flex h-11 w-10 shrink-0 flex-col overflow-hidden rounded-xl border border-border text-center ${className}`.trim()}
       aria-hidden
     >
-      <span className="bg-[#FF3B30] text-white flex items-center justify-center leading-none">
+      <span className="bg-accent text-accent-contrast flex items-center justify-center leading-none">
         <span className="text-xs font-semibold tracking-wide scale-75 origin-center">{monthShort}</span>
       </span>
       <span className="flex-1 flex items-center justify-center bg-background text-base font-bold text-foreground tabular-nums leading-none">

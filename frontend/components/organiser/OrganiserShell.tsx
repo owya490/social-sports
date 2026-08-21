@@ -4,18 +4,52 @@ import { usesOrganiserV2Shell } from "@/components/navbar/navbarVisibility";
 import { OrganiserBreadcrumbProvider } from "@/components/organiser/OrganiserBreadcrumbContext";
 import OrganiserNavbar from "@/components/organiser/OrganiserNavbar";
 import OrganiserSidebar from "@/components/organiser/OrganiserSidebar";
+import { useUser } from "@/components/utility/UserContext";
+import {
+  buttonContrastFor,
+  NEUTRAL_HUB_ACCENT,
+  NEUTRAL_HUB_ACCENT_CONTRAST,
+  NEUTRAL_HUB_ACCENT_SOFT,
+  resolveProfileColour,
+  softAccentFor,
+} from "@/services/src/users/profileColour";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 
 /** Matches `--color-surface` — kept in sync for body overscroll / Safari chrome. */
 const ORGANISER_V2_CANVAS = "#f7f7f7";
 
+function neutralAccentStyle(): CSSProperties {
+  return {
+    ["--color-accent" as string]: NEUTRAL_HUB_ACCENT,
+    ["--color-accent-contrast" as string]: NEUTRAL_HUB_ACCENT_CONTRAST,
+    ["--color-accent-soft" as string]: NEUTRAL_HUB_ACCENT_SOFT,
+    ["--color-focus" as string]: NEUTRAL_HUB_ACCENT,
+  };
+}
+
 export default function OrganiserShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { user, userLoading } = useUser();
   const [mobileOpen, setMobileOpen] = useState(false);
   const onMobileOpenChange = useCallback((open: boolean) => setMobileOpen(open), []);
   const openMobileNav = useCallback(() => setMobileOpen(true), []);
   const isV2Shell = usesOrganiserV2Shell(pathname);
+
+  const accentStyle = useMemo((): CSSProperties => {
+    // Black/white until the organiser profile is loaded and a colour hex is chosen.
+    if (userLoading || !user.userId) return neutralAccentStyle();
+
+    const accent = resolveProfileColour(user.profileColour);
+    if (!accent) return neutralAccentStyle();
+
+    return {
+      ["--color-accent" as string]: accent,
+      ["--color-accent-contrast" as string]: buttonContrastFor(accent),
+      ["--color-accent-soft" as string]: softAccentFor(accent),
+      ["--color-focus" as string]: accent,
+    };
+  }, [user.profileColour, user.userId, userLoading]);
 
   // Keep html/body paint colour on the v2 canvas so overscroll and translucent
   // Safari chrome match the grey hub background (not the global white body).
@@ -36,7 +70,7 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
   if (isV2Shell) {
     return (
       <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
-        <div className="min-h-screen bg-surface">
+        <div className="min-h-screen bg-surface" style={accentStyle}>
           <OrganiserSidebar mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange} />
           <div className="min-h-screen transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
             {children}
@@ -47,9 +81,9 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
   }
 
   return (
-    <>
+    <div style={accentStyle}>
       <OrganiserNavbar />
       <div className="pb-28 sm:ml-14 sm:pb-0">{children}</div>
-    </>
+    </div>
   );
 }

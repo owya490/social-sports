@@ -53,6 +53,7 @@ const config: Config = {
         accent: {
           DEFAULT: "var(--color-accent)",
           contrast: "var(--color-accent-contrast)",
+          soft: "var(--color-accent-soft)",
         },
         danger: "var(--color-danger)",
         focus: "var(--color-focus)",

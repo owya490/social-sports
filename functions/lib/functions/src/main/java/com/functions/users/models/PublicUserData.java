@@ -27,4 +27,6 @@ public class PublicUserData {
 	private List<String> publicUpcomingOrganiserEvents = new ArrayList<>();
 	private String username;
 	private List<String> publicEventCollections = new ArrayList<>();
+	/** Organiser Hub accent colour (#rrggbb). Defaults to sports yellow when unset. */
+	private String profileColour;
 }

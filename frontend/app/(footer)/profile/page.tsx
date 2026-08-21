@@ -1,9 +1,11 @@
 "use client";
 import Loading from "@/components/loading/Loading";
 import { FieldTypes, RenderEditableField, RenderNonEditableField } from "@/components/users/profile/ProfileFields";
+import { ProfileColourSelector } from "@/components/users/profile/ProfileColourSelector";
 import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel";
 import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import { useUser } from "@/components/utility/UserContext";
+import { isValidProfileColourHex } from "@/services/src/users/profileColour";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
@@ -31,6 +33,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [usernameWarning, setUsernameWarning] = useState(false);
   const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
+  const [savingColour, setSavingColour] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -50,6 +53,17 @@ const Profile = () => {
     // Bust the cache to ensure the updated data is fetched next time
     bustUserLocalStorageCache();
     return true;
+  };
+
+  const handleProfileColourUpdate = async (colour: string) => {
+    // Persist `#rrggbb` so custom colours can be supported later.
+    if (!isValidProfileColourHex(colour) || savingColour) return;
+    setSavingColour(true);
+    try {
+      await handleUserProfileUpdate("profileColour", colour.toLowerCase());
+    } finally {
+      setSavingColour(false);
+    }
   };
 
   return loading ? (
@@ -92,6 +106,13 @@ const Profile = () => {
                   onChange={(event) => {
                     handleUserProfileUpdate("isSearchable", event.currentTarget.checked);
                   }}
+                />
+              </div>
+              <div className="mt-4">
+                <ProfileColourSelector
+                  value={user.profileColour}
+                  onChange={handleProfileColourUpdate}
+                  disabled={savingColour}
                 />
               </div>
               <div className="mt-4">

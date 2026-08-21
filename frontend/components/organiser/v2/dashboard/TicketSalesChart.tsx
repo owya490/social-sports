@@ -152,9 +152,13 @@ export function TicketSalesChart({ weekTickets, monthTickets, loading }: TicketS
                   ) : null}
                   <div className="w-full flex-1 flex items-end justify-center min-h-0">
                     <div
-                      className={`w-full rounded-t-sm transition-[height] duration-300 ease-out ${
+                      className={`w-full rounded-t-sm transition-[height,background-color] duration-300 ease-out ${
                         isMonth ? "max-w-none" : "max-w-12 rounded-t-md"
-                      } ${bucket.isCurrent ? "bg-accent" : "bg-surface-muted"} group-hover:brightness-95`}
+                      } ${
+                        bucket.isCurrent
+                          ? "bg-accent"
+                          : "bg-accent-soft group-hover:bg-accent"
+                      }`}
                       style={{ height: `${heightPercent}%` }}
                     />
                   </div>
