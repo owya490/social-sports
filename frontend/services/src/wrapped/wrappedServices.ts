@@ -8,10 +8,13 @@ const wrappedServiceLogger = new Logger("wrappedServiceLogger");
 
 /**
  * Fetches the Sportshub Wrapped data for an organiser for a given year.
- * This calls the backend globalAppController with the GET_SPORTSHUB_WRAPPED endpoint.
  *
- * If wrappedId is provided, it will be verified against the stored data.
- * This is used for public share links where verification is required.
+ * If wrappedId is provided, this is a public share link: the share id is
+ * verified against the stored data server-side via GET_SPORTSHUB_WRAPPED_BY_SHARE_ID,
+ * and no signed-in user is required.
+ *
+ * If wrappedId is omitted, this is the organiser viewing their own wrapped data via
+ * GET_SPORTSHUB_WRAPPED, which requires the caller to be signed in.
  *
  * @param organiserId - The ID of the organiser
  * @param year - The year for the wrapped data
@@ -30,14 +33,24 @@ export async function getWrappedData(
   );
 
   try {
-    const response = await executeGlobalAppControllerFunction<GetWrappedRequest, GetWrappedResponse>(
-      EndpointType.GET_SPORTSHUB_WRAPPED,
-      {
-        organiserId,
-        year,
-        wrappedId,
-      }
-    );
+    const response = wrappedId
+      ? await executeGlobalAppControllerFunction<GetWrappedRequest, GetWrappedResponse>(
+          EndpointType.GET_SPORTSHUB_WRAPPED_BY_SHARE_ID,
+          {
+            organiserId,
+            year,
+            wrappedId,
+          }
+        )
+      : await executeGlobalAppControllerFunction<GetWrappedRequest, GetWrappedResponse>(
+          EndpointType.GET_SPORTSHUB_WRAPPED,
+          {
+            organiserId,
+            year,
+            wrappedId,
+          },
+          { requireAuth: true }
+        );
 
     wrappedServiceLogger.info(
       `getWrappedData: Successfully fetched wrapped data for organiserId: ${organiserId}, year: ${year}`

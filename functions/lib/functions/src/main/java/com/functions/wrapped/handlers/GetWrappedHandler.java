@@ -4,8 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.global.exceptions.AuthenticationException;
+import com.functions.global.models.AuthContext;
+import com.functions.global.models.AuthLevel;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.utils.JavaUtils;
 import com.functions.wrapped.models.SportshubWrappedData;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
@@ -28,9 +32,23 @@ public class GetWrappedHandler implements Handler<GetWrappedRequest, GetWrappedR
     }
 
     @Override
-    public GetWrappedResponse handle(GetWrappedRequest request) {
-        logger.info("Handling get wrapped request for organiserId: {}, year: {}, wrappedId: {}", 
+    public GetWrappedResponse handle(GetWrappedRequest request, AuthContext authContext) {
+        logger.info("Handling get wrapped request for organiserId: {}, year: {}, wrappedId: {}",
                 request.organiserId(), request.year(), request.wrappedId());
+
+        // This handler is registered under two endpoints: GET_SPORTSHUB_WRAPPED (AUTHENTICATED),
+        // where the caller may only read their own wrapped data, and
+        // GET_SPORTSHUB_WRAPPED_BY_SHARE_ID (PUBLIC), where a wrappedId is required and
+        // WrappedService verifies it against the stored record - the share id itself is the
+        // capability that grants access.
+        if (authContext.level() == AuthLevel.AUTHENTICATED) {
+            EventAuthorizationService.requireMatchingUser(
+                    authContext.requireUid(),
+                    request.organiserId(),
+                    "You are not allowed to access another organiser's wrapped data");
+        } else if (request.wrappedId() == null || request.wrappedId().isBlank()) {
+            throw new AuthenticationException("wrappedId is required to access wrapped data via a share link");
+        }
 
         try {
             SportshubWrappedData wrappedData = WrappedService.getOrGenerateWrappedData(
