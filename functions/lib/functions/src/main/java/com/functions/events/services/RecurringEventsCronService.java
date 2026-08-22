@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,14 +52,15 @@ public class RecurringEventsCronService {
         Map<String, List<ReservedSlot>> eventsNeedingReservedSlots = new HashMap<>();
 
         for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
+            Map<String, String> eventIdsByRecurrence = new HashMap<>();
 
-            // Create new transaction
-            FirebaseService.createFirestoreTransaction(transaction -> {
+            RecurrenceTransactionResult transactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
+                List<CreatedRecurringEvent> createdEvents = new ArrayList<>();
                 Optional<RecurrenceTemplate> maybeRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId, transaction);
                 if (maybeRecurrenceTemplate.isEmpty()) {
                     logger.warn("Recurrence template not found for id: {} during transaction. Skipping processing of this recurring event to avoid TOCTOU failures.",
                             recurrenceTemplateId);
-                    return true; // Continue processing other templates in the batch
+                    return new RecurrenceTransactionResult(createdEvents, false);
                 }
 
                 RecurrenceTemplate recurrenceTemplate = maybeRecurrenceTemplate.get();
@@ -105,33 +107,17 @@ public class RecurringEventsCronService {
                         newEventDataDeepCopy.setEndDate(newEndDate);
                         newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
 
-                        String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
+                        String newEventId = eventIdsByRecurrence.computeIfAbsent(
+                                recurrenceTimestampString, ignored -> UUID.randomUUID().toString());
+                        CreateEventHandler.createEvent(newEventDataDeepCopy, transaction, newEventId);
 
                         logger.info("New event id: {}", newEventId);
-                        createdEventIds.add(newEventId);
-                        
-                        // Track reserved slots for processing after transaction completes
                         List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
-                        if (reservedSlots != null && !reservedSlots.isEmpty()) {
-                            eventsNeedingReservedSlots.put(newEventId, new ArrayList<>(reservedSlots));
-                        }
+                        createdEvents.add(new CreatedRecurringEvent(newEventId,
+                                newEventDataDeepCopy.getOrganiserId(),
+                                recurrenceTemplateId,
+                                reservedSlots == null ? List.of() : new ArrayList<>(reservedSlots)));
                         pastRecurrences.put(recurrenceTimestampString, newEventId);
-
-                        // Update custom event links references
-                        try {
-                            CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
-                        } catch (Exception e) {
-                            logger.error("Failed to update custom event links for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
-                            // Continue with event creation even if custom links update fails
-                        }
-
-                        // Add event to event collections that contain the recurrence template
-                        try {
-                            EventCollectionsService.addEventToEventCollectionsWithRecurrenceTemplate(recurrenceTemplateId, newEventId);
-                        } catch (Exception e) {
-                            logger.error("Failed to add event to event collection for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
-                            // Continue with event creation even if event collection update fails
-                        }
                     }
 
                     if (!recurrenceData.getAllRecurrences().isEmpty()) {
@@ -148,11 +134,36 @@ public class RecurringEventsCronService {
 
                 RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId, newRecurrenceTemplate, transaction);
 
-                if (!isStillActiveRecurrenceFlag) {
-                    moveToInactiveRecurringEvents.add(recurrenceTemplateId);
-                }
-                return true;
+                return new RecurrenceTransactionResult(createdEvents, !isStillActiveRecurrenceFlag);
             });
+
+            for (CreatedRecurringEvent createdEvent : transactionResult.createdEvents()) {
+                createdEventIds.add(createdEvent.eventId());
+                if (!createdEvent.reservedSlots().isEmpty()) {
+                    eventsNeedingReservedSlots.put(createdEvent.eventId(), createdEvent.reservedSlots());
+                }
+
+                try {
+                    CustomEventLinksService.updateEventLinksPointedToRecurrence(
+                            createdEvent.organiserId(), createdEvent.recurrenceTemplateId(),
+                            createdEvent.eventId());
+                } catch (Exception e) {
+                    logger.error("Failed to update custom event links for recurrence template {}: {}",
+                            createdEvent.recurrenceTemplateId(), e.getMessage());
+                }
+
+                try {
+                    EventCollectionsService.addEventToEventCollectionsWithRecurrenceTemplate(
+                            createdEvent.recurrenceTemplateId(), createdEvent.eventId());
+                } catch (Exception e) {
+                    logger.error("Failed to add event to event collection for recurrence template {}: {}",
+                            createdEvent.recurrenceTemplateId(), e.getMessage());
+                }
+            }
+
+            if (transactionResult.moveToInactive()) {
+                moveToInactiveRecurringEvents.add(recurrenceTemplateId);
+            }
         }
 
         // Process reserved slots in separate transactions (after event creation transactions complete)
@@ -205,6 +216,15 @@ public class RecurringEventsCronService {
         } catch (Exception e) {
             logger.error("Unable to move Recurrence Template {}", recurrenceId, e);
         }
+    }
+
+    private record CreatedRecurringEvent(String eventId, String organiserId,
+                                         String recurrenceTemplateId,
+                                         List<ReservedSlot> reservedSlots) {
+    }
+
+    private record RecurrenceTransactionResult(List<CreatedRecurringEvent> createdEvents,
+                                               boolean moveToInactive) {
     }
 
 
