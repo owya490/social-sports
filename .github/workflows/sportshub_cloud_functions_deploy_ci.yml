@@ -240,17 +240,11 @@ jobs:
           fi
 
       - name: Deploy Cloud Scheduler jobs
-        continue-on-error: true
         working-directory: functions/lib/functions
         run: |
           bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
           bash ./deployExpirePendingBookingsSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/expirePendingBookingsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/expirePendingBookingsCron' }}
-
-      - name: Report scheduler deployment status
-        if: failure()
-        run: |
-          echo "::warning::Cloud Scheduler deployment failed but workflow is continuing. Please check the scheduler deployment logs above for details."
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
