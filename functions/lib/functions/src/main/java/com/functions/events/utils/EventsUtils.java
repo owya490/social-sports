@@ -9,14 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
-import com.functions.users.models.PrivateUserData;
-import com.functions.users.models.PublicUserData;
-import com.functions.users.services.Users;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Transaction;
 
 public class EventsUtils {
     private static final Logger logger = LoggerFactory.getLogger(EventsUtils.class);
@@ -25,27 +25,26 @@ public class EventsUtils {
                 .collect(Collectors.toList());
     }
 
-    public static void addEventIdToUserOrganiserPublicUpcomingEvents(String userId, String eventId)
-            throws Exception {
-        PublicUserData publicUserData = Users.getPublicUserDataById(userId);
-
-        List<String> publicUpcomingOrganiserEvents =
-                publicUserData.getPublicUpcomingOrganiserEvents();
-        publicUpcomingOrganiserEvents.add(eventId);
-        publicUserData.setPublicUpcomingOrganiserEvents(publicUpcomingOrganiserEvents);
-
-        Users.updatePublicUserData(userId, publicUserData);
+    public static void addEventIdToUserOrganiserPublicUpcomingEvents(Transaction transaction,
+                                                                       String userId,
+                                                                       String eventId) {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference publicUserRef = db.collection(CollectionPaths.USERS)
+                .document(CollectionPaths.ACTIVE)
+                .collection(CollectionPaths.PUBLIC)
+                .document(userId);
+        transaction.update(publicUserRef, "publicUpcomingOrganiserEvents", FieldValue.arrayUnion(eventId));
     }
 
-    public static void addEventIdToUserOrganiserEvents(String userId, String eventId)
-            throws Exception {
-        PrivateUserData privateUserData = Users.getPrivateUserDataById(userId);
-
-        List<String> organiserEvents = privateUserData.getOrganiserEvents();
-        organiserEvents.add(eventId);
-        privateUserData.setOrganiserEvents(organiserEvents);
-
-        Users.updatePrivateUserData(userId, privateUserData);
+    public static void addEventIdToUserOrganiserEvents(Transaction transaction,
+                                                        String userId,
+                                                        String eventId) {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference privateUserRef = db.collection(CollectionPaths.USERS)
+                .document(CollectionPaths.ACTIVE)
+                .collection(CollectionPaths.PRIVATE)
+                .document(userId);
+        transaction.update(privateUserRef, "organiserEvents", FieldValue.arrayUnion(eventId));
     }
 
     /**

@@ -11,6 +11,7 @@ import {
 import {
   DocumentData,
   DocumentReference,
+  Transaction,
   WriteBatch,
   arrayRemove,
   arrayUnion,
@@ -28,12 +29,12 @@ import {
 } from "firebase/firestore";
 import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
-import { EmptyPublicUserData, PublicUserData, UserData, UserId } from "@/interfaces/UserTypes";
+import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
-import { getFullUserById, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import {
@@ -60,7 +61,7 @@ import {
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
 //Function to create a Event
-export async function createEvent(data: NewEventData, externalBatch?: WriteBatch): Promise<EventId> {
+export async function createEvent(data: NewEventData): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
     eventServiceLogger.warn("Rate Limited!!!");
     throw "Rate Limited";
@@ -76,29 +77,23 @@ export async function createEvent(data: NewEventData, externalBatch?: WriteBatch
     const isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     const isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
 
-    const batch = externalBatch !== undefined ? externalBatch : writeBatch(db);
     const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
-    batch.set(docRef, eventDataWithTokens);
-    await createEventMetadata(batch, docRef.id as EventId, data);
-    if (externalBatch === undefined) {
-      await batch.commit();
-    }
 
     await runTransaction(db, async (transaction) => {
-      const user = await getFullUserById(data.organiserId, transaction);
+      transaction.set(docRef, eventDataWithTokens);
+      await createEventMetadata(transaction, docRef.id as EventId, data);
 
-      const updatedUserEventsObject: Partial<UserData> = {};
-      updatedUserEventsObject.organiserEvents = user.organiserEvents
-        ? [...user.organiserEvents, docRef.id]
-        : [docRef.id];
+      const privateUserRef = doc(db, "Users", "Active", "Private", data.organiserId);
+      transaction.update(privateUserRef, {
+        organiserEvents: arrayUnion(docRef.id),
+      });
 
-      // If event is public, add it to the upcoming events
       if (!eventDataWithTokens.isPrivate) {
-        updatedUserEventsObject.publicUpcomingOrganiserEvents = user.publicUpcomingOrganiserEvents
-          ? [...user.publicUpcomingOrganiserEvents, docRef.id as EventId]
-          : [docRef.id as EventId];
+        const publicUserRef = doc(db, "Users", "Active", "Public", data.organiserId);
+        transaction.update(publicUserRef, {
+          publicUpcomingOrganiserEvents: arrayUnion(docRef.id),
+        });
       }
-      await updateUser(data.organiserId, updatedUserEventsObject, transaction);
     });
 
     // We want to bust all our caches when we create a new event.
@@ -129,7 +124,7 @@ export async function createEventV2(data: NewEventData) {
   });
 }
 
-export async function createEventMetadata(batch: WriteBatch, eventId: EventId, data: NewEventData) {
+export async function createEventMetadata(batch: WriteBatch | Transaction, eventId: EventId, data: NewEventData) {
   try {
     const eventMetadata = extractEventsMetadataFields(data);
     const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
