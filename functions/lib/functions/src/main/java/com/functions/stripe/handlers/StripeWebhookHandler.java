@@ -28,9 +28,7 @@ import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 
 /**
- * Handler for processing Stripe webhook events.
- * This is shared by the dedicated Stripe webhook endpoint and the legacy
- * GlobalAppController webhook route.
+ * Handler for processing Stripe webhook events received by the dedicated webhook endpoint.
  */
 public class StripeWebhookHandler {
     private static final Logger logger = LoggerFactory.getLogger(StripeWebhookHandler.class);
