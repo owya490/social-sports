@@ -23,6 +23,8 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
+import java.util.UUID;
+
 public class CreateEventHandler implements Handler<NewEventData, String> {
     private static final Logger logger = LoggerFactory.getLogger(CreateEventHandler.class);
 
@@ -43,8 +45,9 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
 
         try {
             Firestore db = FirebaseService.getFirestore();
-            String eventId = db.runTransaction(transaction ->
-                    createEvent(request, transaction)).get();
+            String eventId = UUID.randomUUID().toString();
+            db.runTransaction(transaction ->
+                    createEvent(request, transaction, eventId)).get();
 
             logger.info("Event created successfully with ID: {}", eventId);
             return "Event created successfully with ID: " + eventId;
@@ -55,33 +58,37 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
     }
 
     /**
-     * Create a new event in firebase with a transaction.
+     * Creates a new event and its organiser indexes in a Firestore transaction.
      *
-     * @param data        data of the new event.
-     * @param transaction the firestore transaction object
+     * @param data data of the new event
+     * @param transaction the Firestore transaction
+     * @param eventId a retry-stable event ID allocated before the transaction begins
      */
-    // TODO: make createEvent private method and expose only handle method on Service
-    public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
+    public static String createEvent(NewEventData data, Transaction transaction, String eventId)
+            throws Exception {
         logger.info("Creating event: {}", data.getName());
         Firestore db = FirebaseService.getFirestore();
         String isActive = data.getIsActive() ? ACTIVE : INACTIVE;
         String isPrivate = data.getIsPrivate() ? PRIVATE : PUBLIC;
         DocumentReference newEventDocRef =
-                db.collection(EVENTS).document(isActive).collection(isPrivate).document();
+                db.collection(EVENTS).document(isActive).collection(isPrivate).document(eventId);
         final String safeName = data.getName() == null ? "" : data.getName();
         final String safeLocation = data.getLocation() == null ? "" : data.getLocation();
         data.setNameTokens(EventsUtils.tokenizeText(safeName));
         data.setLocationTokens(EventsUtils.tokenizeText(safeLocation));
         transaction.set(newEventDocRef, data);
-        final String eventId = newEventDocRef.getId();
         createEventMetadata(transaction, eventId, data);
-        EventsUtils.addEventIdToUserOrganiserEvents(data.getOrganiserId(), eventId);
+        EventsUtils.addEventIdToUserOrganiserEvents(transaction, data.getOrganiserId(), eventId);
         // If the event is public, add it to the user's public upcoming events
         if (!data.getIsPrivate()) {
-            EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(data.getOrganiserId(),
-                    newEventDocRef.getId());
+            EventsUtils.addEventIdToUserOrganiserPublicUpcomingEvents(transaction,
+                    data.getOrganiserId(), eventId);
         }
-        return newEventDocRef.getId();
+        return eventId;
+    }
+
+    public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
+        return createEvent(data, transaction, UUID.randomUUID().toString());
     }
 
     private static void createEventMetadata(Transaction transaction, String eventId,
