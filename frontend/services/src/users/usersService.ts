@@ -2,6 +2,7 @@ import {
   EmptyPrivateUserData,
   EmptyPublicUserData,
   EmptyUserData,
+  OnboardingUserData,
   PrivateUserData,
   PublicUserData,
   UserData,
@@ -27,7 +28,12 @@ import { tokenizeText } from "../events/eventsUtils/commonEventsUtils";
 import { db } from "../firebase";
 import { UserNotFoundError, UsersServiceError } from "./userErrors";
 import { DEFAULT_USER_PROFILE_PICTURE, USERS_REFRESH_MILLIS, UsersLocalStorageKeys } from "./usersConstants";
-import { extractPrivateUserData, extractPublicUserData } from "./usersUtils/createUsersUtils";
+import {
+  extractOnboardingUserData,
+  extractPrivateUserData,
+  extractPublicUserData,
+  omitOnboardingFields,
+} from "./usersUtils/createUsersUtils";
 import {
   fetchUsersByTokenMatch,
   getAllUsersDataFromLocalStorage,
@@ -52,8 +58,8 @@ export async function createUser(data: UserData, userId: UserId): Promise<void> 
       username: uniqueUsername,
       nameTokens: data.firstName.toLowerCase().split(" "),
     } as PublicUserData);
-    await setDoc(doc(db, "Users", "Active", "Private", userId), {
-      ...extractPrivateUserData(data),
+    await setDoc(doc(db, "Users", "Active", "Private", userId), extractPrivateUserData(data));
+    await setDoc(doc(db, "Users", "Active", "Onboarding", userId), {
       onboardingCompletedAt: null,
     });
     userServiceLogger.info(`User created successfully: ${userId}`);
@@ -133,7 +139,7 @@ export async function getPrivateUserById(userId: UserId, transaction?: Transacti
     }
     const userData = userDoc.data() as PrivateUserData;
     userData.userId = userId;
-    return { ...EmptyPrivateUserData, ...userData };
+    return { ...EmptyPrivateUserData, ...omitOnboardingFields(userData) };
   } catch (error) {
     if (error instanceof UserNotFoundError) {
       userServiceLogger.error(`User ID=${userId} did not exist when expected by reference: ${error}`);
@@ -154,19 +160,30 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
   try {
     const publicDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateDocRef = doc(db, "Users", "Active", "Private", userId);
-    const [publicDoc, privateDoc] = transaction
-      ? await Promise.all([transaction.get(publicDocRef), transaction.get(privateDocRef)])
-      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef)]);
+    const onboardingDocRef = doc(db, "Users", "Active", "Onboarding", userId);
+    const [publicDoc, privateDoc, onboardingDoc] = transaction
+      ? await Promise.all([
+          transaction.get(publicDocRef),
+          transaction.get(privateDocRef),
+          transaction.get(onboardingDocRef),
+        ])
+      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef), getDoc(onboardingDocRef)]);
 
     if (!publicDoc.exists() || publicDoc === undefined || !privateDoc.exists() || privateDoc === undefined) {
       throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
     }
 
     const publicUserData = publicDoc.data() as PublicUserData;
-    const privateUserData = privateDoc.data() as PrivateUserData;
+    const privateUserData = omitOnboardingFields(privateDoc.data() as PrivateUserData);
+    const onboardingUserData = onboardingDoc.exists() ? (onboardingDoc.data() as OnboardingUserData) : {};
 
-    // Merge public and private data into one JSON object
-    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, userId };
+    const fullUserData = {
+      ...EmptyUserData,
+      ...publicUserData,
+      ...privateUserData,
+      ...onboardingUserData,
+      userId,
+    };
     return fullUserData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
@@ -228,9 +245,11 @@ export async function deleteUser(userId: UserId): Promise<void> {
   try {
     const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
+    const onboardingUserDocRef = doc(db, "Users", "Active", "Onboarding", userId);
 
     await deleteDoc(publicUserDocRef);
     await deleteDoc(privateUserDocRef);
+    await deleteDoc(onboardingUserDocRef);
     userServiceLogger.info(`User deleted successfully:", ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error deleting user with ID ${userId}:, ${error}`);
@@ -247,29 +266,31 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
   }
 
   try {
-    // Construct references for public and private user data
     const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
+    const onboardingUserDocRef = doc(db, "Users", "Active", "Onboarding", userId);
 
-    // Extract public & private user data
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
+    const onboardingDataToUpdate = extractOnboardingUserData(newData);
 
     const hasPublicUpdates = Object.keys(publicDataToUpdate).length > 0;
     const hasPrivateUpdates = Object.keys(privateDataToUpdate).length > 0;
+    const hasOnboardingUpdates = Object.keys(onboardingDataToUpdate).length > 0;
 
-    if (!hasPublicUpdates && !hasPrivateUpdates) {
+    if (!hasPublicUpdates && !hasPrivateUpdates && !hasOnboardingUpdates) {
       userServiceLogger.warn(`updateUser called with no writable fields for ${userId}`);
       return;
     }
 
-    // Update public & private user data
     if (transaction) {
       if (hasPublicUpdates) transaction.update(publicUserDocRef, publicDataToUpdate);
       if (hasPrivateUpdates) transaction.update(privateUserDocRef, privateDataToUpdate);
+      if (hasOnboardingUpdates) transaction.set(onboardingUserDocRef, onboardingDataToUpdate, { merge: true });
     } else {
       if (hasPublicUpdates) await updateDoc(publicUserDocRef, publicDataToUpdate);
       if (hasPrivateUpdates) await updateDoc(privateUserDocRef, privateDataToUpdate);
+      if (hasOnboardingUpdates) await setDoc(onboardingUserDocRef, onboardingDataToUpdate, { merge: true });
     }
 
     userServiceLogger.info(`User updated successfully:", ${userId}`);
@@ -309,10 +330,14 @@ export async function clearOnboardingPersonaChoice(userId: UserId): Promise<void
     throw new UserNotFoundError(userId, "UserId is undefined");
   }
   try {
-    const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
-    await updateDoc(privateUserDocRef, {
-      onboardingPersona: deleteField(),
-    });
+    const onboardingUserDocRef = doc(db, "Users", "Active", "Onboarding", userId);
+    await setDoc(
+      onboardingUserDocRef,
+      {
+        onboardingPersona: deleteField(),
+      },
+      { merge: true }
+    );
     bustUserLocalStorageCache();
     userServiceLogger.info(`Cleared onboarding persona for re-choice: ${userId}`);
   } catch (error) {
