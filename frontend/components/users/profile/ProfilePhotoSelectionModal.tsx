@@ -7,6 +7,11 @@ import { Logger } from "@/observability/logger";
 import { getUsersProfilePhotosUrls, uploadProfilePhoto } from "@/services/src/images/imageService";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
+import {
+  accentFromLocalImageFile,
+  readCachedOrganiserAccent,
+  rememberOrganiserAccentFromPhoto,
+} from "@/utilities/organiserAccentColour";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import imageCompression from "browser-image-compression";
@@ -78,6 +83,14 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
 
       const downloadUrl = await uploadProfilePhoto(user.userId, fileToUpload);
 
+      // Sample the local file in-browser (Firebase URLs can't be read for pixels).
+      try {
+        const palette = await accentFromLocalImageFile(fileToUpload);
+        rememberOrganiserAccentFromPhoto(user.userId, downloadUrl, palette);
+      } catch (error) {
+        logger.error("Error sampling profile photo accent colour:", error);
+      }
+
       // Add the new photo to the beginning of the list
       const updatedPhotos = [downloadUrl, ...profilePhotoUrls];
       setProfilePhotoUrls(updatedPhotos);
@@ -113,6 +126,8 @@ export const ProfilePhotoSelectionModal = ({ isOpen, onClose, user, setUser }: P
 
       setUser({ ...user, profilePicture: selectedPhotoUrl });
       bustUserLocalStorageCache();
+      const cached = readCachedOrganiserAccent(user.userId, selectedPhotoUrl);
+      if (cached) rememberOrganiserAccentFromPhoto(user.userId, selectedPhotoUrl, cached);
       handleClose();
     } catch (error: any) {
       logger.error("Error updating profile picture:", error);
