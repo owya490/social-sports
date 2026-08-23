@@ -129,7 +129,6 @@ export async function createEventMetadata(batch: WriteBatch | Transaction, event
     const eventMetadata = extractEventsMetadataFields(data);
     const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
     batch.set(docRef, eventMetadata);
-    eventServiceLogger.info(`createEventMetadata succedded for ${eventId}`);
   } catch (error) {
     eventServiceLogger.error(`An error occured in createEventMetadata for ${eventId} error=${error}`);
     throw error;
