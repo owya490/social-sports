@@ -16,6 +16,14 @@ export type DashboardAnnouncement = {
 
 export const DASHBOARD_ANNOUNCEMENTS: DashboardAnnouncement[] = [
   {
+    id: "ticket-types",
+    tag: "Feature",
+    label: "Ticket types",
+    description: "Multiple prices, capacities, and forms on one event",
+    href: "https://www.sportshub.net.au/blogs/features/ticket-types",
+    external: true,
+  },
+  {
     id: "booking-approval",
     tag: "Feature",
     label: "Booking approval",

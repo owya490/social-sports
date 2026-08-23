@@ -55,9 +55,15 @@ export const OrganiserAnnouncementBanner = () => {
           </p>
         ) : (
           <p className="text-sm leading-6 text-foreground font-sans">
-            <strong className="font-semibold">Booking approval is available</strong>
+            <strong className="font-semibold">Ticket types are here</strong>
             <BannerDot />
-            Enable it in event Settings to review requests before confirming.
+            Add multiple prices, capacities, and forms in event Settings.{" "}
+            <Link
+              href="/blogs/features/ticket-types"
+              className="font-semibold underline underline-offset-2 hover:text-foreground-secondary"
+            >
+              Learn more
+            </Link>
           </p>
         )}
       </div>
