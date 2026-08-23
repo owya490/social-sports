@@ -336,9 +336,9 @@ export const EventDrilldownFormsPage = ({ eventId, orderTicketsMap }: EventDrill
     if (!purchaserA && !purchaserB) return 0;
     if (!purchaserA) return 1;
     if (!purchaserB) return -1;
-    const emailCompare = purchaserA.email.localeCompare(purchaserB.email);
-    if (emailCompare !== 0) return emailCompare;
-    return purchaserA.name.localeCompare(purchaserB.name);
+    const nameCompare = purchaserA.name.localeCompare(purchaserB.name);
+    if (nameCompare !== 0) return nameCompare;
+    return purchaserA.email.localeCompare(purchaserB.email);
   });
 
   const allQuestionIdentifiers = new Set<string>();
