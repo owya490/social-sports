@@ -13,7 +13,6 @@ import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
-import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
@@ -26,11 +25,6 @@ import com.google.cloud.functions.HttpResponse;
 public class GlobalAppController extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
-    @FunctionalInterface
-    interface StripeWebhookProcessor {
-        void handle(HttpRequest request, HttpResponse response) throws Exception;
-    }
-
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         setResponseHeaders(response);
@@ -38,11 +32,6 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(204); // No Content
-            return;
-        }
-
-        if (shouldRouteToStripeWebhook(request)) {
-            handleStripeWebhook(request, response);
             return;
         }
 
@@ -127,32 +116,6 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
 
         var handler = HandlerRegistry.getHandler(endpointType);
         return handler.handle(handler.parse(unifiedRequest));
-    }
-
-    static boolean shouldRouteToStripeWebhook(HttpRequest request) {
-        return "POST".equalsIgnoreCase(request.getMethod())
-                && request.getFirstHeader("Stripe-Signature")
-                        .map(signature -> !signature.trim().isEmpty())
-                        .orElse(false);
-    }
-
-    static void handleStripeWebhook(HttpRequest request, HttpResponse response) throws Exception {
-        handleStripeWebhook(request, response, StripeWebhookHandler::handleWebhook);
-    }
-
-    static void handleStripeWebhook(
-            HttpRequest request,
-            HttpResponse response,
-            StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
-        logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
-        try {
-            stripeWebhookProcessor.handle(request, response);
-        } catch (Exception e) {
-            logger.error("Unhandled exception while processing Stripe webhook. uri={}", request.getUri(), e);
-            response.setStatusCode(500);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Internal server error")));
-        }
     }
 
     private void setResponseHeaders(HttpResponse response) {
