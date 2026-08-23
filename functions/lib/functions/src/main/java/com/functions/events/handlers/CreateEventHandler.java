@@ -57,6 +57,9 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
         }
     }
 
+    // TODO(repository-boundary): Move event/metadata and organiser-index writes to
+    // transaction-aware event and user repositories. Keep this method as orchestration,
+    // preserve the supplied retry-stable eventId, and cover public and private creation.
     /**
      * Creates a new event and its organiser indexes in a Firestore transaction.
      *
