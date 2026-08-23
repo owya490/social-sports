@@ -90,8 +90,8 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
             </DialogTitle>
             <p className="mt-2 text-sm text-foreground-muted font-sans leading-relaxed">
               Create a copy of{" "}
-              <span className="font-semibold text-foreground">{event.name || "this event"}</span>. Attendees
-              and sales are not copied. You can edit the new event after.
+              <span className="font-semibold text-foreground">{event.name || "this event"}</span>.
+              <span className="block mt-1.5">You can edit the new event after.</span>
             </p>
             <div className="mt-5 flex justify-end gap-2">
               <button
