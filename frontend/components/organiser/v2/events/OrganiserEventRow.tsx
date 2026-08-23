@@ -1,5 +1,6 @@
 "use client";
 
+import { EventDuplicateMenu } from "@/components/organiser/v2/events/EventDuplicateMenu";
 import {
   EventHoverDescription,
   EventHoverFlags,
@@ -65,11 +66,12 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
       metrics={<EventHoverMetrics event={event} />}
       body={<EventHoverDescription event={event} />}
       flags={<EventHoverFlags event={event} />}
+      className={`group flex w-full items-center hover:bg-surface-hover transition-colors ${className}`}
     >
       <Link
         href={href}
         data-event-id={event.eventId}
-        className={`group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus ${className}`}
+        className="flex min-w-0 flex-1 items-center gap-3 p-2.5 sm:p-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
       >
         <EntityRowThumbnail
           src={thumbnailSrc}
@@ -103,6 +105,9 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
           <OrganiserEventFillBar filled={filled} capacity={inventory.capacity} />
         </div>
       </Link>
+      <div className="shrink-0 pr-1.5 sm:pr-2">
+        <EventDuplicateMenu event={event} />
+      </div>
     </EntityHoverPreview>
   );
 }
