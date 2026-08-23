@@ -2,7 +2,8 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { EventId } from "@/interfaces/EventTypes";
+import { EventDuplicateMenu } from "@/components/organiser/v2/events/EventDuplicateMenu";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import {
   ArrowTopRightOnSquareIcon,
@@ -19,6 +20,7 @@ import Skeleton from "react-loading-skeleton";
 
 type EventHubHeaderProps = {
   loading: boolean;
+  event: EventData;
   eventId: EventId;
   name: string;
   startDate: Timestamp;
@@ -31,6 +33,7 @@ type EventHubHeaderProps = {
 
 export function EventHubHeader({
   loading,
+  event,
   eventId,
   name,
   startDate,
@@ -62,29 +65,32 @@ export function EventHubHeader({
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-0.5 shrink-0">
-          <Link
-            href={`/event/${eventId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            Event page
-            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden />
-          </Link>
-          <button
-            type="button"
-            onClick={onTogglePause}
-            disabled={loading || pauseUpdating || !isActive}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg px-1.5 py-1"
-          >
-            {paused ? (
-              <PlayCircleIcon className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <PauseCircleIcon className="h-3.5 w-3.5" aria-hidden />
-            )}
-            <span>{paused ? "Resume" : "Pause"}</span>
-          </button>
+        <div className="flex items-center gap-0.5 shrink-0">
+          <div className="hidden sm:flex items-center gap-0.5">
+            <Link
+              href={`/event/${eventId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              Event page
+              <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden />
+            </Link>
+            <button
+              type="button"
+              onClick={onTogglePause}
+              disabled={loading || pauseUpdating || !isActive}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg px-1.5 py-1"
+            >
+              {paused ? (
+                <PlayCircleIcon className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <PauseCircleIcon className="h-3.5 w-3.5" aria-hidden />
+              )}
+              <span>{paused ? "Resume" : "Pause"}</span>
+            </button>
+          </div>
+          <EventDuplicateMenu event={event} disabled={loading} />
         </div>
       </div>
     </header>

@@ -215,6 +215,7 @@ export function OrganiserEventHubView() {
       <div className="bg-background border-b border-border">
         <EventHubHeader
           loading={loading}
+          event={eventData}
           eventId={eventId}
           name={eventName}
           startDate={eventStartDate}

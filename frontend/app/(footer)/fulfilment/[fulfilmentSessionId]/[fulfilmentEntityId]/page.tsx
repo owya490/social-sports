@@ -22,11 +22,20 @@ import {
   getNextFulfilmentEntityUrl,
   getPrevFulfilmentEntityUrl,
 } from "@/services/src/fulfilment/fulfilmentServices";
+import { isExternalUrl, redirectToExternalUrl } from "@/services/src/urlUtils";
 import { HomeIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+
+function isStripeFulfilmentEntityType(type: FulfilmentEntityType | null | undefined): boolean {
+  return type === FulfilmentEntityType.STRIPE || type === FulfilmentEntityType.DELAYED_STRIPE;
+}
+
+function hasFulfilmentRedirectUrl(url: URL | null): url is URL {
+  return url !== null && url.toString().trim() !== "";
+}
 
 /**
  * Routing page for fulfilment session entities.
@@ -61,6 +70,29 @@ const FulfilmentSessionEntityPage = () => {
         if (cancelled) {
           return;
         }
+
+        if (isStripeFulfilmentEntityType(getFulfilmentEntityInfoResponse.type)) {
+          if (!hasFulfilmentRedirectUrl(getFulfilmentEntityInfoResponse.url)) {
+            fulfilmentSessionEntityPageLogger.error(
+              `${getFulfilmentEntityInfoResponse.type} Fulfilment Entity URL is missing when it should not be, fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
+                getFulfilmentEntityInfoResponse
+              )}`
+            );
+            router.replace("/error");
+            return;
+          }
+
+          const redirectUrl = getFulfilmentEntityInfoResponse.url.toString();
+          if (isExternalUrl(redirectUrl)) {
+            // Keep the loading state and use a full-page redirect so we don't flash /error via App Router navigation.
+            redirectToExternalUrl(redirectUrl);
+            return;
+          }
+
+          router.replace(redirectUrl);
+          return;
+        }
+
         setGetFulfilmentEntityInfoResponse(getFulfilmentEntityInfoResponse);
 
         const fulfilmentSessionInfo = await getFulfilmentSessionInfo(fulfilmentSessionId, fulfilmentEntityId);
@@ -69,6 +101,7 @@ const FulfilmentSessionEntityPage = () => {
         }
         setFulfilmentSessionInfo(fulfilmentSessionInfo);
         fulfilmentSessionEntityPageLogger.info(`fulfilmentSessionInfo: ${JSON.stringify(fulfilmentSessionInfo)}`);
+        setLoading(false);
       } catch (error) {
         if (cancelled) {
           return;
@@ -79,11 +112,6 @@ const FulfilmentSessionEntityPage = () => {
         }
         fulfilmentSessionEntityPageLogger.error(`Error fetching fulfilment info ${error}`);
         router.replace("/error");
-        return;
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
       }
     };
 
@@ -108,35 +136,6 @@ const FulfilmentSessionEntityPage = () => {
   useEffect(() => {
     setIsFormReady(false);
   }, [fulfilmentSessionId, fulfilmentEntityId]);
-
-  useEffect(() => {
-    if (
-      getFulfilmentEntityInfoResponse?.type !== FulfilmentEntityType.STRIPE &&
-      getFulfilmentEntityInfoResponse?.type !== FulfilmentEntityType.DELAYED_STRIPE
-    ) {
-      return;
-    }
-
-    if (getFulfilmentEntityInfoResponse.url === null) {
-      fulfilmentSessionEntityPageLogger.error(
-        `${getFulfilmentEntityInfoResponse.type} Fulfilment Entity URL is null when it should not be, fulfilmentSessionId: ${
-          fulfilmentSessionId
-        }, fulfilmentEntityId: ${fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
-          getFulfilmentEntityInfoResponse
-        )}`
-      );
-      router.push("/error");
-      return;
-    }
-
-    router.push(getFulfilmentEntityInfoResponse.url.toString());
-  }, [
-    getFulfilmentEntityInfoResponse,
-    fulfilmentSessionId,
-    fulfilmentEntityId,
-    fulfilmentSessionEntityPageLogger,
-    router,
-  ]);
 
   const handleNext = async () => {
     try {
@@ -242,14 +241,6 @@ const FulfilmentSessionEntityPage = () => {
   }
 
   switch (getFulfilmentEntityInfoResponse?.type) {
-    case FulfilmentEntityType.STRIPE:
-    case FulfilmentEntityType.DELAYED_STRIPE:
-      return (
-        <>
-          <Loading />
-          {renderErrorAlert()}
-        </>
-      );
     case FulfilmentEntityType.FORMS:
       if (getFulfilmentEntityInfoResponse.formId === null || getFulfilmentEntityInfoResponse.eventId === null) {
         fulfilmentSessionEntityPageLogger.error(

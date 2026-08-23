@@ -22,7 +22,7 @@ export type AttendeeCsvRow = {
 export function buildAttendeeCsvData(orderTicketsMap: Map<Order, Ticket[]>): AttendeeCsvRow[] {
   const sortedEntries = Array.from(orderTicketsMap.entries())
     .filter(([, tickets]) => tickets.length > 0)
-    .sort(([a], [b]) => a.email.localeCompare(b.email));
+    .sort(([a], [b]) => a.fullName.localeCompare(b.fullName));
 
   return sortedEntries.flatMap(([order, tickets]) => {
     const phone = order.phone ? `${order.phone}` : "N/A";
