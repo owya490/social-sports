@@ -11,7 +11,6 @@ import {
 import {
   DocumentData,
   DocumentReference,
-  Transaction,
   WriteBatch,
   arrayRemove,
   arrayUnion,
@@ -81,7 +80,9 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
 
     await runTransaction(db, async (transaction) => {
       transaction.set(docRef, eventDataWithTokens);
-      await createEventMetadata(transaction, docRef.id as EventId, data);
+      const eventMetadataRef = doc(db, CollectionPaths.EventsMetadata, docRef.id);
+      transaction.set(eventMetadataRef, extractEventsMetadataFields(data));
+      eventServiceLogger.info(`createEventMetadata succedded for ${docRef.id}`);
 
       const privateUserRef = doc(db, "Users", "Active", "Private", data.organiserId);
       transaction.update(privateUserRef, {
@@ -122,18 +123,6 @@ export async function createEventV2(data: NewEventData) {
     const data = JSON.parse(result.data as string) as CreateEventResponse;
     return data.eventId;
   });
-}
-
-export async function createEventMetadata(batch: WriteBatch | Transaction, eventId: EventId, data: NewEventData) {
-  try {
-    const eventMetadata = extractEventsMetadataFields(data);
-    const docRef = doc(db, CollectionPaths.EventsMetadata, eventId);
-    batch.set(docRef, eventMetadata);
-    eventServiceLogger.info(`createEventMetadata succedded for ${eventId}`);
-  } catch (error) {
-    eventServiceLogger.error(`An error occured in createEventMetadata for ${eventId} error=${error}`);
-    throw error;
-  }
 }
 
 export async function getEventById(
