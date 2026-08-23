@@ -2,17 +2,26 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { EventDuplicateMenu } from "@/components/organiser/v2/events/EventDuplicateMenu";
+import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { Logger } from "@/observability/logger";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { createEvent } from "@/services/src/events/eventsService";
+import { buildDuplicatedNewEventData } from "@/services/src/events/eventsUtils/duplicateEventUtils";
+import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import {
   ArrowTopRightOnSquareIcon,
+  DocumentDuplicateIcon,
   PauseCircleIcon,
   PlayCircleIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
+
+const logger = new Logger("EventHubHeader");
 
 /**
  * Quiet Luma-style header — title + meta + Event page. Cover lives in Details.
@@ -43,10 +52,31 @@ export function EventHubHeader({
   onTogglePause,
   pauseUpdating = false,
 }: EventHubHeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [duplicating, setDuplicating] = useState(false);
   useOrganiserBreadcrumbTitle(loading ? null : name);
   const meta = loading
     ? ""
     : [timestampToEventCardDateString(startDate), location].filter(Boolean).join(" · ");
+
+  const handleDuplicate = async () => {
+    if (loading || duplicating) return;
+    setDuplicating(true);
+    try {
+      const newEventId = await createEvent(buildDuplicatedNewEventData(event));
+      bustOrganiserEventsCache();
+      router.push(welcomeAwareEventHref(pathname, newEventId));
+    } catch (error) {
+      setDuplicating(false);
+      if (error === "Rate Limited") {
+        router.push("/error/CREATE_UPDATE_EVENT_RATELIMITED");
+        return;
+      }
+      logger.error(`Failed to duplicate event ${event.eventId}: ${error}`);
+      router.push("/error");
+    }
+  };
 
   return (
     <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-3">
@@ -65,32 +95,40 @@ export function EventHubHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-0.5 shrink-0">
-          <div className="hidden sm:flex items-center gap-0.5">
-            <Link
-              href={`/event/${eventId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              Event page
-              <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden />
-            </Link>
-            <button
-              type="button"
-              onClick={onTogglePause}
-              disabled={loading || pauseUpdating || !isActive}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg px-1.5 py-1"
-            >
-              {paused ? (
-                <PlayCircleIcon className="h-3.5 w-3.5" aria-hidden />
-              ) : (
-                <PauseCircleIcon className="h-3.5 w-3.5" aria-hidden />
-              )}
-              <span>{paused ? "Resume" : "Pause"}</span>
-            </button>
-          </div>
-          <EventDuplicateMenu event={event} disabled={loading} />
+        <div className="hidden sm:flex items-center gap-0.5 shrink-0">
+          <Link
+            href={`/event/${eventId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Event page
+            <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" aria-hidden />
+          </Link>
+          <button
+            type="button"
+            onClick={onTogglePause}
+            disabled={loading || pauseUpdating || !isActive}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg px-1.5 py-1"
+          >
+            {paused ? (
+              <PlayCircleIcon className="h-3.5 w-3.5" aria-hidden />
+            ) : (
+              <PauseCircleIcon className="h-3.5 w-3.5" aria-hidden />
+            )}
+            <span>{paused ? "Resume" : "Pause"}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              void handleDuplicate();
+            }}
+            disabled={loading || duplicating}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg px-1.5 py-1"
+          >
+            <DocumentDuplicateIcon className="h-3.5 w-3.5" aria-hidden />
+            <span>{duplicating ? "Duplicating…" : "Duplicate"}</span>
+          </button>
         </div>
       </div>
     </header>
