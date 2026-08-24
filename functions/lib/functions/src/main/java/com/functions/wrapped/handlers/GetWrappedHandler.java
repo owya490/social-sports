@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.AuthLevel;
 import com.functions.global.models.Handler;
@@ -47,7 +46,7 @@ public class GetWrappedHandler implements Handler<GetWrappedRequest, GetWrappedR
                     request.organiserId(),
                     "You are not allowed to access another organiser's wrapped data");
         } else if (request.wrappedId() == null || request.wrappedId().isBlank()) {
-            throw new AuthenticationException("wrappedId is required to access wrapped data via a share link");
+            throw new IllegalArgumentException("wrappedId is required to access wrapped data via a share link");
         }
 
         try {

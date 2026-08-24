@@ -5,6 +5,7 @@ import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.AuthLevel;
 import com.google.cloud.functions.HttpRequest;
+import com.google.firebase.ErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseToken;
@@ -39,12 +40,14 @@ public final class AuthService {
         try {
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(idToken, CHECK_TOKEN_REVOKED);
             return decodedToken.getUid();
-        } catch (FirebaseAuthException | IllegalArgumentException e) {
-            // verifyIdToken throws FirebaseAuthException for invalid/expired/revoked
-            // tokens but IllegalArgumentException for malformed ones. Both are
-            // authentication failures (401), not internal errors (500). Anything else
-            // (e.g. an uninitialised FirebaseApp) is deliberately left to propagate as
-            // a 500 rather than being masked as a bad credential.
+        } catch (FirebaseAuthException e) {
+            // Revocation checking can fail with UNAVAILABLE when Firebase Auth is
+            // temporarily unreachable. That is a service failure (5xx), not a bad token.
+            if (e.getErrorCode() == ErrorCode.UNAVAILABLE) {
+                throw new RuntimeException("Firebase Auth service unavailable", e);
+            }
+            throw new AuthenticationException("Invalid Firebase ID token");
+        } catch (IllegalArgumentException e) {
             throw new AuthenticationException("Invalid Firebase ID token");
         }
     }

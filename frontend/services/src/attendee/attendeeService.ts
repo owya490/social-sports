@@ -27,7 +27,7 @@ export async function addAttendee(request: AddAttendeeRequest): Promise<AddAtten
     const response = await executeGlobalAppControllerFunction<AddAttendeeRequest, AddAttendeeResponse>(
       EndpointType.ADD_ATTENDEE,
       request,
-      { requireAuth: true }
+      { attachAuth: true }
     );
     attendeeServiceLogger.info(`addAttendeeViaBackend: success orderId=${response.orderId}`);
     return response;
@@ -60,7 +60,7 @@ export async function setAttendeeTickets(
     const response = await executeGlobalAppControllerFunction<SetAttendeeTicketsRequest, SetAttendeeTicketsResponse>(
       EndpointType.SET_ATTENDEE_TICKETS,
       request,
-      { requireAuth: true }
+      { attachAuth: true }
     );
     attendeeServiceLogger.info(`setAttendeeTicketsViaBackend: success`);
     return response;

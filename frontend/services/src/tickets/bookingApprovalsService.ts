@@ -36,7 +36,7 @@ export async function approveBooking(eventId: string, organiserId: string, order
         orderId,
         bookingApprovalOperation: BookingApprovalOperation.APPROVE,
       },
-      { requireAuth: true }
+      { attachAuth: true }
     );
 
     bookingApprovalServiceLogger.info(`approveBooking: Successfully approved orderId=${orderId}`);
@@ -59,7 +59,7 @@ export async function rejectBooking(eventId: string, organiserId: string, orderI
         orderId,
         bookingApprovalOperation: BookingApprovalOperation.REJECT,
       },
-      { requireAuth: true }
+      { attachAuth: true }
     );
 
     bookingApprovalServiceLogger.info(`rejectBooking: Successfully rejected orderId=${orderId}`);
