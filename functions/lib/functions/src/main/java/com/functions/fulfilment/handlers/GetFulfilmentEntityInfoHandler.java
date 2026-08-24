@@ -5,6 +5,7 @@ import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
@@ -25,7 +26,7 @@ public class GetFulfilmentEntityInfoHandler implements Handler<GetFulfilmentEnti
     }
 
     @Override
-    public GetFulfilmentEntityInfoResponse handle(GetFulfilmentEntityInfoRequest request) {
+    public GetFulfilmentEntityInfoResponse handle(GetFulfilmentEntityInfoRequest request, AuthContext authContext) {
         logger.info("Handling get fulfilment entity info request for session: {}, entity Id: {}, request: {}",
                 request.fulfilmentSessionId(), request.fulfilmentEntityId(), request);
                 

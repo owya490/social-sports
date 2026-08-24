@@ -9,6 +9,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.fulfilment.models.requests.GetPrevFulfilmentEntityRequest;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.utils.JavaUtils;
@@ -26,7 +27,7 @@ public class GetPrevFulfilmentEntityHandler implements Handler<GetPrevFulfilment
     }
 
     @Override
-    public GetPrevFulfilmentEntityResponse handle(GetPrevFulfilmentEntityRequest request) {
+    public GetPrevFulfilmentEntityResponse handle(GetPrevFulfilmentEntityRequest request, AuthContext authContext) {
         Optional<GetPrevFulfilmentEntityResponse> maybeResponse = FulfilmentService.getPrevFulfilmentEntityByCurrentId(
                 request.fulfilmentSessionId(), request.currentFulfilmentEntityId());
 

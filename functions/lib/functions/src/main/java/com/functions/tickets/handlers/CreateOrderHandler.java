@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.tickets.models.requests.create.CreateOrderRequest;
@@ -24,7 +25,7 @@ public class CreateOrderHandler implements Handler<CreateOrderRequest, CreateOrd
     }
 
     @Override
-    public CreateOrderResponse handle(CreateOrderRequest request) throws Exception {
+    public CreateOrderResponse handle(CreateOrderRequest request, AuthContext authContext) throws Exception {
         logger.info("Creating order for eventId: {}, email: {}", request.eventId(), request.email());
 
         if (request.eventId() == null || request.eventId().isBlank()) {

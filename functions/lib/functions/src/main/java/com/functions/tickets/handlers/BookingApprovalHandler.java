@@ -4,8 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.global.services.EventAuthorizationService;
 import com.functions.tickets.models.requests.BookingApprovalRequest;
 import com.functions.tickets.models.responses.BookingApprovalResponse;
 import com.functions.tickets.services.BookingApprovalService;
@@ -28,12 +30,23 @@ public class BookingApprovalHandler implements Handler<BookingApprovalRequest, B
     }
 
     @Override
-    public BookingApprovalResponse handle(BookingApprovalRequest request) throws Exception {
+    public BookingApprovalResponse handle(BookingApprovalRequest request, AuthContext authContext) throws Exception {
+        // The organiserId in the request body is public data (visible to any attendee of the
+        // event), so trusting it here would let any signed-in user capture or cancel another
+        // organiser's payments. The authenticated uid is the only trustworthy source of identity.
+        String organiserId = authContext.requireUid();
+        if (request.organiserId() != null && !request.organiserId().equals(organiserId)) {
+            logger.warn("Booking approval request organiserId {} does not match authenticated uid {}; "
+                    + "using authenticated uid", request.organiserId(), organiserId);
+        }
+
         logger.info("Handling booking approval request for eventId: {}, organiserId: {}, orderId: {}, operation: {}",
-                request.eventId(), request.organiserId(), request.orderId(), request.bookingApprovalOperation());
+                request.eventId(), organiserId, request.orderId(), request.bookingApprovalOperation());
+
+        EventAuthorizationService.requireOrganiserAccess(organiserId, request.eventId());
 
         BookingApprovalResponse response = BookingApprovalService.handleBookingApproval(request.eventId(),
-                request.organiserId(), request.orderId(), request.bookingApprovalOperation());
+                organiserId, request.orderId(), request.bookingApprovalOperation());
 
         logger.info("[BookingApprovalHandler] Booking {} operation completed for orderId: {}, success: {}",
                 request.bookingApprovalOperation(), request.orderId(), response.success());
