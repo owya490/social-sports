@@ -49,7 +49,7 @@ export async function getWrappedData(
             year,
             wrappedId,
           },
-          { attachAuth: true }
+          { requireAuth: true }
         );
 
     wrappedServiceLogger.info(

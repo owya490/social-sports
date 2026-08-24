@@ -1,11 +1,9 @@
 import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
-import { AuthenticationError } from "@/interfaces/exceptions/AuthenticationError";
-import { AuthorizationError } from "@/interfaces/exceptions/AuthorizationError";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
-import { auth } from "@/services/src/firebase";
 import { Environment, getEnvironment } from "@/utilities/environment";
+import { auth } from "../firebase";
 import { GLOBAL_APP_CONTROLLER_URL } from "./functionsConstants";
 
 const functionsUtilsLogger = new Logger("functionsUtilsLogger");
@@ -18,7 +16,7 @@ export function getGlobalAppControllerUrl(): string {
 export async function executeGlobalAppControllerFunction<S, T>(
   endpointType: EndpointType,
   data: S,
-  options?: { attachAuth?: boolean }
+  options?: { requireAuth?: boolean }
 ): Promise<T> {
   const request: UnifiedRequest<S> = {
     endpointType: endpointType,
@@ -30,7 +28,7 @@ export async function executeGlobalAppControllerFunction<S, T>(
     Accept: "application/json",
   };
 
-  if (options?.attachAuth) {
+  if (options?.requireAuth) {
     const currentUser = auth.currentUser;
     if (!currentUser) {
       throw new Error("A signed-in user is required for this request");
@@ -58,25 +56,7 @@ export async function executeGlobalAppControllerFunction<S, T>(
     functionsUtilsLogger.error(
       `executeGlobalAppControllerFunction: Failed to execute global app controller function. status=${rawResponse.status} body=${errorText}`
     );
-
-    let errorMessage = `Failed to execute global app controller function (status ${rawResponse.status})`;
-    try {
-      const errorResponse = JSON.parse(errorText) as ErrorResponse;
-      if (errorResponse.errorMessage) {
-        errorMessage = errorResponse.errorMessage;
-      }
-    } catch {
-      // Keep the generic message when the body is not a structured ErrorResponse.
-    }
-
-    if (rawResponse.status === 401) {
-      throw new AuthenticationError(errorMessage);
-    }
-    if (rawResponse.status === 403) {
-      throw new AuthorizationError(errorMessage);
-    }
-
-    throw new Error(errorMessage);
+    throw new Error(`Failed to execute global app controller function (status ${rawResponse.status})`);
   }
 
   const json = (await rawResponse.json()) as UnifiedResponse<T>;
