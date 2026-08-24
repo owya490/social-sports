@@ -202,9 +202,18 @@ def send_email_with_loop(
         )
 
     if response.status_code != 200:
-        logger.error(
+        log_message = (
             f"Failed to send event reminder for eventId={event_id}, body={response.text}"
         )
+        try:
+            response_error = response.json().get("error", {})
+        except (requests.exceptions.JSONDecodeError, AttributeError):
+            response_error = {}
+
+        if response.status_code == 400 and response_error.get("path") == "email":
+            logger.warning(log_message)
+        else:
+            logger.error(log_message)
 
     # Sleep for 300ms to avoid getting rate limited. Loops offer 10 emails a second: https://loops.so/docs/api-reference/intro#rate-limiting
     time.sleep(0.3)
