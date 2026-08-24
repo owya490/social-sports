@@ -1,9 +1,6 @@
 package com.functions.tickets.handlers;
 
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,13 +46,7 @@ public class GetOrderHandler implements Handler<GetOrderRequest, GetOrderRespons
             throw new IllegalArgumentException("Order has no tickets: " + request.orderId());
         }
 
-        Set<String> eventIds = tickets.stream()
-                .map(Ticket::getEventId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-        for (String eventId : eventIds) {
-            EventAuthorizationService.requireOrganiserAccess(authContext.requireUid(), eventId);
-        }
+        EventAuthorizationService.requireOrganiserAccess(authContext.requireUid(), tickets.get(0).getEventId());
 
         return new GetOrderResponse(order, tickets);
     }
