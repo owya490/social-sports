@@ -10,6 +10,7 @@ AGENTS.md loaded
 - Never deploy Firebase or Google Cloud functions without explicit operator approval.
 - Never edit generated Hugo output under `frontend/public/blogs`, `frontend/public/docs`, `frontend/public/css`, `frontend/public/js`, or `frontend/public/tags`. Edit `sportshub-blogs-docs/` and run its integration script only when requested.
 - Do not expose or commit `.env*`, Firebase service-account files, API keys, or other credentials.
+- Create new worktrees with `./scripts/add-worktree.sh <worktree-path> <branch-name>` so approved ignored local files are copied safely. To prepare an existing worktree, run `./scripts/bootstrap-worktree-env.sh <source-worktree>` from its root. See `docs/WORKTREES.md`.
 
 ## Repository Overview
 
