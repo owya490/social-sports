@@ -63,12 +63,22 @@ if ! [[ " ${VALID_ENVIRONMENTS[@]} " =~ " ${ENVIRONMENT} " ]]; then
 fi
 
 if [ "$ENVIRONMENT" == "dev" ]; then
-    cp ../../functions_key_dev.json functions_key.json
-    cp ../../.env.dev .env
+    FUNCTIONS_KEY_SOURCE=../../functions_key_dev.json
+    ENV_SOURCE=../../.env.dev
 else
-    cp ../../functions_key_prod.json functions_key.json
-    cp ../../.env.prod .env
+    FUNCTIONS_KEY_SOURCE=../../functions_key_prod.json
+    ENV_SOURCE=../../.env.prod
 fi
+
+for REQUIRED_FILE in "$FUNCTIONS_KEY_SOURCE" "$ENV_SOURCE"; do
+    if [ ! -f "$REQUIRED_FILE" ]; then
+        echo "Missing required local deployment file: $REQUIRED_FILE" >&2
+        exit 1
+    fi
+done
+
+cp "$FUNCTIONS_KEY_SOURCE" functions_key.json
+cp "$ENV_SOURCE" .env
 
 # project name is socialsports-44162 for dev and socialsportsprod for prod
 if [ "$ENVIRONMENT" == "dev" ]; then
