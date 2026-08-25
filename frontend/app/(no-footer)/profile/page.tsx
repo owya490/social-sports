@@ -17,6 +17,8 @@ import { Logger } from "@/observability/logger";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
+import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
+import { PHONE_VALIDATION_ERROR_MESSAGE, validatePhoneNumber } from "@/utilities/phoneValidationUtils";
 import { convertDateToInput, convertInputToDate } from "@/utilities/profileDateUtils";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
@@ -54,6 +56,23 @@ function draftFromUser(user: UserData): ProfileDraft {
   };
 }
 
+function getProfileContactErrors(draft: ProfileDraft) {
+  return {
+    publicEmail:
+      draft.publicEmail.trim() !== "" && !validateEmail(draft.publicEmail)
+        ? EMAIL_VALIDATION_ERROR_MESSAGE
+        : undefined,
+    publicMobile:
+      draft.publicMobile !== "" && !validatePhoneNumber(draft.publicMobile)
+        ? PHONE_VALIDATION_ERROR_MESSAGE
+        : undefined,
+    privateMobile:
+      draft.privateMobile !== "" && !validatePhoneNumber(draft.privateMobile)
+        ? PHONE_VALIDATION_ERROR_MESSAGE
+        : undefined,
+  };
+}
+
 const Profile = () => {
   const { user, setUser } = useUser();
   const [loading, setLoading] = useState(true);
@@ -63,6 +82,7 @@ const Profile = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [usernameWarning, setUsernameWarning] = useState(false);
   const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
+  const [saveAttempted, setSaveAttempted] = useState(false);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -78,6 +98,17 @@ const Profile = () => {
     return JSON.stringify(draft) !== JSON.stringify(baseline);
   }, [draft, user]);
 
+  const contactErrors = useMemo(
+    () =>
+      draft
+        ? getProfileContactErrors(draft)
+        : { publicEmail: undefined, publicMobile: undefined, privateMobile: undefined },
+    [draft]
+  );
+  const shownContactErrors = saveAttempted
+    ? contactErrors
+    : { publicEmail: undefined, publicMobile: undefined, privateMobile: undefined };
+
   const updateDraft = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) => {
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
     setSaveSuccess(false);
@@ -90,16 +121,25 @@ const Profile = () => {
     setSaveError("");
     setSaveSuccess(false);
     setUsernameWarning(false);
+    setSaveAttempted(false);
   };
 
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!draft || !user.userId || saving) return;
 
-    setSaving(true);
+    setSaveAttempted(true);
     setSaveError("");
     setSaveSuccess(false);
     setUsernameWarning(false);
+
+    const errors = getProfileContactErrors(draft);
+    if (errors.publicEmail || errors.publicMobile || errors.privateMobile) {
+      setSaveError("Fix the highlighted fields and try again.");
+      return;
+    }
+
+    setSaving(true);
 
     try {
       const usernameChanged = draft.username !== user.username;
@@ -176,7 +216,7 @@ const Profile = () => {
           </p>
         </header>
 
-        <form onSubmit={handleSave} className="space-y-4">
+        <form onSubmit={handleSave} noValidate className="space-y-4">
           <ProfileSection title="Photo" description="This image appears on your public profile and events.">
             <ProfilePhotoPanel user={user} setUser={setUser} />
           </ProfileSection>
@@ -238,7 +278,11 @@ const Profile = () => {
             description="Visible on your organiser profile when people find you."
           >
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <ProfileField label="Contact email" htmlFor="profile-public-email">
+              <ProfileField
+                label="Contact email"
+                htmlFor="profile-public-email"
+                error={shownContactErrors.publicEmail}
+              >
                 <ProfileTextInput
                   id="profile-public-email"
                   type="email"
@@ -246,9 +290,15 @@ const Profile = () => {
                   onChange={(v) => updateDraft("publicEmail", v)}
                   placeholder="public@email.com"
                   autoComplete="email"
+                  invalid={Boolean(shownContactErrors.publicEmail)}
                 />
               </ProfileField>
-              <ProfileField label="Phone number" htmlFor="profile-public-mobile" hint="Digits only.">
+              <ProfileField
+                label="Phone number"
+                htmlFor="profile-public-mobile"
+                hint="Digits only."
+                error={shownContactErrors.publicMobile}
+              >
                 <ProfileTextInput
                   id="profile-public-mobile"
                   value={draft.publicMobile}
@@ -257,6 +307,7 @@ const Profile = () => {
                   }}
                   inputMode="numeric"
                   placeholder="04…"
+                  invalid={Boolean(shownContactErrors.publicMobile)}
                 />
               </ProfileField>
               <div className="sm:col-span-2 space-y-1.5">
@@ -295,7 +346,12 @@ const Profile = () => {
                   </button>
                 }
               />
-              <ProfileField label="Private phone number" htmlFor="profile-private-mobile" hint="Digits only.">
+              <ProfileField
+                label="Private phone number"
+                htmlFor="profile-private-mobile"
+                hint="Digits only."
+                error={shownContactErrors.privateMobile}
+              >
                 <ProfileTextInput
                   id="profile-private-mobile"
                   value={draft.privateMobile}
@@ -303,6 +359,7 @@ const Profile = () => {
                     if (/^\d*$/.test(v)) updateDraft("privateMobile", v);
                   }}
                   inputMode="numeric"
+                  invalid={Boolean(shownContactErrors.privateMobile)}
                 />
               </ProfileField>
             </div>

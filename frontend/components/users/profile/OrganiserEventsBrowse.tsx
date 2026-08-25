@@ -4,7 +4,7 @@
  * THESIS: Public organiser events as a Luma-style timeline + calendar — browse by day, scan chronologically.
  * OWN-WORLD: Honest Clubhouse tokens — surface canvas, outlined white panels, Satoshi, yellow only on primary CTAs.
  * STORY: Visitor opens a profile, sees upcoming sessions on a timeline, picks a day on the calendar to focus.
- * FIRST VIEWPORT: Timeline (main) + calendar sidebar with Upcoming/Past; date headers with vertical rail.
+ * FIRST VIEWPORT: Timeline (main) + calendar sidebar; date headers with vertical rail.
  * FORM: Luma timeline composition inside Clubhouse light tokens (not dark mode).
  */
 
@@ -24,8 +24,6 @@ import {
 } from "date-fns";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useMemo, useState } from "react";
-
-type RangeMode = "upcoming" | "past";
 
 interface OrganiserEventsBrowseProps {
   events: EventData[];
@@ -58,50 +56,23 @@ export default function OrganiserEventsBrowse({
   emptyDescription = "This organiser hasn't published any upcoming events yet.",
 }: OrganiserEventsBrowseProps) {
   const today = useMemo(() => startOfDay(new Date()), []);
-  const [rangeMode, setRangeMode] = useState<RangeMode>("upcoming");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [month, setMonth] = useState<Date>(() => startOfMonth(new Date()));
 
-  const filteredByRange = useMemo(() => {
-    return events
-      .filter((event) => {
-        const eventDay = startOfDay(event.startDate.toDate());
-        if (rangeMode === "upcoming") {
-          return !isBefore(eventDay, today);
-        }
-        return isBefore(eventDay, today);
-      })
-      .sort((a, b) => {
-        const diff = a.startDate.toMillis() - b.startDate.toMillis();
-        return rangeMode === "upcoming" ? diff : -diff;
-      });
-  }, [events, rangeMode, today]);
+  const sortedEvents = useMemo(() => {
+    return [...events].sort((a, b) => a.startDate.toMillis() - b.startDate.toMillis());
+  }, [events]);
 
   const eventDateKeys = useMemo(
-    () => new Set(filteredByRange.map((event) => dayKey(event.startDate.toDate()))),
-    [filteredByRange]
+    () => new Set(sortedEvents.map((event) => dayKey(event.startDate.toDate()))),
+    [sortedEvents]
   );
 
-  const setRangeModeAndReset = (mode: RangeMode) => {
-    setRangeMode(mode);
-    setSelectedDate(undefined);
-    const nextEvents = events
-      .filter((event) => {
-        const eventDay = startOfDay(event.startDate.toDate());
-        return mode === "upcoming" ? !isBefore(eventDay, today) : isBefore(eventDay, today);
-      })
-      .sort((a, b) => a.startDate.toMillis() - b.startDate.toMillis());
-    if (nextEvents.length > 0) {
-      const anchor = mode === "upcoming" ? nextEvents[0] : nextEvents[nextEvents.length - 1];
-      setMonth(startOfMonth(startOfDay(anchor.startDate.toDate())));
-    }
-  };
-
   const timelineEvents = useMemo(() => {
-    if (!selectedDate) return filteredByRange;
+    if (!selectedDate) return sortedEvents;
     const selectedKey = dayKey(selectedDate);
-    return filteredByRange.filter((event) => dayKey(event.startDate.toDate()) === selectedKey);
-  }, [filteredByRange, selectedDate]);
+    return sortedEvents.filter((event) => dayKey(event.startDate.toDate()) === selectedKey);
+  }, [sortedEvents, selectedDate]);
 
   const grouped = useMemo(() => groupEventsByDay(timelineEvents), [timelineEvents]);
 
@@ -154,7 +125,7 @@ export default function OrganiserEventsBrowse({
         )}
       </div>
 
-      <aside className="mt-8 lg:mt-0 lg:sticky lg:top-24 space-y-3">
+      <aside className="mt-8 lg:mt-0 lg:sticky lg:top-24">
         <div className="rounded-xl border border-border bg-background p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-foreground font-sans">{format(month, "MMMM yyyy")}</p>
@@ -180,7 +151,7 @@ export default function OrganiserEventsBrowse({
 
           <div className="grid grid-cols-7 gap-1 mb-1">
             {["S", "M", "T", "W", "T", "F", "S"].map((label, idx) => (
-              <div key={`${label}-${idx}`} className="text-center text-[10px] font-medium text-foreground-muted font-sans py-1">
+              <div key={`${label}-${idx}`} className="text-center text-xs font-medium text-foreground-muted font-sans py-1">
                 {label}
               </div>
             ))}
@@ -195,10 +166,7 @@ export default function OrganiserEventsBrowse({
               const selected = selectedDate ? dayKey(selectedDate) === dayKey(day) : false;
               const isToday = isSameDay(day, today);
               const inMonth = isSameMonth(day, month);
-              const outOfRange =
-                rangeMode === "upcoming"
-                  ? isBefore(day, today)
-                  : !isBefore(day, today) && !isSameDay(day, today);
+              const isPast = isBefore(day, today);
 
               return (
                 <button
@@ -212,7 +180,7 @@ export default function OrganiserEventsBrowse({
                       ? "bg-foreground text-white font-semibold"
                       : hasEvent
                         ? "text-foreground hover:bg-surface-hover font-semibold"
-                        : !inMonth || outOfRange
+                        : !inMonth || isPast
                           ? "text-foreground-muted/50"
                           : "text-foreground",
                     isToday && !selected ? "ring-1 ring-border" : "",
@@ -237,30 +205,6 @@ export default function OrganiserEventsBrowse({
               Clear date filter · {format(selectedDate, "d MMM")}
             </button>
           ) : null}
-        </div>
-
-        <div
-          role="group"
-          aria-label="Event range"
-          className="flex rounded-xl border border-border bg-background p-1"
-        >
-          {(["upcoming", "past"] as const).map((mode) => {
-            const active = rangeMode === mode;
-            return (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setRangeModeAndReset(mode)}
-                className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold font-sans capitalize transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                  active
-                    ? "bg-surface-muted text-foreground"
-                    : "text-foreground-secondary hover:bg-surface-hover"
-                }`}
-              >
-                {mode}
-              </button>
-            );
-          })}
         </div>
       </aside>
     </div>

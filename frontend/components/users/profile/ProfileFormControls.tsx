@@ -4,10 +4,12 @@ import { EventHubDescriptionEditor } from "@/components/organiser/v2/event-hub/E
 import { InputHTMLAttributes, ReactNode } from "react";
 
 export const profileFieldClass =
-  "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 px-3 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none disabled:opacity-60";
+  "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 px-3 text-base sm:text-sm leading-6 text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 shadow-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 disabled:opacity-60";
 
 export const profileFieldShellClass =
-  "relative flex items-center rounded-xl border border-border bg-background";
+  "relative flex items-center min-h-[2.875rem] rounded-xl border border-border bg-background";
+
+const profileLabelClass = "block h-4 text-xs font-medium leading-4 text-foreground-muted font-sans";
 
 type ProfileSectionProps = {
   title: string;
@@ -33,16 +35,21 @@ type ProfileFieldProps = {
   label: string;
   htmlFor?: string;
   hint?: string;
+  error?: string;
   children: ReactNode;
   className?: string;
 };
 
-export function ProfileField({ label, htmlFor, hint, children, className = "" }: ProfileFieldProps) {
+export function ProfileField({ label, htmlFor, hint, error, children, className = "" }: ProfileFieldProps) {
   return (
     <label htmlFor={htmlFor} className={`block space-y-1.5 ${className}`}>
-      <span className="text-xs font-medium text-foreground-muted font-sans">{label}</span>
+      <span className={profileLabelClass}>{label}</span>
       {children}
-      {hint ? <span className="block text-xs text-foreground-muted font-sans">{hint}</span> : null}
+      {error ? (
+        <span className="block text-xs text-danger font-sans">{error}</span>
+      ) : hint ? (
+        <span className="block text-xs text-foreground-muted font-sans">{hint}</span>
+      ) : null}
     </label>
   );
 }
@@ -57,6 +64,7 @@ type ProfileTextInputProps = {
   type?: string;
   inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"];
   autoComplete?: string;
+  invalid?: boolean;
 };
 
 export function ProfileTextInput({
@@ -69,11 +77,12 @@ export function ProfileTextInput({
   type = "text",
   inputMode,
   autoComplete,
+  invalid,
 }: ProfileTextInputProps) {
   return (
     <div className={profileFieldShellClass}>
       {prefix ? (
-        <span className="pl-3 text-sm text-foreground-muted font-sans shrink-0" aria-hidden>
+        <span className="pl-3 text-base sm:text-sm leading-6 text-foreground-muted font-sans shrink-0" aria-hidden>
           {prefix}
         </span>
       ) : null}
@@ -85,6 +94,7 @@ export function ProfileTextInput({
         placeholder={placeholder}
         inputMode={inputMode}
         autoComplete={autoComplete}
+        aria-invalid={invalid || undefined}
         onChange={(e) => onChange(e.target.value)}
         className={`${profileFieldClass} ${prefix ? "pl-1.5" : ""}`}
       />
@@ -128,13 +138,24 @@ type ProfileReadonlyProps = {
 
 export function ProfileReadonlyField({ label, value, action }: ProfileReadonlyProps) {
   return (
-    <div className="space-y-1.5">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-foreground-muted font-sans">{label}</p>
-        {action}
-      </div>
-      <div className="rounded-xl border border-border bg-surface px-3 py-2.5">
-        <p className="text-sm text-foreground font-sans break-all">{value || "—"}</p>
+    <div className="block space-y-1.5">
+      {action ? (
+        <div className="flex h-4 items-center justify-between gap-2">
+          <span className={profileLabelClass}>{label}</span>
+          {action}
+        </div>
+      ) : (
+        <span className={profileLabelClass}>{label}</span>
+      )}
+      <div className={`${profileFieldShellClass} bg-surface`}>
+        <input
+          readOnly
+          tabIndex={-1}
+          value={value || "—"}
+          aria-label={label}
+          title={value || undefined}
+          className={`${profileFieldClass} cursor-default`}
+        />
       </div>
     </div>
   );
