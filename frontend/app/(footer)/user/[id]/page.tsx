@@ -32,7 +32,8 @@ export default function UserProfilePage() {
   useEffect(() => {
     const fetchEvents = async (user: PublicUserData) => {
       const eventPromises = (user.publicUpcomingOrganiserEvents || []).map((eventId) => getEventById(eventId));
-      const events = await Promise.all(eventPromises);
+      const eventResults = await Promise.allSettled(eventPromises);
+      const events = eventResults.flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
       setUpcomingOrganiserEvents(events);
       return events;
     };

@@ -57,7 +57,13 @@ export default function OrganiserEventsBrowse({
 }: OrganiserEventsBrowseProps) {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [month, setMonth] = useState<Date>(() => startOfMonth(new Date()));
+  const [month, setMonth] = useState<Date>(() => {
+    if (events.length === 0) return startOfMonth(new Date());
+    const earliest = events.reduce((min, event) =>
+      event.startDate.toMillis() < min.startDate.toMillis() ? event : min
+    );
+    return startOfMonth(earliest.startDate.toDate());
+  });
 
   const sortedEvents = useMemo(() => {
     return [...events].sort((a, b) => a.startDate.toMillis() - b.startDate.toMillis());

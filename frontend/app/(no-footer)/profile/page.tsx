@@ -20,6 +20,11 @@ import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { PHONE_VALIDATION_ERROR_MESSAGE, validatePhoneNumber } from "@/utilities/phoneValidationUtils";
 import { convertDateToInput, convertInputToDate } from "@/utilities/profileDateUtils";
+import {
+  isValidUsername,
+  sanitizeUsernameInput,
+  USERNAME_VALIDATION_ERROR_MESSAGE,
+} from "@/utilities/usernameValidationUtils";
 import Tick from "@svgs/Verified_tick.png";
 import Image from "next/image";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -70,6 +75,7 @@ function getProfileContactErrors(draft: ProfileDraft) {
       draft.privateMobile !== "" && !validatePhoneNumber(draft.privateMobile)
         ? PHONE_VALIDATION_ERROR_MESSAGE
         : undefined,
+    username: !isValidUsername(draft.username) ? USERNAME_VALIDATION_ERROR_MESSAGE : undefined,
   };
 }
 
@@ -90,7 +96,9 @@ const Profile = () => {
       setDraft(draftFromUser(user));
       setLoading(false);
     }
-  }, [user]);
+    // Re-init draft only when the signed-in user changes, not on every user field update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- preserve unsaved edits during photo updates
+  }, [user.userId]);
 
   const isDirty = useMemo(() => {
     if (!draft || !user.userId) return false;
@@ -102,12 +110,12 @@ const Profile = () => {
     () =>
       draft
         ? getProfileContactErrors(draft)
-        : { publicEmail: undefined, publicMobile: undefined, privateMobile: undefined },
+        : { publicEmail: undefined, publicMobile: undefined, privateMobile: undefined, username: undefined },
     [draft]
   );
   const shownContactErrors = saveAttempted
     ? contactErrors
-    : { publicEmail: undefined, publicMobile: undefined, privateMobile: undefined };
+    : { publicEmail: undefined, publicMobile: undefined, privateMobile: undefined, username: undefined };
 
   const updateDraft = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) => {
     setDraft((prev) => (prev ? { ...prev, [key]: value } : prev));
@@ -134,7 +142,7 @@ const Profile = () => {
     setUsernameWarning(false);
 
     const errors = getProfileContactErrors(draft);
-    if (errors.publicEmail || errors.publicMobile || errors.privateMobile) {
+    if (errors.publicEmail || errors.publicMobile || errors.privateMobile || errors.username) {
       setSaveError("Fix the highlighted fields and try again.");
       return;
     }
@@ -323,14 +331,20 @@ const Profile = () => {
               <ProfileField
                 label="Username"
                 htmlFor="profile-username"
-                hint={usernameWarning ? "Username update failed — try another." : undefined}
+                hint={
+                  usernameWarning
+                    ? "Username update failed — try another."
+                    : "Lowercase letters, numbers, hyphens, and underscores only."
+                }
+                error={shownContactErrors.username}
               >
                 <ProfileTextInput
                   id="profile-username"
                   value={draft.username}
-                  onChange={(v) => updateDraft("username", v)}
+                  onChange={(v) => updateDraft("username", sanitizeUsernameInput(v))}
                   prefix="@"
                   autoComplete="username"
+                  invalid={Boolean(shownContactErrors.username)}
                 />
               </ProfileField>
               <ProfileReadonlyField
