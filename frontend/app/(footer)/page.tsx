@@ -3,11 +3,11 @@ import FilterBanner from "@/components/Filter/FilterBanner";
 import { MaintenanceBanner } from "@/components/MaintenanceBanner";
 import EventCard from "@/components/events/EventCard";
 import { UserCard } from "@/components/users/UserCard";
-import { EmptyEventData, EventData, EventId, SearchType } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, SearchType } from "@/interfaces/EventTypes";
 import { PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import noSearchResultLineDrawing from "@/public/images/no-search-result-line-drawing.jpg";
-import { getAllEvents, getEventById, searchEventsByKeyword } from "@/services/src/events/eventsService";
+import { getAllEvents, searchEventsByKeyword } from "@/services/src/events/eventsService";
 import { getErrorUrl } from "@/services/src/urlUtils";
 import {
   getAllPublicUsers,
@@ -15,7 +15,6 @@ import {
   getUsernameMapping,
   searchUserByKeyword,
 } from "@/services/src/users/usersService";
-import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -109,7 +108,6 @@ function DashboardContent() {
     };
 
     const fetchEvents = async (event: string, location: string) => {
-      await sleep(500);
       if (event === "UNDEFINED") {
         return false;
       }
@@ -124,11 +122,8 @@ function DashboardContent() {
         } else {
           try {
             const events = await searchEventsByKeyword(event, location);
-            const tempEventDataList = await Promise.all(
-              events.map((singleEvent) => getEventById(singleEvent.eventId as EventId))
-            );
-            setEventDataList(tempEventDataList);
-            setSearchDataList(tempEventDataList);
+            setEventDataList(events);
+            setSearchDataList(events);
             setPublicUserDataList([]);
           } catch (error) {
             logger.error(`Error: ${error}`);
@@ -186,14 +181,9 @@ function DashboardContent() {
 
   // useEffect listener for when filtering finishes
   useEffect(() => {
-    const finishLoading = async () => {
-      if (endLoading !== undefined) {
-        // Something wrong with endLoading in the filter stuff
-        await sleep(500);
-        setLoading(false);
-      }
-    };
-    finishLoading();
+    if (endLoading !== undefined) {
+      setLoading(false);
+    }
   }, [endLoading]);
 
   useEffect(() => {

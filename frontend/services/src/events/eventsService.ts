@@ -173,7 +173,10 @@ export async function getEventById(
   }
 }
 
-export async function searchEventsByKeyword(nameKeyword: string, locationKeyword: string) {
+export async function searchEventsByKeyword(
+  nameKeyword: string,
+  locationKeyword: string
+): Promise<EventData[]> {
   eventServiceLogger.info(`searchEventsByKeyword ${nameKeyword}`);
   try {
     if (!nameKeyword && !locationKeyword) {

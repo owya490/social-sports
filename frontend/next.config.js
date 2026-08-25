@@ -1,5 +1,23 @@
+const os = require("os");
+
+/** LAN IPv4s so a phone hitting this Mac over Wi-Fi can load /_next HMR. */
+function getLanDevOrigins() {
+  const origins = [];
+  for (const addrs of Object.values(os.networkInterfaces())) {
+    if (!addrs) continue;
+    for (const addr of addrs) {
+      if (!addr.internal && (addr.family === "IPv4" || addr.family === 4)) {
+        origins.push(addr.address);
+      }
+    }
+  }
+  return origins;
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Next.js blocks /_next webpack-hmr from non-localhost origins unless listed.
+  allowedDevOrigins: getLanDevOrigins(),
   env: {
     FIREBASE_DEV_API_KEY: process.env.FIREBASE_DEV_API_KEY,
     FIREBASE_DEV_AUTH_DOMAIN: process.env.FIREBASE_DEV_AUTH_DOMAIN,
@@ -49,6 +67,36 @@ const nextConfig = {
       {
         source: "/organiser",
         destination: "/organiser/v2/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/organiser/dashboard",
+        destination: "/organiser/v2/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/organiser/metrics",
+        destination: "/organiser/v2/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/organiser/gallery",
+        destination: "/organiser/v2/gallery",
+        permanent: true,
+      },
+      {
+        source: "/organiser/settings",
+        destination: "/organiser/v2/settings",
+        permanent: true,
+      },
+      {
+        source: "/organiser/event/:path*",
+        destination: "/organiser/v2/event/:path*",
+        permanent: true,
+      },
+      {
+        source: "/organiser/forms/:path*",
+        destination: "/organiser/v2/forms/:path*",
         permanent: true,
       },
     ];

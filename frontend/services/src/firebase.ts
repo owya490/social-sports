@@ -2,10 +2,11 @@
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
 import { browserLocalPersistence, getAuth, setPersistence } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { FirestoreSettings, getFirestore, initializeFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getEnvironment } from "../../utilities/environment";
 import { getFirebaseConfigForEnvironment } from "./firebaseConfig";
+import { getFirestoreSettingsForCurrentBrowser } from "./firebase/firestoreWebKitTransport";
 
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -15,7 +16,10 @@ const firebaseConfig = getFirebaseConfigForEnvironment(getEnvironment());
 // Initialize Firebase
 export const app = initializeApp(firebaseConfig);
 // const analytics = getAnalytics(app);
-export const db = getFirestore(app);
+const webKitFirestoreSettings = getFirestoreSettingsForCurrentBrowser();
+export const db = webKitFirestoreSettings
+  ? initializeFirestore(app, webKitFirestoreSettings as FirestoreSettings)
+  : getFirestore(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 

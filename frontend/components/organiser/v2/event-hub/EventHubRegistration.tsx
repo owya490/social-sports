@@ -92,6 +92,8 @@ export function EventHubRegistration({
   const [addSaving, setAddSaving] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const formResponderRef = useRef<FormResponderRef>(null);
+  const orderTicketsMapRef = useRef(orderTicketsMap);
+  orderTicketsMapRef.current = orderTicketsMap;
   const approvedOrderTicketsMap = useMemo(() => getApprovedOrderTicketsMap(orderTicketsMap), [orderTicketsMap]);
 
   const resolvedTicketTypes = eventTicketTypes ?? eventData?.eventTicketTypes;
@@ -109,22 +111,23 @@ export function EventHubRegistration({
 
   const applyResponseFilter = useCallback(
     (responses: FormResponse[]) => {
+      const currentMap = orderTicketsMapRef.current;
       if (usesTicketTypes && selectedTypeId) {
         return filterFormResponsesForTicketType(
           responses,
-          orderTicketsMap,
+          currentMap,
           selectedTypeId,
           selectedTicketType?.eventTicketType.name
         );
       }
-      return filterFormResponsesForApprovedOrders(responses, orderTicketsMap);
+      return filterFormResponsesForApprovedOrders(responses, currentMap);
     },
-    [usesTicketTypes, selectedTypeId, selectedTicketType, orderTicketsMap]
+    [usesTicketTypes, selectedTypeId, selectedTicketType]
   );
 
   useEffect(() => {
     setFormResponses(applyResponseFilter(unfilteredFormResponsesRef.current));
-  }, [applyResponseFilter]);
+  }, [applyResponseFilter, orderTicketsMap]);
 
   const loadFormAndResponses = useCallback(
     async (
@@ -144,15 +147,16 @@ export function EventHubRegistration({
       setForm(nextForm);
       const fetched = await getFormResponsesForEvent(resolvedFormId, eventId);
       unfilteredFormResponsesRef.current = fetched;
+      const currentMap = orderTicketsMapRef.current;
       if (typeIdForFilter) {
         setFormResponses(
-          filterFormResponsesForTicketType(fetched, orderTicketsMap, typeIdForFilter, typeNameForFilter)
+          filterFormResponsesForTicketType(fetched, currentMap, typeIdForFilter, typeNameForFilter)
         );
       } else {
-        setFormResponses(filterFormResponsesForApprovedOrders(fetched, orderTicketsMap));
+        setFormResponses(filterFormResponsesForApprovedOrders(fetched, currentMap));
       }
     },
-    [eventId, orderTicketsMap]
+    [eventId]
   );
 
   const fetchEvent = useCallback(async () => {
@@ -318,9 +322,9 @@ export function EventHubRegistration({
     if (!purchaserA && !purchaserB) return 0;
     if (!purchaserA) return 1;
     if (!purchaserB) return -1;
-    const emailCompare = purchaserA.email.localeCompare(purchaserB.email);
-    if (emailCompare !== 0) return emailCompare;
-    return purchaserA.name.localeCompare(purchaserB.name);
+    const nameCompare = purchaserA.name.localeCompare(purchaserB.name);
+    if (nameCompare !== 0) return nameCompare;
+    return purchaserA.email.localeCompare(purchaserB.email);
   });
 
   const allQuestionIdentifiers = new Set<string>();

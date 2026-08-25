@@ -76,6 +76,21 @@ public class FirebaseService {
         }
     }
 
+    /**
+     * Triggers this class's static initializer, which is what creates the default
+     * FirebaseApp.
+     * <p>
+     * Callers that use the Firebase Admin SDK without going through Firestore --
+     * notably {@code FirebaseAuth.getInstance()} in AuthService -- must call this
+     * first. Otherwise, on a cold instance whose first request is an authenticated
+     * one, no code has loaded this class yet and FirebaseAuth.getInstance() fails
+     * with "FirebaseApp with name [DEFAULT] doesn't exist".
+     */
+    public static void ensureInitialized() {
+        // Intentionally empty: invoking any static member forces class
+        // initialization, which runs the static block above.
+    }
+
     private static void initialize() throws Exception {
         String credentialsPath = "functions_key.json";
         posthogApiKey = Global.getEnv("POSTHOG_API_KEY");

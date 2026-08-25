@@ -76,6 +76,7 @@ See @docs/PATTERNS.md. It is **MUST READ** before changing authentication, payme
 - Branch from `master`; Brian-authored branches use `brian2w/<feature>`.
 - Keep changes focused and include the relevant quality gates.
 - Use `.github/pull_request_template.md`.
+- Keep PR descriptions concise and outcome-focused: state why the change is needed, what changed, and only essential reviewer notes.
 - Show the final diff and obtain approval before pushing or opening a PR.
 - Never post review comments or address other people on GitHub without explicit approval.
 
