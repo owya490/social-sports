@@ -29,6 +29,15 @@ class CreateStandardStripeAccountRequest:
       raise ValueError("Return Url must be provided as a string.")
     if not isinstance(self.organiser, str):
       raise ValueError("Organiser Id must be provided as a string.")
+
+
+@dataclass
+class ResyncStripeStandardAccountRequest:
+  organiser: str
+
+  def __post_init__(self):
+    if not isinstance(self.organiser, str):
+      raise ValueError("Organiser Id must be provided as a string.")
       
 
 @firestore.transactional
@@ -81,6 +90,65 @@ def check_and_update_organiser_stripe_account(transaction: Transaction, logger: 
       transaction.update(organiser_ref, {"stripeAccountActive": True})
       logger.info(f"Provided organiser {organiser_ref.path} already has all charges enabled and details submitted. Activiating their sportshub stripe account.")
       return json.dumps({"url": return_url})
+
+
+@firestore.transactional
+def resync_organiser_stripe_account(transaction: Transaction, logger: Logger, organiser_ref: DocumentReference):
+  maybe_organiser = organiser_ref.get(transaction=transaction)
+  if not maybe_organiser.exists:
+    logger.error(f"Provided Organiser {organiser_ref.path} was not found in the database.")
+    return {"stripeAccountActive": False, "needsOnboarding": False}
+
+  organiser = maybe_organiser.to_dict()
+  organiser_stripe_account_id = organiser.get("stripeAccount")
+  if organiser_stripe_account_id is None:
+    logger.info(f"Provided organiser {organiser_ref.path} has no stripe account to resync.")
+    return {"stripeAccountActive": False, "needsOnboarding": True}
+
+  account = stripe.Account.retrieve(organiser_stripe_account_id)
+  if account.charges_enabled and account.details_submitted:
+    transaction.update(organiser_ref, {"stripeAccountActive": True})
+    logger.info(f"Resynced stripe account active for provided organiser {organiser_ref.path}.")
+    return {"stripeAccountActive": True, "needsOnboarding": False}
+
+  transaction.update(organiser_ref, {"stripeAccountActive": False})
+  logger.info(
+    f"Stripe account for provided organiser {organiser_ref.path} is not ready. "
+    f"charges_enabled={account.charges_enabled} details_submitted={account.details_submitted}"
+  )
+  return {"stripeAccountActive": False, "needsOnboarding": True}
+
+
+@https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")
+def resync_stripe_standard_account(req: https_fn.CallableRequest):
+  uid = str(uuid.uuid4())
+  logger = Logger(f"stripe_resync_account_logger_{uid}")
+  logger.add_tag("uuid", uid)
+
+  body_data = req.data
+
+  if req.auth is None or req.auth.uid is None:
+    logger.error(f"Unauthenticated request to resync_stripe_standard_account. body_data={json.dumps(body_data)}")
+    return https_fn.Response(status=401, body_data=json.dumps({"stripeAccountActive": False, "needsOnboarding": False}))
+
+  try:
+    request_data = ResyncStripeStandardAccountRequest(**body_data)
+  except ValueError as v:
+    logger.warning(f"Request body did not contain necessary fields. Error was thrown: {v}. Returned status=400")
+    return {"stripeAccountActive": False, "needsOnboarding": False}
+
+  logger.add_tag("organiser", request_data.organiser)
+
+  if not req.auth.uid == request_data.organiser:
+    logger.error(
+      f"Authenticated uid does not match with organiser attached in request body. "
+      f"uid={req.auth.uid} organiser={request_data.organiser}"
+    )
+    return https_fn.Response(status=401, body_data=json.dumps({"stripeAccountActive": False, "needsOnboarding": False}))
+
+  transaction = db.transaction()
+  organiser_ref = db.collection("Users/Active/Private").document(request_data.organiser)
+  return resync_organiser_stripe_account(transaction, logger, organiser_ref)
 
 
 @https_fn.on_call(cors=options.CorsOptions(cors_origins=["https://www.sportshub.net.au", "*"], cors_methods=["post"]), region="australia-southeast1")

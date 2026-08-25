@@ -1,13 +1,18 @@
 "use client";
 
-import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
+import { useUser } from "@/components/utility/UserContext";
+import { Logger } from "@/observability/logger";
+import { getStripeStandardAccountLink, resyncStripeStandardAccount } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import StripeLogo from "@/public/images/stripe-logo.svg";
-import { ArrowTopRightOnSquareIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { SportshubStripeIntegrationIcon } from "./SportshubStripeIntegrationIcon";
+
+const logger = new Logger("SettingsStripePanel");
 
 type SettingsStripePanelProps = {
   stripeId: string;
@@ -24,8 +29,36 @@ export function SettingsStripePanel({
   userLoading,
   onConnecting,
 }: SettingsStripePanelProps) {
+  const { user, refreshUser } = useUser();
+  const [resyncing, setResyncing] = useState(false);
+  const [resyncMessage, setResyncMessage] = useState<string | null>(null);
   const connected = Boolean(stripeId) && !stripeLoading;
   const needsSetup = !stripeLoading && !stripeId;
+  const paymentsActive = user.stripeAccountActive === true;
+
+  const handleResync = async () => {
+    if (resyncing || userLoading || !userId) return;
+
+    setResyncing(true);
+    setResyncMessage(null);
+    try {
+      const result = await resyncStripeStandardAccount(userId);
+      await refreshUser();
+
+      if (result.stripeAccountActive) {
+        setResyncMessage("Stripe account synced. Payouts are active.");
+      } else if (result.needsOnboarding) {
+        setResyncMessage("Stripe still needs setup. Use Connect Stripe to finish onboarding.");
+      } else {
+        setResyncMessage("Could not sync Stripe account. Try again or contact support.");
+      }
+    } catch (error) {
+      logger.error(`Failed to resync Stripe account: ${error}`);
+      setResyncMessage("Failed to sync Stripe account. Try again.");
+    } finally {
+      setResyncing(false);
+    }
+  };
 
   return (
     <section aria-label="Stripe payments" className="rounded-xl border border-border bg-background overflow-hidden">
@@ -40,17 +73,33 @@ export function SettingsStripePanel({
             </span>
           ) : null}
         </div>
-        {connected ? (
-          <a
-            href="https://dashboard.stripe.com/login"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground-secondary hover:text-foreground font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            <span className="hidden sm:inline">Open dashboard</span>
-            <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
-          </a>
-        ) : null}
+        <div className="flex items-center gap-2 shrink-0">
+          {connected ? (
+            <button
+              type="button"
+              disabled={resyncing || userLoading || !userId}
+              onClick={() => {
+                void handleResync();
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-foreground-secondary hover:text-foreground hover:bg-surface font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 disabled:pointer-events-none"
+              aria-label="Resync Stripe account"
+            >
+              <ArrowPathIcon className={`h-4 w-4 ${resyncing ? "animate-spin" : ""}`} aria-hidden />
+              <span className="hidden sm:inline">Resync</span>
+            </button>
+          ) : null}
+          {connected ? (
+            <a
+              href="https://dashboard.stripe.com/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground-secondary hover:text-foreground font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <span className="hidden sm:inline">Open dashboard</span>
+              <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden />
+            </a>
+          ) : null}
+        </div>
       </div>
 
       <div className="p-4 sm:p-5 space-y-4">
@@ -61,13 +110,37 @@ export function SettingsStripePanel({
           </div>
         ) : connected ? (
           <div>
-            <p className="text-xs font-medium text-foreground-muted font-sans">Stripe account ID</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-xs font-medium text-foreground-muted font-sans">Stripe account ID</p>
+              {paymentsActive ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-foreground font-sans">
+                  <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden />
+                  Payouts active
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-foreground-secondary font-sans">
+                  <ExclamationCircleIcon className="h-3.5 w-3.5" aria-hidden />
+                  Payouts inactive
+                </span>
+              )}
+            </div>
             <p className="mt-2 rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-sm text-foreground break-all">
               {stripeId}
             </p>
             <p className="mt-2 text-xs text-foreground-muted font-sans">
               This is your Stripe Connect identifier for receiving event payments.
+              {!paymentsActive ? " If Stripe shows your account as ready, use Resync to update payout status." : null}
             </p>
+            {resyncMessage ? (
+              <p
+                className={`mt-3 text-xs font-sans ${
+                  paymentsActive ? "text-foreground" : "text-foreground-secondary"
+                }`}
+                role="status"
+              >
+                {resyncMessage}
+              </p>
+            ) : null}
           </div>
         ) : needsSetup ? (
           <div className="space-y-4">
