@@ -24,28 +24,3 @@ class TestCreateStandardStripeAccount(unittest.TestCase):
 
     # Verify
     self.assertEqual(TEST_URL, response.get_json()["url"])
-
-
-class TestResyncStandardStripeAccount(unittest.TestCase):
-
-  @patch("lib.stripe.create_account.resync_organiser_stripe_account")
-  def test_resync_requires_authenticated_organiser(self, mock_resync):
-    mock_resync.return_value = {"stripeAccountActive": True, "needsOnboarding": False}
-
-    mock_request = Mock()
-    mock_request.auth = Mock(uid="owen")
-    mock_request.data = {"organiser": "owen"}
-
-    response = resync_stripe_standard_account(mock_request)
-
-    self.assertEqual({"stripeAccountActive": True, "needsOnboarding": False}, response)
-    mock_resync.assert_called_once()
-
-  def test_resync_rejects_unauthenticated_request(self):
-    mock_request = Mock()
-    mock_request.auth = None
-    mock_request.data = {"organiser": "owen"}
-
-    response = resync_stripe_standard_account(mock_request)
-
-    self.assertEqual(401, response.status_code)

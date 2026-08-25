@@ -1,8 +1,7 @@
 "use client";
 
 import { useUser } from "@/components/utility/UserContext";
-import { Logger } from "@/observability/logger";
-import { getStripeStandardAccountLink, resyncStripeStandardAccount } from "@/services/src/stripe/stripeService";
+import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import StripeLogo from "@/public/images/stripe-logo.svg";
@@ -11,8 +10,6 @@ import Image from "next/image";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { SportshubStripeIntegrationIcon } from "./SportshubStripeIntegrationIcon";
-
-const logger = new Logger("SettingsStripePanel");
 
 type SettingsStripePanelProps = {
   stripeId: string;
@@ -29,9 +26,8 @@ export function SettingsStripePanel({
   userLoading,
   onConnecting,
 }: SettingsStripePanelProps) {
-  const { user, refreshUser } = useUser();
+  const { user } = useUser();
   const [resyncing, setResyncing] = useState(false);
-  const [resyncMessage, setResyncMessage] = useState<string | null>(null);
   const connected = Boolean(stripeId) && !stripeLoading;
   const needsSetup = !stripeLoading && !stripeId;
   const paymentsActive = user.stripeAccountActive === true;
@@ -40,22 +36,17 @@ export function SettingsStripePanel({
     if (resyncing || userLoading || !userId) return;
 
     setResyncing(true);
-    setResyncMessage(null);
+    onConnecting(true);
+    window.scrollTo(0, 0);
     try {
-      const result = await resyncStripeStandardAccount(userId);
-      await refreshUser();
-
-      if (result.stripeAccountActive) {
-        setResyncMessage("Stripe account synced. Payouts are active.");
-      } else if (result.needsOnboarding) {
-        setResyncMessage("Stripe still needs setup. Use Connect Stripe to finish onboarding.");
-      } else {
-        setResyncMessage("Could not sync Stripe account. Try again or contact support.");
-      }
-    } catch (error) {
-      logger.error(`Failed to resync Stripe account: ${error}`);
-      setResyncMessage("Failed to sync Stripe account. Try again.");
-    } finally {
+      const link = await getStripeStandardAccountLink(
+        userId,
+        getUrlWithCurrentHostname("/organiser/v2/settings"),
+        getRefreshAccountLinkUrl(),
+      );
+      window.location.href = link;
+    } catch {
+      onConnecting(false);
       setResyncing(false);
     }
   };
@@ -131,16 +122,6 @@ export function SettingsStripePanel({
               This is your Stripe Connect identifier for receiving event payments.
               {!paymentsActive ? " If Stripe shows your account as ready, use Resync to update payout status." : null}
             </p>
-            {resyncMessage ? (
-              <p
-                className={`mt-3 text-xs font-sans ${
-                  paymentsActive ? "text-foreground" : "text-foreground-secondary"
-                }`}
-                role="status"
-              >
-                {resyncMessage}
-              </p>
-            ) : null}
           </div>
         ) : needsSetup ? (
           <div className="space-y-4">

@@ -7,7 +7,6 @@ export const FIREBASE_FUNCTIONS_CREATE_RECURRENCE_TEMPLATE = "create_recurrence_
 
 // Stripe
 export const FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT = "create_stripe_standard_account";
-export const FIREBASE_FUNCTIONS_RESYNC_STRIPE_STANDARD_ACCOUNT = "resync_stripe_standard_account";
 
 // Sendgrid
 export const FIREBASE_FUNCTIONS_SEND_EMAIL_ON_CREATE_EVENT = "send_email_on_create_event";
