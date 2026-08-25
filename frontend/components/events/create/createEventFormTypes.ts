@@ -3,6 +3,7 @@ import { DEFAULT_MAX_TICKETS_PER_ORDER } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { DEFAULT_RECURRENCE_FORM_DATA, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { getLocalTomorrowYmd } from "@/services/src/datetimeUtils";
+import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 
 export type CreateEventFormData = {
   startDate: string;
@@ -40,8 +41,12 @@ export type CreateEventFormData = {
 /** @deprecated Prefer CreateEventFormData — kept for existing BasicForm imports via page re-export if needed */
 export type FormData = CreateEventFormData;
 
-export function createEventInitialData(): CreateEventFormData {
+export function createEventInitialData(options?: {
+  stripeAccountActive?: boolean | null;
+}): CreateEventFormData {
   const tomorrow = getLocalTomorrowYmd();
+  // Omit stripeAccountActive to keep the historical default (payments on).
+  const paymentsActive = options === undefined ? true : isStripeAccountActive(options.stripeAccountActive);
   return {
     startDate: tomorrow,
     endDate: tomorrow,
@@ -59,7 +64,7 @@ export function createEventInitialData(): CreateEventFormData {
     startTime: "10:00",
     endTime: "10:00",
     registrationEndTime: "10:00",
-    paymentsActive: true,
+    paymentsActive,
     lat: 0,
     lng: 0,
     stripeFeeToCustomer: true,

@@ -164,7 +164,7 @@ export function EventHubPreferenceRow({
         aria-label={title}
         disabled={disabled}
         onClick={() => onChange(!checked)}
-        className={`relative shrink-0 h-5 w-9 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 ${
+        className={`relative shrink-0 h-5 w-9 rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 ${
           checked ? "bg-accent" : "bg-surface-muted"
         }`}
       >
@@ -248,9 +248,9 @@ export function EventHubSettingTile({
       onClick={() => onChange(!checked)}
       className={`flex min-w-[7.5rem] flex-1 items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-[border-color,background-color,opacity] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 ${
         checked
-          ? `bg-background ${toneStyles.onBorder} hover:bg-surface-hover`
-          : "border-border bg-surface text-foreground-muted hover:bg-surface-hover"
-      }`}
+          ? `bg-background ${toneStyles.onBorder}`
+          : "border-border bg-surface text-foreground-muted"
+      } ${disabled ? "" : "hover:bg-surface-hover"}`}
     >
       <span
         aria-hidden

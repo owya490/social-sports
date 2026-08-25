@@ -22,6 +22,7 @@ import {
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { dateAndTimeInLocalToTimestamp } from "@/services/src/datetimeUtils";
+import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -53,6 +54,21 @@ export default function CreateEvent() {
     };
     fetchUserImages();
   }, [user]);
+
+  useEffect(() => {
+    if (user.userId === "") return;
+    if (isStripeAccountActive(user.stripeAccountActive)) return;
+    setData((prev) => {
+      if (!prev.paymentsActive && !prev.bookingApprovalEnabled) return prev;
+      return {
+        ...prev,
+        paymentsActive: false,
+        bookingApprovalEnabled: false,
+        stripeFeeToCustomer: true,
+        promotionalCodesEnabled: false,
+      };
+    });
+  }, [user.userId, user.stripeAccountActive]);
 
   function updateFields(fields: Partial<CreateEventFormData>) {
     setData((prev) => {
@@ -171,7 +187,7 @@ export default function CreateEvent() {
         lng: formData.lng,
       },
       sport: formData.sport,
-      paymentsActive: formData.paymentsActive,
+      paymentsActive: isStripeAccountActive(user.stripeAccountActive) && formData.paymentsActive,
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
       stripeFeeToCustomer: formData.stripeFeeToCustomer,
@@ -180,7 +196,8 @@ export default function CreateEvent() {
       eventLink: formData.eventLink,
       hideVacancy: formData.hideVacancy,
       waitlistEnabled: formData.waitlistEnabled,
-      bookingApprovalEnabled: formData.bookingApprovalEnabled,
+      bookingApprovalEnabled:
+        isStripeAccountActive(user.stripeAccountActive) && formData.bookingApprovalEnabled,
       formId: formData.formId,
       showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
       maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
