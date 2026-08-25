@@ -22,7 +22,7 @@ import {
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
 import { dateAndTimeInLocalToTimestamp } from "@/services/src/datetimeUtils";
-import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
+import { withInactiveStripePaymentDefaults } from "@/services/src/stripe/stripeUtils";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
@@ -46,6 +46,7 @@ export default function CreateEvent() {
 
   const [eventThumbnailsUrls, setEventThumbnailUrls] = useState<string[]>([]);
   const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
+  const eventFormData = withInactiveStripePaymentDefaults(data, user.stripeAccountActive);
 
   useEffect(() => {
     const fetchUserImages = async () => {
@@ -54,21 +55,6 @@ export default function CreateEvent() {
     };
     fetchUserImages();
   }, [user]);
-
-  useEffect(() => {
-    if (user.userId === "") return;
-    if (isStripeAccountActive(user.stripeAccountActive)) return;
-    setData((prev) => {
-      if (!prev.paymentsActive && !prev.bookingApprovalEnabled) return prev;
-      return {
-        ...prev,
-        paymentsActive: false,
-        bookingApprovalEnabled: false,
-        stripeFeeToCustomer: true,
-        promotionalCodesEnabled: false,
-      };
-    });
-  }, [user.userId, user.stripeAccountActive]);
 
   function updateFields(fields: Partial<CreateEventFormData>) {
     setData((prev) => {
@@ -112,7 +98,7 @@ export default function CreateEvent() {
     }
 
     try {
-      const eventId = await createEventWorkflow(data, user);
+      const eventId = await createEventWorkflow(eventFormData, user);
       if (eventId !== null) {
         router.push(`/organiser/v2/event/${eventId}`);
       }
@@ -165,6 +151,7 @@ export default function CreateEvent() {
     imageUrl: string,
     thumbnailUrl: string
   ): NewEventData {
+    const paymentFields = withInactiveStripePaymentDefaults(formData, user.stripeAccountActive);
     return {
       location: formData.location,
       name: formData.name,
@@ -187,17 +174,16 @@ export default function CreateEvent() {
         lng: formData.lng,
       },
       sport: formData.sport,
-      paymentsActive: isStripeAccountActive(user.stripeAccountActive) && formData.paymentsActive,
+      paymentsActive: paymentFields.paymentsActive,
       startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
       endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
-      stripeFeeToCustomer: formData.stripeFeeToCustomer,
-      promotionalCodesEnabled: formData.promotionalCodesEnabled,
+      stripeFeeToCustomer: paymentFields.stripeFeeToCustomer,
+      promotionalCodesEnabled: paymentFields.promotionalCodesEnabled,
       paused: formData.paused,
       eventLink: formData.eventLink,
       hideVacancy: formData.hideVacancy,
       waitlistEnabled: formData.waitlistEnabled,
-      bookingApprovalEnabled:
-        isStripeAccountActive(user.stripeAccountActive) && formData.bookingApprovalEnabled,
+      bookingApprovalEnabled: paymentFields.bookingApprovalEnabled,
       formId: formData.formId,
       showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
       maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
@@ -235,7 +221,7 @@ export default function CreateEvent() {
         </div>
       ) : (
         <CreateEventWorkbench
-          data={data}
+          data={eventFormData}
           user={user}
           updateField={updateFields}
           eventThumbnailsUrls={eventThumbnailsUrls}
