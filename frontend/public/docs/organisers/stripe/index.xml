@@ -83,11 +83,11 @@
 &lt;/ul>
 &lt;p>Your Stripe integration is now complete! You can start creating paid events and collecting secure payments from your participants.&lt;/p>
 &lt;h2>Need Help?&lt;span class="hx:absolute hx:-mt-20" id="need-help">&lt;/span>
-&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>If you encounter any issues during setup, contact &lt;a href="https://www.sportshub.net.au/docs/contact-us/" >SPORTSHUB Support&lt;/a> for assistance with your Stripe integration.&lt;/p></description></item><item><title>Coupon Codes</title><link>https://www.sportshub.net.au/docs/organisers/stripe/coupon-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/stripe/coupon-codes/</guid><description>
-&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="coupon-codes" loading="lazy" />&lt;/p>
-&lt;p>Coupon codes allow you to offer discounts to your event participants. Follow these steps to create and manage coupons in Stripe.&lt;/p>
-&lt;h2>Creating a Coupon in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-a-coupon-in-stripe">&lt;/span>
-&lt;a href="#creating-a-coupon-in-stripe" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;a href="#need-help" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>If you encounter any issues during setup, contact &lt;a href="https://www.sportshub.net.au/docs/contact-us/" >SPORTSHUB Support&lt;/a> for assistance with your Stripe integration.&lt;/p></description></item><item><title>Promo Codes</title><link>https://www.sportshub.net.au/docs/organisers/stripe/promo-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/stripe/promo-codes/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="promo-codes" loading="lazy" />&lt;/p>
+&lt;p>Promo codes allow you to offer discounts to your event participants. Follow these steps to create and manage promo codes in Stripe.&lt;/p>
+&lt;h2>Creating Promo Codes in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-promo-codes-in-stripe">&lt;/span>
+&lt;a href="#creating-promo-codes-in-stripe" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
 &lt;li>
 &lt;p>&lt;strong>Navigate to Stripe Dashboard&lt;/strong>&lt;/p>
 &lt;ul>
@@ -96,7 +96,7 @@
 &lt;/ul>
 &lt;/li>
 &lt;li>
-&lt;p>&lt;strong>Configure Your Coupon&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>Configure Your Promo Code&lt;/strong>&lt;/p>
 &lt;ul>
 &lt;li>&lt;strong>Discount Type&lt;/strong>: Choose between:
 &lt;ul>
@@ -104,22 +104,22 @@
 &lt;li>&lt;strong>Fixed amount off&lt;/strong>: e.g., $10 off&lt;/li>
 &lt;/ul>
 &lt;/li>
-&lt;li>&lt;strong>Coupon Code&lt;/strong>: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li>
-&lt;li>&lt;strong>Expiry Date&lt;/strong>: Set when the coupon expires&lt;/li>
-&lt;li>&lt;strong>Usage Limits&lt;/strong>: Control how many times the coupon can be used&lt;/li>
+&lt;li>&lt;strong>Promo Code&lt;/strong>: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li>
+&lt;li>&lt;strong>Expiry Date&lt;/strong>: Set when the promo code expires&lt;/li>
+&lt;li>&lt;strong>Usage Limits&lt;/strong>: Control how many times the promo code can be used&lt;/li>
 &lt;/ul>
 &lt;/li>
 &lt;/ol>
-&lt;h2>Enabling Coupons in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-coupons-in-sportshub">&lt;/span>
-&lt;a href="#enabling-coupons-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" />&lt;/p>
-&lt;p>To use your Stripe coupons for SPORTSHUB events:&lt;/p>
+&lt;h2>Enabling Promo Codes in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-promo-codes-in-sportshub">&lt;/span>
+&lt;a href="#enabling-promo-codes-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" />&lt;/p>
+&lt;p>To use your Stripe promo codes for SPORTSHUB events:&lt;/p>
 &lt;ol>
 &lt;li>&lt;strong>During Event Creation&lt;/strong>: Enable &amp;ldquo;Promotional Codes&amp;rdquo; in the event creation form&lt;/li>
 &lt;li>&lt;strong>Existing Events&lt;/strong>: Go to Event Settings and enable promotional codes&lt;/li>
 &lt;/ol>
 &lt;h2>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
 &lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
-&lt;li>&lt;strong>Cross-Event Usage&lt;/strong>: Coupons work across all your events, not just specific ones&lt;/li>
+&lt;li>&lt;strong>Cross-Event Usage&lt;/strong>: Promo codes work across all your events, not just specific ones&lt;/li>
 &lt;/ul>
 &lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
 &lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>&amp;gt; &lt;strong>100% Discount Bug&lt;/strong>: If you pass application fees to customers, you cannot offer 100% discounts as Stripe doesn&amp;rsquo;t allow this configuration.&lt;/p>

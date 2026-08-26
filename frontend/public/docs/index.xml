@@ -321,7 +321,7 @@ Once you&amp;rsquo;ve created your form, attaching it to an event is straightfor
 &lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
 &lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>Configure registration settings&lt;/li>
-&lt;li>Set up payment options and coupons&lt;/li>
+&lt;li>Set up payment options and promo codes&lt;/li>
 &lt;li>Manage communication preferences&lt;/li>
 &lt;li>Update cancellation policies&lt;/li>
 &lt;/ul>
@@ -506,50 +506,7 @@ Once you&amp;rsquo;ve created your form, attaching it to an event is straightfor
 &lt;li>Contact the organiser if you have questions about the event&lt;/li>
 &lt;/ul>
 &lt;hr>
-&lt;p>&lt;strong>Need help?&lt;/strong> &lt;a href="https://www.sportshub.net.au/docs/contact-us/" >Contact support&lt;/a> or reach out to the event organiser directly.&lt;/p></description></item><item><title>Coupon Codes</title><link>https://www.sportshub.net.au/docs/organisers/stripe/coupon-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/stripe/coupon-codes/</guid><description>
-&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="coupon-codes" loading="lazy" />&lt;/p>
-&lt;p>Coupon codes allow you to offer discounts to your event participants. Follow these steps to create and manage coupons in Stripe.&lt;/p>
-&lt;h2>Creating a Coupon in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-a-coupon-in-stripe">&lt;/span>
-&lt;a href="#creating-a-coupon-in-stripe" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
-&lt;li>
-&lt;p>&lt;strong>Navigate to Stripe Dashboard&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>Go to &lt;a href="https://dashboard.stripe.com/coupons/create" target="_blank" rel="noopener">Stripe Coupons&lt;/a>&lt;/li>
-&lt;li>Alternatively, search for &amp;ldquo;coupons&amp;rdquo; in the Stripe dashboard search bar&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>
-&lt;p>&lt;strong>Configure Your Coupon&lt;/strong>&lt;/p>
-&lt;ul>
-&lt;li>&lt;strong>Discount Type&lt;/strong>: Choose between:
-&lt;ul>
-&lt;li>&lt;strong>Percentage off&lt;/strong>: e.g., 20% off&lt;/li>
-&lt;li>&lt;strong>Fixed amount off&lt;/strong>: e.g., $10 off&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;li>&lt;strong>Coupon Code&lt;/strong>: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li>
-&lt;li>&lt;strong>Expiry Date&lt;/strong>: Set when the coupon expires&lt;/li>
-&lt;li>&lt;strong>Usage Limits&lt;/strong>: Control how many times the coupon can be used&lt;/li>
-&lt;/ul>
-&lt;/li>
-&lt;/ol>
-&lt;h2>Enabling Coupons in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-coupons-in-sportshub">&lt;/span>
-&lt;a href="#enabling-coupons-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" />&lt;/p>
-&lt;p>To use your Stripe coupons for SPORTSHUB events:&lt;/p>
-&lt;ol>
-&lt;li>&lt;strong>During Event Creation&lt;/strong>: Enable &amp;ldquo;Promotional Codes&amp;rdquo; in the event creation form&lt;/li>
-&lt;li>&lt;strong>Existing Events&lt;/strong>: Go to Event Settings and enable promotional codes&lt;/li>
-&lt;/ol>
-&lt;h2>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
-&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
-&lt;li>&lt;strong>Cross-Event Usage&lt;/strong>: Coupons work across all your events, not just specific ones&lt;/li>
-&lt;/ul>
-&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
-&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>&amp;gt; &lt;strong>100% Discount Bug&lt;/strong>: If you pass application fees to customers, you cannot offer 100% discounts as Stripe doesn&amp;rsquo;t allow this configuration.&lt;/p>
-&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
-&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;/div>
-&lt;/div>
-&lt;/div></description></item><item><title>Manage Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
+&lt;p>&lt;strong>Need help?&lt;/strong> &lt;a href="https://www.sportshub.net.au/docs/contact-us/" >Contact support&lt;/a> or reach out to the event organiser directly.&lt;/p></description></item><item><title>Manage Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/organiser-hub/manage-recurring-events/</guid><description>
 &lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/organiser-hub/recurring-event-edit.png" alt="recurring-event-edit" loading="lazy" />
 Recurring events allow you to automatically generate multiple instances of the same event at regular intervals. This is perfect for regular training sessions, weekly leagues, or monthly tournaments.&lt;/p>
 &lt;h2>Managing Recurrence&lt;span class="hx:absolute hx:-mt-20" id="managing-recurrence">&lt;/span>
@@ -593,7 +550,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
 &lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>Configure registration settings for each occurrence&lt;/li>
-&lt;li>Set up payment options and coupons&lt;/li>
+&lt;li>Set up payment options and promo codes&lt;/li>
 &lt;li>Manage communication preferences&lt;/li>
 &lt;li>Update cancellation policies&lt;/li>
 &lt;/ul>
@@ -617,7 +574,50 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;li>Modify the recurrence configuration&lt;/li>
 &lt;li>Save changes - this will apply to future occurrences only&lt;/li>
 &lt;li>Existing created events will retain their individual settings&lt;/li>
-&lt;/ol></description></item><item><title>Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</guid><description>
+&lt;/ol></description></item><item><title>Promo Codes</title><link>https://www.sportshub.net.au/docs/organisers/stripe/promo-codes/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/stripe/promo-codes/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/coupon-codes.jpg" alt="promo-codes" loading="lazy" />&lt;/p>
+&lt;p>Promo codes allow you to offer discounts to your event participants. Follow these steps to create and manage promo codes in Stripe.&lt;/p>
+&lt;h2>Creating Promo Codes in Stripe&lt;span class="hx:absolute hx:-mt-20" id="creating-promo-codes-in-stripe">&lt;/span>
+&lt;a href="#creating-promo-codes-in-stripe" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ol>
+&lt;li>
+&lt;p>&lt;strong>Navigate to Stripe Dashboard&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>Go to &lt;a href="https://dashboard.stripe.com/coupons/create" target="_blank" rel="noopener">Stripe Coupons&lt;/a>&lt;/li>
+&lt;li>Alternatively, search for &amp;ldquo;coupons&amp;rdquo; in the Stripe dashboard search bar&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>
+&lt;p>&lt;strong>Configure Your Promo Code&lt;/strong>&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>Discount Type&lt;/strong>: Choose between:
+&lt;ul>
+&lt;li>&lt;strong>Percentage off&lt;/strong>: e.g., 20% off&lt;/li>
+&lt;li>&lt;strong>Fixed amount off&lt;/strong>: e.g., $10 off&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;li>&lt;strong>Promo Code&lt;/strong>: Create a customer-facing code (e.g., &amp;ldquo;EARLY20&amp;rdquo;, &amp;ldquo;WELCOME10&amp;rdquo;)&lt;/li>
+&lt;li>&lt;strong>Expiry Date&lt;/strong>: Set when the promo code expires&lt;/li>
+&lt;li>&lt;strong>Usage Limits&lt;/strong>: Control how many times the promo code can be used&lt;/li>
+&lt;/ul>
+&lt;/li>
+&lt;/ol>
+&lt;h2>Enabling Promo Codes in SPORTSHUB&lt;span class="hx:absolute hx:-mt-20" id="enabling-promo-codes-in-sportshub">&lt;/span>
+&lt;a href="#enabling-promo-codes-in-sportshub" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>&lt;img src="https://www.sportshub.net.au/images/docs/organisers/stripe/promotional-codes-enabled.png" alt="promotional-codes-enabled" loading="lazy" />&lt;/p>
+&lt;p>To use your Stripe promo codes for SPORTSHUB events:&lt;/p>
+&lt;ol>
+&lt;li>&lt;strong>During Event Creation&lt;/strong>: Enable &amp;ldquo;Promotional Codes&amp;rdquo; in the event creation form&lt;/li>
+&lt;li>&lt;strong>Existing Events&lt;/strong>: Go to Event Settings and enable promotional codes&lt;/li>
+&lt;/ol>
+&lt;h2>Important Notes&lt;span class="hx:absolute hx:-mt-20" id="important-notes">&lt;/span>
+&lt;a href="#important-notes" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;ul>
+&lt;li>&lt;strong>Cross-Event Usage&lt;/strong>: Promo codes work across all your events, not just specific ones&lt;/li>
+&lt;/ul>
+&lt;div class="hx:overflow-x-auto hx:mt-6 hx:flex hx:flex-col hx:rounded-lg hx:border hx:py-4 hx:px-4 hx:border-gray-200 hx:contrast-more:border-current hx:contrast-more:dark:border-current hx:border-amber-200 hx:bg-amber-100 hx:text-amber-900 hx:dark:border-amber-200/30 hx:dark:bg-amber-900/30 hx:dark:text-amber-200">
+&lt;p class="hx:flex hx:items-center hx:font-medium">&lt;svg height=16px class="hx:inline-block hx:align-middle hx:mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true">&lt;path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>&lt;/svg>&amp;gt; &lt;strong>100% Discount Bug&lt;/strong>: If you pass application fees to customers, you cannot offer 100% discounts as Stripe doesn&amp;rsquo;t allow this configuration.&lt;/p>
+&lt;div class="hx:w-full hx:min-w-0 hx:leading-7">
+&lt;div class="hx:mt-6 hx:leading-7 hx:first:mt-0">&lt;/div>
+&lt;/div>
+&lt;/div></description></item><item><title>Recurring Events</title><link>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>https://www.sportshub.net.au/docs/organisers/events/recurring-events/</guid><description>
 &lt;h2>Overview&lt;span class="hx:absolute hx:-mt-20" id="overview">&lt;/span>
 &lt;a href="#overview" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Recurring events are perfect for &amp;ldquo;set and forget&amp;rdquo; activities that happen on a regular schedule. Whether you&amp;rsquo;re running weekly training sessions, monthly tournaments, or fortnightly social games, this feature automatically creates events at your chosen intervals, saving you time and ensuring consistency for your participants.&lt;/p>
 &lt;p>This feature is ideal for:&lt;/p>
