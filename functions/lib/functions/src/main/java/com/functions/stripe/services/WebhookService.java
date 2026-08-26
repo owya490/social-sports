@@ -22,6 +22,7 @@ import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.Purchaser;
 import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventsRepository;
 import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
@@ -949,17 +950,23 @@ public class WebhookService {
             .document(eventId);
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
         
-        long quantity = getRequiredCheckoutQuantity(lineItems, checkoutSessionId, true);
-        
         // Verify event exists before updating vacancy to avoid transaction commit failures
         ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
         DocumentSnapshot eventSnapshot = eventFuture.get();
         
         if (!eventSnapshot.exists()) {
+            boolean deletedEventExists = EventsRepository.deletedEventExists(eventId, Optional.of(transaction));
+            if (shouldAcknowledgeExpiredCheckoutForDeletedEvent(eventSnapshot.exists(), deletedEventExists)) {
+                logger.info("Event {} is already deleted; acknowledging expired checkout session {} without restocking",
+                        eventId, checkoutSessionId);
+                return;
+            }
             logger.error("Unable to find event to restock tickets for expired checkout. eventId={}, isPrivate={}", 
                         eventId, isPrivate);
             throw new IllegalStateException("Event does not exist: eventId=" + eventId);
         }
+
+        long quantity = getRequiredCheckoutQuantity(lineItems, checkoutSessionId, true);
 
         EventData eventData = eventSnapshot.toObject(EventData.class);
         if (eventData == null) {
@@ -978,6 +985,15 @@ public class WebhookService {
         // Restock General Admission vacancy
         EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, quantity);
         transaction.set(eventMetadataRef, eventMetadata);
+    }
+
+    /**
+     * Stripe retries checkout.session.expired until this webhook returns 200.
+     * If the SportsHub event is already in DeletedEvents, there is nothing left to restock.
+     */
+    static boolean shouldAcknowledgeExpiredCheckoutForDeletedEvent(
+            boolean activeEventExists, boolean deletedEventExists) {
+        return !activeEventExists && deletedEventExists;
     }
     
     /**
