@@ -46,7 +46,7 @@ Each recurring event instance can be managed independently. All child recurrence
 ### Event Settings
 
 - Configure registration settings for each occurrence
-- Set up payment options and coupons
+- Set up payment options and promo codes
 - Manage communication preferences
 - Update cancellation policies
 
