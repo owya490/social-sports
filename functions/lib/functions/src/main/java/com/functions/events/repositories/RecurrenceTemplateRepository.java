@@ -7,6 +7,7 @@ import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -46,6 +47,21 @@ public class RecurrenceTemplateRepository {
         // 4. Try InActive Public Recurrence Templates
         maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false, transaction);
         return maybeRecurrenceTemplate;
+    }
+
+    public static Optional<RecurrenceTemplate> getRecurrenceTemplateInTransaction(
+            String recurrenceTemplateId, Transaction transaction) throws Exception {
+        for (boolean isActive : List.of(true, false)) {
+            for (boolean isPrivate : List.of(true, false)) {
+                DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(
+                        recurrenceTemplateId, isActive, isPrivate);
+                DocumentSnapshot snapshot = transaction.get(recurrenceTemplateDocRef).get();
+                if (snapshot.exists()) {
+                    return Optional.ofNullable(snapshot.toObject(RecurrenceTemplate.class));
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate) {

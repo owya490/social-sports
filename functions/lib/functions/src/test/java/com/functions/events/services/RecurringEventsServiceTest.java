@@ -8,6 +8,9 @@ import com.google.cloud.Timestamp;
 import org.junit.Test;
 
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Date;
 
 public class RecurringEventsServiceTest {
@@ -37,4 +40,35 @@ public class RecurringEventsServiceTest {
 
         System.out.println(eventData.getStartDate());
     }
+
+    @Test
+    public void createsOneDueRecurrenceAtATime() {
+        Timestamp firstRecurrence = Timestamp.of(Date.from(Instant.parse("2026-08-23T09:00:00Z")));
+        Timestamp secondRecurrence = Timestamp.of(Date.from(Instant.parse("2026-08-23T10:00:00Z")));
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(0)
+                .allRecurrences(List.of(firstRecurrence, secondRecurrence))
+                .pastRecurrences(Map.of())
+                .build();
+
+        Timestamp selectedRecurrence = RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(), LocalDate.of(2026, 8, 23), false);
+
+        org.junit.Assert.assertEquals(firstRecurrence, selectedRecurrence);
+    }
+
+    @Test
+    public void movesPastFinalRecurrenceTemplateInactiveWhenNoEventIsCreated() {
+        Timestamp recurrence = Timestamp.of(Date.from(Instant.parse("2026-08-23T09:00:00Z")));
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .createDaysBefore(0)
+                .allRecurrences(List.of(recurrence))
+                .build();
+
+        org.junit.Assert.assertTrue(
+                RecurringEventsCronService.shouldMoveTemplateToInactiveAfterNoCreation(
+                        recurrenceData, LocalDate.of(2026, 8, 24), false));
+    }
+
 }

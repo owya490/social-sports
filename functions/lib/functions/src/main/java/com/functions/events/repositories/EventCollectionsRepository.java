@@ -9,8 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.firebase.services.FirebaseService;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.Transaction;
 
 public class EventCollectionsRepository {
   private static final Logger logger = LoggerFactory.getLogger(EventCollectionsRepository.class);
@@ -48,5 +51,21 @@ public class EventCollectionsRepository {
       logger.error("Error getting event collection ids containing recurring template", e);
       return Collections.emptyList();
     }
+  }
+
+  public static List<DocumentReference> getEventCollectionDocumentsContainingRecurringTemplate(
+      boolean isPrivate, String recurrenceTemplateId, Transaction transaction) throws Exception {
+    Query query = db.collection("EventCollections")
+        .document("Active")
+        .collection(isPrivate ? "Private" : "Public")
+        .whereArrayContains("recurringEventTemplateIds", recurrenceTemplateId);
+    return transaction.get(query).get().getDocuments().stream()
+        .map(DocumentSnapshot::getReference)
+        .collect(Collectors.toList());
+  }
+
+  public static void addEventIdToEventCollection(DocumentReference documentReference,
+      String eventId, Transaction transaction) {
+    transaction.update(documentReference, "eventIds", FieldValue.arrayUnion(eventId));
   }
 }
