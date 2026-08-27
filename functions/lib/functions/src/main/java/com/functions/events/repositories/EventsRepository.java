@@ -212,6 +212,24 @@ public class EventsRepository {
         return db.document(FirebaseService.CollectionPaths.EVENTS_METADATA + "/" + eventId);
     }
 
+    /**
+     * Returns true if the event has already been archived into DeletedEvents.
+     * Used by webhook restock so Stripe can be acknowledged when there is nothing left to update.
+     */
+    public static boolean deletedEventExists(String eventId) throws Exception {
+        return deletedEventExists(eventId, Optional.empty());
+    }
+
+    public static boolean deletedEventExists(String eventId, Optional<Transaction> transaction) throws Exception {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference deletedEventRef = db.collection(FirebaseService.CollectionPaths.DELETED_EVENTS)
+                .document(eventId);
+        DocumentSnapshot snapshot = transaction.isPresent()
+                ? transaction.get().get(deletedEventRef).get()
+                : deletedEventRef.get().get();
+        return snapshot.exists();
+    }
+
     private static DocumentReference findEventDocumentReference(String eventId, Transaction transaction) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {

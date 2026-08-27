@@ -34,6 +34,7 @@ public class FirebaseService {
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
         public static final String EVENTS_METADATA = "EventsMetadata";
+        public static final String DELETED_EVENTS = "DeletedEvents";
         public static final String RECURRING_EVENTS = "RecurringEvents";
         public static final List<String> EVENT_PATHS = List.of(
                 "Events/Active/Public",
