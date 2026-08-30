@@ -88,10 +88,16 @@ function formatClock(time: string): string {
 }
 
 function hasDescriptionContent(description: string): boolean {
-  return description.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim().length > 0;
+  return (
+    description
+      .replace(/&(?:nbsp|#160|#xA0);/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim().length > 0
+  );
 }
 
-function RequiredIndicator() {
+function RequiredIndicator(): JSX.Element {
   return (
     <span className="ml-0.5 text-danger" aria-hidden>
       *
@@ -735,6 +741,7 @@ export function CreateEventWorkbench({
                   </label>
                   <input
                     id="create-event-location"
+                    required
                     ref={locationInputRef}
                     value={locationDraft}
                     onChange={(e) => {
