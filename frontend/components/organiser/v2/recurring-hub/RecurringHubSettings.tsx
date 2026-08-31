@@ -6,6 +6,8 @@ import {
   EventHubSettingTileRow,
   EventHubStage,
 } from "@/components/organiser/v2/event-hub/EventHubStage";
+import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
+import { useUser } from "@/components/utility/UserContext";
 import { NewEventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import {
@@ -14,6 +16,7 @@ import {
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
+import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { isFreeEvent } from "@/utilities/priceUtils";
 import {
@@ -89,8 +92,11 @@ export function RecurringHubSettings({
   eventPrice,
 }: RecurringHubSettingsProps) {
   const [saving, setSaving] = useState(false);
+  const { user } = useUser();
   const isFree = isFreeEvent(eventPrice);
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
+  const stripeReady = isStripeAccountActive(user.stripeAccountActive);
+  const paymentsLockedDescription = "Connect Stripe to enable this setting.";
 
   const save = async (data: Partial<NewEventData>) => {
     setSaving(true);
@@ -130,23 +136,31 @@ export function RecurringHubSettings({
             <EventHubSettingTile
               title={isFree ? "Bookings" : "Payments"}
               description={
-                isFree
-                  ? "Allow customers to book spots on future occurrences."
-                  : "Allow customers to purchase paid tickets on future occurrences."
+                !stripeReady
+                  ? paymentsLockedDescription
+                  : isFree
+                    ? "Allow customers to book spots on future occurrences."
+                    : "Allow customers to purchase paid tickets on future occurrences."
               }
               icon={isFree ? <TicketIcon /> : <CreditCardIcon />}
               tone="stripe"
-              checked={paymentsActive}
+              checked={stripeReady && paymentsActive}
+              disabled={!stripeReady}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setPaymentsActive, "paymentsActive")}
             />
             <EventHubSettingTile
               title="Booking approval"
-              description="Require manual approval before bookings are confirmed."
+              description={
+                stripeReady
+                  ? "Require manual approval before bookings are confirmed."
+                  : paymentsLockedDescription
+              }
               icon={<CheckBadgeIcon />}
               tone="blue"
-              checked={bookingApprovalEnabled}
+              checked={stripeReady && bookingApprovalEnabled}
+              disabled={!stripeReady}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
@@ -164,6 +178,7 @@ export function RecurringHubSettings({
               />
             ) : null}
           </EventHubSettingTileRow>
+          {!stripeReady ? <ConnectStripeCta className="mt-3 mb-1" /> : null}
         </SettingsGroup>
 
         {!isFree ? (
@@ -172,12 +187,14 @@ export function RecurringHubSettings({
               title="Pass Stripe fee to customer"
               description="Add card surcharges and Stripe fees at checkout for the customer to pay."
               checked={stripeFeeToCustomer}
+              disabled={!stripeReady}
               onChange={persistToggle(setStripeFeeToCustomer, "stripeFeeToCustomer")}
             />
             <EventHubPreferenceRow
               title="Promotional codes"
               description="Let customers apply promotional codes at checkout."
               checked={promotionalCodesEnabled}
+              disabled={!stripeReady}
               onChange={persistToggle(setPromotionalCodesEnabled, "promotionalCodesEnabled")}
             />
           </SettingsGroup>
