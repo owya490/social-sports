@@ -1,0 +1,9 @@
+# Paths are relative to a worktree root. Keep this list limited to local files
+# that every developer is approved to copy between their own worktrees.
+frontend/.env
+functions/.env
+functions/.env.dev
+functions/.env.prod
+functions/functions_key.json
+functions/functions_key_dev.json
+functions/functions_key_prod.json

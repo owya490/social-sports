@@ -34,6 +34,7 @@ public class FirebaseService {
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
         public static final String EVENTS_METADATA = "EventsMetadata";
+        public static final String DELETED_EVENTS = "DeletedEvents";
         public static final String RECURRING_EVENTS = "RecurringEvents";
         public static final List<String> EVENT_PATHS = List.of(
                 "Events/Active/Public",
@@ -74,6 +75,21 @@ public class FirebaseService {
         } catch (Exception e) {
             logger.error("Error initializing FirebaseService: " + e.getMessage());
         }
+    }
+
+    /**
+     * Triggers this class's static initializer, which is what creates the default
+     * FirebaseApp.
+     * <p>
+     * Callers that use the Firebase Admin SDK without going through Firestore --
+     * notably {@code FirebaseAuth.getInstance()} in AuthService -- must call this
+     * first. Otherwise, on a cold instance whose first request is an authenticated
+     * one, no code has loaded this class yet and FirebaseAuth.getInstance() fails
+     * with "FirebaseApp with name [DEFAULT] doesn't exist".
+     */
+    public static void ensureInitialized() {
+        // Intentionally empty: invoking any static member forces class
+        // initialization, which runs the static block above.
     }
 
     private static void initialize() throws Exception {

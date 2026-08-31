@@ -6,14 +6,17 @@ import org.slf4j.LoggerFactory;
 import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
 import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
+import com.functions.global.exceptions.AuthenticationException;
+import com.functions.global.exceptions.AuthorizationException;
 import com.functions.global.handlers.HandlerRegistry;
+import com.functions.global.models.AuthContext;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
 import com.functions.global.models.responses.UnifiedResponse;
+import com.functions.global.services.AuthService;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
-import com.functions.stripe.handlers.StripeWebhookHandler;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
@@ -26,11 +29,6 @@ import com.google.cloud.functions.HttpResponse;
 public class GlobalAppController extends AbstractConfiguredHttpFunction {
     private static final Logger logger = LoggerFactory.getLogger(GlobalAppController.class);
 
-    @FunctionalInterface
-    interface StripeWebhookProcessor {
-        void handle(HttpRequest request, HttpResponse response) throws Exception;
-    }
-
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
         setResponseHeaders(response);
@@ -38,11 +36,6 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
             response.setStatusCode(204); // No Content
-            return;
-        }
-
-        if (shouldRouteToStripeWebhook(request)) {
-            handleStripeWebhook(request, response);
             return;
         }
 
@@ -74,12 +67,23 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
                 return;
             }
 
-            Object result = routeRequest(unifiedRequest);
+            AuthContext authContext = AuthService.verify(request, unifiedRequest.endpointType().getAuthLevel());
+            Object result = routeRequest(unifiedRequest, authContext);
 
             response.setStatusCode(200);
             response.getWriter().write(
                     JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
 
+        } catch (AuthenticationException e) {
+            logger.warn("Authentication failed: {}", e.getMessage());
+            response.setStatusCode(401);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (AuthorizationException e) {
+            logger.warn("Authorization failed: {}", e.getMessage());
+            response.setStatusCode(403);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
         } catch (FulfilmentProgressionBlockedException e) {
             logger.warn("Fulfilment progression blocked: {}", e.getMessage());
             response.setStatusCode(400);
@@ -118,7 +122,7 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         }
     }
 
-    private Object routeRequest(UnifiedRequest unifiedRequest) throws Exception {
+    private Object routeRequest(UnifiedRequest unifiedRequest, AuthContext authContext) throws Exception {
         EndpointType endpointType = unifiedRequest.endpointType();
 
         if (!HandlerRegistry.hasHandler(endpointType)) {
@@ -126,33 +130,7 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         }
 
         var handler = HandlerRegistry.getHandler(endpointType);
-        return handler.handle(handler.parse(unifiedRequest));
-    }
-
-    static boolean shouldRouteToStripeWebhook(HttpRequest request) {
-        return "POST".equalsIgnoreCase(request.getMethod())
-                && request.getFirstHeader("Stripe-Signature")
-                        .map(signature -> !signature.trim().isEmpty())
-                        .orElse(false);
-    }
-
-    static void handleStripeWebhook(HttpRequest request, HttpResponse response) throws Exception {
-        handleStripeWebhook(request, response, StripeWebhookHandler::handleWebhook);
-    }
-
-    static void handleStripeWebhook(
-            HttpRequest request,
-            HttpResponse response,
-            StripeWebhookProcessor stripeWebhookProcessor) throws Exception {
-        logger.info("Detected Stripe webhook request, routing to StripeWebhookHandler");
-        try {
-            stripeWebhookProcessor.handle(request, response);
-        } catch (Exception e) {
-            logger.error("Unhandled exception while processing Stripe webhook. uri={}", request.getUri(), e);
-            response.setStatusCode(500);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Internal server error")));
-        }
+        return handler.handle(handler.parse(unifiedRequest), authContext);
     }
 
     private void setResponseHeaders(HttpResponse response) {

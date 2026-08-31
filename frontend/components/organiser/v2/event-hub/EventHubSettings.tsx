@@ -1,6 +1,7 @@
 "use client";
 
 import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventModal";
+import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
@@ -13,6 +14,7 @@ import {
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
 import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
+import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { isFreeEvent } from "@/utilities/priceUtils";
 import {
@@ -112,6 +114,8 @@ export function EventHubSettings({
 
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
   const isFree = isFreeEvent(eventPrice);
+  const stripeReady = isStripeAccountActive(user.stripeAccountActive);
+  const paymentsLockedDescription = "Connect Stripe to enable this setting.";
 
   const saveEventSettings = async (data: Partial<EventData>) => {
     setSaving(true);
@@ -179,23 +183,31 @@ export function EventHubSettings({
             <EventHubSettingTile
               title={isFree ? "Bookings" : "Payments"}
               description={
-                isFree
-                  ? "Allow customers to book spots for this event."
-                  : "Allow customers to purchase paid tickets for this event."
+                !stripeReady
+                  ? paymentsLockedDescription
+                  : isFree
+                    ? "Allow customers to book spots for this event."
+                    : "Allow customers to purchase paid tickets for this event."
               }
               icon={isFree ? <TicketIcon /> : <CreditCardIcon />}
               tone="stripe"
-              checked={paymentsActive}
+              checked={stripeReady && paymentsActive}
+              disabled={!stripeReady}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setPaymentsActive, "paymentsActive")}
             />
             <EventHubSettingTile
               title="Booking approval"
-              description="Require manual approval before bookings are confirmed."
+              description={
+                stripeReady
+                  ? "Require manual approval before bookings are confirmed."
+                  : paymentsLockedDescription
+              }
               icon={<CheckBadgeIcon />}
               tone="blue"
-              checked={bookingApprovalEnabled}
+              checked={stripeReady && bookingApprovalEnabled}
+              disabled={!stripeReady}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
@@ -213,6 +225,7 @@ export function EventHubSettings({
               />
             ) : null}
           </EventHubSettingTileRow>
+          {!stripeReady ? <ConnectStripeCta className="mt-3 mb-1" /> : null}
         </SettingsGroup>
 
         {!isFree ? (
@@ -221,12 +234,14 @@ export function EventHubSettings({
               title="Pass Stripe fee to customer"
               description="Add card surcharges and Stripe fees at checkout for the customer to pay."
               checked={stripeFeeToCustomer}
+              disabled={!stripeReady}
               onChange={persistToggle(setStripeFeeToCustomer, "stripeFeeToCustomer")}
             />
             <EventHubPreferenceRow
               title="Promotional codes"
               description="Let customers apply promotional codes at checkout."
               checked={promotionalCodesEnabled}
+              disabled={!stripeReady}
               onChange={persistToggle(setPromotionalCodesEnabled, "promotionalCodesEnabled")}
             />
           </SettingsGroup>
