@@ -27,6 +27,15 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
     };
   }, []);
 
+  // Re-apply canvas colour when the drawer closes so Safari re-samples translucent chrome.
+  useEffect(() => {
+    if (mobileOpen) return;
+    const root = document.documentElement;
+    const body = document.body;
+    root.style.backgroundColor = ORGANISER_V2_CANVAS;
+    body.style.backgroundColor = ORGANISER_V2_CANVAS;
+  }, [mobileOpen]);
+
   return (
     <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
       <div className="min-h-screen bg-surface">

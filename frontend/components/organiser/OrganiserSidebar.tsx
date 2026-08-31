@@ -36,7 +36,7 @@ import { IconLayoutSidebar } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState, type TransitionEvent } from "react";
 
 const SIDEBAR_COLLAPSED_KEY = "organiser-sidebar-collapsed";
 
@@ -436,6 +436,9 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  /** Keep mounted through the close animation, then remove so Safari stops sampling the white drawer. */
+  const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
+  const [mobileDrawerShown, setMobileDrawerShown] = useState(false);
 
   const openNotifications = useCallback(() => {
     onMobileOpenChange(false);
@@ -450,6 +453,21 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      setMobileDrawerShown(false);
+      return;
+    }
+    setMobileDrawerMounted(true);
+    const frame = requestAnimationFrame(() => setMobileDrawerShown(true));
+    return () => cancelAnimationFrame(frame);
+  }, [mobileOpen]);
+
+  const handleMobileDrawerTransitionEnd = (event: TransitionEvent<HTMLElement>) => {
+    if (event.propertyName !== "transform" || mobileOpen) return;
+    setMobileDrawerMounted(false);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
@@ -505,23 +523,26 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
 
   return (
     <>
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] bg-transparent transition-transform duration-300 ease-out lg:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-        aria-label="Organiser sidebar"
-        aria-hidden={!mobileOpen}
-        data-tour="organiser-sidebar"
-      >
-        <div className="mb-[env(safe-area-inset-bottom)] mt-[env(safe-area-inset-top)] flex h-[calc(100%-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col border-r border-border bg-background">
-          <SidebarContent
-            pathname={pathname}
-            onNavigate={() => onMobileOpenChange(false)}
-            onOpenSearch={() => setSearchOpen(true)}
-            onOpenNotifications={openNotifications}
-          />
-        </div>
-      </aside>
+      {mobileDrawerMounted ? (
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] bg-transparent transition-transform duration-300 ease-out lg:hidden ${
+            mobileDrawerShown ? "translate-x-0" : "-translate-x-full"
+          }`}
+          aria-label="Organiser sidebar"
+          aria-hidden={!mobileOpen}
+          data-tour="organiser-sidebar"
+          onTransitionEnd={handleMobileDrawerTransitionEnd}
+        >
+          <div className="mb-[env(safe-area-inset-bottom)] mt-[env(safe-area-inset-top)] flex h-[calc(100%-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col border-r border-border bg-background">
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={() => onMobileOpenChange(false)}
+              onOpenSearch={() => setSearchOpen(true)}
+              onOpenNotifications={openNotifications}
+            />
+          </div>
+        </aside>
+      ) : null}
 
       <aside
         className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[var(--organiser-sidebar-width)] lg:flex-col lg:border-r lg:border-border lg:bg-background lg:transition-[width] lg:duration-200"
