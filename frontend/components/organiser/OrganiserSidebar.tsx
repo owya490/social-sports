@@ -505,29 +505,22 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
 
   return (
     <>
-      {mobileOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          aria-label="Close menu"
-          onClick={() => onMobileOpenChange(false)}
-        />
-      )}
-
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
+        className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] bg-transparent transition-transform duration-300 ease-out lg:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         aria-label="Organiser sidebar"
         aria-hidden={!mobileOpen}
         data-tour="organiser-sidebar"
       >
-        <SidebarContent
-          pathname={pathname}
-          onNavigate={() => onMobileOpenChange(false)}
-          onOpenSearch={() => setSearchOpen(true)}
-          onOpenNotifications={openNotifications}
-        />
+        <div className="mb-[env(safe-area-inset-bottom)] mt-[env(safe-area-inset-top)] flex h-[calc(100%-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col border-r border-border bg-background">
+          <SidebarContent
+            pathname={pathname}
+            onNavigate={() => onMobileOpenChange(false)}
+            onOpenSearch={() => setSearchOpen(true)}
+            onOpenNotifications={openNotifications}
+          />
+        </div>
       </aside>
 
       <aside

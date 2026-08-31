@@ -31,8 +31,20 @@ export default function OrganiserShell({ children }: { children: React.ReactNode
     <OrganiserBreadcrumbProvider openMobileNav={openMobileNav}>
       <div className="min-h-screen bg-surface">
         <OrganiserSidebar mobileOpen={mobileOpen} onMobileOpenChange={onMobileOpenChange} />
-        <div className="min-h-screen transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
-          {children}
+        <div className="flex min-h-[100dvh] flex-col transition-[padding] duration-200 lg:pl-[var(--organiser-sidebar-width)]">
+          <div className="h-[env(safe-area-inset-top)] shrink-0 lg:hidden" aria-hidden />
+          <div className="relative min-h-0 flex-1">
+            <div className={mobileOpen ? "max-lg:pointer-events-none" : undefined}>{children}</div>
+            {mobileOpen ? (
+              <button
+                type="button"
+                className="absolute inset-0 z-30 bg-black/50 lg:hidden"
+                aria-label="Close menu"
+                onClick={() => onMobileOpenChange(false)}
+              />
+            ) : null}
+          </div>
+          <div className="h-[env(safe-area-inset-bottom)] shrink-0 lg:hidden" aria-hidden />
         </div>
       </div>
     </OrganiserBreadcrumbProvider>
