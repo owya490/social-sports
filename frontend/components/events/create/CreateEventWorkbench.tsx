@@ -15,7 +15,7 @@ import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { EventHubDescriptionEditor } from "@/components/organiser/v2/event-hub/EventHubDescriptionEditor";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { ShortDateBadge } from "@/components/organiser/v2/shared/ShortDateBadge";
-import { SportshubStripeIntegrationIcon } from "@/components/organiser/v2/settings/SportshubStripeIntegrationIcon";
+import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
@@ -25,6 +25,7 @@ import { addCalendarDaysToYmd, dateAndTimeInLocalToDate } from "@/services/src/d
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
+import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
 import {
   ArrowPathIcon,
@@ -40,7 +41,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
 import Image from "next/image";
-import Link from "next/link";
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(
@@ -839,7 +839,7 @@ export function CreateEventWorkbench({
                 </div>
                 {priceWarning ? <p className="text-xs text-danger font-sans px-0.5">{priceWarning}</p> : null}
 
-                {user.stripeAccountActive ? (
+                {isStripeAccountActive(user.stripeAccountActive) ? (
                   <OptionCell
                     icon={<CreditCardIcon className="h-4 w-4" />}
                     label={acceptPaymentsLabel}
@@ -852,18 +852,7 @@ export function CreateEventWorkbench({
                     />
                   </OptionCell>
                 ) : (
-                  <div className="rounded-xl border border-border bg-background px-2.5 py-2 flex gap-2.5 items-center">
-                    <SportshubStripeIntegrationIcon />
-                    <p className="min-w-0 flex-1 text-xs font-medium text-foreground leading-snug">
-                      Connect Stripe to take payments through SPORTSHUB.
-                    </p>
-                    <Link
-                      href="/organiser/v2/settings"
-                      className="shrink-0 inline-flex items-center rounded-lg border border-border bg-background px-2 py-1 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    >
-                      Connect Stripe
-                    </Link>
-                  </div>
+                  <ConnectStripeCta />
                 )}
 
                 <OptionCell

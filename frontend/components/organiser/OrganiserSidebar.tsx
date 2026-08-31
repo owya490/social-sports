@@ -17,10 +17,7 @@ import {
 import { useUser } from "@/components/utility/UserContext";
 import Logo from "@/public/images/BlackLogo.svg";
 import { handleSignOut } from "@/services/src/auth/authService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsCache";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
-import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
@@ -35,7 +32,7 @@ import {
 import { IconLayoutSidebar } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Fragment, useCallback, useEffect, useState, type TransitionEvent } from "react";
 
 const SIDEBAR_COLLAPSED_KEY = "organiser-sidebar-collapsed";
@@ -200,7 +197,6 @@ function UserAccountMenu({
   onOpenNotifications: () => void;
 }) {
   const { user, userLoading, setUser } = useUser();
-  const router = useRouter();
   const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
   const subtitle = user.isVerifiedOrganiser ? "Verified organiser" : "Organiser";
   const showProfilePhoto = hasCustomProfilePicture(user.profilePicture, userLoading);
@@ -209,14 +205,12 @@ function UserAccountMenu({
     onNavigate?.();
     try {
       await handleSignOut(setUser);
-      bustEventsLocalStorageCache();
-      bustUserLocalStorageCache();
-      bustOrganiserEventsCache();
-      router.push("/");
-      router.refresh();
+      // Full-page navigation avoids a router.push + refresh race that can leave
+      // the organiser shell mounted after sign-out on the first click.
+      window.location.assign("/");
     } catch (error) {
       console.error("Error during logout:", error);
-      location.reload();
+      window.location.assign("/");
     }
   };
 
