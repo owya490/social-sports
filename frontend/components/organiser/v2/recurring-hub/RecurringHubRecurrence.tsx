@@ -11,9 +11,10 @@ import {
 import { Frequency, NewRecurrenceFormData, ReservedSlot } from "@/interfaces/RecurringEventTypes";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
 type RecurringHubRecurrenceProps = {
@@ -27,6 +28,72 @@ type RecurringHubRecurrenceProps = {
   isRecurrenceEnded: boolean;
   capacity?: number;
 };
+
+type RecurrenceNumberListboxProps = {
+  label: string;
+  value: number;
+  options: number[];
+  formatOption: (value: number) => string;
+  onChange: (value: number) => void;
+};
+
+const RECURRENCE_AMOUNT_OPTIONS = Array.from({ length: MAX_RECURRENCE_AMOUNT }, (_, index) => index + 1);
+
+function RecurrenceNumberListbox({
+  label,
+  value,
+  options,
+  formatOption,
+  onChange,
+}: RecurrenceNumberListboxProps) {
+  return (
+    <Listbox value={value} onChange={onChange}>
+      <div className="relative min-w-[10rem] shrink-0">
+        <Listbox.Button
+          aria-label={label}
+          className="relative w-full rounded-xl border border-border bg-background py-2 pl-3 pr-10 text-left text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <span className="block truncate">{formatOption(value)}</span>
+          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+            <ChevronUpDownIcon className="h-4 w-4 text-foreground-muted" aria-hidden />
+          </span>
+        </Listbox.Button>
+        <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
+          <Listbox.Options
+            anchor="bottom end"
+            modal={false}
+            className="z-[100] max-h-60 w-[var(--button-width)] overflow-auto rounded-xl border border-border bg-background py-1 text-sm shadow-sm focus:outline-none [--anchor-gap:4px]"
+          >
+            {options.map((option) => (
+              <Listbox.Option
+                key={option}
+                value={option}
+                className={({ active }) =>
+                  `relative cursor-default select-none py-2 pl-9 pr-3 font-sans ${
+                    active ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                  }`
+                }
+              >
+                {({ selected }) => (
+                  <>
+                    <span className={`block truncate ${selected ? "font-semibold text-foreground" : "font-normal"}`}>
+                      {formatOption(option)}
+                    </span>
+                    {selected ? (
+                      <span className="absolute inset-y-0 left-0 flex items-center pl-2.5 text-foreground">
+                        <CheckIcon className="h-4 w-4" aria-hidden />
+                      </span>
+                    ) : null}
+                  </>
+                )}
+              </Listbox.Option>
+            ))}
+          </Listbox.Options>
+        </Transition>
+      </div>
+    </Listbox>
+  );
+}
 
 function hasRecurrenceChanges(
   current: NewRecurrenceFormData,
@@ -166,28 +233,15 @@ export function RecurringHubRecurrence({
                       How many more times this template should create an event.
                     </p>
                   </div>
-                  <label className="shrink-0">
-                    <span className="sr-only">Number of recurrences</span>
-                    <select
-                      value={newRecurrenceData.recurrenceAmount}
-                      onChange={(e) =>
-                        setNewRecurrenceData({
-                          ...newRecurrenceData,
-                          recurrenceAmount: Number(e.target.value),
-                        })
-                      }
-                      className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    >
-                      {[...Array(MAX_RECURRENCE_AMOUNT).keys()].map((value) => {
-                        const n = value + 1;
-                        return (
-                          <option key={n} value={n}>
-                            {n === 1 ? "Once" : `${n} times`}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
+                  <RecurrenceNumberListbox
+                    label="Number of recurrences"
+                    value={newRecurrenceData.recurrenceAmount}
+                    options={RECURRENCE_AMOUNT_OPTIONS}
+                    formatOption={(value) => (value === 1 ? "Once" : `${value} times`)}
+                    onChange={(recurrenceAmount) =>
+                      setNewRecurrenceData({ ...newRecurrenceData, recurrenceAmount })
+                    }
+                  />
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-start gap-3 py-4">
@@ -197,28 +251,15 @@ export function RecurringHubRecurrence({
                       How many days before the occurrence date the public event is created.
                     </p>
                   </div>
-                  <label className="shrink-0">
-                    <span className="sr-only">Create days before</span>
-                    <select
-                      value={newRecurrenceData.createDaysBefore}
-                      onChange={(e) =>
-                        setNewRecurrenceData({
-                          ...newRecurrenceData,
-                          createDaysBefore: Number(e.target.value),
-                        })
-                      }
-                      className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                    >
-                      {[...Array(maxCreateDays).keys()].map((value) => {
-                        const n = value + 1;
-                        return (
-                          <option key={n} value={n}>
-                            {n} {n === 1 ? "day" : "days"}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
+                  <RecurrenceNumberListbox
+                    label="Create days before"
+                    value={newRecurrenceData.createDaysBefore}
+                    options={Array.from({ length: maxCreateDays }, (_, index) => index + 1)}
+                    formatOption={(value) => `${value} ${value === 1 ? "day" : "days"}`}
+                    onChange={(createDaysBefore) =>
+                      setNewRecurrenceData({ ...newRecurrenceData, createDaysBefore })
+                    }
+                  />
                 </div>
               </>
             ) : null}
