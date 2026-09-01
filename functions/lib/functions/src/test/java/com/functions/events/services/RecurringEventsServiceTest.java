@@ -71,4 +71,18 @@ public class RecurringEventsServiceTest {
                         recurrenceData, LocalDate.of(2026, 8, 24), false));
     }
 
+    @Test
+    public void keepsFutureDisabledTemplateActiveDuringManualCreation() {
+        Timestamp recurrence = Timestamp.of(Date.from(Instant.parse("2026-08-23T09:00:00Z")));
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(false)
+                .createDaysBefore(0)
+                .allRecurrences(List.of(recurrence))
+                .build();
+
+        org.junit.Assert.assertFalse(
+                RecurringEventsCronService.shouldMoveTemplateToInactiveAfterNoCreation(
+                        recurrenceData, LocalDate.of(2026, 8, 22), true));
+    }
+
 }

@@ -238,7 +238,8 @@ public class RecurringEventsCronService {
 
     static boolean shouldMoveTemplateToInactiveAfterNoCreation(RecurrenceData recurrenceData,
             LocalDate today, boolean createEventWorkflow) {
-        return createEventWorkflow || recurrenceData.getAllRecurrences().isEmpty()
+        return (createEventWorkflow && Boolean.TRUE.equals(recurrenceData.getRecurrenceEnabled()))
+                || recurrenceData.getAllRecurrences().isEmpty()
                 || finalCreationDateHasPassed(recurrenceData, today);
     }
 
