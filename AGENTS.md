@@ -27,6 +27,10 @@ SPORTSHUB is a social-sports event discovery, booking, and organiser platform.
 
 See @docs/ARCHITECTURE.md for boundaries and data flow.
 
+## Terminology
+
+- GAC: `GlobalAppController`, the central Java request dispatcher.
+
 ## Common Commands
 
 Run commands from the indicated directory. Tee long-running build output to `.tmp/<name>.log`.

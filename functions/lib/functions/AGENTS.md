@@ -10,6 +10,7 @@ Read the root `AGENTS.md` and `functions/AGENTS.md` first.
 
 ## Architecture And Conventions
 
+- GAC means `GlobalAppController`, the central Java request dispatcher.
 - Organize code by domain under `src/main/java/com/functions/`.
 - Controllers own HTTP decoding/routing; handlers and services own business behavior; repositories own Firestore access.
 - Authenticate and enforce ownership on the server. Never authorize using only client-supplied organiser identifiers.
