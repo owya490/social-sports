@@ -87,6 +87,24 @@ function formatClock(time: string): string {
   return `${adjusted.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`;
 }
 
+function hasDescriptionContent(description: string): boolean {
+  return (
+    description
+      .replace(/&(?:nbsp|#160|#xA0);/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim().length > 0
+  );
+}
+
+function RequiredIndicator(): JSX.Element {
+  return (
+    <span className="ml-0.5 text-danger" aria-hidden>
+      *
+    </span>
+  );
+}
+
 function OptionCell({
   icon,
   label,
@@ -96,8 +114,8 @@ function OptionCell({
   className = "",
 }: {
   icon: ReactNode;
-  label: string;
-  children: ReactNode;
+  label: ReactNode;
+  children?: ReactNode;
   onClick?: () => void;
   supporting?: string;
   className?: string;
@@ -113,7 +131,9 @@ function OptionCell({
           <span className="block text-xs text-foreground-muted font-sans leading-snug mt-0.5">{supporting}</span>
         ) : null}
       </span>
-      <span className="shrink-0 flex items-center gap-1 text-xs text-foreground-secondary font-sans">{children}</span>
+      {children ? (
+        <span className="shrink-0 flex items-center gap-1 text-xs text-foreground-secondary font-sans">{children}</span>
+      ) : null}
     </>
   );
 
@@ -433,6 +453,7 @@ export function CreateEventWorkbench({
     ? formatFrequency(data.newRecurrenceData.frequency)
     : "Off";
   const acceptPaymentsLabel = isFreeEvent ? "Accept bookings" : "Accept payments";
+  const hasDescription = hasDescriptionContent(data.description);
 
   const canCreate =
     data.name.trim() !== "" && locationWarning === null && (selectionMade || locationDraft.trim() !== "");
@@ -452,26 +473,23 @@ export function CreateEventWorkbench({
   const togglePaymentsActive = () => {
     const next = !data.paymentsActive;
     handlePaymentsActiveChange(next);
-    if (next) {
-      setPanel("payments");
-    } else if (panel === "payments") {
-      closePanel();
-    }
+    if (next) setPanel("payments");
   };
 
   const toggleRecurring = () => {
     const next = !data.newRecurrenceData.recurrenceEnabled;
     if (next) {
       recurrenceWasEnabledRef.current = false;
-      updateField({
-        newRecurrenceData: { ...data.newRecurrenceData, recurrenceEnabled: true },
-      });
-      setRecurrenceOpen(true);
-    } else {
-      updateField({
-        newRecurrenceData: { ...data.newRecurrenceData, recurrenceEnabled: false },
-      });
     }
+    updateField({
+      newRecurrenceData: { ...data.newRecurrenceData, recurrenceEnabled: next },
+    });
+    if (next) setRecurrenceOpen(true);
+  };
+
+  const openRecurrencePanel = () => {
+    recurrenceWasEnabledRef.current = data.newRecurrenceData.recurrenceEnabled;
+    setRecurrenceOpen(true);
   };
 
   return (
@@ -604,8 +622,8 @@ export function CreateEventWorkbench({
 
           <div className="min-w-0 space-y-2.5">
             <div>
-              <label htmlFor="create-event-name" className="sr-only">
-                Event name
+              <label htmlFor="create-event-name" className="block text-xs font-medium text-foreground-muted font-sans mb-1">
+                Event name <RequiredIndicator />
               </label>
               <input
                 id="create-event-name"
@@ -623,7 +641,9 @@ export function CreateEventWorkbench({
                 <ShortDateBadge date={data.startDate} />
                 <div className="grid min-w-0 flex-1 grid-cols-[0.625rem_1fr] gap-x-2.5">
                   <div aria-hidden />
-                  <p className="text-xs font-medium text-foreground-muted mb-0.5">Start</p>
+                  <p className="text-xs font-medium text-foreground-muted mb-0.5">
+                    Start <RequiredIndicator />
+                  </p>
 
                   <div className="relative flex items-center justify-center self-stretch" aria-hidden>
                     <span className="relative z-10 h-2.5 w-2.5 shrink-0 rounded-full border-2 border-foreground bg-foreground" />
@@ -663,7 +683,9 @@ export function CreateEventWorkbench({
                   <div className="flex justify-center self-stretch" aria-hidden>
                     <span className="w-px h-full min-h-[1rem] bg-border" />
                   </div>
-                  <p className="text-xs font-medium text-foreground-muted mb-0.5 self-end">End</p>
+                  <p className="text-xs font-medium text-foreground-muted mb-0.5 self-end">
+                    End <RequiredIndicator />
+                  </p>
 
                   <div className="flex items-center justify-center" aria-hidden>
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-foreground-muted bg-background" />
@@ -715,10 +737,11 @@ export function CreateEventWorkbench({
                 <MapPinIcon className="h-4 w-4 shrink-0 text-foreground-muted mt-0.5" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <label htmlFor="create-event-location" className="block text-xs font-medium text-foreground cursor-text">
-                    {locationDraft ? "Location" : "Add Event Location"}
+                    {locationDraft ? "Location" : "Add Event Location"} <RequiredIndicator />
                   </label>
                   <input
                     id="create-event-location"
+                    required
                     ref={locationInputRef}
                     value={locationDraft}
                     onChange={(e) => {
@@ -762,16 +785,12 @@ export function CreateEventWorkbench({
               {locationWarning ? <p className="text-xs text-danger font-sans px-2.5 pb-2">{locationWarning}</p> : null}
             </div>
 
-            <button
-              type="button"
+            <OptionCell
+              icon={<DocumentTextIcon className="h-4 w-4" />}
+              label="Description"
+              supporting={hasDescription ? "Description added" : "No description yet"}
               onClick={() => setPanel("description")}
-              className="flex w-full min-h-[2.75rem] items-center gap-2.5 rounded-xl border border-border bg-background px-2.5 py-2 text-left transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-            >
-              <DocumentTextIcon className="h-4 w-4 shrink-0 text-foreground-muted" aria-hidden />
-              <span className="min-w-0 flex-1 text-xs font-medium text-foreground">
-                {data.description ? "Description" : "Add Description"}
-              </span>
-            </button>
+            />
 
             <div>
               <h2 className="text-xs font-medium text-foreground-muted mb-1.5 px-0.5">Event Options</h2>
@@ -814,7 +833,11 @@ export function CreateEventWorkbench({
 
                   <OptionCell
                     icon={<UserGroupIcon className="h-4 w-4" />}
-                    label="Capacity"
+                    label={
+                      <>
+                        Capacity <RequiredIndicator />
+                      </>
+                    }
                     onClick={() => capacityInputRef.current?.focus()}
                     className="cursor-text"
                   >
@@ -843,7 +866,7 @@ export function CreateEventWorkbench({
                   <OptionCell
                     icon={<CreditCardIcon className="h-4 w-4" />}
                     label={acceptPaymentsLabel}
-                    onClick={togglePaymentsActive}
+                    onClick={() => setPanel("payments")}
                   >
                     <ClubhouseSwitch
                       checked={data.paymentsActive}
@@ -858,26 +881,25 @@ export function CreateEventWorkbench({
                 <OptionCell
                   icon={<ArrowPathIcon className="h-4 w-4" />}
                   label="Recurring"
-                  onClick={toggleRecurring}
+                  onClick={openRecurrencePanel}
                 >
-                  <ClubhouseSwitch
-                    checked={data.newRecurrenceData.recurrenceEnabled}
-                    onChange={toggleRecurring}
-                    label="Recurring"
-                  />
                   {data.newRecurrenceData.recurrenceEnabled ? (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        recurrenceWasEnabledRef.current = true;
-                        setRecurrenceOpen(true);
+                        openRecurrencePanel();
                       }}
                       className="text-xs font-medium text-foreground-secondary hover:text-foreground underline-offset-2 hover:underline"
                     >
                       {recurrenceLabel}
                     </button>
                   ) : null}
+                  <ClubhouseSwitch
+                    checked={data.newRecurrenceData.recurrenceEnabled}
+                    onChange={toggleRecurring}
+                    label="Recurring"
+                  />
                 </OptionCell>
               </div>
             </div>
