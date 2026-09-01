@@ -11,9 +11,10 @@ import {
 import { Frequency, NewRecurrenceFormData, ReservedSlot } from "@/interfaces/RecurringEventTypes";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
-import { CheckIcon } from "@heroicons/react/24/outline";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
 type RecurringHubRecurrenceProps = {
@@ -166,28 +167,54 @@ export function RecurringHubRecurrence({
                       How many more times this template should create an event.
                     </p>
                   </div>
-                  <label className="shrink-0">
-                    <span className="sr-only">Number of recurrences</span>
-                    <select
+                  <Listbox
                       value={newRecurrenceData.recurrenceAmount}
-                      onChange={(e) =>
+                      onChange={(recurrenceAmount) =>
                         setNewRecurrenceData({
                           ...newRecurrenceData,
-                          recurrenceAmount: Number(e.target.value),
+                          recurrenceAmount,
                         })
                       }
-                      className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                     >
-                      {[...Array(MAX_RECURRENCE_AMOUNT).keys()].map((value) => {
-                        const n = value + 1;
-                        return (
-                          <option key={n} value={n}>
-                            {n === 1 ? "Once" : `${n} times`}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
+                    <div className="relative min-w-[10rem] shrink-0">
+                      <Listbox.Button
+                        aria-label="Number of recurrences"
+                        className="relative w-full rounded-xl border border-border bg-background py-2 pl-3 pr-10 text-left text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      >
+                        {newRecurrenceData.recurrenceAmount === 1
+                          ? "Once"
+                          : `${newRecurrenceData.recurrenceAmount} times`}
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ChevronUpDownIcon className="h-4 w-4 text-foreground-muted" aria-hidden />
+                        </span>
+                      </Listbox.Button>
+                      <Transition
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute right-0 z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-border bg-background py-1 text-sm shadow-sm focus:outline-none">
+                          {[...Array(MAX_RECURRENCE_AMOUNT).keys()].map((value) => {
+                            const n = value + 1;
+                            return (
+                              <Listbox.Option
+                                key={n}
+                                value={n}
+                                className={({ active }) =>
+                                  `cursor-default px-3 py-2 font-sans ${
+                                    active ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                                  }`
+                                }
+                              >
+                                {n === 1 ? "Once" : `${n} times`}
+                              </Listbox.Option>
+                            );
+                          })}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
+                  </Listbox>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-start gap-3 py-4">
@@ -197,28 +224,52 @@ export function RecurringHubRecurrence({
                       How many days before the occurrence date the public event is created.
                     </p>
                   </div>
-                  <label className="shrink-0">
-                    <span className="sr-only">Create days before</span>
-                    <select
+                  <Listbox
                       value={newRecurrenceData.createDaysBefore}
-                      onChange={(e) =>
+                      onChange={(createDaysBefore) =>
                         setNewRecurrenceData({
                           ...newRecurrenceData,
-                          createDaysBefore: Number(e.target.value),
+                          createDaysBefore,
                         })
                       }
-                      className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                     >
-                      {[...Array(maxCreateDays).keys()].map((value) => {
-                        const n = value + 1;
-                        return (
-                          <option key={n} value={n}>
-                            {n} {n === 1 ? "day" : "days"}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
+                    <div className="relative min-w-[10rem] shrink-0">
+                      <Listbox.Button
+                        aria-label="Create days before"
+                        className="relative w-full rounded-xl border border-border bg-background py-2 pl-3 pr-10 text-left text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                      >
+                        {newRecurrenceData.createDaysBefore} {newRecurrenceData.createDaysBefore === 1 ? "day" : "days"}
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                          <ChevronUpDownIcon className="h-4 w-4 text-foreground-muted" aria-hidden />
+                        </span>
+                      </Listbox.Button>
+                      <Transition
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute right-0 z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-border bg-background py-1 text-sm shadow-sm focus:outline-none">
+                          {[...Array(maxCreateDays).keys()].map((value) => {
+                            const n = value + 1;
+                            return (
+                              <Listbox.Option
+                                key={n}
+                                value={n}
+                                className={({ active }) =>
+                                  `cursor-default px-3 py-2 font-sans ${
+                                    active ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                                  }`
+                                }
+                              >
+                                {n} {n === 1 ? "day" : "days"}
+                              </Listbox.Option>
+                            );
+                          })}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
+                  </Listbox>
                 </div>
               </>
             ) : null}
