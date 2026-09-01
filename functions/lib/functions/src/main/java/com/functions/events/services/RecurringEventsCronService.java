@@ -87,7 +87,9 @@ public class RecurringEventsCronService {
 
                     RecurrenceTemplate recurrenceTemplate = maybeRecurrenceTemplate.get();
                     RecurrenceData recurrenceData = recurrenceTemplate.getRecurrenceData();
-                    Map<String, String> pastRecurrences = new HashMap<>(recurrenceData.getPastRecurrences());
+                    Map<String, String> pastRecurrences = recurrenceData.getPastRecurrences() == null
+                            ? new HashMap<>()
+                            : new HashMap<>(recurrenceData.getPastRecurrences());
                     Timestamp recurrenceTimestamp = findNextRecurrenceToCreate(
                             recurrenceData, pastRecurrences, today, createEventWorkflow);
                     if (recurrenceTimestamp == null) {
