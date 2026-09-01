@@ -59,7 +59,11 @@ function RecurrenceNumberListbox({
           </span>
         </Listbox.Button>
         <Transition as={Fragment} leave="transition ease-in duration-100" leaveFrom="opacity-100" leaveTo="opacity-0">
-          <Listbox.Options className="absolute right-0 z-20 mt-1 max-h-60 w-full overflow-auto rounded-xl border border-border bg-background py-1 text-sm shadow-sm focus:outline-none">
+          <Listbox.Options
+            anchor="bottom end"
+            modal={false}
+            className="z-[100] max-h-60 w-[var(--button-width)] overflow-auto rounded-xl border border-border bg-background py-1 text-sm shadow-sm focus:outline-none [--anchor-gap:4px]"
+          >
             {options.map((option) => (
               <Listbox.Option
                 key={option}
