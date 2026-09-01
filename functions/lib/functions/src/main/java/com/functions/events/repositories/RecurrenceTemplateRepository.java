@@ -22,30 +22,26 @@ public class RecurrenceTemplateRepository {
 
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId) {
-        return getRecurrenceTemplate(recurrenceTemplateId, null);
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, Transaction transaction) {
         Optional<RecurrenceTemplate> maybeRecurrenceTemplate;
         // 1. Try Active Private Recurrence Templates
 
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, true, transaction);
+        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, true);
         if (maybeRecurrenceTemplate.isPresent()) {
             return maybeRecurrenceTemplate;
         }
 
         // 2. Try Active Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, false, transaction);
+        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, false);
         if (maybeRecurrenceTemplate.isPresent()) {
             return maybeRecurrenceTemplate;
         }
         // 3. Try InActive Private Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, true, transaction);
+        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, true);
         if (maybeRecurrenceTemplate.isPresent()) {
             return maybeRecurrenceTemplate;
         }
         // 4. Try InActive Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false, transaction);
+        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false);
         return maybeRecurrenceTemplate;
     }
 
@@ -65,18 +61,9 @@ public class RecurrenceTemplateRepository {
     }
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate) {
-        return getRecurrenceTemplate(recurrenceTemplateId, isActive, isPrivate, null);
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate, Transaction transaction) {
         DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(recurrenceTemplateId, isActive, isPrivate);
         try {
-            DocumentSnapshot maybeSnapshot;
-            if (transaction == null) {
-                maybeSnapshot = recurrenceTemplateDocRef.get().get();
-            } else {
-                maybeSnapshot = transaction.get(recurrenceTemplateDocRef).get();
-            }
+            DocumentSnapshot maybeSnapshot = recurrenceTemplateDocRef.get().get();
             if (maybeSnapshot.exists()) {
                 return Optional.ofNullable(maybeSnapshot.toObject(RecurrenceTemplate.class));
             }
