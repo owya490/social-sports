@@ -24,6 +24,8 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Transaction;
 
 public class RecurringEventsCronService {
@@ -44,18 +46,36 @@ public class RecurringEventsCronService {
 
         logger.info("All Active Recurrence Template Ids {}", activeRecurrenceTemplateIds);
         List<String> moveToInactiveRecurringEvents = new ArrayList<>();
-
-        List<String> createdEventIds = new ArrayList<>();
-        
-        // Track events that need reserved slots processed (after main transaction)
-        Map<String, List<ReservedSlot>> eventsNeedingReservedSlots = new HashMap<>();
+        List<CreatedRecurringEvent> createdEvents = new ArrayList<>();
 
         for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
-            Map<String, String> eventIdsByRecurrence = new HashMap<>();
+            RecurrenceTemplateProcessingResult result = processRecurrenceTemplate(
+                    recurrenceTemplateId, today, createEventWorkflow);
+            createdEvents.addAll(result.createdEvents());
+            if (result.moveToInactive()) {
+                moveToInactiveRecurringEvents.add(recurrenceTemplateId);
+            }
+        }
 
-            boolean shouldProcessNextOccurrence = true;
-            while (shouldProcessNextOccurrence) {
-                RecurrenceTransactionResult transactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
+        processReservedSlots(createdEvents);
+
+        for (String recurringEventId : moveToInactiveRecurringEvents) {
+            FirebaseService.createFirestoreTransaction(transaction -> {
+                moveRecurringEventToInactive(recurringEventId, transaction);
+                return null;
+            });
+        }
+
+        return createdEvents.stream().map(CreatedRecurringEvent::eventId).toList();
+    }
+
+    private static RecurrenceTemplateProcessingResult processRecurrenceTemplate(
+            String recurrenceTemplateId, LocalDate today, boolean createEventWorkflow) throws Exception {
+        Map<String, String> eventIdsByRecurrence = new HashMap<>();
+        List<CreatedRecurringEvent> createdEvents = new ArrayList<>();
+
+        do {
+            RecurrenceTransactionResult transactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
                     Optional<RecurrenceTemplate> maybeRecurrenceTemplate =
                             RecurrenceTemplateRepository.getRecurrenceTemplateInTransaction(
                                     recurrenceTemplateId, transaction);
@@ -83,10 +103,10 @@ public class RecurringEventsCronService {
                     String newEventId = eventIdsByRecurrence.computeIfAbsent(
                             recurrenceTimestampString, ignored -> UUID.randomUUID().toString());
 
-                    List<com.google.cloud.firestore.DocumentSnapshot> eventLinkDocuments =
+                    List<DocumentSnapshot> eventLinkDocuments =
                             CustomEventLinksService.getEventLinkDocumentsPointedToRecurrence(
                                     newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, transaction);
-                    List<com.google.cloud.firestore.DocumentReference> eventCollectionDocuments =
+                    List<DocumentReference> eventCollectionDocuments =
                             EventCollectionsService.getEventCollectionDocumentsContainingRecurringTemplate(
                                     recurrenceTemplateId, transaction);
 
@@ -107,52 +127,39 @@ public class RecurringEventsCronService {
                             finalCreationDateHasPassed(recurrenceData, today)
                                     && findNextRecurrenceToCreate(recurrenceData, pastRecurrences,
                                             today, false) == null);
-                });
+            });
 
-                if (transactionResult.createdEvent() == null) {
-                    if (transactionResult.moveToInactive()) {
-                        moveToInactiveRecurringEvents.add(recurrenceTemplateId);
-                    }
-                    shouldProcessNextOccurrence = false;
-                } else {
-                    CreatedRecurringEvent createdEvent = transactionResult.createdEvent();
-                    createdEventIds.add(createdEvent.eventId());
-                    if (!createdEvent.reservedSlots().isEmpty()) {
-                        eventsNeedingReservedSlots.put(createdEvent.eventId(), createdEvent.reservedSlots());
-                    }
-
-                    if (transactionResult.moveToInactive()) {
-                        moveToInactiveRecurringEvents.add(recurrenceTemplateId);
-                    }
-                    shouldProcessNextOccurrence = !transactionResult.moveToInactive()
-                            && !createEventWorkflow;
-                }
+            if (transactionResult.createdEvent() == null) {
+                return new RecurrenceTemplateProcessingResult(createdEvents,
+                        transactionResult.moveToInactive());
             }
-        }
 
-        // Process reserved slots in separate transactions (after event creation transactions complete)
-        for (Map.Entry<String, List<ReservedSlot>> entry : eventsNeedingReservedSlots.entrySet()) {
-            String eventId = entry.getKey();
-            List<ReservedSlot> reservedSlots = entry.getValue();
-            
+            createdEvents.add(transactionResult.createdEvent());
+            if (transactionResult.moveToInactive() || createEventWorkflow) {
+                return new RecurrenceTemplateProcessingResult(createdEvents,
+                        transactionResult.moveToInactive());
+            }
+        } while (!createEventWorkflow);
+
+        return new RecurrenceTemplateProcessingResult(createdEvents, false);
+    }
+
+    private static void processReservedSlots(List<CreatedRecurringEvent> createdEvents) {
+        for (CreatedRecurringEvent createdEvent : createdEvents) {
+            if (createdEvent.reservedSlots().isEmpty()) {
+                continue;
+            }
             try {
                 FirebaseService.createFirestoreTransaction(transaction -> {
-                    ReservedSlotService.processReservedSlots(eventId, reservedSlots, transaction);
+                    ReservedSlotService.processReservedSlots(createdEvent.eventId(),
+                            createdEvent.reservedSlots(), transaction);
                     return null;
                 });
             } catch (Exception e) {
-                logger.error("Failed to process reserved slots for event {}: {}", eventId, e.getMessage(), e);
+                logger.error("Failed to process reserved slots for event {}: {}",
+                        createdEvent.eventId(), e.getMessage(), e);
             }
         }
-
-        for (String recurringEventId : moveToInactiveRecurringEvents) {
-            FirebaseService.createFirestoreTransaction(transaction -> {
-                moveRecurringEventToInactive(recurringEventId, transaction);
-                return null;
-            });
-        }
-
-        return createdEventIds;
     }
 
     private static void moveRecurringEventToInactive(String recurrenceId, Transaction transaction) throws Exception {
@@ -238,6 +245,10 @@ public class RecurringEventsCronService {
 
     private record RecurrenceTransactionResult(CreatedRecurringEvent createdEvent,
                                                boolean moveToInactive) {
+    }
+
+    private record RecurrenceTemplateProcessingResult(List<CreatedRecurringEvent> createdEvents,
+                                                       boolean moveToInactive) {
     }
 
 
