@@ -30,6 +30,7 @@ import com.google.cloud.firestore.Transaction;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
+    private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
         return createEventsFromRecurrenceTemplates(today, null, false);
@@ -99,7 +100,7 @@ public class RecurringEventsCronService {
                     }
 
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
-                            recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
+                            recurrenceTimestamp, SYDNEY_TIMEZONE);
                     NewEventData newEventDataDeepCopy = createEventDataForRecurrence(
                             recurrenceTemplate.getEventData(), recurrenceTimestamp);
                     String newEventId = eventIdsByRecurrence.computeIfAbsent(
@@ -200,9 +201,10 @@ public class RecurringEventsCronService {
 
         for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
             String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
-                    recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
-            LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp)
-                    .toLocalDate().minusDays(recurrenceData.getCreateDaysBefore());
+                    recurrenceTimestamp, SYDNEY_TIMEZONE);
+            LocalDate eventCreationDate = recurrenceTimestamp.toSqlTimestamp().toInstant()
+                    .atZone(SYDNEY_TIMEZONE).toLocalDate()
+                    .minusDays(recurrenceData.getCreateDaysBefore());
             if (!pastRecurrences.containsKey(recurrenceTimestampString)
                     && (createEventWorkflow || today.equals(eventCreationDate))) {
                 return recurrenceTimestamp;
@@ -231,8 +233,9 @@ public class RecurringEventsCronService {
         Timestamp latestTimestamp = recurrenceData.getAllRecurrences().stream()
                 .max(Timestamp::compareTo)
                 .orElseThrow();
-        LocalDate finalEventCreationDate = TimeUtils.convertTimestampToLocalDateTime(latestTimestamp)
-                .toLocalDate().minusDays(recurrenceData.getCreateDaysBefore());
+        LocalDate finalEventCreationDate = latestTimestamp.toSqlTimestamp().toInstant()
+                .atZone(SYDNEY_TIMEZONE).toLocalDate()
+                .minusDays(recurrenceData.getCreateDaysBefore());
         return !today.isBefore(finalEventCreationDate);
     }
 

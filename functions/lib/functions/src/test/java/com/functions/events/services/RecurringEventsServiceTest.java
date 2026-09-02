@@ -59,6 +59,22 @@ public class RecurringEventsServiceTest {
     }
 
     @Test
+    public void usesSydneyDateWhenSelectingDueRecurrence() {
+        Timestamp recurrence = Timestamp.of(Date.from(Instant.parse("2026-08-22T14:00:00Z")));
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(0)
+                .allRecurrences(List.of(recurrence))
+                .pastRecurrences(Map.of())
+                .build();
+
+        Timestamp selectedRecurrence = RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(), LocalDate.of(2026, 8, 23), false);
+
+        org.junit.Assert.assertEquals(recurrence, selectedRecurrence);
+    }
+
+    @Test
     public void movesPastFinalRecurrenceTemplateInactiveWhenNoEventIsCreated() {
         Timestamp recurrence = Timestamp.of(Date.from(Instant.parse("2026-08-23T09:00:00Z")));
         RecurrenceData recurrenceData = RecurrenceData.builder()
