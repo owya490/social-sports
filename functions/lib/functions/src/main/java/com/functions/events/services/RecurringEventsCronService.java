@@ -4,12 +4,12 @@ package com.functions.events.services;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +24,13 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Transaction;
 
 public class RecurringEventsCronService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsCronService.class);
+    private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today) throws Exception {
         return createEventsFromRecurrenceTemplates(today, null, false);
@@ -44,131 +47,18 @@ public class RecurringEventsCronService {
 
         logger.info("All Active Recurrence Template Ids {}", activeRecurrenceTemplateIds);
         List<String> moveToInactiveRecurringEvents = new ArrayList<>();
-
-        List<String> createdEventIds = new ArrayList<>();
-        
-        // Track events that need reserved slots processed (after main transaction)
-        Map<String, List<ReservedSlot>> eventsNeedingReservedSlots = new HashMap<>();
+        List<CreatedRecurringEvent> createdEvents = new ArrayList<>();
 
         for (String recurrenceTemplateId : activeRecurrenceTemplateIds) {
-
-            // Create new transaction
-            FirebaseService.createFirestoreTransaction(transaction -> {
-                Optional<RecurrenceTemplate> maybeRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId, transaction);
-                if (maybeRecurrenceTemplate.isEmpty()) {
-                    logger.warn("Recurrence template not found for id: {} during transaction. Skipping processing of this recurring event to avoid TOCTOU failures.",
-                            recurrenceTemplateId);
-                    return true; // Continue processing other templates in the batch
-                }
-
-                RecurrenceTemplate recurrenceTemplate = maybeRecurrenceTemplate.get();
-                logger.debug("Creating recurring event from recurrence template data: {}", recurrenceTemplate);
-                NewEventData newEventData = recurrenceTemplate.getEventData();
-                RecurrenceData recurrenceData = recurrenceTemplate.getRecurrenceData();
-                Map<String, String> pastRecurrences = new HashMap<>(recurrenceData.getPastRecurrences());
-
-                boolean isStillActiveRecurrenceFlag = false;
-                List<Timestamp> allRecurrences = recurrenceData.getAllRecurrences();
-
-                if (createEventWorkflow) {
-                    // Find the first recurrence that hasn't been created yet
-                    Timestamp nextUncreatedRecurrence = null;
-                    for (Timestamp ts : allRecurrences) {
-                        String tsString = TimeUtils.getTimestampStringFromTimezone(ts, ZoneId.of("Australia/Sydney"));
-                        if (!pastRecurrences.containsKey(tsString)) {
-                            nextUncreatedRecurrence = ts;
-                            break;
-                        }
-                    }
-                    if (nextUncreatedRecurrence != null) {
-                        allRecurrences = List.of(nextUncreatedRecurrence);
-                    } else {
-                        logger.info("All recurrences already created for template: {}", recurrenceTemplateId);
-                        allRecurrences = List.of(); // Empty list - nothing to create
-                    }
-                }
-
-                for (Timestamp recurrenceTimestamp : allRecurrences) {
-                    logger.info("Recurrence Timestamp: {}", recurrenceTimestamp);
-                    String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(recurrenceTimestamp, ZoneId.of("Australia/Sydney"));
-                    LocalDate eventCreationDate = TimeUtils.convertTimestampToLocalDateTime(recurrenceTimestamp).toLocalDate()
-                            .minusDays(recurrenceData.getCreateDaysBefore());
-                    logger.info("Event Creation Date: {}", eventCreationDate);
-                    if (!pastRecurrences.containsKey(recurrenceTimestampString) && (today.equals(eventCreationDate) || createEventWorkflow) && (recurrenceTemplate.getRecurrenceData().getRecurrenceEnabled())) {
-                        logger.info("Creating event for recurrence template: {} for recurrence timestamp: {}", recurrenceTemplateId, recurrenceTimestampString);
-                        NewEventData newEventDataDeepCopy = JavaUtils.deepCopy(newEventData, NewEventData.class);
-                        long eventLengthMillis = newEventDataDeepCopy.getEndDate().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
-                        long eventDeadlineDeltaMillis = newEventDataDeepCopy.getRegistrationDeadline().toSqlTimestamp().getTime() - newEventDataDeepCopy.getStartDate().toSqlTimestamp().getTime();
-                        newEventDataDeepCopy.setStartDate(recurrenceTimestamp);
-                        Timestamp newEndDate = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventLengthMillis) * 1000);
-                        Timestamp newRegistrationDeadline = Timestamp.ofTimeMicroseconds((recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000);
-                        newEventDataDeepCopy.setEndDate(newEndDate);
-                        newEventDataDeepCopy.setRegistrationDeadline(newRegistrationDeadline);
-
-                        String newEventId = CreateEventHandler.createEvent(newEventDataDeepCopy, transaction);
-
-                        logger.info("New event id: {}", newEventId);
-                        createdEventIds.add(newEventId);
-                        
-                        // Track reserved slots for processing after transaction completes
-                        List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
-                        if (reservedSlots != null && !reservedSlots.isEmpty()) {
-                            eventsNeedingReservedSlots.put(newEventId, new ArrayList<>(reservedSlots));
-                        }
-                        pastRecurrences.put(recurrenceTimestampString, newEventId);
-
-                        // Update custom event links references
-                        try {
-                            CustomEventLinksService.updateEventLinksPointedToRecurrence(newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, newEventId);
-                        } catch (Exception e) {
-                            logger.error("Failed to update custom event links for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
-                            // Continue with event creation even if custom links update fails
-                        }
-
-                        // Add event to event collections that contain the recurrence template
-                        try {
-                            EventCollectionsService.addEventToEventCollectionsWithRecurrenceTemplate(recurrenceTemplateId, newEventId);
-                        } catch (Exception e) {
-                            logger.error("Failed to add event to event collection for recurrence template {}: {}", recurrenceTemplateId, e.getMessage());
-                            // Continue with event creation even if event collection update fails
-                        }
-                    }
-
-                    if (!recurrenceData.getAllRecurrences().isEmpty()) {
-                        Timestamp latestTimestamp = Collections.max(recurrenceData.getAllRecurrences(), Timestamp::compareTo);
-                        LocalDate finalEventCreationDate = TimeUtils.convertTimestampToLocalDateTime(latestTimestamp).toLocalDate().minusDays(recurrenceData.getCreateDaysBefore());
-                        if (today.isBefore(finalEventCreationDate)) {
-                            isStillActiveRecurrenceFlag = true;
-                        }
-                    }
-                }
-                RecurrenceData newRecurrenceData = recurrenceData.toBuilder().pastRecurrences(pastRecurrences).build();
-                logger.info("New Recurrence Data {}", newRecurrenceData.getPastRecurrences());
-                RecurrenceTemplate newRecurrenceTemplate = recurrenceTemplate.toBuilder().recurrenceData(newRecurrenceData).build();
-
-                RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId, newRecurrenceTemplate, transaction);
-
-                if (!isStillActiveRecurrenceFlag) {
-                    moveToInactiveRecurringEvents.add(recurrenceTemplateId);
-                }
-                return true;
-            });
-        }
-
-        // Process reserved slots in separate transactions (after event creation transactions complete)
-        for (Map.Entry<String, List<ReservedSlot>> entry : eventsNeedingReservedSlots.entrySet()) {
-            String eventId = entry.getKey();
-            List<ReservedSlot> reservedSlots = entry.getValue();
-            
-            try {
-                FirebaseService.createFirestoreTransaction(transaction -> {
-                    ReservedSlotService.processReservedSlots(eventId, reservedSlots, transaction);
-                    return null;
-                });
-            } catch (Exception e) {
-                logger.error("Failed to process reserved slots for event {}: {}", eventId, e.getMessage(), e);
+            RecurrenceTemplateProcessingResult result = processRecurrenceTemplate(
+                    recurrenceTemplateId, today, createEventWorkflow);
+            createdEvents.addAll(result.createdEvents());
+            if (result.moveToInactive()) {
+                moveToInactiveRecurringEvents.add(recurrenceTemplateId);
             }
         }
+
+        processReservedSlots(createdEvents);
 
         for (String recurringEventId : moveToInactiveRecurringEvents) {
             FirebaseService.createFirestoreTransaction(transaction -> {
@@ -177,12 +67,108 @@ public class RecurringEventsCronService {
             });
         }
 
-        return createdEventIds;
+        return createdEvents.stream().map(CreatedRecurringEvent::eventId).toList();
+    }
+
+    private static RecurrenceTemplateProcessingResult processRecurrenceTemplate(
+            String recurrenceTemplateId, LocalDate today, boolean createEventWorkflow) throws Exception {
+        Map<String, String> eventIdsByRecurrence = new HashMap<>();
+        List<CreatedRecurringEvent> createdEvents = new ArrayList<>();
+
+        do {
+            RecurrenceTransactionResult transactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
+                    Optional<RecurrenceTemplate> maybeRecurrenceTemplate =
+                            RecurrenceTemplateRepository.getRecurrenceTemplateInTransaction(
+                                    recurrenceTemplateId, transaction);
+                    if (maybeRecurrenceTemplate.isEmpty()) {
+                        logger.warn("Recurrence template not found for id: {} during transaction. Skipping processing of this recurring event to avoid TOCTOU failures.",
+                                recurrenceTemplateId);
+                        return new RecurrenceTransactionResult(null, false);
+                    }
+
+                    RecurrenceTemplate recurrenceTemplate = maybeRecurrenceTemplate.get();
+                    RecurrenceData recurrenceData = recurrenceTemplate.getRecurrenceData();
+                    Map<String, String> pastRecurrences = recurrenceData.getPastRecurrences() == null
+                            ? new HashMap<>()
+                            : new HashMap<>(recurrenceData.getPastRecurrences());
+                    Timestamp recurrenceTimestamp = findNextRecurrenceToCreate(
+                            recurrenceData, pastRecurrences, today, createEventWorkflow);
+                    if (recurrenceTimestamp == null) {
+                        return new RecurrenceTransactionResult(null,
+                                shouldMoveTemplateToInactiveAfterNoCreation(
+                                        recurrenceData, today, createEventWorkflow));
+                    }
+
+                    String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
+                            recurrenceTimestamp, SYDNEY_TIMEZONE);
+                    NewEventData newEventDataDeepCopy = createEventDataForRecurrence(
+                            recurrenceTemplate.getEventData(), recurrenceTimestamp);
+                    String newEventId = eventIdsByRecurrence.computeIfAbsent(
+                            recurrenceTimestampString, ignored -> UUID.randomUUID().toString());
+
+                    List<DocumentSnapshot> eventLinkDocuments =
+                            CustomEventLinksService.getEventLinkDocumentsPointedToRecurrence(
+                                    newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, transaction);
+                    List<DocumentReference> eventCollectionDocuments =
+                            EventCollectionsService.getEventCollectionDocumentsContainingRecurringTemplate(
+                                    recurrenceTemplateId, transaction);
+
+                    CreateEventHandler.createEvent(newEventDataDeepCopy, transaction, newEventId);
+                    CustomEventLinksService.updateEventLinks(eventLinkDocuments, newEventId, transaction);
+                    EventCollectionsService.addEventToEventCollections(
+                            eventCollectionDocuments, newEventId, transaction);
+                    pastRecurrences.put(recurrenceTimestampString, newEventId);
+
+                    RecurrenceData newRecurrenceData = recurrenceData.toBuilder()
+                            .pastRecurrences(pastRecurrences).build();
+                    RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId,
+                            recurrenceTemplate.toBuilder().recurrenceData(newRecurrenceData).build(), transaction);
+
+                    List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
+                    return new RecurrenceTransactionResult(new CreatedRecurringEvent(newEventId,
+                            reservedSlots == null ? List.of() : new ArrayList<>(reservedSlots)),
+                            finalCreationDateHasPassed(recurrenceData, today)
+                                    && findNextRecurrenceToCreate(recurrenceData, pastRecurrences,
+                                            today, false) == null);
+            });
+
+            if (transactionResult.createdEvent() == null) {
+                return new RecurrenceTemplateProcessingResult(createdEvents,
+                        transactionResult.moveToInactive());
+            }
+
+            createdEvents.add(transactionResult.createdEvent());
+            if (transactionResult.moveToInactive() || createEventWorkflow) {
+                return new RecurrenceTemplateProcessingResult(createdEvents,
+                        transactionResult.moveToInactive());
+            }
+        } while (!createEventWorkflow);
+
+        return new RecurrenceTemplateProcessingResult(createdEvents, false);
+    }
+
+    private static void processReservedSlots(List<CreatedRecurringEvent> createdEvents) {
+        for (CreatedRecurringEvent createdEvent : createdEvents) {
+            if (createdEvent.reservedSlots().isEmpty()) {
+                continue;
+            }
+            try {
+                FirebaseService.createFirestoreTransaction(transaction -> {
+                    ReservedSlotService.processReservedSlots(createdEvent.eventId(),
+                            createdEvent.reservedSlots(), transaction);
+                    return null;
+                });
+            } catch (Exception e) {
+                logger.error("Failed to process reserved slots for event {}: {}",
+                        createdEvent.eventId(), e.getMessage(), e);
+            }
+        }
     }
 
     private static void moveRecurringEventToInactive(String recurrenceId, Transaction transaction) throws Exception {
         // Get the Recurrence Template from firestore with transaction first
-        Optional<RecurrenceTemplate> maybeRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceId, transaction);
+        Optional<RecurrenceTemplate> maybeRecurrenceTemplate =
+                RecurrenceTemplateRepository.getRecurrenceTemplateInTransaction(recurrenceId, transaction);
         if (maybeRecurrenceTemplate.isEmpty()) {
             throw new Exception("Recurrence template does not exist: " + recurrenceId);
         }
@@ -205,6 +191,70 @@ public class RecurringEventsCronService {
         } catch (Exception e) {
             logger.error("Unable to move Recurrence Template {}", recurrenceId, e);
         }
+    }
+
+    static Timestamp findNextRecurrenceToCreate(RecurrenceData recurrenceData,
+            Map<String, String> pastRecurrences, LocalDate today, boolean createEventWorkflow) {
+        if (!recurrenceData.getRecurrenceEnabled()) {
+            return null;
+        }
+
+        for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
+            String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
+                    recurrenceTimestamp, SYDNEY_TIMEZONE);
+            LocalDate eventCreationDate = recurrenceTimestamp.toSqlTimestamp().toInstant()
+                    .atZone(SYDNEY_TIMEZONE).toLocalDate()
+                    .minusDays(recurrenceData.getCreateDaysBefore());
+            if (!pastRecurrences.containsKey(recurrenceTimestampString)
+                    && (createEventWorkflow || today.equals(eventCreationDate))) {
+                return recurrenceTimestamp;
+            }
+        }
+        return null;
+    }
+
+    private static NewEventData createEventDataForRecurrence(NewEventData eventData,
+            Timestamp recurrenceTimestamp) {
+        NewEventData eventDataCopy = JavaUtils.deepCopy(eventData, NewEventData.class);
+        long eventLengthMillis = eventDataCopy.getEndDate().toSqlTimestamp().getTime()
+                - eventDataCopy.getStartDate().toSqlTimestamp().getTime();
+        long eventDeadlineDeltaMillis = eventDataCopy.getRegistrationDeadline().toSqlTimestamp().getTime()
+                - eventDataCopy.getStartDate().toSqlTimestamp().getTime();
+        eventDataCopy.setStartDate(recurrenceTimestamp);
+        eventDataCopy.setEndDate(Timestamp.ofTimeMicroseconds(
+                (recurrenceTimestamp.toSqlTimestamp().getTime() + eventLengthMillis) * 1000));
+        eventDataCopy.setRegistrationDeadline(Timestamp.ofTimeMicroseconds(
+                (recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000));
+        return eventDataCopy;
+    }
+
+    private static boolean finalCreationDateHasPassed(RecurrenceData recurrenceData,
+            LocalDate today) {
+        Timestamp latestTimestamp = recurrenceData.getAllRecurrences().stream()
+                .max(Timestamp::compareTo)
+                .orElseThrow();
+        LocalDate finalEventCreationDate = latestTimestamp.toSqlTimestamp().toInstant()
+                .atZone(SYDNEY_TIMEZONE).toLocalDate()
+                .minusDays(recurrenceData.getCreateDaysBefore());
+        return !today.isBefore(finalEventCreationDate);
+    }
+
+    static boolean shouldMoveTemplateToInactiveAfterNoCreation(RecurrenceData recurrenceData,
+            LocalDate today, boolean createEventWorkflow) {
+        return (createEventWorkflow && Boolean.TRUE.equals(recurrenceData.getRecurrenceEnabled()))
+                || recurrenceData.getAllRecurrences().isEmpty()
+                || finalCreationDateHasPassed(recurrenceData, today);
+    }
+
+    private record CreatedRecurringEvent(String eventId, List<ReservedSlot> reservedSlots) {
+    }
+
+    private record RecurrenceTransactionResult(CreatedRecurringEvent createdEvent,
+                                               boolean moveToInactive) {
+    }
+
+    private record RecurrenceTemplateProcessingResult(List<CreatedRecurringEvent> createdEvents,
+                                                       boolean moveToInactive) {
     }
 
 
