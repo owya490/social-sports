@@ -101,6 +101,7 @@ export default function Register() {
       <AuthSplitLayout
         ctaTitle="Join Australia's best social sport registration platform."
         ctaBody="Discover volleyball, badminton, pickleball and more, then book or host your next session in minutes."
+        ctaBackdrop="jumpman"
       >
         <h1 className="text-3xl font-bold tracking-tight text-core-text">Register</h1>
         <p className="mt-2 text-sm font-light leading-relaxed text-gray-500">
