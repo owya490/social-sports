@@ -104,7 +104,7 @@ export default function Register() {
       >
         <h1 className="text-3xl font-bold tracking-tight text-core-text">Register</h1>
         <p className="mt-2 text-sm font-light leading-relaxed text-gray-500">
-          Create an account to book sessions and host events.
+          Create an account to host events in minutes.
         </p>
 
         <form className="mt-8 space-y-6 group" onSubmit={handleSubmit}>

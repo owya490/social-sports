@@ -20,8 +20,8 @@ const TOPOGRAPHIC_RINGS = Array.from({ length: 16 }, (_, index) => index + 1);
 export default function AuthSplitLayout({ children, ctaTitle, ctaBody }: AuthSplitLayoutProps) {
   return (
     <div className="grid min-h-screen w-full bg-white md:grid-cols-2">
-      <div className="relative order-1 flex min-h-screen flex-col justify-center overflow-y-auto bg-white px-6 py-16 sm:px-12 lg:px-16 xl:px-24">
-        <AuthHomeLogo className="absolute right-6 top-6 md:hidden" inverted={false} />
+      <div className="relative order-1 flex min-h-screen flex-col justify-center overflow-y-auto bg-white px-6 pb-16 pt-24 sm:px-12 lg:px-16 xl:px-24">
+        <AuthHomeLogo className="absolute left-6 top-6" />
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>
       <div className="order-2 hidden md:block">
@@ -36,7 +36,6 @@ function AuthCtaPanel({ title, body }: { title: string; body: string }) {
     <div className="sticky top-0 flex h-screen overflow-hidden bg-black text-white">
       <TopographicBackdrop />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-      <AuthHomeLogo className="absolute right-6 top-6 z-20" inverted />
       <div className="relative z-10 mt-auto flex w-full flex-col justify-end p-10 lg:p-12">
         <h2 className="max-w-md text-3xl font-bold leading-tight tracking-tight lg:text-4xl">{title}</h2>
         <p className="mt-4 max-w-md text-sm font-light leading-relaxed text-gray-300 lg:text-base">{body}</p>
@@ -45,17 +44,18 @@ function AuthCtaPanel({ title, body }: { title: string; body: string }) {
   );
 }
 
-function AuthHomeLogo({ className, inverted }: { className?: string; inverted: boolean }) {
+function AuthHomeLogo({ className }: { className?: string }) {
   return (
-    <Link href="/" className={className} aria-label="SPORTSHUB home">
+    <Link href="/" className={`flex items-center gap-2.5 ${className ?? ""}`} aria-label="SPORTSHUB home">
       <Image
         src={LogoImage}
-        alt="SPORTSHUB"
-        width={48}
-        height={48}
+        alt=""
+        width={40}
+        height={40}
         priority
-        className={`h-12 w-12 ${inverted ? "invert" : ""}`}
+        className="h-10 w-10 aspect-square"
       />
+      <span className="font-sans text-sm font-semibold uppercase tracking-[0.16em] text-core-text">SPORTSHUB</span>
     </Link>
   );
 }
