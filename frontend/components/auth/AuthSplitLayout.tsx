@@ -17,28 +17,30 @@ const TOPOGRAPHIC_RINGS = Array.from({ length: 16 }, (_, index) => index + 1);
 
 export default function AuthSplitLayout({ children, ctaTitle, ctaBody }: AuthSplitLayoutProps) {
   return (
-    <div className="grid min-h-screen w-full bg-white md:grid-cols-2">
-      <div className="relative order-1 flex min-h-screen flex-col justify-center overflow-y-auto bg-white px-6 pb-16 pt-24 sm:px-12 lg:px-16 xl:px-24">
-        <div className="absolute left-6 top-6">
+    <div className="flex min-h-screen w-full flex-col bg-white md:grid md:grid-cols-2">
+      <div className="relative flex flex-1 flex-col justify-center overflow-y-auto bg-white px-6 pb-10 pt-16 sm:px-12 sm:pt-20 md:min-h-screen md:pb-16 md:pt-24 lg:px-16 xl:px-24">
+        <div className="absolute left-5 top-5 sm:left-6 sm:top-6">
           <Logo showText size="sm" />
         </div>
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>
-      <div className="order-2 hidden md:block">
-        <AuthCtaPanel title={ctaTitle} body={ctaBody} />
-      </div>
+      <AuthCtaPanel title={ctaTitle} body={ctaBody} />
     </div>
   );
 }
 
 function AuthCtaPanel({ title, body }: { title: string; body: string }) {
   return (
-    <div className="sticky top-0 flex h-screen overflow-hidden bg-black text-white">
+    <div className="relative flex min-h-40 shrink-0 overflow-hidden bg-black text-white md:sticky md:top-0 md:h-screen md:min-h-screen">
       <TopographicBackdrop />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-      <div className="relative z-10 mt-auto flex w-full flex-col justify-end p-10 lg:p-12">
-        <h2 className="max-w-md text-3xl font-bold leading-tight tracking-tight lg:text-4xl">{title}</h2>
-        <p className="mt-4 max-w-md text-sm font-light leading-relaxed text-gray-300 lg:text-base">{body}</p>
+      <div className="relative z-10 mt-auto flex w-full flex-col justify-end p-6 sm:p-8 md:p-10 lg:p-12">
+        <h2 className="max-w-md text-xl font-bold leading-tight tracking-tight sm:text-2xl md:text-3xl lg:text-4xl">
+          {title}
+        </h2>
+        <p className="mt-2 max-w-md text-xs font-light leading-relaxed text-gray-300 sm:text-sm md:mt-4 md:text-sm lg:text-base">
+          {body}
+        </p>
       </div>
     </div>
   );

@@ -17,13 +17,13 @@ export default function Logo({
         priority={true}
         src={LogoImage}
         alt="SPORTSHUB - Find and book social sports events"
-        width={small ? 32 : 48}
-        height={small ? 32 : 48}
-        className={`${small ? "h-8 w-8" : "h-12 w-12"} aspect-square object-contain`}
+        width={small ? 24 : 48}
+        height={small ? 24 : 48}
+        className={`${small ? "h-5 w-5 sm:h-6 sm:w-6" : "h-12 w-12"} aspect-square object-contain`}
       />
       {showText && (
         <span
-          className={`${small ? "h-8 text-[2rem]" : "h-12 text-[3rem]"} font-sans font-semibold uppercase leading-none text-core-text`}
+          className={`${small ? "h-5 text-xl sm:h-6 sm:text-2xl" : "h-12 text-[3rem]"} font-sans font-semibold uppercase leading-none text-core-text`}
         >
           SPORTSHUB
         </span>
