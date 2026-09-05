@@ -1,6 +1,8 @@
 "use client";
 import AuthSplitLayout, { AUTH_INPUT_CLASS, AUTH_SUBMIT_CLASS } from "@/components/auth/AuthSplitLayout";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import { useUser } from "@/components/utility/UserContext";
+import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { getFullUserById } from "@/services/src/users/usersService";
@@ -17,9 +19,15 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [alertStatus, setAlertStatus] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [socialPending, setSocialPending] = useState(false);
   const router = useRouter();
   const { setUser } = useUser();
   const logger = new Logger("loginLogger");
+
+  const completeSocialSignIn = async (userId: UserId) => {
+    setUser(await getFullUserById(userId));
+    router.push("/?login=success");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -121,10 +129,20 @@ export default function Login() {
             </div>
           </div>
 
-          <button type="submit" className={AUTH_SUBMIT_CLASS} tabIndex={3} disabled={isPending}>
+          <button type="submit" className={AUTH_SUBMIT_CLASS} tabIndex={3} disabled={isPending || socialPending}>
             {isPending ? "Loading..." : "Sign in"}
           </button>
         </form>
+
+        <SocialAuthButtons
+          disabled={isPending}
+          onPendingChange={setSocialPending}
+          onError={(message) => {
+            setErrorMessage(message);
+            setAlertStatus(true);
+          }}
+          onSuccess={completeSocialSignIn}
+        />
 
         <p className="mt-8 text-gray-500">
           Not a member?{" "}
