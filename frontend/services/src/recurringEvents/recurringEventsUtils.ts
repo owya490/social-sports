@@ -1,4 +1,4 @@
-import { NewRecurrenceFormData, RecurrenceData, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { Frequency, NewRecurrenceFormData, RecurrenceData, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import { DocumentData, QueryDocumentSnapshot, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -39,11 +39,12 @@ export async function findRecurrenceTemplateDoc(
 
 export function extractNewRecurrenceFormDataFromRecurrenceData(recurrenceData: RecurrenceData): NewRecurrenceFormData {
   return {
-    frequency: recurrenceData.frequency,
-    createDaysBefore: recurrenceData.createDaysBefore,
-    recurrenceAmount: recurrenceData.recurrenceAmount,
+    frequency: recurrenceData.frequency ?? Frequency.WEEKLY,
+    createDaysBefore: recurrenceData.createDaysBefore ?? 1,
+    recurrenceAmount: recurrenceData.recurrenceAmount ?? 1,
     recurrenceEnabled: recurrenceData.recurrenceEnabled,
     reservedSlots: recurrenceData.reservedSlots || [],
+    occurrences: recurrenceData.occurrences || [],
   };
 }
 

@@ -20,7 +20,7 @@ import {
   getUsersEventThumbnailsUrls,
 } from "@/services/src/images/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
-import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
+import { createRecurrenceTemplateV2 } from "@/services/src/recurringEvents/recurringEventsService";
 import { dateAndTimeInLocalToTimestamp } from "@/services/src/datetimeUtils";
 import { withInactiveStripePaymentDefaults } from "@/services/src/stripe/stripeUtils";
 import { Timestamp } from "firebase/firestore";
@@ -118,8 +118,18 @@ export default function CreateEvent() {
     let newEventId: EventId | null = null;
     try {
       if (newRecurrenceData.recurrenceEnabled) {
-        const [firstEventId] = await createRecurrenceTemplate(newEventData, newRecurrenceData);
-        newEventId = firstEventId;
+        const [firstEventId, recurrenceTemplateId] = await createRecurrenceTemplateV2(
+          newEventData,
+          newRecurrenceData
+        );
+        if (firstEventId) {
+          newEventId = firstEventId;
+        } else {
+          bustOrganiserEventsCache();
+          setLoading(false);
+          router.push(`/organiser/v2/event/recurring-events/${recurrenceTemplateId}`);
+          return null;
+        }
       } else {
         newEventId = await createEvent(newEventData);
       }
