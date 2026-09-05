@@ -1,7 +1,5 @@
-import Image from "next/image";
-import Link from "next/link";
+import Logo from "@/components/navbar/Logo";
 import { ReactNode } from "react";
-import LogoImage from "@/public/icons/Icon_black_square.png";
 
 export const AUTH_INPUT_CLASS =
   "block w-full rounded-lg border-0 py-2.5 text-core-text shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:leading-6";
@@ -21,7 +19,9 @@ export default function AuthSplitLayout({ children, ctaTitle, ctaBody }: AuthSpl
   return (
     <div className="grid min-h-screen w-full bg-white md:grid-cols-2">
       <div className="relative order-1 flex min-h-screen flex-col justify-center overflow-y-auto bg-white px-6 pb-16 pt-24 sm:px-12 lg:px-16 xl:px-24">
-        <AuthHomeLogo className="absolute left-6 top-6" />
+        <div className="absolute left-6 top-6">
+          <Logo showText />
+        </div>
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>
       <div className="order-2 hidden md:block">
@@ -41,22 +41,6 @@ function AuthCtaPanel({ title, body }: { title: string; body: string }) {
         <p className="mt-4 max-w-md text-sm font-light leading-relaxed text-gray-300 lg:text-base">{body}</p>
       </div>
     </div>
-  );
-}
-
-function AuthHomeLogo({ className }: { className?: string }) {
-  return (
-    <Link href="/" className={`flex items-center gap-2.5 ${className ?? ""}`} aria-label="SPORTSHUB home">
-      <Image
-        src={LogoImage}
-        alt=""
-        width={40}
-        height={40}
-        priority
-        className="h-10 w-10 aspect-square"
-      />
-      <span className="font-sans text-sm font-semibold uppercase tracking-[0.16em] text-core-text">SPORTSHUB</span>
-    </Link>
   );
 }
 
