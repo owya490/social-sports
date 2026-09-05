@@ -2,31 +2,45 @@ import Image from "next/image";
 import Link from "next/link";
 import LogoImage from "./../../public/icons/Icon_black_square.png";
 
+const LOGO_SIZES = {
+  sm: {
+    gap: "gap-1.5",
+    image: { width: 24, height: 24, className: "h-5 w-5 sm:h-6 sm:w-6" },
+    text: "text-lg",
+  },
+  md: {
+    gap: "gap-2",
+    image: { width: 48, height: 48, className: "h-12 w-12" },
+    text: "text-[2.25rem]",
+  },
+  lg: {
+    gap: "gap-3",
+    image: { width: 64, height: 64, className: "h-16 w-16" },
+    text: "text-[3rem]",
+  },
+} as const;
+
 export default function Logo({
   showText = false,
-  size = "default",
+  size = "md",
 }: {
   showText?: boolean;
-  size?: "default" | "sm";
+  size?: keyof typeof LOGO_SIZES;
 }) {
-  const small = size === "sm";
+  const { gap, image, text } = LOGO_SIZES[size];
 
   return (
-    <Link href="/" className={`flex items-center ${small ? "gap-1.5" : "gap-2"}`}>
+    <Link href="/" className={`flex items-center ${gap}`}>
       <Image
         priority={true}
         src={LogoImage}
         alt="SPORTSHUB - Find and book social sports events"
-        width={small ? 24 : 48}
-        height={small ? 24 : 48}
-        className={`${small ? "h-5 w-5 sm:h-6 sm:w-6" : "h-12 w-12"} aspect-square object-contain`}
+        width={image.width}
+        height={image.height}
+        className={`${image.className} aspect-square object-contain`}
       />
       {showText && (
-        <span
-          className={`${small ? "h-5 text-xl sm:h-6 sm:text-2xl" : "h-12 text-[3rem]"} font-sans font-semibold uppercase leading-none text-core-text`}
-        >
-          SPORTSHUB
-        </span>
+        <span className={`${text} font-sans font-semibold uppercase leading-none text-core-text`}>SPORTSHUB</span>
       )}
     </Link>
   );
