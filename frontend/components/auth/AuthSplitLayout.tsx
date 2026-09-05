@@ -20,7 +20,7 @@ export default function AuthSplitLayout({ children, ctaTitle, ctaBody }: AuthSpl
     <div className="grid min-h-screen w-full bg-white md:grid-cols-2">
       <div className="relative order-1 flex min-h-screen flex-col justify-center overflow-y-auto bg-white px-6 pb-16 pt-24 sm:px-12 lg:px-16 xl:px-24">
         <div className="absolute left-6 top-6">
-          <Logo showText />
+          <Logo showText size="sm" />
         </div>
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>
