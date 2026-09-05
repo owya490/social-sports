@@ -1,18 +1,26 @@
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import {
   Frequency,
   NewRecurrenceFormData,
+  RecurrenceOccurrence,
   RecurrenceTemplate,
   RecurrenceTemplateId,
+  isRecurrenceTemplateV2,
 } from "@/interfaces/RecurringEventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById } from "../users/usersService";
 import {
   applyGeneralAdmissionInventoryFields,
   mergeInventoryIntoEventData,
 } from "../events/eventsUtils/eventTicketTypesUtils";
+import {
+  calculateRecurrenceEndedV2,
+  serializeOccurrenceForRequest,
+} from "./recurrenceV2Utils";
 import {
   findRecurrenceTemplateDoc,
   getCreateRecurringTemplateUrl,
@@ -26,8 +34,112 @@ interface CreateRecurrenceTemplateResponse {
   recurrenceTemplateId: RecurrenceTemplateId;
 }
 
+interface CreateRecurrenceTemplateV2Response {
+  eventId?: EventId | null;
+  recurrenceTemplateId: RecurrenceTemplateId;
+}
+
 interface UpdateRecurrenceTemplateResponse {
   recurrenceTemplateId: RecurrenceTemplateId;
+}
+
+interface UpdateRecurrenceTemplateV2Response {
+  recurrenceTemplateId: RecurrenceTemplateId;
+  eventId?: EventId | null;
+}
+
+function toTimestamp(value: Timestamp | { seconds: number; nanoseconds?: number } | Date): Timestamp {
+  if (value instanceof Timestamp) {
+    return value;
+  }
+  if (value instanceof Date) {
+    return Timestamp.fromDate(value);
+  }
+  return new Timestamp(value.seconds, value.nanoseconds ?? 0);
+}
+
+function hydrateOccurrences(occurrences: RecurrenceOccurrence[] | undefined): RecurrenceOccurrence[] | undefined {
+  if (!occurrences) {
+    return occurrences;
+  }
+  return occurrences.map((occurrence) => ({
+    ...occurrence,
+    eventStart: toTimestamp(occurrence.eventStart),
+    createDate: toTimestamp(occurrence.createDate),
+    eventId: occurrence.eventId || undefined,
+  }));
+}
+
+function serializeEventDataForRequest(eventData: NewEventData) {
+  return {
+    ...eventData,
+    startDate: eventData.startDate.toDate().toISOString(),
+    endDate: eventData.endDate.toDate().toISOString(),
+    registrationDeadline: eventData.registrationDeadline.toDate().toISOString(),
+  };
+}
+
+export async function createRecurrenceTemplateV2(
+  eventData: NewEventData,
+  recurrenceData: NewRecurrenceFormData
+): Promise<[EventId | null, RecurrenceTemplateId]> {
+  const occurrences = recurrenceData.occurrences ?? [];
+  if (occurrences.length === 0) {
+    throw new Error("At least one recurrence date is required");
+  }
+
+  recurringEventsServiceLogger.info("createRecurrenceTemplateV2");
+  const response = await executeGlobalAppControllerFunction<
+    {
+      eventData: ReturnType<typeof serializeEventDataForRequest>;
+      occurrences: ReturnType<typeof serializeOccurrenceForRequest>[];
+      recurrenceEnabled: boolean;
+      reservedSlots: NewRecurrenceFormData["reservedSlots"];
+    },
+    CreateRecurrenceTemplateV2Response
+  >(
+    EndpointType.CREATE_RECURRENCE_TEMPLATE_V2,
+    {
+      eventData: serializeEventDataForRequest(eventData),
+      occurrences: occurrences.map(serializeOccurrenceForRequest),
+      recurrenceEnabled: true,
+      reservedSlots: recurrenceData.reservedSlots ?? [],
+    },
+    { attachAuth: true }
+  );
+  return [response.eventId ?? null, response.recurrenceTemplateId];
+}
+
+export async function updateRecurrenceTemplateV2(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  updatedData: {
+    eventData?: NewEventData | null;
+    occurrences?: RecurrenceOccurrence[] | null;
+    recurrenceEnabled?: boolean | null;
+    reservedSlots?: NewRecurrenceFormData["reservedSlots"] | null;
+  }
+): Promise<UpdateRecurrenceTemplateV2Response> {
+  recurringEventsServiceLogger.info(`updateRecurrenceTemplateV2 ${recurrenceTemplateId}`);
+  return await executeGlobalAppControllerFunction<
+    {
+      recurrenceTemplateId: RecurrenceTemplateId;
+      eventData: ReturnType<typeof serializeEventDataForRequest> | null;
+      occurrences: ReturnType<typeof serializeOccurrenceForRequest>[] | null;
+      recurrenceEnabled: boolean | null;
+      reservedSlots: NewRecurrenceFormData["reservedSlots"] | null;
+    },
+    UpdateRecurrenceTemplateV2Response
+  >(
+    EndpointType.UPDATE_RECURRENCE_TEMPLATE_V2,
+    {
+      recurrenceTemplateId,
+      eventData: updatedData.eventData ? serializeEventDataForRequest(updatedData.eventData) : null,
+      occurrences: updatedData.occurrences ? updatedData.occurrences.map(serializeOccurrenceForRequest) : null,
+      recurrenceEnabled: updatedData.recurrenceEnabled ?? null,
+      reservedSlots: updatedData.reservedSlots ?? null,
+    },
+    { attachAuth: true }
+  );
 }
 
 export async function createRecurrenceTemplate(
@@ -89,6 +201,10 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
     return {
       ...recurrenceTemplate,
       eventData: applyGeneralAdmissionInventoryFields(recurrenceTemplate.eventData),
+      recurrenceData: {
+        ...recurrenceTemplate.recurrenceData,
+        occurrences: hydrateOccurrences(recurrenceTemplate.recurrenceData.occurrences),
+      },
     };
   } catch (error) {
     recurringEventsServiceLogger.error(
@@ -99,7 +215,13 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
 }
 
 // Should be a partial of eventData or NewRecurrenceFormData
-export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
+export async function updateRecurrenceTemplate(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  updatedData: {
+    eventData?: NewEventData;
+    recurrenceData?: Partial<NewRecurrenceFormData> | null;
+  }
+) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
   let eventData = null;
   if (updatedData.eventData) {
@@ -141,13 +263,14 @@ export async function updateRecurrenceTemplateEventData(
       { ...recurrenceTemplate.eventData, ...restUpdatedData },
       { price, capacity, vacancy }
     );
-    const response = await updateRecurrenceTemplate(recurrenceTemplateId, {
-      eventData: mergedEventData,
-    });
+    const response = await (isRecurrenceTemplateV2(recurrenceTemplate)
+      ? updateRecurrenceTemplateV2(recurrenceTemplateId, { eventData: mergedEventData })
+      : updateRecurrenceTemplate(recurrenceTemplateId, {
+          eventData: mergedEventData,
+        }));
     return response ? true : false;
-  } catch (error) {
-    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
-    // we did not find the existing data in the existing recurrence template
+  } catch {
+    // Logged upstream in get/update; callers treat a missing result as failure.
   }
 }
 
@@ -158,6 +281,14 @@ export async function updateRecurrenceTemplateRecurrenceData(
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} recurrence data`);
   try {
     const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+    if (isRecurrenceTemplateV2(recurrenceTemplate)) {
+      await updateRecurrenceTemplateV2(recurrenceTemplateId, {
+        occurrences: updatedData.occurrences ?? recurrenceTemplate.recurrenceData.occurrences ?? [],
+        recurrenceEnabled: updatedData.recurrenceEnabled ?? recurrenceTemplate.recurrenceData.recurrenceEnabled,
+        reservedSlots: updatedData.reservedSlots ?? recurrenceTemplate.recurrenceData.reservedSlots ?? [],
+      });
+      return;
+    }
     await updateRecurrenceTemplate(recurrenceTemplateId, {
       recurrenceData: {
         frequency: recurrenceTemplate.recurrenceData.frequency,
@@ -167,9 +298,8 @@ export async function updateRecurrenceTemplateRecurrenceData(
         ...updatedData,
       },
     });
-  } catch (error) {
-    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
-    // we did not find the existing data in the existing recurrence template
+  } catch {
+    // Logged upstream in get/update; callers treat a missing result as failure.
   }
 }
 
@@ -202,10 +332,17 @@ export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFor
 }
 
 export function calculateRecurrenceEnded(recurrenceTemplate: RecurrenceTemplate) {
-  const lastRecurrence =
-    recurrenceTemplate.recurrenceData.allRecurrences[recurrenceTemplate.recurrenceData.allRecurrences.length - 1];
+  if (isRecurrenceTemplateV2(recurrenceTemplate)) {
+    return calculateRecurrenceEndedV2(recurrenceTemplate);
+  }
+  const allRecurrences = recurrenceTemplate.recurrenceData.allRecurrences ?? [];
+  if (allRecurrences.length === 0) {
+    return true;
+  }
+  const lastRecurrence = allRecurrences[allRecurrences.length - 1];
   const lastRecurrenceKey = lastRecurrence.toString();
-  const lastPastRecurrenceCreated = recurrenceTemplate.recurrenceData.pastRecurrences[lastRecurrenceKey] !== undefined;
+  const lastPastRecurrenceCreated =
+    recurrenceTemplate.recurrenceData.pastRecurrences?.[lastRecurrenceKey] !== undefined;
 
   const todaysDate = Date.now();
   const pastLastRecurrence = todaysDate > lastRecurrence.toMillis();

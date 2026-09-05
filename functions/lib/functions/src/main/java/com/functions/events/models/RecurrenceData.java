@@ -32,6 +32,11 @@ public class RecurrenceData {
 	@Builder.Default
 	List<ReservedSlot> reservedSlots = new ArrayList<>();
 
+	/**
+	 * Explicit occurrence list for schemaVersion 2 templates. Null/empty on v1 docs.
+	 */
+	List<RecurrenceOccurrence> occurrences;
+
 	public static RecurrenceData.RecurrenceDataBuilder builderFromNewRecurrenceData(NewRecurrenceData newRecurrenceData) {
 		return RecurrenceData.builder()
 				.frequency(newRecurrenceData.getFrequency())

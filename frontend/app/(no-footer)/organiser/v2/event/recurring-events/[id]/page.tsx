@@ -14,6 +14,7 @@ import { RecurringHubHeader } from "@/components/organiser/v2/recurring-hub/Recu
 import { RecurringHubNav } from "@/components/organiser/v2/recurring-hub/RecurringHubNav";
 import { RecurringHubPastEvents } from "@/components/organiser/v2/recurring-hub/RecurringHubPastEvents";
 import { RecurringHubRecurrence } from "@/components/organiser/v2/recurring-hub/RecurringHubRecurrence";
+import { RecurringHubRecurrenceV2 } from "@/components/organiser/v2/recurring-hub/RecurringHubRecurrenceV2";
 import { RecurringHubSettings } from "@/components/organiser/v2/recurring-hub/RecurringHubSettings";
 import { RecurringHubSection } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
 import { useUser } from "@/components/utility/UserContext";
@@ -27,7 +28,9 @@ import {
   DEFAULT_RECURRENCE_FORM_DATA,
   Frequency,
   NewRecurrenceFormData,
+  RecurrenceOccurrence,
   RecurrenceTemplateId,
+  isRecurrenceTemplateV2,
 } from "@/interfaces/RecurringEventTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
@@ -90,6 +93,8 @@ export default function OrganiserRecurringHubV2Page() {
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
+  const [schemaVersionV2, setSchemaVersionV2] = useState(false);
+  const [occurrences, setOccurrences] = useState<RecurrenceOccurrence[]>([]);
   const [pastEvents, setPastEvents] = useState<Record<string, EventId>>({});
   const [recurrenceEnded, setRecurrenceEnded] = useState(false);
   const [newRecurrenceData, setNewRecurrenceData] =
@@ -143,9 +148,16 @@ export default function OrganiserRecurringHubV2Page() {
         );
 
         const formData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceData);
-        setFrequency(recurrenceData.frequency);
+        const isV2 = isRecurrenceTemplateV2(template);
+        setSchemaVersionV2(isV2);
+        setFrequency(recurrenceData.frequency ?? Frequency.WEEKLY);
         setNewRecurrenceData(formData);
-        setOriginalRecurrenceData(JSON.parse(JSON.stringify(formData)));
+        setOriginalRecurrenceData({
+          ...formData,
+          reservedSlots: [...(formData.reservedSlots ?? [])],
+          occurrences: (formData.occurrences ?? []).map((occurrence) => ({ ...occurrence })),
+        });
+        setOccurrences(recurrenceData.occurrences ?? []);
         setPastEvents(recurrenceData.pastRecurrences || {});
 
         const ended = calculateRecurrenceEnded(template);
@@ -197,8 +209,13 @@ export default function OrganiserRecurringHubV2Page() {
     setSaveNotice(null);
     try {
       await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
-      setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
+      setOriginalRecurrenceData({
+        ...newRecurrenceData,
+        reservedSlots: [...(newRecurrenceData.reservedSlots ?? [])],
+        occurrences: (newRecurrenceData.occurrences ?? []).map((occurrence) => ({ ...occurrence })),
+      });
       setFrequency(newRecurrenceData.frequency);
+      setOccurrences(newRecurrenceData.occurrences ?? []);
       setSaveNotice("success");
     } catch (error) {
       logger.error(`Failed to update recurrence data for ${recurrenceTemplateId}: ${error}`);
@@ -219,6 +236,11 @@ export default function OrganiserRecurringHubV2Page() {
           startDate={eventStartDate}
           location={eventLocation}
           frequency={frequency}
+          scheduleLabel={
+            schemaVersionV2
+              ? `${occurrences.length} ${occurrences.length === 1 ? "date" : "dates"}`
+              : undefined
+          }
           paused={eventPaused}
           isActive={eventIsActive}
           onTogglePause={handleTogglePause}
@@ -299,21 +321,39 @@ export default function OrganiserRecurringHubV2Page() {
           />
         )}
 
-        {section === "Past events" && <RecurringHubPastEvents pastEvents={pastEvents} />}
-
-        {section === "Recurrence" && (
-          <RecurringHubRecurrence
-            loading={loading}
-            updating={updatingRecurrenceData}
-            newRecurrenceData={newRecurrenceData}
-            originalRecurrenceData={originalRecurrenceData}
-            setNewRecurrenceData={setNewRecurrenceData}
-            startDate={eventStartDate}
-            submitNewRecurrenceData={submitNewRecurrenceData}
-            isRecurrenceEnded={recurrenceEnded}
-            capacity={eventCapacity}
+        {section === "Past events" && (
+          <RecurringHubPastEvents
+            pastEvents={pastEvents}
+            occurrences={schemaVersionV2 ? occurrences : undefined}
           />
         )}
+
+        {section === "Recurrence" &&
+          (schemaVersionV2 ? (
+            <RecurringHubRecurrenceV2
+              loading={loading}
+              updating={updatingRecurrenceData}
+              newRecurrenceData={newRecurrenceData}
+              originalRecurrenceData={originalRecurrenceData}
+              setNewRecurrenceData={setNewRecurrenceData}
+              startDate={eventStartDate}
+              submitNewRecurrenceData={submitNewRecurrenceData}
+              isRecurrenceEnded={recurrenceEnded}
+              capacity={eventCapacity}
+            />
+          ) : (
+            <RecurringHubRecurrence
+              loading={loading}
+              updating={updatingRecurrenceData}
+              newRecurrenceData={newRecurrenceData}
+              originalRecurrenceData={originalRecurrenceData}
+              setNewRecurrenceData={setNewRecurrenceData}
+              startDate={eventStartDate}
+              submitNewRecurrenceData={submitNewRecurrenceData}
+              isRecurrenceEnded={recurrenceEnded}
+              capacity={eventCapacity}
+            />
+          ))}
 
         {section === "Settings" && (
           <RecurringHubSettings
