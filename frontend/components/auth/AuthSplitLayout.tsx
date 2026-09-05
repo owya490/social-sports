@@ -24,14 +24,16 @@ export default function AuthSplitLayout({ children, ctaTitle, ctaBody }: AuthSpl
         <AuthHomeLogo className="absolute right-6 top-6 md:hidden" inverted={false} />
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>
-      <AuthCtaPanel title={ctaTitle} body={ctaBody} />
+      <div className="order-2 hidden md:block">
+        <AuthCtaPanel title={ctaTitle} body={ctaBody} />
+      </div>
     </div>
   );
 }
 
 function AuthCtaPanel({ title, body }: { title: string; body: string }) {
   return (
-    <div className="relative order-2 hidden min-h-screen overflow-hidden bg-black text-white md:flex">
+    <div className="sticky top-0 flex h-screen overflow-hidden bg-black text-white">
       <TopographicBackdrop />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
       <AuthHomeLogo className="absolute right-6 top-6 z-20" inverted />
