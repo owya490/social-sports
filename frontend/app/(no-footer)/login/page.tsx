@@ -1,4 +1,5 @@
 "use client";
+import AuthSplitLayout, { AUTH_INPUT_CLASS, AUTH_SUBMIT_CLASS } from "@/components/auth/AuthSplitLayout";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
@@ -47,26 +48,28 @@ export default function Login() {
   };
 
   return (
-    <div className="flex px-6 min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] flex-1 flex-col pt-8 sm:pt-40">
+    <>
       <Alert
         open={alertStatus}
         onClose={handleAlertClose}
         color="red"
-        className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
+        className="absolute ml-auto mr-auto left-0 right-0 top-6 w-fit z-30"
       >
         {errorMessage}
       </Alert>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h1 className="text-center text-3xl font-bold leading-9 tracking-tight text-gray-900 mt-[10vh] sm:mt-0">
-          Sign in to your account
-        </h1>
-      </div>
+      <AuthSplitLayout
+        ctaTitle="Find your next social sport session."
+        ctaBody="Log in to book games near you, manage your spots, and pick up where your community left off."
+      >
+        <h1 className="text-3xl font-bold tracking-tight text-core-text">Sign in</h1>
+        <p className="mt-2 text-sm font-light leading-relaxed text-gray-500">
+          Welcome back. Use your email to continue.
+        </p>
 
-      <div className="mt-8 mx-auto w-full max-w-sm">
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block font-medium leading-6 text-gray-900">
+            <label htmlFor="email" className="block font-medium leading-6 text-core-text">
               Email address
             </label>
             <div className="mt-2">
@@ -77,7 +80,7 @@ export default function Login() {
                 autoComplete="email"
                 tabIndex={1}
                 required
-                className="block w-full rounded-lg border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm: sm:leading-6"
+                className={AUTH_INPUT_CLASS}
                 value={userData.email}
                 onChange={(e) =>
                   setUserData({
@@ -91,14 +94,12 @@ export default function Login() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block font-medium leading-6 text-gray-900">
+              <label htmlFor="password" className="block font-medium leading-6 text-core-text">
                 Password
               </label>
-              <div>
-                <Link href="resetPassword" className="font-semibold text-sm text-gray-500 hover:underline">
-                  Forgot password?
-                </Link>
-              </div>
+              <Link href="resetPassword" className="font-semibold text-sm text-gray-500 hover:underline">
+                Forgot password?
+              </Link>
             </div>
             <div className="mt-2">
               <input
@@ -108,7 +109,7 @@ export default function Login() {
                 autoComplete="current-password"
                 tabIndex={2}
                 required
-                className="block w-full rounded-lg border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm: sm:leading-6"
+                className={AUTH_INPUT_CLASS}
                 value={userData.password}
                 onChange={(e) =>
                   setUserData({
@@ -120,25 +121,18 @@ export default function Login() {
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              className="flex w-full justify-center rounded-lg bg-highlight-yellow text-white px-3 py-2 font-semibold leading-6 shadow-sm hover:bg-white hover:text-highlight-yellow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 border-highlight-yellow border-2 transition-colors duration-300 transform"
-              tabIndex={3}
-              disabled={isPending}
-            >
-              {isPending ? <>Loading...</> : <>Sign in</>}
-            </button>
-          </div>
+          <button type="submit" className={AUTH_SUBMIT_CLASS} tabIndex={3} disabled={isPending}>
+            {isPending ? "Loading..." : "Sign in"}
+          </button>
         </form>
 
-        <p className="mt-10 text-center text-gray-500">
+        <p className="mt-8 text-gray-500">
           Not a member?{" "}
-          <Link href="/register" className="font-semibold leading-6 text-black hover:underline">
+          <Link href="/register" className="font-semibold leading-6 text-core-text hover:underline">
             Register here
           </Link>
         </p>
-      </div>
-    </div>
+      </AuthSplitLayout>
+    </>
   );
 }
