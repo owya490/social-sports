@@ -2,7 +2,7 @@
 
 import { useUser } from "@/components/utility/UserContext";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
-import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getRefreshAccountLinkUrl, isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import StripeLogo from "@/public/images/stripe-logo.svg";
 import { ArrowPathIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
@@ -28,27 +28,36 @@ export function SettingsStripePanel({
 }: SettingsStripePanelProps) {
   const { user } = useUser();
   const [resyncing, setResyncing] = useState(false);
-  const connected = Boolean(stripeId) && !stripeLoading;
-  const needsSetup = !stripeLoading && !stripeId;
-  const paymentsActive = user.stripeAccountActive === true;
+  const paymentsActive = isStripeAccountActive(user.stripeAccountActive);
+  const hasStripeAccount = Boolean(stripeId) && !stripeLoading;
+  const needsSetup = !stripeLoading && (!hasStripeAccount || !paymentsActive);
+  const fullyConnected = hasStripeAccount && paymentsActive;
 
-  const handleResync = async () => {
-    if (resyncing || userLoading || !userId) return;
+  const handleStripeAccountLink = async (returnPath: string, onError?: () => void) => {
+    if (userLoading || !userId) return;
 
-    setResyncing(true);
     onConnecting(true);
     window.scrollTo(0, 0);
     try {
       const link = await getStripeStandardAccountLink(
         userId,
-        getUrlWithCurrentHostname("/organiser/v2/settings"),
+        getUrlWithCurrentHostname(returnPath),
         getRefreshAccountLinkUrl(),
       );
       window.location.href = link;
     } catch {
       onConnecting(false);
-      setResyncing(false);
+      onError?.();
     }
+  };
+
+  const handleResync = async () => {
+    if (resyncing || userLoading || !userId) return;
+
+    setResyncing(true);
+    await handleStripeAccountLink("/organiser/v2/settings", () => {
+      setResyncing(false);
+    });
   };
 
   return (
@@ -57,7 +66,7 @@ export function SettingsStripePanel({
         <div className="min-w-0 flex items-center gap-3">
           <SportshubStripeIntegrationIcon />
           <Image src={StripeLogo} alt="Stripe" className="h-8 w-auto sm:h-10" />
-          {connected ? (
+          {fullyConnected ? (
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground font-sans">
               <CheckCircleIcon className="h-4 w-4" aria-hidden />
               Connected
@@ -65,7 +74,7 @@ export function SettingsStripePanel({
           ) : null}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          {connected ? (
+          {hasStripeAccount ? (
             <button
               type="button"
               disabled={resyncing || userLoading || !userId}
@@ -79,7 +88,7 @@ export function SettingsStripePanel({
               <span className="hidden sm:inline">Resync</span>
             </button>
           ) : null}
-          {connected ? (
+          {hasStripeAccount ? (
             <a
               href="https://dashboard.stripe.com/login"
               target="_blank"
@@ -99,62 +108,59 @@ export function SettingsStripePanel({
             <Skeleton height={14} width={120} />
             <Skeleton height={44} className="!rounded-lg" />
           </div>
-        ) : connected ? (
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs font-medium text-foreground-muted font-sans">Stripe account ID</p>
-              {paymentsActive ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-foreground font-sans">
-                  <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden />
-                  Payouts active
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-foreground-secondary font-sans">
-                  <ExclamationCircleIcon className="h-3.5 w-3.5" aria-hidden />
-                  Payouts inactive
-                </span>
-              )}
-            </div>
-            <p className="mt-2 rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-sm text-foreground break-all">
-              {stripeId}
-            </p>
-            <p className="mt-2 text-xs text-foreground-muted font-sans">
-              This is your Stripe Connect identifier for receiving event payments.
-              {!paymentsActive ? " If Stripe shows your account as ready, use Resync to update payout status." : null}
-            </p>
-          </div>
-        ) : needsSetup ? (
+        ) : (
           <div className="space-y-4">
-            <div>
-              <p className="text-sm font-semibold text-foreground font-sans">Connect Stripe to get paid</p>
-              <p className="mt-1 text-xs text-foreground-muted font-sans">
-                Accept ticket payments securely through Stripe Connect. Setup usually takes a few minutes.
-              </p>
-            </div>
-            <button
-              type="button"
-              disabled={userLoading || !userId}
-              onClick={async () => {
-                if (userLoading || !userId) return;
-                onConnecting(true);
-                window.scrollTo(0, 0);
-                try {
-                  const link = await getStripeStandardAccountLink(
-                    userId,
-                    getUrlWithCurrentHostname("/organiser/v2/dashboard"),
-                    getRefreshAccountLinkUrl(),
-                  );
-                  window.location.href = link;
-                } catch {
-                  onConnecting(false);
-                }
-              }}
-              className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 disabled:pointer-events-none"
-            >
-              Connect Stripe
-            </button>
+            {hasStripeAccount ? (
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-xs font-medium text-foreground-muted font-sans">Stripe account ID</p>
+                  {paymentsActive ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-foreground font-sans">
+                      <CheckCircleIcon className="h-3.5 w-3.5" aria-hidden />
+                      Payouts active
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-surface px-2 py-0.5 text-[11px] font-semibold text-foreground-secondary font-sans">
+                      <ExclamationCircleIcon className="h-3.5 w-3.5" aria-hidden />
+                      Payouts inactive
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 rounded-lg border border-border bg-surface px-3 py-2.5 font-mono text-sm text-foreground break-all">
+                  {stripeId}
+                </p>
+                <p className="mt-2 text-xs text-foreground-muted font-sans">
+                  This is your Stripe Connect identifier for receiving event payments.
+                  {!paymentsActive ? " If Stripe shows your account as ready, use Resync to update payout status." : null}
+                </p>
+              </div>
+            ) : null}
+            {needsSetup ? (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-foreground font-sans">
+                    {hasStripeAccount ? "Complete your Stripe setup" : "Connect Stripe to get paid"}
+                  </p>
+                  <p className="mt-1 text-xs text-foreground-muted font-sans">
+                    {hasStripeAccount
+                      ? "Finish connecting your Stripe account to start receiving payouts."
+                      : "Accept ticket payments securely through Stripe Connect. Setup usually takes a few minutes."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={userLoading || !userId}
+                  onClick={() => {
+                    void handleStripeAccountLink("/organiser/v2/dashboard");
+                  }}
+                  className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 disabled:pointer-events-none"
+                >
+                  {hasStripeAccount ? "Continue Stripe setup" : "Connect Stripe"}
+                </button>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        )}
       </div>
     </section>
   );
