@@ -17,9 +17,9 @@ const TOPOGRAPHIC_RINGS = Array.from({ length: 16 }, (_, index) => index + 1);
 
 export default function AuthSplitLayout({ children, ctaEyebrow, ctaTitle, ctaBody }: AuthSplitLayoutProps) {
   return (
-    <div className="flex min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] w-full items-start justify-center bg-surface px-4 pt-8 pb-24 sm:px-6 sm:pt-12 sm:pb-32">
+    <div className="flex min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] w-full items-center justify-center bg-surface px-4 py-16 sm:px-6 sm:py-24">
       <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-core-outline bg-white md:grid-cols-2">
-        <div className="order-1 flex flex-col justify-center px-6 py-10 sm:px-12 lg:px-14">{children}</div>
+        <div className="order-1 flex flex-col justify-center px-6 py-8 sm:px-12 sm:py-10 lg:px-14">{children}</div>
         <AuthCtaPanel eyebrow={ctaEyebrow} title={ctaTitle} body={ctaBody} />
       </div>
     </div>
@@ -28,7 +28,7 @@ export default function AuthSplitLayout({ children, ctaEyebrow, ctaTitle, ctaBod
 
 function AuthCtaPanel({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
   return (
-    <div className="relative order-2 flex min-h-[240px] overflow-hidden bg-foreground text-white sm:min-h-[320px] md:min-h-full">
+    <div className="relative order-2 flex min-h-[200px] overflow-hidden bg-foreground text-white sm:min-h-[280px] md:min-h-full">
       <TopographicBackdrop />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
       <div className="relative z-10 mt-auto flex w-full flex-col justify-end p-8 sm:p-10">
