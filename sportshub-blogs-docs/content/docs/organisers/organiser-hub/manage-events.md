@@ -41,7 +41,7 @@ Once you select an event from the dashboard, you can:
 ### Event Settings
 
 - Configure registration settings
-- Set up payment options and coupons
+- Set up payment options and promo codes
 - Manage communication preferences
 - Update cancellation policies
 
