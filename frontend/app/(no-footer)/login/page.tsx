@@ -53,13 +53,12 @@ export default function Login() {
         open={alertStatus}
         onClose={handleAlertClose}
         color="red"
-        className="absolute ml-auto mr-auto left-0 right-0 top-24 w-fit"
+        className="absolute ml-auto mr-auto left-0 right-0 top-6 w-fit z-30"
       >
         {errorMessage}
       </Alert>
 
       <AuthSplitLayout
-        ctaEyebrow="SPORTSHUB"
         ctaTitle="Find your next social sport session."
         ctaBody="Log in to book games near you, manage your spots, and pick up where your community left off."
       >

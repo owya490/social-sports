@@ -77,7 +77,7 @@ export default function Register() {
         open={passwordMismatch}
         onClose={() => setPasswordMismatch(false)}
         color="red"
-        className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+        className="absolute ml-auto mr-auto left-0 right-0 top-6 w-fit z-30"
       >
         Passwords do not match.
       </Alert>
@@ -85,7 +85,7 @@ export default function Register() {
         open={showRegisterFailure}
         onClose={() => handleAlertClose()}
         color="red"
-        className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+        className="absolute ml-auto mr-auto left-0 right-0 top-6 w-fit z-30"
       >
         {error}
       </Alert>
@@ -93,15 +93,14 @@ export default function Register() {
         open={showEmailSentAlert}
         onClose={() => setShowEmailSentAlert(false)}
         color="green"
-        className="absolute ml-auto mr-auto left-0 right-0 top-20 w-fit"
+        className="absolute ml-auto mr-auto left-0 right-0 top-6 w-fit z-30"
       >
         Email sent. Please check your inbox.
       </Alert>
 
       <AuthSplitLayout
-        ctaEyebrow="SPORTSHUB"
         ctaTitle="Join Australia's best social sport registration platform."
-        ctaBody="Discover volleyball, badminton, pickleball and more — then book or host your next session in minutes."
+        ctaBody="Discover volleyball, badminton, pickleball and more, then book or host your next session in minutes."
       >
         <h1 className="text-3xl font-bold tracking-tight text-core-text">Register</h1>
         <p className="mt-2 text-sm font-light leading-relaxed text-gray-500">

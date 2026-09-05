@@ -1,4 +1,7 @@
+import Image from "next/image";
+import Link from "next/link";
 import { ReactNode } from "react";
+import LogoImage from "@/public/icons/Icon_black_square.png";
 
 export const AUTH_INPUT_CLASS =
   "block w-full rounded-lg border-0 py-2.5 text-core-text shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:leading-6";
@@ -8,35 +11,50 @@ export const AUTH_SUBMIT_CLASS =
 
 interface AuthSplitLayoutProps {
   children: ReactNode;
-  ctaEyebrow: string;
   ctaTitle: string;
   ctaBody: string;
 }
 
 const TOPOGRAPHIC_RINGS = Array.from({ length: 16 }, (_, index) => index + 1);
 
-export default function AuthSplitLayout({ children, ctaEyebrow, ctaTitle, ctaBody }: AuthSplitLayoutProps) {
+export default function AuthSplitLayout({ children, ctaTitle, ctaBody }: AuthSplitLayoutProps) {
   return (
-    <div className="flex min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] w-full items-center justify-center bg-surface px-4 py-16 sm:px-6 sm:py-24">
-      <div className="grid w-full max-w-5xl overflow-hidden rounded-2xl border border-core-outline bg-white md:grid-cols-2">
-        <div className="order-1 flex flex-col justify-center px-6 py-8 sm:px-12 sm:py-10 lg:px-14">{children}</div>
-        <AuthCtaPanel eyebrow={ctaEyebrow} title={ctaTitle} body={ctaBody} />
+    <div className="grid min-h-screen w-full bg-white md:grid-cols-2">
+      <div className="relative order-1 flex min-h-screen flex-col justify-center overflow-y-auto bg-white px-6 py-16 sm:px-12 lg:px-16 xl:px-24">
+        <AuthHomeLogo className="absolute right-6 top-6 md:hidden" inverted={false} />
+        <div className="mx-auto w-full max-w-sm">{children}</div>
+      </div>
+      <AuthCtaPanel title={ctaTitle} body={ctaBody} />
+    </div>
+  );
+}
+
+function AuthCtaPanel({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="relative order-2 hidden min-h-screen overflow-hidden bg-black text-white md:flex">
+      <TopographicBackdrop />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+      <AuthHomeLogo className="absolute right-6 top-6 z-20" inverted />
+      <div className="relative z-10 mt-auto flex w-full flex-col justify-end p-10 lg:p-12">
+        <h2 className="max-w-md text-3xl font-bold leading-tight tracking-tight lg:text-4xl">{title}</h2>
+        <p className="mt-4 max-w-md text-sm font-light leading-relaxed text-gray-300 lg:text-base">{body}</p>
       </div>
     </div>
   );
 }
 
-function AuthCtaPanel({ eyebrow, title, body }: { eyebrow: string; title: string; body: string }) {
+function AuthHomeLogo({ className, inverted }: { className?: string; inverted: boolean }) {
   return (
-    <div className="relative order-2 flex min-h-[200px] overflow-hidden bg-foreground text-white sm:min-h-[280px] md:min-h-full">
-      <TopographicBackdrop />
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
-      <div className="relative z-10 mt-auto flex w-full flex-col justify-end p-8 sm:p-10">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gray-400">{eyebrow}</p>
-        <h2 className="mt-3 max-w-md text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{title}</h2>
-        <p className="mt-4 max-w-md text-sm font-light leading-relaxed text-gray-300 sm:text-base">{body}</p>
-      </div>
-    </div>
+    <Link href="/" className={className} aria-label="SPORTSHUB home">
+      <Image
+        src={LogoImage}
+        alt="SPORTSHUB"
+        width={48}
+        height={48}
+        priority
+        className={`h-12 w-12 ${inverted ? "invert" : ""}`}
+      />
+    </Link>
   );
 }
 
@@ -54,7 +72,7 @@ function TopographicBackdrop() {
           <feDisplacementMap in="SourceGraphic" in2="noise" scale="22" xChannelSelector="R" yChannelSelector="G" />
         </filter>
       </defs>
-      <rect width="600" height="760" fill="#0a0a0a" />
+      <rect width="600" height="760" fill="#000000" />
       <g filter="url(#sportshub-auth-topo-displace)" fill="none" stroke="#ffffff">
         {TOPOGRAPHIC_RINGS.map((i) => (
           <ellipse
