@@ -1,8 +1,11 @@
 "use client";
 import AuthSplitLayout, { AUTH_INPUT_CLASS, AUTH_SUBMIT_CLASS } from "@/components/auth/AuthSplitLayout";
-import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import { useUser } from "@/components/utility/UserContext";
+import { EmptyNewUserData, NewUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
+import { getFullUserById } from "@/services/src/users/usersService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
@@ -20,6 +23,13 @@ export default function Register() {
   const [showEmailSentAlert, setShowEmailSentAlert] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [socialPending, setSocialPending] = useState(false);
+  const { setUser } = useUser();
+
+  const completeSocialSignIn = async (userId: UserId) => {
+    setUser(await getFullUserById(userId));
+    router.push("/?login=success");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -195,17 +205,27 @@ export default function Register() {
             </div>
           </div>
 
-          <button type="submit" className={AUTH_SUBMIT_CLASS} disabled={isPending}>
+          <button type="submit" className={AUTH_SUBMIT_CLASS} disabled={isPending || socialPending}>
             {isPending ? "Loading..." : "Register"}
           </button>
-
-          <p className="text-gray-500">
-            Have an account?{" "}
-            <Link href="/login" className="font-semibold leading-6 text-core-text hover:underline">
-              Login here
-            </Link>
-          </p>
         </form>
+
+        <SocialAuthButtons
+          disabled={isPending}
+          onPendingChange={setSocialPending}
+          onError={(message) => {
+            setError(message);
+            setShowRegisterFailure(true);
+          }}
+          onSuccess={completeSocialSignIn}
+        />
+
+        <p className="mt-8 text-gray-500">
+          Have an account?{" "}
+          <Link href="/login" className="font-semibold leading-6 text-core-text hover:underline">
+            Login here
+          </Link>
+        </p>
       </AuthSplitLayout>
     </>
   );

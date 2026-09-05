@@ -3,7 +3,12 @@ import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
-import { getTempUserData, migrateTempUserToActiveUser } from "@/services/src/auth/authService";
+import {
+  ensureActiveUserFromAuth,
+  getTempUserData,
+  migrateTempUserToActiveUser,
+} from "@/services/src/auth/authService";
+import { isSocialAuthUser } from "@/services/src/auth/socialAuthUtils";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
@@ -70,8 +75,18 @@ export default function UserContext({ children }: { children: any }) {
               const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
               setUser(userData);
             } catch {
-              router.push("/error");
-              return;
+              if (!isSocialAuthUser(userAuth)) {
+                router.push("/error");
+                return;
+              }
+              try {
+                await ensureActiveUserFromAuth();
+                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+                setUser(userData);
+              } catch {
+                router.push("/error");
+                return;
+              }
             }
           }
         } finally {

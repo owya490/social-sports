@@ -2,10 +2,13 @@ import { EmptyUserData, NewUserData, UserData, UserId } from "@/interfaces/UserT
 import { Logger } from "@/observability/logger";
 import { FirebaseError } from "@firebase/util";
 import {
+  AuthProvider,
   createUserWithEmailAndPassword,
   EmailAuthProvider,
   FacebookAuthProvider,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
+  OAuthProvider,
   reauthenticateWithCredential,
   sendEmailVerification,
   sendPasswordResetEmail,
@@ -22,6 +25,7 @@ import { bustOrganiserEventsCache } from "../organiser/organiserEventsCache";
 import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
+import { mapSocialAuthError, userDataFromSocialProfile } from "./socialAuthUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -202,50 +206,107 @@ export async function migrateTempUserToActiveUser(userId: UserId): Promise<UserD
   }
 }
 
-export async function handleGoogleSignIn() {
+// Popup completion and UserContext's onAuthStateChanged can both try to provision
+// the Firestore profile at once; share one in-flight promise so we don't double-create.
+let ensureActiveUserInFlight: Promise<UserId> | null = null;
+
+export function handleGoogleSignIn(): Promise<UserId | null> {
+  return signInWithSocialProvider(new GoogleAuthProvider());
+}
+
+export function handleAppleSignIn(): Promise<UserId | null> {
+  const provider = new OAuthProvider("apple.com");
+  provider.addScope("email");
+  provider.addScope("name");
+  return signInWithSocialProvider(provider);
+}
+
+export function handleFacebookSignIn(): Promise<UserId | null> {
+  const provider = new FacebookAuthProvider();
+  provider.addScope("email");
+  provider.addScope("public_profile");
+  return signInWithSocialProvider(provider);
+}
+
+async function signInWithSocialProvider(provider: AuthProvider): Promise<UserId | null> {
   try {
-    const provider = new GoogleAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(auth, provider);
-    const userDocRef = doc(db, "Users", userCredential.user.uid);
-
-    // Check if the user already exists in your Firestore collection,
-    // and create a new document if not.
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      const userDataToSet = {
-        firstName: userCredential.user.displayName,
-        // TODO: add more fields here
-      };
-      await setDoc(userDocRef, userDataToSet);
-    }
-
-    authServiceLogger.info("Google signed in");
+    const credential = await signInWithPopup(auth, provider);
+    const userId = await ensureActiveUserFromAuth(credential);
+    authServiceLogger.info("Social sign-in succeeded", { userId, provider: provider.providerId });
+    return userId;
   } catch (error) {
-    authServiceLogger.info(`${error}`);
+    const message = mapSocialAuthError(error);
+    if (message === null) {
+      return null;
+    }
+    authServiceLogger.error("Social sign-in failed", {
+      message,
+      provider: provider.providerId,
+    });
+    throw new Error(message);
   }
 }
 
-export async function handleFacebookSignIn() {
-  try {
-    const provider = new FacebookAuthProvider();
-    const userCredential: UserCredential = await signInWithPopup(auth, provider);
-    const userDocRef = doc(db, "Users", userCredential.user.uid);
-
-    // Check if the user already exists in your Firestore collection,
-    // and create a new document if not.
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      const userDataToSet = {
-        firstName: userCredential.user.displayName,
-        // TODO: add more fields here
-      };
-      await setDoc(userDocRef, userDataToSet);
-    }
-
-    authServiceLogger.info("Facebook signed in");
-  } catch (error) {
-    authServiceLogger.info(`${error}`);
+export async function ensureActiveUserFromAuth(credential?: UserCredential): Promise<UserId> {
+  if (ensureActiveUserInFlight) {
+    return ensureActiveUserInFlight;
   }
+
+  ensureActiveUserInFlight = provisionActiveUserFromAuth(credential).finally(() => {
+    ensureActiveUserInFlight = null;
+  });
+  return await ensureActiveUserInFlight;
+}
+
+async function provisionActiveUserFromAuth(credential?: UserCredential): Promise<UserId> {
+  const user = credential?.user ?? auth.currentUser;
+  if (!user) {
+    throw new Error("No authenticated user");
+  }
+  if (!user.email) {
+    throw new Error("This sign-in method did not provide an email address.");
+  }
+
+  const userId = user.uid as UserId;
+  try {
+    await getPublicUserById(userId);
+    await syncEmailOnLogin(userId);
+    return userId;
+  } catch (error) {
+    if (!(error instanceof UserNotFoundError)) {
+      throw error;
+    }
+  }
+
+  await createUser(
+    userDataFromSocialProfile({
+      uid: user.uid,
+      email: user.email,
+      displayName: resolveSocialDisplayName(credential) ?? user.displayName,
+      photoURL: user.photoURL,
+    }),
+    userId
+  );
+  authServiceLogger.info("Created user from social sign-in", { userId });
+  return userId;
+}
+
+function resolveSocialDisplayName(credential?: UserCredential): string | null {
+  if (!credential) {
+    return null;
+  }
+  if (credential.user.displayName) {
+    return credential.user.displayName;
+  }
+  const profile = getAdditionalUserInfo(credential)?.profile as { name?: unknown } | undefined;
+  if (typeof profile?.name === "string") {
+    return profile.name;
+  }
+  if (profile?.name && typeof profile.name === "object") {
+    const name = profile.name as { firstName?: string; lastName?: string };
+    return [name.firstName, name.lastName].filter(Boolean).join(" ") || null;
+  }
+  return null;
 }
 
 const actionCodeSettings = {
