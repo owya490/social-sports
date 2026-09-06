@@ -5,6 +5,10 @@ import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { getEventById } from "@/services/src/events/eventsService";
+import {
+  resolveEventTicketTypeName,
+  resolveFormIdForTicketType,
+} from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -14,6 +18,10 @@ import { useParams } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
 import Logo from "../../public/images/BlackLogo.svg";
+import {
+  buildPurchaserOrderDocumentTitle,
+  DEFAULT_PURCHASER_ORDER_DOCUMENT_TITLE,
+} from "./purchaserOrderPageUtils";
 
 /** Firestore order document ids are auto-generated (not strictly UUID). */
 function isPlausibleOrderId(id: string): boolean {
@@ -115,6 +123,31 @@ export default function PurchaserOrderPage() {
   }, [orderIdParam]);
 
   const orderTotalCents = useMemo(() => tickets.reduce((sum, t) => sum + (t.price ?? 0), 0), [tickets]);
+
+  const documentTitle = useMemo(() => {
+    if (!order) {
+      return DEFAULT_PURCHASER_ORDER_DOCUMENT_TITLE;
+    }
+    const ticketTypeNames = event
+      ? tickets.map((ticket) =>
+          resolveEventTicketTypeName(event, ticket.eventTicketTypeId, ticket.eventTicketTypeName)
+        )
+      : [];
+    return buildPurchaserOrderDocumentTitle({
+      ticketTypeNames,
+      eventName: event?.name,
+      eventId: event?.eventId,
+      orderId: order.orderId,
+    });
+  }, [event, order, tickets]);
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    document.title = documentTitle;
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [documentTitle]);
 
   if (loading) {
     return <Loading />;
@@ -239,33 +272,42 @@ export default function PurchaserOrderPage() {
         <section className="rounded-xl border border-core-outline bg-white px-6 py-7 shadow-sm sm:px-8">
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">Tickets</p>
           <ul className="mt-4 divide-y divide-core-outline">
-            {tickets.map((ticket) => (
-              <li key={ticket.ticketId} className="flex flex-col gap-3 py-5 first:pt-0">
-                <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                  <span className="text-xs font-medium text-gray-500">ID</span>
-                  <span className="min-w-0 flex-1 break-all font-mono text-sm text-core-text">{ticket.ticketId}</span>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-gray-600">{formatFirestoreTimestamp(ticket.purchaseDate)}</p>
-                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <StatusChip status={ticket.status} />
-                    <span className="text-sm font-medium text-core-text">{getEventPriceDisplay(ticket.price)}</span>
+            {tickets.map((ticket) => {
+              const ticketTypeName = resolveEventTicketTypeName(
+                event,
+                ticket.eventTicketTypeId,
+                ticket.eventTicketTypeName
+              );
+              const ticketFormId = resolveFormIdForTicketType(event, ticket.eventTicketTypeId);
+              return (
+                <li key={ticket.ticketId} className="flex flex-col gap-3 py-5 first:pt-0">
+                  <p className="text-sm font-medium text-core-text">{ticketTypeName}</p>
+                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="text-xs font-medium text-gray-500">ID</span>
+                    <span className="min-w-0 flex-1 break-all font-mono text-sm text-core-text">{ticket.ticketId}</span>
                   </div>
-                </div>
-                {ticket.formResponseId && event.formId ? (
-                  <div className="pt-1">
-                    <Link
-                      href={`/forms/${event.formId}/${event.eventId}/${ticket.formResponseId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-core-text underline underline-offset-4 decoration-gray-400 hover:decoration-core-text"
-                    >
-                      View Form Responses
-                    </Link>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm text-gray-600">{formatFirestoreTimestamp(ticket.purchaseDate)}</p>
+                    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      <StatusChip status={ticket.status} />
+                      <span className="text-sm font-medium text-core-text">{getEventPriceDisplay(ticket.price)}</span>
+                    </div>
                   </div>
-                ) : null}
-              </li>
-            ))}
+                  {ticket.formResponseId && ticketFormId ? (
+                    <div className="pt-1">
+                      <Link
+                        href={`/forms/${ticketFormId}/${event.eventId}/${ticket.formResponseId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-core-text underline underline-offset-4 decoration-gray-400 hover:decoration-core-text"
+                      >
+                        View Form Responses
+                      </Link>
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
           {tickets.length > 0 && (
             <div className="mt-4 flex items-center justify-between border-t border-core-outline pt-4 text-sm font-semibold text-core-text">
@@ -291,10 +333,6 @@ export default function PurchaserOrderPage() {
             </Link>
           </div>
         </section>
-
-        <p className="pb-4 text-center text-xs font-light text-gray-500">
-          Keep this page private — anyone with the link can see these details.
-        </p>
       </div>
     </div>
   );
