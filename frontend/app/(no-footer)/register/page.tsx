@@ -206,6 +206,7 @@ export default function Register() {
                   type="password"
                   className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
                   required
+                  placeholder="Repeat password"
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
