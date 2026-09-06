@@ -150,10 +150,8 @@ export async function getTempUserData(userId: UserId): Promise<UserData | null> 
 
     if (docSnap.exists()) {
       return docSnap.data() as UserData;
-    } else {
-      authServiceLogger.error(`User ID=${userId} did not exist when expected by reference.`);
-      return null;
     }
+    return null;
   } catch (error) {
     authServiceLogger.error(`Error fetching user data for ID=${userId}: ${error}`);
     return null;

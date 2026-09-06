@@ -66,21 +66,22 @@ export default function UserContext({ children }: { children: any }) {
             const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
             setUser(userData);
           } catch {
-            try {
-              // The user is verified but their profile was never promoted out of
-              // TempUsers (e.g. they verified their email but never came back
-              // through the login form). Migrate them now so downstream features
-              // relying on Users/Active (e.g. Stripe onboarding) work correctly.
-              await migrateTempUserToActiveUser(uid as UserId);
-              const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-              setUser(userData);
-            } catch {
-              if (!isSocialAuthUser(userAuth)) {
+            if (isSocialAuthUser(userAuth)) {
+              try {
+                await ensureActiveUserFromAuth();
+                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+                setUser(userData);
+              } catch {
                 router.push("/error");
                 return;
               }
+            } else {
               try {
-                await ensureActiveUserFromAuth();
+                // The user is verified but their profile was never promoted out of
+                // TempUsers (e.g. they verified their email but never came back
+                // through the login form). Migrate them now so downstream features
+                // relying on Users/Active (e.g. Stripe onboarding) work correctly.
+                await migrateTempUserToActiveUser(uid as UserId);
                 const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
                 setUser(userData);
               } catch {
@@ -117,8 +118,9 @@ export default function UserContext({ children }: { children: any }) {
           // user workflow
           const { uid } = auth.currentUser;
           try {
-            const userData = await getTempUserData(uid as UserId);
-            if (!userData) {
+            const tempUserData = await getTempUserData(uid as UserId);
+            // Verified users without staged signup data are already active (or social-provisioned).
+            if (!tempUserData) {
               router.push("/");
             }
           } catch {

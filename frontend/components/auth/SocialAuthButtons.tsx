@@ -5,12 +5,18 @@ import { handleAppleSignIn, handleFacebookSignIn, handleGoogleSignIn } from "@/s
 import { useEffect, useTransition } from "react";
 
 const SOCIAL_BUTTON_CLASS =
-  "flex h-10 flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-10 w-full items-center justify-center rounded-xl border border-gray-300 bg-white transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text disabled:cursor-not-allowed disabled:opacity-50";
 
 const SOCIAL_PROVIDERS = [
-  { id: "google", label: "Continue with Google", signIn: handleGoogleSignIn, src: "/images/auth/google.png" },
-  { id: "apple", label: "Continue with Apple", signIn: handleAppleSignIn, src: "/images/auth/apple.png" },
-  { id: "facebook", label: "Continue with Facebook", signIn: handleFacebookSignIn, src: "/images/auth/facebook.png" },
+  { id: "google", label: "Continue with Google", signIn: handleGoogleSignIn, src: "/images/auth/google.png", enabled: true },
+  { id: "apple", label: "Continue with Apple", signIn: handleAppleSignIn, src: "/images/auth/apple.png", enabled: false },
+  {
+    id: "facebook",
+    label: "Continue with Facebook",
+    signIn: handleFacebookSignIn,
+    src: "/images/auth/facebook.png",
+    enabled: false,
+  },
 ] as const;
 
 interface SocialAuthButtonsProps {
@@ -53,8 +59,8 @@ export default function SocialAuthButtons({ disabled, onError, onSuccess, onPend
         </div>
       </div>
 
-      <div className="mt-3 flex gap-2.5" aria-busy={isPending}>
-        {SOCIAL_PROVIDERS.map((provider) => (
+      <div className="mt-3" aria-busy={isPending}>
+        {SOCIAL_PROVIDERS.filter((provider) => provider.enabled).map((provider) => (
           <button
             key={provider.id}
             type="button"
