@@ -271,6 +271,24 @@ function findEventTicketType(
   return Object.values(eventTicketTypes).find((type) => type?.id === eventTicketTypeId) ?? null;
 }
 
+/** Display name for a ticket: stored name, then the event's ticket type, then General Admission. */
+export function resolveEventTicketTypeName(
+  event: EventWithInventory,
+  eventTicketTypeId: EventTicketTypeId | null | undefined,
+  storedName?: string | null
+): string {
+  if (storedName && storedName.trim()) {
+    return storedName.trim();
+  }
+  if (eventTicketTypeId) {
+    const ticketType = findEventTicketType(event.eventTicketTypes, eventTicketTypeId);
+    if (ticketType?.name) {
+      return ticketType.name;
+    }
+  }
+  return GENERAL_TICKET_TYPE_NAME;
+}
+
 /**
  * Form for a ticket type. Prefer the type's formId; only General Admission falls back to
  * event.formId when unset. Other types with a null formId use no form.
