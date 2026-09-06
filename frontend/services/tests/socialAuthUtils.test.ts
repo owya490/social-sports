@@ -3,6 +3,7 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 import {
   isSocialAuthUser,
   mapSocialAuthError,
+  resolveSocialProfilePicture,
   splitDisplayName,
   userDataFromSocialProfile,
 } from "../src/auth/socialAuthUtils";
@@ -35,7 +36,7 @@ describe("userDataFromSocialProfile", () => {
     expect(userData.firstName).toBe("Owen");
     expect(userData.surname).toBe("Yang");
     expect(userData.contactInformation.email).toBe("owen@example.com");
-    expect(userData.publicContactInformation.email).toBe("owen@example.com");
+    expect(userData.publicContactInformation.email).toBe("");
     expect(userData.profilePicture).toBe("https://example.com/photo.png");
   });
 
@@ -50,6 +51,19 @@ describe("userDataFromSocialProfile", () => {
     expect(userData.profilePicture).toBe(DEFAULT_USER_PROFILE_PICTURE);
     expect(userData.surname).toBe("");
     expect(userData.activeBookings).toEqual(EmptyUserData.activeBookings);
+  });
+});
+
+describe("resolveSocialProfilePicture", () => {
+  it("uses the default avatar when the provider omits or blanks the photo URL", () => {
+    expect(resolveSocialProfilePicture(null)).toBe(DEFAULT_USER_PROFILE_PICTURE);
+    expect(resolveSocialProfilePicture("")).toBe(DEFAULT_USER_PROFILE_PICTURE);
+    expect(resolveSocialProfilePicture("   ")).toBe(DEFAULT_USER_PROFILE_PICTURE);
+  });
+
+  it("keeps a non-empty provider photo URL", () => {
+    expect(resolveSocialProfilePicture("https://example.com/photo.png")).toBe("https://example.com/photo.png");
+    expect(resolveSocialProfilePicture("  https://example.com/photo.png  ")).toBe("https://example.com/photo.png");
   });
 });
 

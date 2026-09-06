@@ -25,6 +25,11 @@ export function splitDisplayName(displayName: string | null | undefined): { firs
   return { firstName, surname: rest.join(" ") };
 }
 
+export function resolveSocialProfilePicture(photoURL: string | null | undefined): string {
+  const trimmed = photoURL?.trim();
+  return trimmed ? trimmed : DEFAULT_USER_PROFILE_PICTURE;
+}
+
 export function userDataFromSocialProfile(profile: SocialAuthProfile): UserData {
   const { firstName, surname } = splitDisplayName(profile.displayName);
   const email = profile.email ?? "";
@@ -33,13 +38,9 @@ export function userDataFromSocialProfile(profile: SocialAuthProfile): UserData 
     userId: profile.uid as UserId,
     firstName,
     surname,
-    profilePicture: profile.photoURL || DEFAULT_USER_PROFILE_PICTURE,
+    profilePicture: resolveSocialProfilePicture(profile.photoURL),
     contactInformation: {
       ...EmptyUserData.contactInformation,
-      email,
-    },
-    publicContactInformation: {
-      ...EmptyUserData.publicContactInformation,
       email,
     },
   };
