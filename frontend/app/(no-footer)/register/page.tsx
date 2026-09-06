@@ -1,8 +1,15 @@
 "use client";
-import AuthSplitLayout, { AUTH_INPUT_CLASS, AUTH_SUBMIT_CLASS } from "@/components/auth/AuthSplitLayout";
-import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
+import AuthSplitLayout, {
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+  AUTH_SUBMIT_CLASS,
+} from "@/components/auth/AuthSplitLayout";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
+import { useUser } from "@/components/utility/UserContext";
+import { EmptyNewUserData, NewUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
+import { getFullUserById } from "@/services/src/users/usersService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
@@ -20,6 +27,13 @@ export default function Register() {
   const [showEmailSentAlert, setShowEmailSentAlert] = useState(false);
   const [error, setError] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [socialPending, setSocialPending] = useState(false);
+  const { setUser } = useUser();
+
+  const completeSocialSignIn = async (userId: UserId) => {
+    setUser(await getFullUserById(userId));
+    router.push("/?login=success");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -103,17 +117,17 @@ export default function Register() {
         ctaBody="Discover volleyball, badminton, pickleball and more, then book or host your next session in minutes."
         ctaBackdrop="jumpman"
       >
-        <h1 className="text-3xl font-bold tracking-tight text-core-text">Register</h1>
-        <p className="mt-2 text-sm font-light leading-relaxed text-gray-500">
+        <h1 className="text-2xl font-bold tracking-tight text-core-text">Register</h1>
+        <p className="mt-1 text-sm font-light leading-snug text-gray-500">
           Create an account to host events in minutes.
         </p>
 
-        <form className="mt-8 space-y-6 group" onSubmit={handleSubmit}>
+        <form className="mt-5 space-y-3 group" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="first-name" className="block font-medium leading-6 text-core-text">
+            <label htmlFor="first-name" className={AUTH_LABEL_CLASS}>
               First Name
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="first-name"
                 name="first-name"
@@ -131,10 +145,10 @@ export default function Register() {
             </div>
           </div>
           <div>
-            <label htmlFor="email" className="block font-medium leading-6 text-core-text">
+            <label htmlFor="email" className={AUTH_LABEL_CLASS}>
               Email address
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="email"
                 name="email"
@@ -157,10 +171,10 @@ export default function Register() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block font-medium leading-6 text-core-text">
-              Password (min. 6 characters)
+            <label htmlFor="password" className={AUTH_LABEL_CLASS}>
+              Password
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="password"
                 name="password"
@@ -168,6 +182,7 @@ export default function Register() {
                 className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
                 required
                 pattern=".{6,}"
+                placeholder="Min. 6 characters"
                 value={userData.password}
                 onChange={(e) =>
                   setUserData({
@@ -180,32 +195,43 @@ export default function Register() {
           </div>
 
           <div>
-            <label htmlFor="password-repeat" className="block font-medium leading-6 text-core-text">
+            <label htmlFor="password-repeat" className={AUTH_LABEL_CLASS}>
               Repeat Password
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="password-repeat"
                 name="password"
                 type="password"
                 className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
                 required
+                placeholder="Repeat password"
                 onChange={(e) => setRepeatPassword(e.target.value)}
               />
             </div>
           </div>
 
-          <button type="submit" className={AUTH_SUBMIT_CLASS} disabled={isPending}>
+          <button type="submit" className={AUTH_SUBMIT_CLASS} disabled={isPending || socialPending}>
             {isPending ? "Loading..." : "Register"}
           </button>
-
-          <p className="text-gray-500">
-            Have an account?{" "}
-            <Link href="/login" className="font-semibold leading-6 text-core-text hover:underline">
-              Login here
-            </Link>
-          </p>
         </form>
+
+        <SocialAuthButtons
+          disabled={isPending}
+          onPendingChange={setSocialPending}
+          onError={(message) => {
+            setError(message);
+            setShowRegisterFailure(true);
+          }}
+          onSuccess={completeSocialSignIn}
+        />
+
+        <p className="mt-4 text-sm text-gray-500">
+          Have an account?{" "}
+          <Link href="/login" className="font-semibold leading-6 text-core-text hover:underline">
+            Login here
+          </Link>
+        </p>
       </AuthSplitLayout>
     </>
   );

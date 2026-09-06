@@ -2,10 +2,12 @@ import Logo from "@/components/navbar/Logo";
 import { ReactNode } from "react";
 
 export const AUTH_INPUT_CLASS =
-  "block w-full rounded-lg border-0 py-2.5 text-core-text shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:leading-6";
+  "block w-full rounded-md border-0 py-1.5 text-sm text-core-text shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black";
+
+export const AUTH_LABEL_CLASS = "block text-sm font-medium leading-5 text-core-text";
 
 export const AUTH_SUBMIT_CLASS =
-  "flex w-full justify-center rounded-lg bg-core-text text-white px-3 py-2.5 font-semibold leading-6 border border-core-text hover:bg-white hover:text-core-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed";
+  "flex w-full justify-center rounded-md bg-core-text text-white px-3 py-2 text-sm font-semibold leading-5 border border-core-text hover:bg-white hover:text-core-text focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed";
 
 const CTA_BACKDROPS = {
   athlete: {
@@ -35,8 +37,8 @@ export default function AuthSplitLayout({
 }: AuthSplitLayoutProps) {
   return (
     <div className="flex min-h-screen w-full flex-col bg-white md:grid md:grid-cols-2">
-      <div className="relative flex flex-1 flex-col justify-center overflow-y-auto bg-white px-6 pb-10 pt-16 sm:px-12 sm:pt-20 md:min-h-screen md:pb-16 md:pt-24 lg:px-16 xl:px-24">
-        <div className="absolute left-5 top-5 sm:left-6 sm:top-6">
+      <div className="relative flex flex-1 flex-col justify-center overflow-y-auto bg-white px-6 pb-8 pt-14 sm:px-12 sm:pt-16 md:min-h-screen md:pb-10 md:pt-16 lg:px-16 xl:px-24">
+        <div className="absolute left-5 top-4 sm:left-6 sm:top-5">
           <Logo showText size="sm" />
         </div>
         <div className="mx-auto w-full max-w-sm">{children}</div>

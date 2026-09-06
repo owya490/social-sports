@@ -1,6 +1,12 @@
 "use client";
-import AuthSplitLayout, { AUTH_INPUT_CLASS, AUTH_SUBMIT_CLASS } from "@/components/auth/AuthSplitLayout";
+import AuthSplitLayout, {
+  AUTH_INPUT_CLASS,
+  AUTH_LABEL_CLASS,
+  AUTH_SUBMIT_CLASS,
+} from "@/components/auth/AuthSplitLayout";
+import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
 import { useUser } from "@/components/utility/UserContext";
+import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { getFullUserById } from "@/services/src/users/usersService";
@@ -17,9 +23,15 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState("");
   const [alertStatus, setAlertStatus] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [socialPending, setSocialPending] = useState(false);
   const router = useRouter();
   const { setUser } = useUser();
   const logger = new Logger("loginLogger");
+
+  const completeSocialSignIn = async (userId: UserId) => {
+    setUser(await getFullUserById(userId));
+    router.push("/?login=success");
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -62,17 +74,17 @@ export default function Login() {
         ctaTitle="Find your next social sport session."
         ctaBody="Log in to book games near you, manage your spots, and pick up where your community left off."
       >
-        <h1 className="text-3xl font-bold tracking-tight text-core-text">Sign in</h1>
-        <p className="mt-2 text-sm font-light leading-relaxed text-gray-500">
+        <h1 className="text-2xl font-bold tracking-tight text-core-text">Sign in</h1>
+        <p className="mt-1 text-sm font-light leading-snug text-gray-500">
           Welcome back. Use your email to continue.
         </p>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-5 space-y-3" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="email" className="block font-medium leading-6 text-core-text">
+            <label htmlFor="email" className={AUTH_LABEL_CLASS}>
               Email address
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="email"
                 name="email"
@@ -94,14 +106,14 @@ export default function Login() {
 
           <div>
             <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block font-medium leading-6 text-core-text">
+              <label htmlFor="password" className={AUTH_LABEL_CLASS}>
                 Password
               </label>
               <Link href="resetPassword" className="font-semibold text-sm text-gray-500 hover:underline">
                 Forgot password?
               </Link>
             </div>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="password"
                 name="password"
@@ -121,12 +133,22 @@ export default function Login() {
             </div>
           </div>
 
-          <button type="submit" className={AUTH_SUBMIT_CLASS} tabIndex={3} disabled={isPending}>
+          <button type="submit" className={AUTH_SUBMIT_CLASS} tabIndex={3} disabled={isPending || socialPending}>
             {isPending ? "Loading..." : "Sign in"}
           </button>
         </form>
 
-        <p className="mt-8 text-gray-500">
+        <SocialAuthButtons
+          disabled={isPending}
+          onPendingChange={setSocialPending}
+          onError={(message) => {
+            setErrorMessage(message);
+            setAlertStatus(true);
+          }}
+          onSuccess={completeSocialSignIn}
+        />
+
+        <p className="mt-4 text-sm text-gray-500">
           Not a member?{" "}
           <Link href="/register" className="font-semibold leading-6 text-core-text hover:underline">
             Register here
