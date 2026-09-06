@@ -5,7 +5,7 @@ import { handleAppleSignIn, handleFacebookSignIn, handleGoogleSignIn } from "@/s
 import { useEffect, useTransition } from "react";
 
 const SOCIAL_BUTTON_CLASS =
-  "flex h-14 flex-1 items-center justify-center rounded-2xl border border-gray-300 bg-white transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text disabled:cursor-not-allowed disabled:opacity-50";
+  "flex h-10 flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text disabled:cursor-not-allowed disabled:opacity-50";
 
 const SOCIAL_PROVIDERS = [
   { id: "google", label: "Continue with Google", signIn: handleGoogleSignIn, src: "/images/auth/google.png" },
@@ -43,17 +43,17 @@ export default function SocialAuthButtons({ disabled, onError, onSuccess, onPend
   };
 
   return (
-    <div className="mt-8">
+    <div className="mt-4">
       <div className="relative">
         <div className="absolute inset-0 flex items-center" aria-hidden>
           <div className="w-full border-t border-gray-200" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-white px-3 text-sm text-gray-400">or</span>
+          <span className="bg-white px-3 text-xs text-gray-400">or</span>
         </div>
       </div>
 
-      <div className="mt-6 flex gap-3" aria-busy={isPending}>
+      <div className="mt-3 flex gap-2.5" aria-busy={isPending}>
         {SOCIAL_PROVIDERS.map((provider) => (
           <button
             key={provider.id}
@@ -63,7 +63,7 @@ export default function SocialAuthButtons({ disabled, onError, onSuccess, onPend
             disabled={buttonsDisabled}
             onClick={() => handleProviderClick(provider.signIn)}
           >
-            <img src={provider.src} alt="" className="h-6 w-6 object-contain" />
+            <img src={provider.src} alt="" className="h-5 w-5 object-contain" />
           </button>
         ))}
       </div>

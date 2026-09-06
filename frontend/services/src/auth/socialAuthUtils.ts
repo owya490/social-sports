@@ -1,5 +1,6 @@
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
+import { Environment, getEnvironment } from "@/utilities/environment";
 
 export const SOCIAL_PROVIDER_IDS = new Set(["google.com", "facebook.com", "apple.com"]);
 
@@ -57,7 +58,10 @@ export function mapSocialAuthError(error: unknown): string | null {
     case "auth/operation-not-allowed":
       return "This sign-in method isn't available yet. Please use email instead.";
     case "auth/unauthorized-domain":
-      return "This domain isn't authorized for social sign-in.";
+      if (getEnvironment() === Environment.PRODUCTION) {
+        return "This domain isn't authorized for social sign-in.";
+      }
+      return "This domain isn't authorized for social sign-in. Add this hostname in Firebase Authentication → Settings → Authorized domains.";
     default:
       break;
   }
