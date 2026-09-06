@@ -170,46 +170,44 @@ export default function Register() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <label htmlFor="password" className={AUTH_LABEL_CLASS}>
-                Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
-                  required
-                  pattern=".{6,}"
-                  placeholder="Min. 6 characters"
-                  value={userData.password}
-                  onChange={(e) =>
-                    setUserData({
-                      ...userData,
-                      password: e.target.value,
-                    })
-                  }
-                />
-              </div>
+          <div>
+            <label htmlFor="password" className={AUTH_LABEL_CLASS}>
+              Password
+            </label>
+            <div className="mt-1">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
+                required
+                pattern=".{6,}"
+                placeholder="Min. 6 characters"
+                value={userData.password}
+                onChange={(e) =>
+                  setUserData({
+                    ...userData,
+                    password: e.target.value,
+                  })
+                }
+              />
             </div>
+          </div>
 
-            <div>
-              <label htmlFor="password-repeat" className={AUTH_LABEL_CLASS}>
-                Repeat Password
-              </label>
-              <div className="mt-1">
-                <input
-                  id="password-repeat"
-                  name="password"
-                  type="password"
-                  className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
-                  required
-                  placeholder="Repeat password"
-                  onChange={(e) => setRepeatPassword(e.target.value)}
-                />
-              </div>
+          <div>
+            <label htmlFor="password-repeat" className={AUTH_LABEL_CLASS}>
+              Repeat Password
+            </label>
+            <div className="mt-1">
+              <input
+                id="password-repeat"
+                name="password"
+                type="password"
+                className={`${AUTH_INPUT_CLASS} ${passwordMismatch ? "ring-red-400" : ""}`}
+                required
+                placeholder="Repeat password"
+                onChange={(e) => setRepeatPassword(e.target.value)}
+              />
             </div>
           </div>
 
