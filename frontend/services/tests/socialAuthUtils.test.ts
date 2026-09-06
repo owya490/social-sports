@@ -82,6 +82,25 @@ describe("mapSocialAuthError", () => {
     expect(mapSocialAuthError({ code: "auth/operation-not-allowed" })).toBe(
       "This sign-in method isn't available yet. Please use email instead."
     );
+    expect(mapSocialAuthError({ code: "auth/unauthorized-domain" })).toBe(
+      "This domain isn't authorized for social sign-in. Add this hostname in Firebase Authentication → Settings → Authorized domains."
+    );
+  });
+
+  it("keeps unauthorized-domain copy short in production", () => {
+    const previous = process.env.NEXT_PUBLIC_ENVIRONMENT;
+    process.env.NEXT_PUBLIC_ENVIRONMENT = "PRODUCTION";
+    try {
+      expect(mapSocialAuthError({ code: "auth/unauthorized-domain" })).toBe(
+        "This domain isn't authorized for social sign-in."
+      );
+    } finally {
+      if (previous === undefined) {
+        delete process.env.NEXT_PUBLIC_ENVIRONMENT;
+      } else {
+        process.env.NEXT_PUBLIC_ENVIRONMENT = previous;
+      }
+    }
   });
 
   it("falls back to the error message when the code is unknown", () => {
