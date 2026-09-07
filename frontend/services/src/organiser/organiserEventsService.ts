@@ -6,7 +6,7 @@ import {
 } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { EVENT_PATHS } from "../events/eventsConstants";
 import { getEventById } from "../events/eventsService";
@@ -36,12 +36,21 @@ type OrganiserEventsInflight = {
 let organiserEventsInflight: OrganiserEventsInflight | null = null;
 let organiserEventsFetchSeq = 0;
 
-async function getEventDocsByOrganiserId(organiserId: UserId): Promise<EventDataWithoutOrganiser[]> {
+async function getEventDocsByOrganiserId(
+  organiserId: UserId,
+  startDateOnOrAfter?: Timestamp
+): Promise<EventDataWithoutOrganiser[]> {
   const snapshots = await Promise.all(
     EVENT_PATHS.map((path) => {
       const [root, status, privacy] = path.split("/");
       const eventCollectionRef = collection(db, root, status, privacy);
-      const eventsQuery = query(eventCollectionRef, where("organiserId", "==", organiserId));
+      const eventsQuery = startDateOnOrAfter
+        ? query(
+            eventCollectionRef,
+            where("organiserId", "==", organiserId),
+            where("startDate", ">=", startDateOnOrAfter)
+          )
+        : query(eventCollectionRef, where("organiserId", "==", organiserId));
       return getDocs(eventsQuery);
     })
   );
@@ -57,16 +66,25 @@ async function getEventDocsByOrganiserId(organiserId: UserId): Promise<EventData
   return events;
 }
 
-async function fetchOrganiserEventsFromFirestore(userId: UserId): Promise<EventData[]> {
+type FetchOrganiserEventsOptions = {
+  startDateOnOrAfter?: Timestamp;
+  /** Per-id lookups for events missing from collection queries. Skip on date-bounded fetches. */
+  includeMissingEventFallbacks?: boolean;
+};
+
+async function fetchOrganiserEventsFromFirestore(
+  userId: UserId,
+  options?: FetchOrganiserEventsOptions
+): Promise<{ events: EventData[]; organiserEventIds: EventId[] }> {
   const privateDoc = await getPrivateUserById(userId);
   const organiserEventIds = (privateDoc.organiserEvents || []) as EventId[];
   if (organiserEventIds.length === 0) {
-    return [];
+    return { events: [], organiserEventIds };
   }
 
   const allowedIds = new Set(organiserEventIds);
   const [eventDocs, organiser] = await Promise.all([
-    getEventDocsByOrganiserId(userId),
+    getEventDocsByOrganiserId(userId, options?.startDateOnOrAfter),
     getPublicUserById(userId, false),
   ]);
 
@@ -86,7 +104,10 @@ async function fetchOrganiserEventsFromFirestore(userId: UserId): Promise<EventD
     );
   }
 
-  const missingIds = organiserEventIds.filter((eventId) => !foundIds.has(eventId));
+  const includeMissingEventFallbacks = options?.includeMissingEventFallbacks !== false;
+  const missingIds = includeMissingEventFallbacks
+    ? organiserEventIds.filter((eventId) => !foundIds.has(eventId))
+    : [];
   if (missingIds.length > 0) {
     const fallbacks = await Promise.all(
       missingIds.map((eventId) =>
@@ -106,7 +127,25 @@ async function fetchOrganiserEventsFromFirestore(userId: UserId): Promise<EventD
   }
 
   organiserEventsServiceLogger.info(`Fetched ${eventDataList.length} organiser events for ${userId}`);
-  return eventDataList;
+  return { events: eventDataList, organiserEventIds };
+}
+
+/**
+ * Events whose startDate is on/after `startDateOnOrAfter`.
+ * That window is recent past plus every upcoming event; older history is omitted.
+ */
+export async function getOrganiserEventsStartingOnOrAfter(
+  userId: UserId,
+  startDateOnOrAfter: Timestamp
+): Promise<{ events: EventData[]; hasAnyOrganiserEvents: boolean }> {
+  organiserEventsServiceLogger.info(
+    `getOrganiserEventsStartingOnOrAfter since=${startDateOnOrAfter.seconds}`
+  );
+  const { events, organiserEventIds } = await fetchOrganiserEventsFromFirestore(userId, {
+    startDateOnOrAfter,
+    includeMissingEventFallbacks: false,
+  });
+  return { events, hasAnyOrganiserEvents: organiserEventIds.length > 0 };
 }
 
 export async function getOrganiserEvents(
@@ -131,7 +170,7 @@ export async function getOrganiserEvents(
 
   const fetchSeq = ++organiserEventsFetchSeq;
   const promise = (async () => {
-    const events = await fetchOrganiserEventsFromFirestore(userId);
+    const { events } = await fetchOrganiserEventsFromFirestore(userId);
     if (fetchSeq === organiserEventsFetchSeq) {
       setOrganiserEventsIntoCache(userId, events, generation);
     }
