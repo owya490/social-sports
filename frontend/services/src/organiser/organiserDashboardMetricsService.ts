@@ -1,14 +1,21 @@
-import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
-import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
 import {
-  getOrganiserEvents,
+  getOrganiserDocsThroughCache,
   getOrganiserEventsCacheGeneration,
   onOrganiserEventsCacheBust,
-} from "@/services/src/organiser/organiserEventsService";
+  setOrganiserEventMetadataIntoCache,
+  setOrganiserOrderIntoCache,
+  setOrganiserTicketIntoCache,
+  tryGetOrganiserEventMetadataFromCache,
+  tryGetOrganiserOrderFromCache,
+  tryGetOrganiserTicketFromCache,
+} from "@/services/src/organiser/organiserEventsCache";
+import { getOrganiserEvents } from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -294,24 +301,51 @@ export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): Organiser
   return metricsCache.metrics;
 }
 
-async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
-  const events = await getOrganiserEvents(userId);
+async function loadOrganiserDashboardMetrics(
+  userId: UserId,
+  options?: { bypassCache?: boolean }
+): Promise<OrganiserDashboardMetrics> {
+  const events = await getOrganiserEvents(userId, options);
   const nowSeconds = Timestamp.now().seconds;
   const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
 
-  const metadataList = await Promise.all(events.map((event) => getEventsMetadataByEventId(event.eventId)));
+  const metadataList = await Promise.all(
+    events.map(async (event) => {
+      if (!options?.bypassCache) {
+        const cached = tryGetOrganiserEventMetadataFromCache(event.eventId);
+        if (cached) {
+          return cached;
+        }
+      }
+      const eventMetadata = await getEventsMetadataByEventId(event.eventId);
+      setOrganiserEventMetadataIntoCache(event.eventId, eventMetadata);
+      return eventMetadata;
+    })
+  );
 
-  const allOrderIds = new Set<string>();
+  const allOrderIds = [...new Set(metadataList.flatMap((eventMetadata) => eventMetadata.orderIds))];
 
-  metadataList.forEach((metadata) => {
-    metadata.orderIds.forEach((orderId) => allOrderIds.add(orderId));
-  });
-
-  const orders = allOrderIds.size > 0 ? await getOrdersByIds([...allOrderIds] as OrderId[]) : [];
+  const orders =
+    allOrderIds.length > 0
+      ? await getOrganiserDocsThroughCache(
+          allOrderIds,
+          options?.bypassCache,
+          tryGetOrganiserOrderFromCache,
+          getOrdersByIds,
+          setOrganiserOrderIntoCache
+        )
+      : [];
   const approvedOrders = orders.filter(isApprovedOrder);
+  const ticketIds = approvedOrders.flatMap((order) => order.tickets);
   const allTickets =
-    approvedOrders.length > 0
-      ? await getTicketsByIds(approvedOrders.flatMap((order) => order.tickets))
+    ticketIds.length > 0
+      ? await getOrganiserDocsThroughCache(
+          ticketIds,
+          options?.bypassCache,
+          tryGetOrganiserTicketFromCache,
+          getTicketsByIds,
+          setOrganiserTicketIntoCache
+        )
       : [];
 
   const approvedTickets = allTickets.filter(isApprovedTicket);
@@ -360,7 +394,7 @@ export async function fetchOrganiserDashboardMetrics(
   }
 
   const promise = (async () => {
-    const metrics = await loadOrganiserDashboardMetrics(userId);
+    const metrics = await loadOrganiserDashboardMetrics(userId, options);
     if (generation === getOrganiserEventsCacheGeneration()) {
       metricsCache = { userId, fetchedAt: Date.now(), generation, metrics };
     }

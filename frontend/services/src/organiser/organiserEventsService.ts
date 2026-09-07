@@ -133,7 +133,7 @@ export async function getOrganiserEvents(
   const promise = (async () => {
     const events = await fetchOrganiserEventsFromFirestore(userId);
     if (fetchSeq === organiserEventsFetchSeq) {
-      setOrganiserEventsIntoCache(userId, events, generation);
+      setOrganiserEventsIntoCache(userId, events);
     }
     return events;
   })();
