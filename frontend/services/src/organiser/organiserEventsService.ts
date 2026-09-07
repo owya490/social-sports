@@ -60,8 +60,6 @@ async function getEventDocsByOrganiserId(organiserId: UserId): Promise<EventData
 
 type FetchOrganiserEventsOptions = {
   startDateOnOrAfter?: Timestamp;
-  /** Per-id lookups for events missing from collection queries. Skip on date-bounded fetches. */
-  includeMissingEventFallbacks?: boolean;
 };
 
 async function fetchOrganiserEventsFromFirestore(
@@ -96,10 +94,7 @@ async function fetchOrganiserEventsFromFirestore(
     );
   }
 
-  const includeMissingEventFallbacks = options?.includeMissingEventFallbacks !== false;
-  const missingIds = includeMissingEventFallbacks
-    ? organiserEventIds.filter((eventId) => !foundIds.has(eventId))
-    : [];
+  const missingIds = organiserEventIds.filter((eventId) => !foundIds.has(eventId));
   if (missingIds.length > 0) {
     const fallbacks = await Promise.all(
       missingIds.map((eventId) =>
@@ -139,7 +134,6 @@ export async function getOrganiserEventsStartingOnOrAfter(
   );
   const { events, organiserEventIds } = await fetchOrganiserEventsFromFirestore(userId, {
     startDateOnOrAfter,
-    includeMissingEventFallbacks: false,
   });
   return { events, hasAnyOrganiserEvents: organiserEventIds.length > 0 };
 }
