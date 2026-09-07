@@ -1,7 +1,8 @@
 "use client";
 
-import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
+import { EventId } from "@/interfaces/EventTypes";
+import { OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
 import { Spinner } from "@material-tailwind/react";
@@ -11,9 +12,9 @@ import { RedHighlightButton } from "../../../elements/HighlightButton";
 import DeleteEventAttendeeCard from "./DeleteEventAttendeeCard";
 
 interface ShareModalProps {
+  eventId: EventId;
   eventName: string;
   eventStartDate: Timestamp;
-  orderTicketsMap: Map<Order, Ticket[]>;
   modalOpen: boolean;
   loading: boolean;
   onClose: () => void;
@@ -21,17 +22,18 @@ interface ShareModalProps {
 }
 
 const DeleteEventModal = ({
+  eventId,
   eventName,
   eventStartDate,
-  orderTicketsMap,
   modalOpen,
   loading,
   onClose,
   onConfirm,
 }: ShareModalProps) => {
+  const { approvedOrderTicketsMap } = useEventOrderAndTickets(eventId);
   const attendeeRows = useMemo(
     () =>
-      Array.from(orderTicketsMap.entries())
+      Array.from(approvedOrderTicketsMap.entries())
         .filter(([order]) => order.status === OrderAndTicketStatus.APPROVED && !!order.email)
         .map(([order, tickets]) => ({
           attendeeName: order.fullName?.trim() || order.email,
@@ -46,7 +48,7 @@ const DeleteEventModal = ({
           }
           return row1.attendeeName.localeCompare(row2.attendeeName);
         }),
-    [orderTicketsMap]
+    [approvedOrderTicketsMap]
   );
 
   const hasAttendees = attendeeRows.length > 0;

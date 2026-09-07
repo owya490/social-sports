@@ -4,8 +4,6 @@ import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventM
 import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
@@ -37,7 +35,6 @@ import {
 
 type EventHubSettingsProps = {
   eventId: EventId;
-  orderTicketsMap: Map<Order, Ticket[]>;
   eventName: string;
   eventStartDate: Timestamp;
   paused: boolean;
@@ -85,7 +82,6 @@ function SettingsGroup({
 
 export function EventHubSettings({
   eventId,
-  orderTicketsMap,
   eventName,
   eventStartDate,
   paused,
@@ -308,9 +304,9 @@ export function EventHubSettings({
       </div>
 
       <DeleteEventModal
+        eventId={eventId}
         eventName={eventName}
         eventStartDate={eventStartDate}
-        orderTicketsMap={orderTicketsMap}
         modalOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onConfirm={onConfirm}

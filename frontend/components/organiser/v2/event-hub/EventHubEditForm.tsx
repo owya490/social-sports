@@ -15,8 +15,6 @@
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import {
   addCalendarDaysToYmd,
   dateAndTimeInLocalToDate,
@@ -54,7 +52,6 @@ type EventHubEditFormProps = {
   eventEventLink: string;
   isActive: boolean;
   eventTicketTypes?: EventTicketTypesMap;
-  orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   hideTicketTypeFormSelector?: boolean;
@@ -75,7 +72,6 @@ export function EventHubEditForm({
   eventEventLink,
   isActive,
   eventTicketTypes,
-  orderTicketsMap,
   setEventTicketTypes,
   onPersistTicketTypes,
   hideTicketTypeFormSelector = true,
@@ -279,7 +275,7 @@ export function EventHubEditForm({
   };
 
   const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
-  const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
+  const canEditTicketTypes = Boolean(setEventTicketTypes);
   const readOnly = !isActive;
 
   return (
@@ -394,7 +390,6 @@ export function EventHubEditForm({
           <EventHubTicketTypesEditor
             eventId={eventId}
             eventTicketTypes={eventTicketTypes}
-            orderTicketsMap={orderTicketsMap!}
             isActive={isActive}
             setEventTicketTypes={setEventTicketTypes!}
             onPersistTicketTypes={onPersistTicketTypes}

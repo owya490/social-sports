@@ -4,8 +4,6 @@ import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   getSortedEventTicketTypes,
@@ -58,7 +56,6 @@ type EventHubListingProps = {
   isActive: boolean;
   isPrivate: boolean;
   eventTicketTypes?: EventTicketTypesMap;
-  orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
@@ -85,7 +82,6 @@ export function EventHubListing({
   isActive,
   isPrivate,
   eventTicketTypes,
-  orderTicketsMap,
   setEventTicketTypes,
   onPersistTicketTypes,
   mode = "event",
@@ -387,7 +383,6 @@ export function EventHubListing({
             eventEventLink={eventEventLink}
             isActive={isActive}
             eventTicketTypes={eventTicketTypes}
-            orderTicketsMap={orderTicketsMap}
             setEventTicketTypes={setEventTicketTypes}
             onPersistTicketTypes={onPersistTicketTypes}
             hideTicketTypeFormSelector={!isTemplate}
