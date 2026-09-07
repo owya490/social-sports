@@ -54,7 +54,7 @@ export async function getTicketsByIds(ticketIds: TicketId[]): Promise<Ticket[]> 
     const uniqueIds = [...new Set(ticketIds)];
     const tickets = await queryTicketsByIds(uniqueIds);
     const byId = new Map(tickets.map((ticket) => [ticket.ticketId, ticket]));
-    return uniqueIds.map((ticketId) => {
+    return ticketIds.map((ticketId) => {
       const ticket = byId.get(ticketId);
       if (!ticket) {
         ticketServiceLogger.error(`getTicketById, ticket not found, ${ticketId}`);

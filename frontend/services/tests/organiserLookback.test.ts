@@ -54,4 +54,43 @@ describe("organiser lookback filters", () => {
       "recent",
     ]);
   });
+
+  it("drops events and tickets earlier in the same second as the cutoff", () => {
+    const cutoff = new Timestamp(1_000_000, 500);
+    const earlierSameSecond = new Timestamp(1_000_000, 499);
+    const laterSameSecond = new Timestamp(1_000_000, 500);
+
+    const earlierEvent = {
+      ...EmptyEventData,
+      eventId: "earlier" as EventId,
+      startDate: earlierSameSecond,
+    };
+    const laterEvent = {
+      ...EmptyEventData,
+      eventId: "later" as EventId,
+      startDate: laterSameSecond,
+    };
+    expect(filterEventsStartingOnOrAfter([earlierEvent, laterEvent], cutoff).map((event) => event.eventId)).toEqual([
+      "later",
+    ]);
+
+    const earlierTicket: Ticket = {
+      ticketId: "earlier" as Ticket["ticketId"],
+      eventId: "event" as EventId,
+      orderId: "order" as Ticket["orderId"],
+      price: 1000,
+      purchaseDate: earlierSameSecond,
+      status: OrderAndTicketStatus.APPROVED,
+      formResponseId: null,
+      type: OrderAndTicketType.GENERAL,
+    };
+    const laterTicket: Ticket = {
+      ...earlierTicket,
+      ticketId: "later" as Ticket["ticketId"],
+      purchaseDate: laterSameSecond,
+    };
+    expect(filterTicketsPurchasedOnOrAfter([earlierTicket, laterTicket], cutoff).map((ticket) => ticket.ticketId)).toEqual(
+      ["later"]
+    );
+  });
 });

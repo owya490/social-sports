@@ -65,11 +65,11 @@ type FetchOrganiserEventsOptions = {
 async function fetchOrganiserEventsFromFirestore(
   userId: UserId,
   options?: FetchOrganiserEventsOptions
-): Promise<{ events: EventData[]; organiserEventIds: EventId[] }> {
+): Promise<{ events: EventData[]; loadedEventCount: number; organiserEventIds: EventId[] }> {
   const privateDoc = await getPrivateUserById(userId);
   const organiserEventIds = (privateDoc.organiserEvents || []) as EventId[];
   if (organiserEventIds.length === 0) {
-    return { events: [], organiserEventIds };
+    return { events: [], loadedEventCount: 0, organiserEventIds };
   }
 
   const allowedIds = new Set(organiserEventIds);
@@ -113,12 +113,13 @@ async function fetchOrganiserEventsFromFirestore(
     }
   }
 
+  const loadedEventCount = eventDataList.length;
   const events = options?.startDateOnOrAfter
     ? filterEventsStartingOnOrAfter(eventDataList, options.startDateOnOrAfter)
     : eventDataList;
 
   organiserEventsServiceLogger.info(`Fetched ${events.length} organiser events for ${userId}`);
-  return { events, organiserEventIds };
+  return { events, loadedEventCount, organiserEventIds };
 }
 
 /**
@@ -132,10 +133,10 @@ export async function getOrganiserEventsStartingOnOrAfter(
   organiserEventsServiceLogger.info(
     `getOrganiserEventsStartingOnOrAfter since=${startDateOnOrAfter.seconds}`
   );
-  const { events, organiserEventIds } = await fetchOrganiserEventsFromFirestore(userId, {
+  const { events, loadedEventCount } = await fetchOrganiserEventsFromFirestore(userId, {
     startDateOnOrAfter,
   });
-  return { events, hasAnyOrganiserEvents: organiserEventIds.length > 0 };
+  return { events, hasAnyOrganiserEvents: loadedEventCount > 0 };
 }
 
 export async function getOrganiserEvents(
