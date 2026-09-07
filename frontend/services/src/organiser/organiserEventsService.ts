@@ -6,12 +6,13 @@ import {
 } from "@/interfaces/EventTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, Timestamp, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { EVENT_PATHS } from "../events/eventsConstants";
 import { getEventById } from "../events/eventsService";
 import { applyGeneralAdmissionInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
+import { filterEventsStartingOnOrAfter } from "./organiserLookback";
 import {
   getOrganiserEventsCacheGeneration,
   setOrganiserEventsIntoCache,
@@ -57,11 +58,18 @@ async function getEventDocsByOrganiserId(organiserId: UserId): Promise<EventData
   return events;
 }
 
-async function fetchOrganiserEventsFromFirestore(userId: UserId): Promise<EventData[]> {
+type FetchOrganiserEventsOptions = {
+  startDateOnOrAfter?: Timestamp;
+};
+
+async function fetchOrganiserEventsFromFirestore(
+  userId: UserId,
+  options?: FetchOrganiserEventsOptions
+): Promise<{ events: EventData[]; loadedEventCount: number; organiserEventIds: EventId[] }> {
   const privateDoc = await getPrivateUserById(userId);
   const organiserEventIds = (privateDoc.organiserEvents || []) as EventId[];
   if (organiserEventIds.length === 0) {
-    return [];
+    return { events: [], loadedEventCount: 0, organiserEventIds };
   }
 
   const allowedIds = new Set(organiserEventIds);
@@ -105,8 +113,30 @@ async function fetchOrganiserEventsFromFirestore(userId: UserId): Promise<EventD
     }
   }
 
-  organiserEventsServiceLogger.info(`Fetched ${eventDataList.length} organiser events for ${userId}`);
-  return eventDataList;
+  const loadedEventCount = eventDataList.length;
+  const events = options?.startDateOnOrAfter
+    ? filterEventsStartingOnOrAfter(eventDataList, options.startDateOnOrAfter)
+    : eventDataList;
+
+  organiserEventsServiceLogger.info(`Fetched ${events.length} organiser events for ${userId}`);
+  return { events, loadedEventCount, organiserEventIds };
+}
+
+/**
+ * Recent-past plus upcoming events. Uses the existing organiserId query and
+ * drops older events in memory so we do not need a composite startDate index.
+ */
+export async function getOrganiserEventsStartingOnOrAfter(
+  userId: UserId,
+  startDateOnOrAfter: Timestamp
+): Promise<{ events: EventData[]; hasAnyOrganiserEvents: boolean }> {
+  organiserEventsServiceLogger.info(
+    `getOrganiserEventsStartingOnOrAfter since=${startDateOnOrAfter.seconds}`
+  );
+  const { events, loadedEventCount } = await fetchOrganiserEventsFromFirestore(userId, {
+    startDateOnOrAfter,
+  });
+  return { events, hasAnyOrganiserEvents: loadedEventCount > 0 };
 }
 
 export async function getOrganiserEvents(
@@ -131,7 +161,7 @@ export async function getOrganiserEvents(
 
   const fetchSeq = ++organiserEventsFetchSeq;
   const promise = (async () => {
-    const events = await fetchOrganiserEventsFromFirestore(userId);
+    const { events } = await fetchOrganiserEventsFromFirestore(userId);
     if (fetchSeq === organiserEventsFetchSeq) {
       setOrganiserEventsIntoCache(userId, events, generation);
     }
