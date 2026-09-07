@@ -1,4 +1,4 @@
-/** Firestore `in` / `array-contains-any` disjunction limit. */
+/** Firestore `in` and `array-contains-any` disjunction limit (30 values). */
 export const FIRESTORE_IN_QUERY_LIMIT = 30;
 
 export function chunkForInQuery<T>(values: T[]): T[][] {

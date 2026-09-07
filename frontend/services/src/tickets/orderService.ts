@@ -63,7 +63,7 @@ export async function getOrdersByIds(orderIds: OrderId[]): Promise<Order[]> {
     const uniqueIds = [...new Set(orderIds)];
     const orders = await queryOrdersByIds(uniqueIds);
     const byId = new Map(orders.map((order) => [order.orderId, order]));
-    return uniqueIds.map((orderId) => {
+    return orderIds.map((orderId) => {
       const order = byId.get(orderId);
       if (!order) {
         orderServiceLogger.error(`getOrderById, order not found, ${orderId}`);
