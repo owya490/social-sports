@@ -12,6 +12,7 @@ import {
   onOrganiserEventsCacheBust,
   tryGetOrganiserEventsFromCache,
 } from "@/services/src/organiser/organiserEventsService";
+import { filterEventsStartingOnOrAfter } from "@/services/src/organiser/organiserLookback";
 import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
 import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -303,7 +304,7 @@ async function loadDashboardEvents(
   const cached = tryGetOrganiserEventsFromCache(userId);
   if (cached) {
     return {
-      events: cached.filter((event) => event.startDate.seconds >= since.seconds),
+      events: filterEventsStartingOnOrAfter(cached, since),
       hasAnyEvents: cached.length > 0,
     };
   }

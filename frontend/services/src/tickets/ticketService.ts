@@ -3,6 +3,7 @@ import { EMPTY_TICKET, Ticket, TicketsCollectionPath } from "@/interfaces/Ticket
 import { Logger } from "@/observability/logger";
 import { db } from "@/services/src/firebase";
 import { chunkForInQuery } from "@/services/src/firebase/firestoreQueryUtils";
+import { filterTicketsPurchasedOnOrAfter } from "@/services/src/organiser/organiserLookback";
 import { collection, doc, documentId, getDoc, getDocs, query, Timestamp, where } from "firebase/firestore";
 
 const ticketServiceLogger = new Logger("ticketServiceLogger");
@@ -67,7 +68,10 @@ export async function getTicketsByIds(ticketIds: TicketId[]): Promise<Ticket[]> 
   }
 }
 
-/** Tickets for the given events with purchaseDate on/after `purchasedOnOrAfter`. */
+/**
+ * Tickets for the given events, keeping those purchased on/after `purchasedOnOrAfter`.
+ * Queries by eventId only (single-field `in`) and applies the date cut in memory.
+ */
 export async function getTicketsPurchasedOnOrAfter(
   eventIds: EventId[],
   purchasedOnOrAfter: Timestamp
@@ -83,13 +87,7 @@ export async function getTicketsPurchasedOnOrAfter(
 
     const snapshots = await Promise.all(
       chunks.map((chunk) =>
-        getDocs(
-          query(
-            collection(db, TicketsCollectionPath),
-            where("eventId", "in", chunk),
-            where("purchaseDate", ">=", purchasedOnOrAfter)
-          )
-        )
+        getDocs(query(collection(db, TicketsCollectionPath), where("eventId", "in", chunk)))
       )
     );
 
@@ -99,8 +97,11 @@ export async function getTicketsPurchasedOnOrAfter(
         tickets.push(ticketFromDoc(ticketDoc.id as TicketId, ticketDoc.data() as Ticket));
       });
     }
-    ticketServiceLogger.info(`getTicketsPurchasedOnOrAfter returned ${tickets.length} tickets`);
-    return tickets;
+    const recentTickets = filterTicketsPurchasedOnOrAfter(tickets, purchasedOnOrAfter);
+    ticketServiceLogger.info(
+      `getTicketsPurchasedOnOrAfter returned ${recentTickets.length} of ${tickets.length} tickets`
+    );
+    return recentTickets;
   } catch (error) {
     ticketServiceLogger.error(`getTicketsPurchasedOnOrAfter ${error}`);
     throw error;

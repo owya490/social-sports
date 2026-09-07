@@ -12,6 +12,7 @@ import { EVENT_PATHS } from "../events/eventsConstants";
 import { getEventById } from "../events/eventsService";
 import { applyGeneralAdmissionInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
+import { filterEventsStartingOnOrAfter } from "./organiserLookback";
 import {
   getOrganiserEventsCacheGeneration,
   setOrganiserEventsIntoCache,
@@ -36,21 +37,12 @@ type OrganiserEventsInflight = {
 let organiserEventsInflight: OrganiserEventsInflight | null = null;
 let organiserEventsFetchSeq = 0;
 
-async function getEventDocsByOrganiserId(
-  organiserId: UserId,
-  startDateOnOrAfter?: Timestamp
-): Promise<EventDataWithoutOrganiser[]> {
+async function getEventDocsByOrganiserId(organiserId: UserId): Promise<EventDataWithoutOrganiser[]> {
   const snapshots = await Promise.all(
     EVENT_PATHS.map((path) => {
       const [root, status, privacy] = path.split("/");
       const eventCollectionRef = collection(db, root, status, privacy);
-      const eventsQuery = startDateOnOrAfter
-        ? query(
-            eventCollectionRef,
-            where("organiserId", "==", organiserId),
-            where("startDate", ">=", startDateOnOrAfter)
-          )
-        : query(eventCollectionRef, where("organiserId", "==", organiserId));
+      const eventsQuery = query(eventCollectionRef, where("organiserId", "==", organiserId));
       return getDocs(eventsQuery);
     })
   );
@@ -84,7 +76,7 @@ async function fetchOrganiserEventsFromFirestore(
 
   const allowedIds = new Set(organiserEventIds);
   const [eventDocs, organiser] = await Promise.all([
-    getEventDocsByOrganiserId(userId, options?.startDateOnOrAfter),
+    getEventDocsByOrganiserId(userId),
     getPublicUserById(userId, false),
   ]);
 
@@ -126,13 +118,17 @@ async function fetchOrganiserEventsFromFirestore(
     }
   }
 
-  organiserEventsServiceLogger.info(`Fetched ${eventDataList.length} organiser events for ${userId}`);
-  return { events: eventDataList, organiserEventIds };
+  const events = options?.startDateOnOrAfter
+    ? filterEventsStartingOnOrAfter(eventDataList, options.startDateOnOrAfter)
+    : eventDataList;
+
+  organiserEventsServiceLogger.info(`Fetched ${events.length} organiser events for ${userId}`);
+  return { events, organiserEventIds };
 }
 
 /**
- * Events whose startDate is on/after `startDateOnOrAfter`.
- * That window is recent past plus every upcoming event; older history is omitted.
+ * Recent-past plus upcoming events. Uses the existing organiserId query and
+ * drops older events in memory so we do not need a composite startDate index.
  */
 export async function getOrganiserEventsStartingOnOrAfter(
   userId: UserId,
