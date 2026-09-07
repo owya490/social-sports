@@ -43,6 +43,8 @@ public class EndpointTypeAuthLevelTest {
 
         // Require a verified Firebase ID token. Handlers additionally check ownership.
         EXPECTED_AUTH_LEVELS.put(EndpointType.CREATE_EVENT, AuthLevel.AUTHENTICATED);
+        EXPECTED_AUTH_LEVELS.put(EndpointType.CREATE_RECURRENCE_TEMPLATE_V2, AuthLevel.AUTHENTICATED);
+        EXPECTED_AUTH_LEVELS.put(EndpointType.UPDATE_RECURRENCE_TEMPLATE_V2, AuthLevel.AUTHENTICATED);
         EXPECTED_AUTH_LEVELS.put(EndpointType.GET_SPORTSHUB_WRAPPED, AuthLevel.AUTHENTICATED);
         EXPECTED_AUTH_LEVELS.put(EndpointType.GET_ORDER, AuthLevel.AUTHENTICATED);
         EXPECTED_AUTH_LEVELS.put(EndpointType.GET_TICKET, AuthLevel.AUTHENTICATED);

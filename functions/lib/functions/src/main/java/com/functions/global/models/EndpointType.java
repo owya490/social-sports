@@ -7,10 +7,14 @@ import com.functions.attendee.models.responses.AddAttendeeResponse;
 import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
+import com.functions.events.models.requests.CreateRecurrenceTemplateV2Request;
 import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
+import com.functions.events.models.requests.UpdateRecurrenceTemplateV2Request;
+import com.functions.events.models.responses.CreateRecurrenceTemplateV2Response;
 import com.functions.events.models.responses.GetEventByIdResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
+import com.functions.events.models.responses.UpdateRecurrenceTemplateV2Response;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
@@ -54,6 +58,10 @@ public enum EndpointType {
     // fulfilment session can only be advanced by the guest who owns it.
     SAVE_TEMP_FORM_RESPONSE(SaveTempFormResponseRequest.class, SaveTempFormResponseResponse.class, AuthLevel.PUBLIC),
     CREATE_EVENT(NewEventData.class, String.class, AuthLevel.AUTHENTICATED),
+    CREATE_RECURRENCE_TEMPLATE_V2(CreateRecurrenceTemplateV2Request.class, CreateRecurrenceTemplateV2Response.class,
+            AuthLevel.AUTHENTICATED),
+    UPDATE_RECURRENCE_TEMPLATE_V2(UpdateRecurrenceTemplateV2Request.class, UpdateRecurrenceTemplateV2Response.class,
+            AuthLevel.AUTHENTICATED),
     INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.class, InitCheckoutFulfilmentSessionResponse.class,
             AuthLevel.PUBLIC),
     UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID(UpdateFulfilmentEntityWithFormResponseIdRequest.class, String.class,

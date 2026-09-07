@@ -18,7 +18,7 @@ import { ShortDateBadge } from "@/components/organiser/v2/shared/ShortDateBadge"
 import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
-import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
+import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { addCalendarDaysToYmd, dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
@@ -57,19 +57,6 @@ const validatePrice = (amount: number): string | null => {
   }
   return null;
 };
-
-function formatFrequency(frequency: Frequency): string {
-  switch (frequency) {
-    case Frequency.WEEKLY:
-      return "Weekly";
-    case Frequency.FORTNIGHTLY:
-      return "Fortnightly";
-    case Frequency.MONTHLY:
-      return "Monthly";
-    default:
-      return "On";
-  }
-}
 
 function formatShortWeekdayDate(isoDate: string): string {
   const d = dateAndTimeInLocalToDate(isoDate, "12:00");
@@ -450,7 +437,7 @@ export function CreateEventWorkbench({
   };
 
   const recurrenceLabel = data.newRecurrenceData.recurrenceEnabled
-    ? formatFrequency(data.newRecurrenceData.frequency)
+    ? `${(data.newRecurrenceData.occurrences ?? []).length || 1} dates`
     : "Off";
   const acceptPaymentsLabel = isFreeEvent ? "Accept bookings" : "Accept payments";
   const hasDescription = hasDescriptionContent(data.description);
@@ -1016,6 +1003,7 @@ export function CreateEventWorkbench({
         open={recurrenceOpen}
         onClose={() => setRecurrenceOpen(false)}
         startDate={data.startDate}
+        startTime={data.startTime}
         value={data.newRecurrenceData}
         onSave={handleRecurrenceSave}
         onCancelEnable={onRecurrenceCancelEnable}

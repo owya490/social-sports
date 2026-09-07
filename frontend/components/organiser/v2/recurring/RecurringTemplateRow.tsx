@@ -9,7 +9,7 @@ import {
   EntityHoverPreview,
 } from "@/components/organiser/v2/shared/EntityHoverPreview";
 import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowThumbnail";
-import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { Frequency, RecurrenceTemplate, isRecurrenceTemplateV2 } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -65,7 +65,13 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
   const { eventData, recurrenceData, recurrenceTemplateId } = template;
   const thumbnailSrc = eventData.thumbnail || eventData.image;
   const status = statusMeta(template);
-  const scheduleLine = `${frequencyLabel(recurrenceData.frequency)} · ${recurrenceData.recurrenceAmount} times · creates ${recurrenceData.createDaysBefore}d before`;
+  const scheduleLine = isRecurrenceTemplateV2(template)
+    ? `${(recurrenceData.occurrences ?? []).length} ${
+        (recurrenceData.occurrences ?? []).length === 1 ? "date" : "dates"
+      }`
+    : `${frequencyLabel(recurrenceData.frequency ?? Frequency.WEEKLY)} · ${
+        recurrenceData.recurrenceAmount ?? 0
+      } times · creates ${recurrenceData.createDaysBefore ?? 0}d before`;
 
   return (
     <EntityHoverPreview

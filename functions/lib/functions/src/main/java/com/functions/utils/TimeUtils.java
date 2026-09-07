@@ -147,8 +147,35 @@ public class TimeUtils {
         return isDateInRange(date, dateRange);
     }
 
-    private static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
+    public static final ZoneId SYDNEY_TIMEZONE = ZoneId.of("Australia/Sydney");
     private static final DateTimeFormatter EMAIL_DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/dd/yyyy, HH:mm");
+
+    /**
+     * Calendar date of {@code timestamp} in Australia/Sydney.
+     */
+    public static LocalDate toSydneyLocalDate(Timestamp timestamp) {
+        if (timestamp == null) {
+            throw new IllegalArgumentException("timestamp is required");
+        }
+        return timestamp.toSqlTimestamp().toInstant().atZone(SYDNEY_TIMEZONE).toLocalDate();
+    }
+
+    /**
+     * Instant at 00:00:00 of {@code date} in Australia/Sydney.
+     */
+    public static Timestamp sydneyStartOfDay(LocalDate date) {
+        if (date == null) {
+            throw new IllegalArgumentException("date is required");
+        }
+        return convertZonedDateTimeToTimestamp(date.atStartOfDay(SYDNEY_TIMEZONE));
+    }
+
+    /**
+     * Normalize a timestamp to Australia/Sydney start-of-day of its Sydney calendar date.
+     */
+    public static Timestamp normalizeToSydneyStartOfDay(Timestamp timestamp) {
+        return sydneyStartOfDay(toSydneyLocalDate(timestamp));
+    }
 
     /**
      * Formats a Timestamp for email display in Sydney timezone.

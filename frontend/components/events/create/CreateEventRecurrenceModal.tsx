@@ -1,6 +1,6 @@
 "use client";
 
-import { RecurringEventsForm } from "@/components/events/create/forms/RecurringEventsForm";
+import { RecurrenceCalendarEditor } from "@/components/events/create/recurrence-v2/RecurrenceCalendarEditor";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { useState } from "react";
@@ -9,6 +9,7 @@ type CreateEventRecurrenceModalProps = {
   open: boolean;
   onClose: () => void;
   startDate: string;
+  startTime: string;
   value: NewRecurrenceFormData;
   onSave: (data: NewRecurrenceFormData) => void;
   onCancelEnable: () => void;
@@ -16,14 +17,16 @@ type CreateEventRecurrenceModalProps = {
 
 type BodyProps = {
   startDate: string;
+  startTime: string;
   initial: NewRecurrenceFormData;
   onSave: (data: NewRecurrenceFormData) => void;
   onClose: () => void;
   onCancelEnable: () => void;
 };
 
-function RecurrencePanelBody({ startDate, initial, onSave, onClose, onCancelEnable }: BodyProps) {
+function RecurrencePanelBody({ startDate, startTime, initial, onSave, onClose, onCancelEnable }: BodyProps) {
   const [draft, setDraft] = useState<NewRecurrenceFormData>(initial);
+  const canSave = (draft.occurrences ?? []).length > 0;
 
   const handleClose = () => {
     onCancelEnable();
@@ -31,20 +34,20 @@ function RecurrencePanelBody({ startDate, initial, onSave, onClose, onCancelEnab
   };
 
   const handleSave = () => {
+    if (!canSave) {
+      return;
+    }
     onSave({ ...draft, recurrenceEnabled: true });
     onClose();
   };
 
   return (
     <>
-      <p className="text-sm text-foreground-muted font-sans mb-4 leading-relaxed">
-        Choose how often this event repeats. Later occurrences are created automatically from this template.
-      </p>
-      <RecurringEventsForm
-        startDate={startDate}
-        newRecurrenceData={draft}
-        setRecurrenceData={setDraft}
-        hideEnableSwitch
+      <RecurrenceCalendarEditor
+        startDateYmd={startDate}
+        startTimeHm={startTime}
+        value={draft}
+        onChange={setDraft}
       />
       <div className="mt-6 flex items-center justify-end gap-2 border-t border-border pt-4">
         <button
@@ -56,8 +59,9 @@ function RecurrencePanelBody({ startDate, initial, onSave, onClose, onCancelEnab
         </button>
         <button
           type="button"
+          disabled={!canSave}
           onClick={handleSave}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-3 py-2 text-sm font-semibold text-background font-sans hover:opacity-90 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-foreground px-3 py-2 text-sm font-semibold text-background font-sans hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:bg-surface-muted disabled:text-foreground-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
         >
           Save recurrence
         </button>
@@ -74,6 +78,7 @@ export function CreateEventRecurrenceModal({
   open,
   onClose,
   startDate,
+  startTime,
   value,
   onSave,
   onCancelEnable,
@@ -88,6 +93,7 @@ export function CreateEventRecurrenceModal({
       {open ? (
         <RecurrencePanelBody
           startDate={startDate}
+          startTime={startTime}
           initial={{ ...value, recurrenceEnabled: true }}
           onSave={onSave}
           onClose={onClose}

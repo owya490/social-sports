@@ -38,6 +38,7 @@ type RecurringHubHeaderProps = {
   startDate: Timestamp;
   location: string;
   frequency: Frequency;
+  scheduleLabel?: string;
   paused: boolean;
   isActive: boolean;
   onTogglePause: () => void;
@@ -50,6 +51,7 @@ export function RecurringHubHeader({
   startDate,
   location,
   frequency,
+  scheduleLabel,
   paused,
   isActive,
   onTogglePause,
@@ -57,7 +59,9 @@ export function RecurringHubHeader({
 }: RecurringHubHeaderProps) {
   const meta = loading
     ? ""
-    : [frequencyLabel(frequency), nextOccurrenceLabel(startDate), location].filter(Boolean).join(" · ");
+    : [scheduleLabel ?? frequencyLabel(frequency), nextOccurrenceLabel(startDate), location]
+        .filter(Boolean)
+        .join(" · ");
   useOrganiserBreadcrumbTitle(loading ? null : name);
 
   return (
