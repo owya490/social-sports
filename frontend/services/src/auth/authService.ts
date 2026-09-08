@@ -21,7 +21,7 @@ import {
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
-import { bustOrganiserEventsCache } from "../organiser/organiserEventsCache";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
@@ -65,7 +65,7 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
     await signOut(auth);
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
-    bustOrganiserEventsCache();
+    bustOrganiserHubCache();
     setUser(EmptyUserData as UserData);
     console.log("Signed out!");
   } catch (error) {

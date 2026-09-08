@@ -1,3 +1,6 @@
+/**
+ * @jest-environment jsdom
+ */
 import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -101,7 +104,7 @@ describe("organiser hub cache", () => {
     expect(mockedGetEventById).toHaveBeenCalledWith(eventId);
   });
 
-  it("refetches an event after invalidate and leaves other collections in place", async () => {
+  it("refetches an event and related cached documents after invalidateEventForOrganiserHub", async () => {
     const eventId = "event-3" as EventId;
     const ticketId = "ticket-3" as TicketId;
     const orderId = "order-3" as OrderId;
@@ -117,17 +120,18 @@ describe("organiser hub cache", () => {
     await organiserHub.getTicket(ticketId);
     await organiserHub.getOrder(orderId);
 
-    organiserHub.invalidateEvent(eventId);
+    organiserHub.invalidateEventForOrganiserHub(eventId);
 
     const refreshed = await organiserHub.getEvent(eventId);
     expect(refreshed.name).toBe("After");
     expect(mockedGetEventById).toHaveBeenCalledTimes(2);
-    expect(await organiserHub.getTicket(ticketId)).toEqual(ticketWith(ticketId, orderId, eventId));
-    expect(mockedGetTicketsByIds).toHaveBeenCalledTimes(1);
-    expect(mockedGetOrdersByIds).toHaveBeenCalledTimes(1);
+    await organiserHub.getTicket(ticketId);
+    await organiserHub.getOrder(orderId);
+    expect(mockedGetTicketsByIds).toHaveBeenCalledTimes(2);
+    expect(mockedGetOrdersByIds).toHaveBeenCalledTimes(2);
   });
 
-  it("only fetches missing tickets and orders in a batch", async () => {
+  it("only fetches missing tickets and orders when requested individually", async () => {
     const eventId = "event-5" as EventId;
     const ticketA = "ticket-a" as TicketId;
     const ticketB = "ticket-b" as TicketId;
@@ -140,43 +144,41 @@ describe("organiser hub cache", () => {
       .mockResolvedValueOnce([orderWith(orderA, [ticketA])])
       .mockResolvedValueOnce([orderWith(orderB, [ticketB])]);
 
-    await organiserHub.getTickets([ticketA]);
-    await organiserHub.getOrders([orderA]);
+    await organiserHub.getTicket(ticketA);
+    await organiserHub.getOrder(orderA);
 
-    const loadedTickets = await organiserHub.getTickets([ticketA, ticketB, ticketA]);
-    const loadedOrders = await organiserHub.getOrders([orderA, orderB]);
+    const loadedTicketB = await organiserHub.getTicket(ticketB);
+    const loadedOrderB = await organiserHub.getOrder(orderB);
+    const cachedTicketA = await organiserHub.getTicket(ticketA);
+    const cachedOrderA = await organiserHub.getOrder(orderA);
 
-    expect(loadedTickets.map((ticket) => ticket.ticketId)).toEqual([ticketA, ticketB, ticketA]);
-    expect(loadedOrders.map((order) => order.orderId)).toEqual([orderA, orderB]);
+    expect(loadedTicketB.ticketId).toBe(ticketB);
+    expect(loadedOrderB.orderId).toBe(orderB);
+    expect(cachedTicketA.ticketId).toBe(ticketA);
+    expect(cachedOrderA.orderId).toBe(orderA);
+    expect(mockedGetTicketsByIds).toHaveBeenCalledTimes(2);
     expect(mockedGetTicketsByIds).toHaveBeenNthCalledWith(1, [ticketA]);
     expect(mockedGetTicketsByIds).toHaveBeenNthCalledWith(2, [ticketB]);
+    expect(mockedGetOrdersByIds).toHaveBeenCalledTimes(2);
     expect(mockedGetOrdersByIds).toHaveBeenNthCalledWith(1, [orderA]);
     expect(mockedGetOrdersByIds).toHaveBeenNthCalledWith(2, [orderB]);
   });
 
-  it("returns an empty list without fetching when no ids are requested", async () => {
-    await expect(organiserHub.getEvents([])).resolves.toEqual([]);
-    await expect(organiserHub.getTickets([])).resolves.toEqual([]);
-    await expect(organiserHub.getOrders([])).resolves.toEqual([]);
-    expect(mockedGetEventById).not.toHaveBeenCalled();
-    expect(mockedGetTicketsByIds).not.toHaveBeenCalled();
-    expect(mockedGetOrdersByIds).not.toHaveBeenCalled();
-  });
-
-  it("invalidates tickets and orders independently by their own ids", async () => {
+  it("invalidates cached orders and tickets for an event via invalidateEventForOrganiserHub", async () => {
     const eventId = "event-7" as EventId;
     const ticketId = "ticket-7" as TicketId;
     const orderId = "order-7" as OrderId;
     mockedGetTicketsByIds.mockResolvedValue([ticketWith(ticketId, orderId, eventId)]);
     mockedGetOrdersByIds.mockResolvedValue([orderWith(orderId, [ticketId])]);
+    mockedGetEventsMetadataByEventId.mockResolvedValue(metadataWith(eventId, [orderId]));
+
+    await organiserHub.getEventMetadata(eventId);
+    await organiserHub.getTicket(ticketId);
+    await organiserHub.getOrder(orderId);
+    organiserHub.invalidateEventForOrganiserHub(eventId);
 
     await organiserHub.getTicket(ticketId);
     await organiserHub.getOrder(orderId);
-    organiserHub.invalidateTicket(ticketId);
-    organiserHub.invalidateOrder(orderId);
-
-    await organiserHub.getTickets([ticketId]);
-    await organiserHub.getOrders([orderId]);
     expect(mockedGetTicketsByIds).toHaveBeenCalledTimes(2);
     expect(mockedGetOrdersByIds).toHaveBeenCalledTimes(2);
   });

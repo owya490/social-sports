@@ -1,14 +1,14 @@
-import { TTLCache } from "@isaacs/ttlcache";
-import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import lscache from "lscache";
 import { Timestamp } from "firebase/firestore";
+import { applyGeneralAdmissionInventoryFields } from "../events/eventsUtils/eventTicketTypesUtils";
 import { getEventsMetadataByEventId } from "../events/eventsMetadata/eventsMetadataService";
 import { getEventById } from "../events/eventsService";
 import { getOrdersByIds } from "../tickets/orderService";
 import { getTicketsByIds } from "../tickets/ticketService";
-import { hydrateStoredOrganiserEvent } from "./organiserEventsCache";
-import { ORGANISER_EVENTS_REFRESH_MILLIS } from "./organiserConstants";
+import { ORGANISER_EVENTS_REFRESH_MILLIS, OrganiserHubEntityType } from "./organiserConstants";
 
 export interface OrganiserHubCache {
   getEvent(eventId: EventId): Promise<EventData>;
@@ -18,22 +18,19 @@ export interface OrganiserHubCache {
   getTickets(ticketIds: TicketId[]): Promise<Ticket[]>;
   getOrder(orderId: OrderId): Promise<Order>;
   getOrders(orderIds: OrderId[]): Promise<Order[]>;
-  invalidateEvent(eventId: EventId): void;
-  invalidateEventMetadata(eventId: EventId): void;
-  invalidateTicket(ticketId: TicketId): void;
-  invalidateTickets(ticketIds: TicketId[]): void;
-  invalidateOrder(orderId: OrderId): void;
-  invalidateOrders(orderIds: OrderId[]): void;
+  invalidateEventForOrganiserHub(eventId: EventId): void;
 }
 
-const memory = new TTLCache<string, unknown>({
-  max: 5000,
-  ttl: ORGANISER_EVENTS_REFRESH_MILLIS,
-  checkAgeOnGet: true,
-});
+const CACHE_TTL_MINUTES = ORGANISER_EVENTS_REFRESH_MILLIS / (60 * 1000);
 
-function cacheKey(kind: string, id: string): string {
-  return `organiserHub.${kind}.${id}`;
+lscache.setBucket("organiserHub");
+
+export function flushOrganiserHubCache(): void {
+  lscache.flush();
+}
+
+function cacheKey(entityType: OrganiserHubEntityType, id: string): string {
+  return `${entityType}.${id}`;
 }
 
 function toTimestamp(value: unknown): Timestamp {
@@ -47,122 +44,119 @@ function toTimestamp(value: unknown): Timestamp {
   return new Timestamp(0, 0);
 }
 
-function read<V>(kind: string, id: string, hydrate: (value: V) => V): V | undefined {
-  const key = cacheKey(kind, id);
-  const cached = memory.get(key) as V | undefined;
-  if (cached !== undefined) {
-    return cached;
-  }
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) {
-      return undefined;
-    }
-    const stored = JSON.parse(raw) as { fetchedAt?: number; value: V };
-    if (typeof stored.fetchedAt !== "number" || Date.now() - stored.fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
-      localStorage.removeItem(key);
-      return undefined;
-    }
-    const value = hydrate(stored.value);
-    memory.set(key, value);
-    return value;
-  } catch {
+function deserialiserEvent(event: EventData): EventData {
+  return applyGeneralAdmissionInventoryFields({
+    ...EmptyEventData,
+    ...event,
+    startDate: toTimestamp(event.startDate),
+    endDate: toTimestamp(event.endDate),
+    registrationDeadline: toTimestamp(event.registrationDeadline),
+  });
+}
+
+function read<V>(
+  entityType: OrganiserHubEntityType,
+  id: string,
+  deserialiser: (value: V) => V
+): V | undefined {
+  const cached = lscache.get(cacheKey(entityType, id));
+  if (cached == null) {
     return undefined;
   }
+  return deserialiser(cached as V);
 }
 
-function write<V>(kind: string, id: string, value: V): void {
-  const key = cacheKey(kind, id);
-  memory.set(key, value);
-  try {
-    localStorage.setItem(key, JSON.stringify({ fetchedAt: Date.now(), value }));
-  } catch {
-    // Memory still holds the value if localStorage is missing or full.
-  }
+function write<V>(entityType: OrganiserHubEntityType, id: string, value: V): void {
+  lscache.set(cacheKey(entityType, id), value, CACHE_TTL_MINUTES);
 }
 
-function remove(kind: string, ids: string[]): void {
+function remove(entityType: OrganiserHubEntityType, ids: string[]): void {
   for (const id of ids) {
     if (!id) {
       continue;
     }
-    const key = cacheKey(kind, id);
-    memory.delete(key);
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // Ignore storage access failures on invalidate.
-    }
+    lscache.remove(cacheKey(entityType, id));
   }
 }
 
-function getMany<K extends string, V>(
-  kind: string,
+async function getMany<K extends string, V>(
+  entityType: OrganiserHubEntityType,
   ids: K[],
-  fetchMissing: (missingIds: K[]) => Promise<V[]>,
+  loader: (missingIds: K[]) => Promise<V[]>,
   getId: (value: V) => K,
-  hydrate: (value: V) => V
+  deserialiser: (value: V) => V
 ): Promise<V[]> {
   if (ids.length === 0) {
-    return Promise.resolve([]);
+    return [];
   }
 
+  const uniqueIds = [...new Set(ids)];
   const found = new Map<K, V>();
-  const missing: K[] = [];
-  for (const id of [...new Set(ids)]) {
-    const cached = read(kind, id, hydrate);
+
+  for (const id of uniqueIds) {
+    const cached = read(entityType, id, deserialiser);
     if (cached !== undefined) {
       found.set(id, cached);
-    } else {
-      missing.push(id);
     }
   }
 
-  if (missing.length === 0) {
-    return Promise.resolve(ids.map((id) => found.get(id) as V));
-  }
-
-  return fetchMissing(missing).then((fetched) => {
-    const byId = new Map(fetched.map((value) => [getId(value), value] as const));
-    for (const id of missing) {
-      const value = byId.get(id);
-      if (value === undefined) {
-        throw new Error(`Organiser hub document not found: ${id}`);
-      }
-      write(kind, id, value);
+  const missing = uniqueIds.filter((id) => !found.has(id));
+  if (missing.length > 0) {
+    const fetched = await loader(missing);
+    for (const value of fetched) {
+      const id = getId(value);
+      write(entityType, id, value);
       found.set(id, value);
     }
-    return ids.map((id) => {
-      const value = found.get(id);
-      if (value === undefined) {
+    for (const id of missing) {
+      if (!found.has(id)) {
         throw new Error(`Organiser hub document not found: ${id}`);
       }
-      return value;
-    });
-  });
+    }
+  }
+
+  return ids.map((id) => found.get(id) as V);
 }
 
-function hydrateTicket(ticket: Ticket): Ticket {
+function deserialiserTicket(ticket: Ticket): Ticket {
   return { ...ticket, purchaseDate: toTimestamp(ticket.purchaseDate) };
 }
 
-function hydrateOrder(order: Order): Order {
+function deserialiserOrder(order: Order): Order {
   return { ...order, datePurchased: toTimestamp(order.datePurchased) };
+}
+
+function invalidateEventForOrganiserHub(eventId: EventId): void {
+  const metadata = read(OrganiserHubEntityType.EventMetadata, eventId, (value) => value as EventMetadata);
+  const orderIds = metadata?.orderIds ?? [];
+
+  const ticketIds: TicketId[] = [];
+  for (const orderId of orderIds) {
+    const order = read(OrganiserHubEntityType.Order, orderId, deserialiserOrder);
+    if (order) {
+      ticketIds.push(...order.tickets);
+    }
+  }
+
+  remove(OrganiserHubEntityType.Event, [eventId]);
+  remove(OrganiserHubEntityType.EventMetadata, [eventId]);
+  remove(OrganiserHubEntityType.Order, orderIds);
+  remove(OrganiserHubEntityType.Ticket, ticketIds);
 }
 
 export const organiserHub: OrganiserHubCache = {
   getEvent: (eventId) => organiserHub.getEvents([eventId]).then(([event]) => event),
   getEvents: (eventIds) =>
     getMany(
-      "event",
+      OrganiserHubEntityType.Event,
       eventIds,
       (ids) => Promise.all(ids.map((id) => getEventById(id))),
       (event) => event.eventId,
-      hydrateStoredOrganiserEvent
+      deserialiserEvent
     ),
   getEventMetadata: (eventId) =>
     getMany(
-      "eventMetadata",
+      OrganiserHubEntityType.EventMetadata,
       [eventId],
       (ids) =>
         Promise.all(
@@ -172,31 +166,26 @@ export const organiserHub: OrganiserHubCache = {
       (metadata) => metadata
     ).then(([metadata]) => metadata),
   getTicket: (ticketId) => organiserHub.getTickets([ticketId]).then(([ticket]) => ticket),
-  getTickets: (ticketIds) => getMany("ticket", ticketIds, getTicketsByIds, (ticket) => ticket.ticketId, hydrateTicket),
+  getTickets: (ticketIds) =>
+    getMany(
+      OrganiserHubEntityType.Ticket,
+      ticketIds,
+      getTicketsByIds,
+      (ticket) => ticket.ticketId,
+      deserialiserTicket
+    ),
   getOrder: (orderId) => organiserHub.getOrders([orderId]).then(([order]) => order),
-  getOrders: (orderIds) => getMany("order", orderIds, getOrdersByIds, (order) => order.orderId, hydrateOrder),
-  invalidateEvent: (eventId) => remove("event", [eventId]),
-  invalidateEventMetadata: (eventId) => remove("eventMetadata", [eventId]),
-  invalidateTicket: (ticketId) => remove("ticket", [ticketId]),
-  invalidateTickets: (ticketIds) => remove("ticket", ticketIds),
-  invalidateOrder: (orderId) => remove("order", [orderId]),
-  invalidateOrders: (orderIds) => remove("order", orderIds),
+  getOrders: (orderIds) =>
+    getMany(
+      OrganiserHubEntityType.Order,
+      orderIds,
+      getOrdersByIds,
+      (order) => order.orderId,
+      deserialiserOrder
+    ),
+  invalidateEventForOrganiserHub,
 };
 
 export function clearOrganiserHubCache(): void {
-  memory.clear();
-  try {
-    const keys: string[] = [];
-    for (let index = 0; index < localStorage.length; index += 1) {
-      const key = localStorage.key(index);
-      if (key?.startsWith("organiserHub.")) {
-        keys.push(key);
-      }
-    }
-    for (const key of keys) {
-      localStorage.removeItem(key);
-    }
-  } catch {
-    // Node tests and private mode have no localStorage.
-  }
+  flushOrganiserHubCache();
 }

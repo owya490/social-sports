@@ -31,7 +31,7 @@ import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { eventServiceLogger, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -53,7 +53,7 @@ export function OrganiserEventHubView() {
     getEventMetadata,
     getOrders,
     getTickets,
-    invalidateEvent,
+    invalidateEventForOrganiserHub,
   } = useEventsForOrganiserHub();
 
   const [section, setSection] = useState<EventHubSection>("Details");
@@ -196,16 +196,16 @@ export function OrganiserEventHubView() {
     setEventPaused(next);
     try {
       await updateEventById(eventId, { paused: next });
-      invalidateEvent(eventId);
+      invalidateEventForOrganiserHub(eventId);
       bustEventsLocalStorageCache();
-      bustOrganiserEventsCache();
+      bustOrganiserHubCache();
     } catch (error) {
       setEventPaused(!next);
       eventServiceLogger.error(`Failed to toggle pause on event hub: ${error}`);
     } finally {
       setPauseUpdating(false);
     }
-  }, [eventId, eventPaused, invalidateEvent]);
+  }, [eventId, eventPaused, invalidateEventForOrganiserHub]);
 
   const handleSectionChange = (next: EventHubSection) => {
     if (next === section) return;
@@ -272,9 +272,9 @@ export function OrganiserEventHubView() {
             }}
             updateData={async (id, data) => {
               await updateEventById(id, data);
-              invalidateEvent(id);
+              invalidateEventForOrganiserHub(id);
               bustEventsLocalStorageCache();
-              bustOrganiserEventsCache();
+              bustOrganiserHubCache();
               if (data.name !== undefined) setEventName(data.name);
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);

@@ -277,7 +277,7 @@ export function EventHubRegistration({
           eventTicketTypes: nextTypes,
           ...(syncEventFormId ? { formId: selectedFormId } : {}),
         });
-        organiserHub.invalidateEvent(eventId);
+        organiserHub.invalidateEventForOrganiserHub(eventId);
 
         const nextEventData: EventData = {
           ...eventData,
@@ -296,7 +296,7 @@ export function EventHubRegistration({
       }
 
       await updateEventById(eventId, { formId: selectedFormId });
-      organiserHub.invalidateEvent(eventId);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       setEventData((prev) => (prev ? { ...prev, formId: selectedFormId } : prev));
 
       if (!selectedFormId) {

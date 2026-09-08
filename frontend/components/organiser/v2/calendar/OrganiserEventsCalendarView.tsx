@@ -6,11 +6,12 @@ import {
   startOfMonth,
   toCalendarDayEvent,
 } from "@/components/organiser/v2/calendar/calendarUtils";
+import { useEventsForOrganiserHub } from "@/components/organiser/v2/event-hub/useEventsForOrganiserHub";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import { useUser } from "@/components/utility/UserContext";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
-import { getOrganiserEvents, tryGetOrganiserEventsFromCache } from "@/services/src/organiser/organiserEventsService";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { addMonths, subMonths } from "date-fns";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 
@@ -18,6 +19,7 @@ const logger = new Logger("OrganiserEventsCalendar");
 
 export function OrganiserEventsCalendarView() {
   const { user } = useUser();
+  const { getEvents } = useEventsForOrganiserHub();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [allEvents, setAllEvents] = useState<EventData[]>([]);
@@ -30,17 +32,11 @@ export function OrganiserEventsCalendarView() {
   useEffect(() => {
     const fetchEvents = async () => {
       if (user.userId === "") return;
-      const cached = tryGetOrganiserEventsFromCache(user.userId);
-      if (cached) {
-        setAllEvents(cached);
-        setError(false);
-        setLoading(false);
-        return;
-      }
+      const eventIds = user.organiserEvents as EventId[];
       setError(false);
       setLoading(true);
       try {
-        const events = await getOrganiserEvents(user.userId);
+        const events = await getEvents(eventIds);
         setAllEvents(events);
       } catch (fetchError) {
         logger.error(`Failed to get organiser events for calendar: ${fetchError}`);
@@ -51,7 +47,7 @@ export function OrganiserEventsCalendarView() {
     };
 
     fetchEvents();
-  }, [user.userId]);
+  }, [user.userId, user.organiserEvents, getEvents]);
 
   const eventsByDay = useMemo(() => {
     const calendarEvents = allEvents.map(toCalendarDayEvent);
@@ -99,7 +95,9 @@ export function OrganiserEventsCalendarView() {
               onClick={() => {
                 setError(false);
                 setLoading(true);
-                getOrganiserEvents(user.userId, { bypassCache: true })
+                const eventIds = user.organiserEvents as EventId[];
+                bustOrganiserHubCache();
+                getEvents(eventIds)
                   .then(setAllEvents)
                   .catch((fetchError) => {
                     logger.error(`Retry failed: ${fetchError}`);

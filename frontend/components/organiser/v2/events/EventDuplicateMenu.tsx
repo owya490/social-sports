@@ -5,7 +5,7 @@ import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
 import { buildDuplicatedNewEventData } from "@/services/src/events/eventsUtils/duplicateEventUtils";
-import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { DocumentDuplicateIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
@@ -34,7 +34,7 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
     setDuplicating(true);
     try {
       const newEventId = await createEvent(buildDuplicatedNewEventData(event));
-      bustOrganiserEventsCache();
+      bustOrganiserHubCache();
       router.push(welcomeAwareEventHref(pathname, newEventId));
     } catch (error) {
       setDuplicating(false);

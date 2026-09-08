@@ -305,10 +305,7 @@ function AttendeeEditTicketsPanel({
         eventTicketTypeId:
           tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
-      organiserHub.invalidateEvent(eventId);
-      organiserHub.invalidateEventMetadata(eventId);
-      organiserHub.invalidateOrders([order.orderId]);
-      organiserHub.invalidateTickets(order.tickets);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       await refreshAttendeeRecords();
       toast.success("Tickets updated");
       onClose();
@@ -501,9 +498,7 @@ export function EventHubAttendees({
     const toastId = toast.loading("Approving order...");
     try {
       const response = await approveBooking(eventId, eventData.organiserId, order.orderId);
-      organiserHub.invalidateEvent(eventId);
-      organiserHub.invalidateOrders([order.orderId]);
-      organiserHub.invalidateTickets(order.tickets);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       await refreshAttendeeRecords();
       if (response.success) {
         toast.success("Order approved", { id: toastId });
@@ -523,9 +518,7 @@ export function EventHubAttendees({
     const toastId = toast.loading("Declining order...");
     try {
       const response = await rejectBooking(eventId, eventData.organiserId, order.orderId);
-      organiserHub.invalidateEvent(eventId);
-      organiserHub.invalidateOrders([order.orderId]);
-      organiserHub.invalidateTickets(order.tickets);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       await refreshAttendeeRecords();
       if (response.success) {
         toast.success("Order declined", { id: toastId });
@@ -582,8 +575,7 @@ export function EventHubAttendees({
         price: 0,
         eventTicketTypeId,
       });
-      organiserHub.invalidateEvent(eventId);
-      organiserHub.invalidateEventMetadata(eventId);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       await refreshAttendeeRecords();
       toast.success("Attendee added");
       closeAddPanel();
@@ -828,7 +820,7 @@ export function EventHubAttendees({
                         {order.fullName || "Attendee"}
                       </p>
                       {order.type === OrderAndTicketType.MANUAL ? (
-                        <p className="text-[10px] text-foreground-muted font-sans leading-tight">
+                        <p className="text-xs text-foreground-muted font-sans leading-tight">
                           Direct Addition
                         </p>
                       ) : null}

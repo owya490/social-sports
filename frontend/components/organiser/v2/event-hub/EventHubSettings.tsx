@@ -9,7 +9,7 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import {
   clampMaxTicketsPerTransaction,
@@ -126,8 +126,8 @@ export function EventHubSettings({
     setSaving(true);
     try {
       await updateEventById(eventId, data);
-      organiserHub.invalidateEvent(eventId);
-      bustOrganiserEventsCache();
+      organiserHub.invalidateEventForOrganiserHub(eventId);
+      bustOrganiserHubCache();
     } finally {
       setSaving(false);
     }
@@ -151,9 +151,8 @@ export function EventHubSettings({
       await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
       await sendEmailOnDeleteEventV2(eventId);
       bustEventsLocalStorageCache();
-      bustOrganiserEventsCache();
-      organiserHub.invalidateEvent(eventId);
-      organiserHub.invalidateEventMetadata(eventId);
+      bustOrganiserHubCache();
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       setDeleteLoading(false);
       router.push("/organiser/v2/event/dashboard");
     } catch (error) {

@@ -49,10 +49,7 @@ const RemoveAttendeeDialog = ({
         numTickets: 0,
         eventTicketTypeId: tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
-      organiserHub.invalidateEvent(eventId);
-      organiserHub.invalidateEventMetadata(eventId);
-      organiserHub.invalidateOrders([order.orderId]);
-      organiserHub.invalidateTickets(order.tickets);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
       await onRemoved();
       setShowSuccessAlert(true);
       setShowErrorMessage(false);

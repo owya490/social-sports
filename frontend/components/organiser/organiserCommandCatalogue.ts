@@ -1,8 +1,5 @@
 import { getAllOrganiserCustomEventLinks } from "@/services/src/events/customEventLinks/customEventLinksService";
-import {
-  getOrganiserEvents,
-  onOrganiserEventsCacheBust,
-} from "@/services/src/organiser/organiserEventsService";
+import { getOrganiserEvents } from "@/services/src/organiser/organiserEventsService";
 import { getOrganiserCollections } from "@/services/src/eventCollections/eventCollectionsService";
 import { getFormsForUser } from "@/services/src/forms/formsServices";
 import { getOrganiserRecurrenceTemplates } from "@/services/src/recurringEvents/recurringEventsService";
@@ -151,10 +148,6 @@ export function bustOrganiserCommandCatalogueCache(userId?: string) {
     cache = null;
   }
 }
-
-onOrganiserEventsCacheBust(() => {
-  bustOrganiserCommandCatalogueCache();
-});
 
 export async function loadOrganiserCommandCatalogue(userId: UserId): Promise<OrganiserCommandCatalogue> {
   if (!userId) {
