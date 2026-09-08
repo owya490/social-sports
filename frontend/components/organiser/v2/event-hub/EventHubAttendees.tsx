@@ -26,16 +26,7 @@ import {
   filterOrderTicketsMapByTicketType,
   ticketMatchesEventTicketType,
 } from "@/services/src/forms/formsUtils/formsUtils";
-import {
-  getOrganiserHubEvent,
-  getOrganiserHubEventMetadata,
-  getOrganiserHubOrders,
-  getOrganiserHubTickets,
-  invalidateOrganiserHubEvent,
-  invalidateOrganiserHubEventMetadata,
-  invalidateOrganiserHubOrders,
-  invalidateOrganiserHubTickets,
-} from "@/services/src/organiser/organiserHubCache";
+import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -138,10 +129,10 @@ async function readThroughEventAttendeeDocuments(eventId: EventId): Promise<{
   metadata: EventMetadata;
   orderTicketsMap: Map<Order, Ticket[]>;
 }> {
-  const event = await getOrganiserHubEvent(eventId);
-  const metadata = await getOrganiserHubEventMetadata(eventId);
-  const orders = await getOrganiserHubOrders(metadata.orderIds);
-  const tickets = await getOrganiserHubTickets(orders.flatMap((order) => order.tickets));
+  const event = await organiserHub.getEvent(eventId);
+  const metadata = await organiserHub.getEventMetadata(eventId);
+  const orders = await organiserHub.getOrders(metadata.orderIds);
+  const tickets = await organiserHub.getTickets(orders.flatMap((order) => order.tickets));
   return { event, metadata, orderTicketsMap: buildOrderTicketsMap(orders, tickets) };
 }
 
@@ -314,10 +305,10 @@ function AttendeeEditTicketsPanel({
         eventTicketTypeId:
           tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
-      invalidateOrganiserHubEvent(eventId);
-      invalidateOrganiserHubEventMetadata(eventId);
-      invalidateOrganiserHubOrders([order.orderId]);
-      invalidateOrganiserHubTickets(order.tickets);
+      organiserHub.invalidateEvent(eventId);
+      organiserHub.invalidateEventMetadata(eventId);
+      organiserHub.invalidateOrders([order.orderId]);
+      organiserHub.invalidateTickets(order.tickets);
       await refreshAttendeeRecords();
       toast.success("Tickets updated");
       onClose();
@@ -495,11 +486,6 @@ export function EventHubAttendees({
   }, [orderTicketsMap]);
 
   const refreshAttendeeRecords = useCallback(async () => {
-    const currentOrders = Array.from(orderTicketsMap.keys());
-    invalidateOrganiserHubEvent(eventId);
-    invalidateOrganiserHubEventMetadata(eventId);
-    invalidateOrganiserHubOrders(currentOrders.map((order) => order.orderId));
-    invalidateOrganiserHubTickets(currentOrders.flatMap((order) => order.tickets));
     const { event, metadata, orderTicketsMap: nextOrderTicketsMap } =
       await readThroughEventAttendeeDocuments(eventId);
     setOrderTicketsMap(nextOrderTicketsMap);
@@ -509,15 +495,15 @@ export function EventHubAttendees({
     } else {
       setEventVacancy(resolveEventInventory(event).vacancy);
     }
-  }, [eventId, onEventRefresh, orderTicketsMap, setEventMetadata, setEventVacancy, setOrderTicketsMap]);
+  }, [eventId, onEventRefresh, setEventMetadata, setEventVacancy, setOrderTicketsMap]);
 
   const handleApproveOrder = async (order: Order) => {
     const toastId = toast.loading("Approving order...");
     try {
       const response = await approveBooking(eventId, eventData.organiserId, order.orderId);
-      invalidateOrganiserHubEvent(eventId);
-      invalidateOrganiserHubOrders([order.orderId]);
-      invalidateOrganiserHubTickets(order.tickets);
+      organiserHub.invalidateEvent(eventId);
+      organiserHub.invalidateOrders([order.orderId]);
+      organiserHub.invalidateTickets(order.tickets);
       await refreshAttendeeRecords();
       if (response.success) {
         toast.success("Order approved", { id: toastId });
@@ -537,9 +523,9 @@ export function EventHubAttendees({
     const toastId = toast.loading("Declining order...");
     try {
       const response = await rejectBooking(eventId, eventData.organiserId, order.orderId);
-      invalidateOrganiserHubEvent(eventId);
-      invalidateOrganiserHubOrders([order.orderId]);
-      invalidateOrganiserHubTickets(order.tickets);
+      organiserHub.invalidateEvent(eventId);
+      organiserHub.invalidateOrders([order.orderId]);
+      organiserHub.invalidateTickets(order.tickets);
       await refreshAttendeeRecords();
       if (response.success) {
         toast.success("Order declined", { id: toastId });
@@ -596,8 +582,8 @@ export function EventHubAttendees({
         price: 0,
         eventTicketTypeId,
       });
-      invalidateOrganiserHubEvent(eventId);
-      invalidateOrganiserHubEventMetadata(eventId);
+      organiserHub.invalidateEvent(eventId);
+      organiserHub.invalidateEventMetadata(eventId);
       await refreshAttendeeRecords();
       toast.success("Attendee added");
       closeAddPanel();

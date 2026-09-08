@@ -4,12 +4,7 @@ import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
-import {
-  invalidateOrganiserHubEvent,
-  invalidateOrganiserHubEventMetadata,
-  invalidateOrganiserHubOrders,
-  invalidateOrganiserHubTickets,
-} from "@/services/src/organiser/organiserHubCache";
+import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
@@ -54,10 +49,10 @@ const RemoveAttendeeDialog = ({
         numTickets: 0,
         eventTicketTypeId: tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
-      invalidateOrganiserHubEvent(eventId);
-      invalidateOrganiserHubEventMetadata(eventId);
-      invalidateOrganiserHubOrders([order.orderId]);
-      invalidateOrganiserHubTickets(order.tickets);
+      organiserHub.invalidateEvent(eventId);
+      organiserHub.invalidateEventMetadata(eventId);
+      organiserHub.invalidateOrders([order.orderId]);
+      organiserHub.invalidateTickets(order.tickets);
       await onRemoved();
       setShowSuccessAlert(true);
       setShowErrorMessage(false);

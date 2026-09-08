@@ -1,273 +1,202 @@
+import { TTLCache } from "@isaacs/ttlcache";
 import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { Timestamp } from "firebase/firestore";
 import { getEventsMetadataByEventId } from "../events/eventsMetadata/eventsMetadataService";
 import { getEventById } from "../events/eventsService";
 import { getOrdersByIds } from "../tickets/orderService";
 import { getTicketsByIds } from "../tickets/ticketService";
+import { hydrateStoredOrganiserEvent } from "./organiserEventsCache";
+import { ORGANISER_EVENTS_REFRESH_MILLIS } from "./organiserConstants";
 
-type EntityCache<K extends string, V> = {
-  values: Map<K, V>;
-  inflight: Map<K, Promise<V>>;
-  generation: Map<K, number>;
-};
-
-function createEntityCache<K extends string, V>(): EntityCache<K, V> {
-  return {
-    values: new Map(),
-    inflight: new Map(),
-    generation: new Map(),
-  };
+export interface OrganiserHubCache {
+  getEvent(eventId: EventId): Promise<EventData>;
+  getEvents(eventIds: EventId[]): Promise<EventData[]>;
+  getEventMetadata(eventId: EventId): Promise<EventMetadata>;
+  getTicket(ticketId: TicketId): Promise<Ticket>;
+  getTickets(ticketIds: TicketId[]): Promise<Ticket[]>;
+  getOrder(orderId: OrderId): Promise<Order>;
+  getOrders(orderIds: OrderId[]): Promise<Order[]>;
+  invalidateEvent(eventId: EventId): void;
+  invalidateEventMetadata(eventId: EventId): void;
+  invalidateTicket(ticketId: TicketId): void;
+  invalidateTickets(ticketIds: TicketId[]): void;
+  invalidateOrder(orderId: OrderId): void;
+  invalidateOrders(orderIds: OrderId[]): void;
 }
 
-const eventsCache = createEntityCache<EventId, EventData>();
-const eventMetadataCache = createEntityCache<EventId, EventMetadata>();
-const ticketsCache = createEntityCache<TicketId, Ticket>();
-const ordersCache = createEntityCache<OrderId, Order>();
+const memory = new TTLCache<string, unknown>({
+  max: 5000,
+  ttl: ORGANISER_EVENTS_REFRESH_MILLIS,
+  checkAgeOnGet: true,
+});
 
-const cacheChangeListeners: Array<() => void> = [];
+function cacheKey(kind: string, id: string): string {
+  return `organiserHub.${kind}.${id}`;
+}
 
-export function onOrganiserHubCacheChange(listener: () => void): () => void {
-  cacheChangeListeners.push(listener);
-  return () => {
-    const index = cacheChangeListeners.indexOf(listener);
-    if (index >= 0) {
-      cacheChangeListeners.splice(index, 1);
+function toTimestamp(value: unknown): Timestamp {
+  if (value instanceof Timestamp) {
+    return value;
+  }
+  if (value && typeof value === "object" && "seconds" in value) {
+    const stamp = value as { seconds: number; nanoseconds?: number };
+    return new Timestamp(stamp.seconds, stamp.nanoseconds ?? 0);
+  }
+  return new Timestamp(0, 0);
+}
+
+function read<V>(kind: string, id: string, hydrate: (value: V) => V): V | undefined {
+  const key = cacheKey(kind, id);
+  const cached = memory.get(key) as V | undefined;
+  if (cached !== undefined) {
+    return cached;
+  }
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) {
+      return undefined;
     }
-  };
-}
-
-function notifyOrganiserHubCacheListeners(): void {
-  for (const listener of cacheChangeListeners) {
-    listener();
-  }
-}
-
-function currentGeneration<K extends string, V>(cache: EntityCache<K, V>, id: K): number {
-  return cache.generation.get(id) ?? 0;
-}
-
-function invalidateIds<K extends string, V>(cache: EntityCache<K, V>, ids: K[]): void {
-  const uniqueIds = [...new Set(ids)].filter((id) => id);
-  if (uniqueIds.length === 0) {
-    return;
-  }
-  let changed = false;
-  for (const id of uniqueIds) {
-    cache.generation.set(id, currentGeneration(cache, id) + 1);
-    if (cache.values.delete(id)) {
-      changed = true;
+    const stored = JSON.parse(raw) as { fetchedAt?: number; value: V };
+    if (typeof stored.fetchedAt !== "number" || Date.now() - stored.fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
+      localStorage.removeItem(key);
+      return undefined;
     }
-    if (cache.inflight.delete(id)) {
-      changed = true;
-    }
-  }
-  if (changed) {
-    notifyOrganiserHubCacheListeners();
+    const value = hydrate(stored.value);
+    memory.set(key, value);
+    return value;
+  } catch {
+    return undefined;
   }
 }
 
-async function readThroughMany<K extends string, V>(
-  cache: EntityCache<K, V>,
+function write<V>(kind: string, id: string, value: V): void {
+  const key = cacheKey(kind, id);
+  memory.set(key, value);
+  try {
+    localStorage.setItem(key, JSON.stringify({ fetchedAt: Date.now(), value }));
+  } catch {
+    // Memory still holds the value if localStorage is missing or full.
+  }
+}
+
+function remove(kind: string, ids: string[]): void {
+  for (const id of ids) {
+    if (!id) {
+      continue;
+    }
+    const key = cacheKey(kind, id);
+    memory.delete(key);
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignore storage access failures on invalidate.
+    }
+  }
+}
+
+function getMany<K extends string, V>(
+  kind: string,
   ids: K[],
-  fetchMany: (missingIds: K[]) => Promise<V[]>,
-  getId: (value: V) => K
+  fetchMissing: (missingIds: K[]) => Promise<V[]>,
+  getId: (value: V) => K,
+  hydrate: (value: V) => V
 ): Promise<V[]> {
   if (ids.length === 0) {
-    return [];
+    return Promise.resolve([]);
   }
 
-  const resolved = new Map<K, V>();
-  const uniqueIds = [...new Set(ids)];
-  const waits: Promise<void>[] = [];
-  const toFetch: K[] = [];
-  const fetchGeneration = new Map<K, number>();
-
-  for (const id of uniqueIds) {
-    const cached = cache.values.get(id);
+  const found = new Map<K, V>();
+  const missing: K[] = [];
+  for (const id of [...new Set(ids)]) {
+    const cached = read(kind, id, hydrate);
     if (cached !== undefined) {
-      resolved.set(id, cached);
-      continue;
+      found.set(id, cached);
+    } else {
+      missing.push(id);
     }
-    const pending = cache.inflight.get(id);
-    if (pending) {
-      waits.push(
-        pending.then((value) => {
-          resolved.set(id, value);
-        })
-      );
-      continue;
-    }
-    toFetch.push(id);
-    fetchGeneration.set(id, currentGeneration(cache, id));
   }
 
-  if (toFetch.length > 0) {
-    const batchPromise = fetchMany(toFetch).then((results) => {
-      const byId = new Map(results.map((value) => [getId(value), value] as const));
-      let didWrite = false;
-      for (const id of toFetch) {
-        const value = byId.get(id);
-        if (value === undefined) {
-          throw new Error(`Organiser hub cache entity not found: ${id}`);
-        }
-        // Drop writes from fetches that started before this id was invalidated.
-        if (currentGeneration(cache, id) === fetchGeneration.get(id)) {
-          cache.values.set(id, value);
-          didWrite = true;
-        }
+  if (missing.length === 0) {
+    return Promise.resolve(ids.map((id) => found.get(id) as V));
+  }
+
+  return fetchMissing(missing).then((fetched) => {
+    const byId = new Map(fetched.map((value) => [getId(value), value] as const));
+    for (const id of missing) {
+      const value = byId.get(id);
+      if (value === undefined) {
+        throw new Error(`Organiser hub document not found: ${id}`);
       }
-      if (didWrite) {
-        notifyOrganiserHubCacheListeners();
+      write(kind, id, value);
+      found.set(id, value);
+    }
+    return ids.map((id) => {
+      const value = found.get(id);
+      if (value === undefined) {
+        throw new Error(`Organiser hub document not found: ${id}`);
       }
-      return byId;
+      return value;
     });
-
-    for (const id of toFetch) {
-      const idPromise = batchPromise.then((byId) => {
-        const value = byId.get(id);
-        if (value === undefined) {
-          throw new Error(`Organiser hub cache entity not found: ${id}`);
-        }
-        return value;
-      });
-      cache.inflight.set(id, idPromise);
-      waits.push(
-        idPromise
-          .then((value) => {
-            resolved.set(id, value);
-          })
-          .finally(() => {
-            if (cache.inflight.get(id) === idPromise) {
-              cache.inflight.delete(id);
-            }
-          })
-      );
-    }
-  }
-
-  await Promise.all(waits);
-  return ids.map((id) => {
-    const value = resolved.get(id);
-    if (value === undefined) {
-      throw new Error(`Organiser hub cache entity not found: ${id}`);
-    }
-    return value;
   });
 }
 
-function snapshotCache<K extends string, V>(cache: EntityCache<K, V>): ReadonlyMap<K, V> {
-  return new Map(cache.values);
+function hydrateTicket(ticket: Ticket): Ticket {
+  return { ...ticket, purchaseDate: toTimestamp(ticket.purchaseDate) };
 }
 
-export type OrganiserHubCacheSnapshot = {
-  events: ReadonlyMap<EventId, EventData>;
-  eventMetadata: ReadonlyMap<EventId, EventMetadata>;
-  tickets: ReadonlyMap<TicketId, Ticket>;
-  orders: ReadonlyMap<OrderId, Order>;
+function hydrateOrder(order: Order): Order {
+  return { ...order, datePurchased: toTimestamp(order.datePurchased) };
+}
+
+export const organiserHub: OrganiserHubCache = {
+  getEvent: (eventId) => organiserHub.getEvents([eventId]).then(([event]) => event),
+  getEvents: (eventIds) =>
+    getMany(
+      "event",
+      eventIds,
+      (ids) => Promise.all(ids.map((id) => getEventById(id))),
+      (event) => event.eventId,
+      hydrateStoredOrganiserEvent
+    ),
+  getEventMetadata: (eventId) =>
+    getMany(
+      "eventMetadata",
+      [eventId],
+      (ids) =>
+        Promise.all(
+          ids.map((id) => getEventsMetadataByEventId(id).then((metadata) => ({ ...metadata, eventId: id })))
+        ),
+      (metadata) => metadata.eventId as EventId,
+      (metadata) => metadata
+    ).then(([metadata]) => metadata),
+  getTicket: (ticketId) => organiserHub.getTickets([ticketId]).then(([ticket]) => ticket),
+  getTickets: (ticketIds) => getMany("ticket", ticketIds, getTicketsByIds, (ticket) => ticket.ticketId, hydrateTicket),
+  getOrder: (orderId) => organiserHub.getOrders([orderId]).then(([order]) => order),
+  getOrders: (orderIds) => getMany("order", orderIds, getOrdersByIds, (order) => order.orderId, hydrateOrder),
+  invalidateEvent: (eventId) => remove("event", [eventId]),
+  invalidateEventMetadata: (eventId) => remove("eventMetadata", [eventId]),
+  invalidateTicket: (ticketId) => remove("ticket", [ticketId]),
+  invalidateTickets: (ticketIds) => remove("ticket", ticketIds),
+  invalidateOrder: (orderId) => remove("order", [orderId]),
+  invalidateOrders: (orderIds) => remove("order", orderIds),
 };
 
-export function getOrganiserHubCacheSnapshot(): OrganiserHubCacheSnapshot {
-  return {
-    events: snapshotCache(eventsCache),
-    eventMetadata: snapshotCache(eventMetadataCache),
-    tickets: snapshotCache(ticketsCache),
-    orders: snapshotCache(ordersCache),
-  };
-}
-
-export function getOrganiserHubEvents(eventIds: EventId[]): Promise<EventData[]> {
-  return readThroughMany(
-    eventsCache,
-    eventIds,
-    (missingIds) => Promise.all(missingIds.map((id) => getEventById(id))),
-    (event) => event.eventId
-  );
-}
-
-export function getOrganiserHubEvent(eventId: EventId): Promise<EventData> {
-  return getOrganiserHubEvents([eventId]).then(([event]) => event);
-}
-
-export function getOrganiserHubEventMetadataByIds(eventIds: EventId[]): Promise<EventMetadata[]> {
-  return readThroughMany(
-    eventMetadataCache,
-    eventIds,
-    async (missingIds) => {
-      const metadataList = await Promise.all(missingIds.map((id) => getEventsMetadataByEventId(id)));
-      return metadataList.map((metadata, index) => ({
-        ...metadata,
-        eventId: missingIds[index],
-      }));
-    },
-    (metadata) => metadata.eventId as EventId
-  );
-}
-
-export function getOrganiserHubEventMetadata(eventId: EventId): Promise<EventMetadata> {
-  return getOrganiserHubEventMetadataByIds([eventId]).then(([metadata]) => metadata);
-}
-
-export function getOrganiserHubTickets(ticketIds: TicketId[]): Promise<Ticket[]> {
-  return readThroughMany(ticketsCache, ticketIds, getTicketsByIds, (ticket) => ticket.ticketId);
-}
-
-export function getOrganiserHubTicket(ticketId: TicketId): Promise<Ticket> {
-  return getOrganiserHubTickets([ticketId]).then(([ticket]) => ticket);
-}
-
-export function getOrganiserHubOrders(orderIds: OrderId[]): Promise<Order[]> {
-  return readThroughMany(ordersCache, orderIds, getOrdersByIds, (order) => order.orderId);
-}
-
-export function getOrganiserHubOrder(orderId: OrderId): Promise<Order> {
-  return getOrganiserHubOrders([orderId]).then(([order]) => order);
-}
-
-export function invalidateOrganiserHubEvents(eventIds: EventId[]): void {
-  invalidateIds(eventsCache, eventIds);
-}
-
-export function invalidateOrganiserHubEvent(eventId: EventId): void {
-  invalidateOrganiserHubEvents([eventId]);
-}
-
-export function invalidateOrganiserHubEventMetadataMany(eventIds: EventId[]): void {
-  invalidateIds(eventMetadataCache, eventIds);
-}
-
-export function invalidateOrganiserHubEventMetadata(eventId: EventId): void {
-  invalidateOrganiserHubEventMetadataMany([eventId]);
-}
-
-export function invalidateOrganiserHubTickets(ticketIds: TicketId[]): void {
-  invalidateIds(ticketsCache, ticketIds);
-}
-
-export function invalidateOrganiserHubTicket(ticketId: TicketId): void {
-  invalidateOrganiserHubTickets([ticketId]);
-}
-
-export function invalidateOrganiserHubOrders(orderIds: OrderId[]): void {
-  invalidateIds(ordersCache, orderIds);
-}
-
-export function invalidateOrganiserHubOrder(orderId: OrderId): void {
-  invalidateOrganiserHubOrders([orderId]);
-}
-
 export function clearOrganiserHubCache(): void {
-  const caches = [eventsCache, eventMetadataCache, ticketsCache, ordersCache] as const;
-  let hadEntries = false;
-  for (const cache of caches) {
-    if (cache.values.size > 0 || cache.inflight.size > 0) {
-      hadEntries = true;
+  memory.clear();
+  try {
+    const keys: string[] = [];
+    for (let index = 0; index < localStorage.length; index += 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith("organiserHub.")) {
+        keys.push(key);
+      }
     }
-    cache.values.clear();
-    cache.inflight.clear();
-    cache.generation.clear();
-  }
-  if (hadEntries) {
-    notifyOrganiserHubCacheListeners();
+    for (const key of keys) {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    // Node tests and private mode have no localStorage.
   }
 }

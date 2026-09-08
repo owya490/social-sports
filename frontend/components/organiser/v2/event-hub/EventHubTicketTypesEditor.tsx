@@ -12,7 +12,7 @@ import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
-import { invalidateOrganiserHubEvent } from "@/services/src/organiser/organiserHubCache";
+import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import {
   applyCapacityChange,
   countSoldTicketsForType,
@@ -71,7 +71,7 @@ export function EventHubTicketTypesEditor({
           ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
         });
         bustOrganiserEventsCache();
-        invalidateOrganiserHubEvent(eventId);
+        organiserHub.invalidateEvent(eventId);
       }
       setEventTicketTypes(nextTypes);
     } catch (e) {

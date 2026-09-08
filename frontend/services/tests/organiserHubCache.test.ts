@@ -5,21 +5,7 @@ import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata
 import { getEventById } from "@/services/src/events/eventsService";
 import {
   clearOrganiserHubCache,
-  getOrganiserHubCacheSnapshot,
-  getOrganiserHubEvent,
-  getOrganiserHubEventMetadata,
-  getOrganiserHubEvents,
-  getOrganiserHubOrder,
-  getOrganiserHubOrders,
-  getOrganiserHubTicket,
-  getOrganiserHubTickets,
-  invalidateOrganiserHubEvent,
-  invalidateOrganiserHubEventMetadata,
-  invalidateOrganiserHubOrder,
-  invalidateOrganiserHubOrders,
-  invalidateOrganiserHubTicket,
-  invalidateOrganiserHubTickets,
-  onOrganiserHubCacheChange,
+  organiserHub,
 } from "@/services/src/organiser/organiserHubCache";
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
@@ -93,7 +79,7 @@ function orderWith(orderId: OrderId, tickets: TicketId[] = []): Order {
   };
 }
 
-describe("organiser hub read-through cache", () => {
+describe("organiser hub cache", () => {
   beforeEach(() => {
     clearOrganiserHubCache();
     mockedGetEventById.mockReset();
@@ -102,40 +88,20 @@ describe("organiser hub read-through cache", () => {
     mockedGetOrdersByIds.mockReset();
   });
 
-  it("fetches an event on miss and returns the cached event on the next get", async () => {
+  it("reads through to the event service and then serves the cached event", async () => {
     const eventId = "event-1" as EventId;
     mockedGetEventById.mockResolvedValue(eventWith(eventId, "Saturday smash"));
 
-    const first = await getOrganiserHubEvent(eventId);
-    const second = await getOrganiserHubEvent(eventId);
+    const first = await organiserHub.getEvent(eventId);
+    const second = await organiserHub.getEvent(eventId);
 
     expect(first.name).toBe("Saturday smash");
-    expect(second).toBe(first);
+    expect(second).toEqual(first);
     expect(mockedGetEventById).toHaveBeenCalledTimes(1);
-    expect(getOrganiserHubCacheSnapshot().events.get(eventId)?.eventId).toBe(eventId);
+    expect(mockedGetEventById).toHaveBeenCalledWith(eventId);
   });
 
-  it("coalesces parallel reads of the same event into one fetch", async () => {
-    const eventId = "event-2" as EventId;
-    let resolveFetch: (event: EventData) => void = () => undefined;
-    mockedGetEventById.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveFetch = resolve;
-        })
-    );
-
-    const firstPromise = getOrganiserHubEvent(eventId);
-    const secondPromise = getOrganiserHubEvent(eventId);
-    resolveFetch(eventWith(eventId, "Coalesced"));
-
-    const [first, second] = await Promise.all([firstPromise, secondPromise]);
-    expect(first.name).toBe("Coalesced");
-    expect(second).toBe(first);
-    expect(mockedGetEventById).toHaveBeenCalledTimes(1);
-  });
-
-  it("refetches after invalidate and does not keep a relationship between collections", async () => {
+  it("refetches an event after invalidate and leaves other collections in place", async () => {
     const eventId = "event-3" as EventId;
     const ticketId = "ticket-3" as TicketId;
     const orderId = "order-3" as OrderId;
@@ -146,45 +112,19 @@ describe("organiser hub read-through cache", () => {
     mockedGetOrdersByIds.mockResolvedValue([orderWith(orderId, [ticketId])]);
     mockedGetEventsMetadataByEventId.mockResolvedValue(metadataWith(eventId, [orderId]));
 
-    await getOrganiserHubEvent(eventId);
-    await getOrganiserHubEventMetadata(eventId);
-    await getOrganiserHubTicket(ticketId);
-    await getOrganiserHubOrder(orderId);
+    await organiserHub.getEvent(eventId);
+    await organiserHub.getEventMetadata(eventId);
+    await organiserHub.getTicket(ticketId);
+    await organiserHub.getOrder(orderId);
 
-    invalidateOrganiserHubEvent(eventId);
+    organiserHub.invalidateEvent(eventId);
 
-    expect(getOrganiserHubCacheSnapshot().events.has(eventId)).toBe(false);
-    expect(getOrganiserHubCacheSnapshot().eventMetadata.has(eventId)).toBe(true);
-    expect(getOrganiserHubCacheSnapshot().tickets.has(ticketId)).toBe(true);
-    expect(getOrganiserHubCacheSnapshot().orders.has(orderId)).toBe(true);
-
-    const refreshed = await getOrganiserHubEvent(eventId);
+    const refreshed = await organiserHub.getEvent(eventId);
     expect(refreshed.name).toBe("After");
     expect(mockedGetEventById).toHaveBeenCalledTimes(2);
+    expect(await organiserHub.getTicket(ticketId)).toEqual(ticketWith(ticketId, orderId, eventId));
     expect(mockedGetTicketsByIds).toHaveBeenCalledTimes(1);
     expect(mockedGetOrdersByIds).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not cache a fetch that completed after that id was invalidated", async () => {
-    const eventId = "event-4" as EventId;
-    let resolveFetch: (event: EventData) => void = () => undefined;
-    mockedGetEventById.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveFetch = resolve;
-        })
-    );
-
-    const inflight = getOrganiserHubEvent(eventId);
-    invalidateOrganiserHubEvent(eventId);
-    resolveFetch(eventWith(eventId, "Stale"));
-    await expect(inflight).resolves.toEqual(eventWith(eventId, "Stale"));
-    expect(getOrganiserHubCacheSnapshot().events.has(eventId)).toBe(false);
-
-    mockedGetEventById.mockResolvedValue(eventWith(eventId, "Fresh"));
-    const next = await getOrganiserHubEvent(eventId);
-    expect(next.name).toBe("Fresh");
-    expect(mockedGetEventById).toHaveBeenCalledTimes(2);
   });
 
   it("only fetches missing tickets and orders in a batch", async () => {
@@ -200,14 +140,14 @@ describe("organiser hub read-through cache", () => {
       .mockResolvedValueOnce([orderWith(orderA, [ticketA])])
       .mockResolvedValueOnce([orderWith(orderB, [ticketB])]);
 
-    await getOrganiserHubTickets([ticketA]);
-    await getOrganiserHubOrders([orderA]);
+    await organiserHub.getTickets([ticketA]);
+    await organiserHub.getOrders([orderA]);
 
-    const tickets = await getOrganiserHubTickets([ticketA, ticketB, ticketA]);
-    const orders = await getOrganiserHubOrders([orderA, orderB]);
+    const loadedTickets = await organiserHub.getTickets([ticketA, ticketB, ticketA]);
+    const loadedOrders = await organiserHub.getOrders([orderA, orderB]);
 
-    expect(tickets.map((ticket) => ticket.ticketId)).toEqual([ticketA, ticketB, ticketA]);
-    expect(orders.map((order) => order.orderId)).toEqual([orderA, orderB]);
+    expect(loadedTickets.map((ticket) => ticket.ticketId)).toEqual([ticketA, ticketB, ticketA]);
+    expect(loadedOrders.map((order) => order.orderId)).toEqual([orderA, orderB]);
     expect(mockedGetTicketsByIds).toHaveBeenNthCalledWith(1, [ticketA]);
     expect(mockedGetTicketsByIds).toHaveBeenNthCalledWith(2, [ticketB]);
     expect(mockedGetOrdersByIds).toHaveBeenNthCalledWith(1, [orderA]);
@@ -215,30 +155,12 @@ describe("organiser hub read-through cache", () => {
   });
 
   it("returns an empty list without fetching when no ids are requested", async () => {
-    await expect(getOrganiserHubEvents([])).resolves.toEqual([]);
-    await expect(getOrganiserHubTickets([])).resolves.toEqual([]);
-    await expect(getOrganiserHubOrders([])).resolves.toEqual([]);
+    await expect(organiserHub.getEvents([])).resolves.toEqual([]);
+    await expect(organiserHub.getTickets([])).resolves.toEqual([]);
+    await expect(organiserHub.getOrders([])).resolves.toEqual([]);
     expect(mockedGetEventById).not.toHaveBeenCalled();
     expect(mockedGetTicketsByIds).not.toHaveBeenCalled();
     expect(mockedGetOrdersByIds).not.toHaveBeenCalled();
-  });
-
-  it("notifies listeners on populate and invalidate", async () => {
-    const eventId = "event-6" as EventId;
-    const listener = jest.fn();
-    const unsubscribe = onOrganiserHubCacheChange(listener);
-    mockedGetEventById.mockResolvedValue(eventWith(eventId, "Listen"));
-
-    await getOrganiserHubEvent(eventId);
-    invalidateOrganiserHubEvent(eventId);
-    invalidateOrganiserHubEventMetadata(eventId);
-    invalidateOrganiserHubTickets([]);
-    invalidateOrganiserHubOrders([]);
-
-    expect(listener).toHaveBeenCalledTimes(2);
-    unsubscribe();
-    invalidateOrganiserHubEvent(eventId);
-    expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it("invalidates tickets and orders independently by their own ids", async () => {
@@ -248,16 +170,13 @@ describe("organiser hub read-through cache", () => {
     mockedGetTicketsByIds.mockResolvedValue([ticketWith(ticketId, orderId, eventId)]);
     mockedGetOrdersByIds.mockResolvedValue([orderWith(orderId, [ticketId])]);
 
-    await getOrganiserHubTicket(ticketId);
-    await getOrganiserHubOrder(orderId);
-    invalidateOrganiserHubTicket(ticketId);
-    invalidateOrganiserHubOrder(orderId);
+    await organiserHub.getTicket(ticketId);
+    await organiserHub.getOrder(orderId);
+    organiserHub.invalidateTicket(ticketId);
+    organiserHub.invalidateOrder(orderId);
 
-    expect(getOrganiserHubCacheSnapshot().tickets.has(ticketId)).toBe(false);
-    expect(getOrganiserHubCacheSnapshot().orders.has(orderId)).toBe(false);
-
-    await getOrganiserHubTickets([ticketId]);
-    await getOrganiserHubOrders([orderId]);
+    await organiserHub.getTickets([ticketId]);
+    await organiserHub.getOrders([orderId]);
     expect(mockedGetTicketsByIds).toHaveBeenCalledTimes(2);
     expect(mockedGetOrdersByIds).toHaveBeenCalledTimes(2);
   });
