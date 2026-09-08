@@ -25,7 +25,7 @@ import {
   onOrganiserHubCacheChange,
   type OrganiserHubCacheSnapshot,
 } from "@/services/src/organiser/organiserHubCache";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 export type UseEventsForOrganiserHubResult = OrganiserHubCacheSnapshot & {
   getEvent: (eventId: EventId) => Promise<EventData>;
@@ -53,11 +53,11 @@ export type UseEventsForOrganiserHubResult = OrganiserHubCacheSnapshot & {
  * Mutations should invalidate the changed ids; the next get fetches fresh.
  */
 export function useEventsForOrganiserHub(): UseEventsForOrganiserHubResult {
-  const [revision, setRevision] = useState(0);
+  const [, setRevision] = useState(0);
 
   useEffect(() => onOrganiserHubCacheChange(() => setRevision((current) => current + 1)), []);
 
-  const snapshot = useMemo(() => getOrganiserHubCacheSnapshot(), [revision]);
+  const snapshot = getOrganiserHubCacheSnapshot();
 
   return {
     ...snapshot,

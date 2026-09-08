@@ -6,7 +6,7 @@ import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAt
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
 import { EventData, EventId, EventMetadata, OrderId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
-import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
+import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
