@@ -1,55 +1,32 @@
 "use client";
 
-import { updateUserPassword } from "@/services/src/auth/authService";
-import {
-  getPasswordChangeValidationError,
-  PASSWORD_UPDATE_FAILED_ERROR_MESSAGE,
-} from "@/utilities/passwordValidationUtils";
+import { resetUserPassword } from "@/services/src/auth/authService";
 import { Dialog, DialogBody, DialogFooter, DialogHeader, Input } from "@material-tailwind/react";
 import { useState } from "react";
 
 interface PasswordChangeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  currentEmail: string;
 }
 
-export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProps) {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+export function PasswordChangeModal({ isOpen, onClose, currentEmail }: PasswordChangeModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  const resetForm = () => {
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
-    setError("");
-    setSuccess(false);
-    setLoading(false);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
-
-    const validationError = getPasswordChangeValidationError(currentPassword, newPassword, confirmPassword);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-
     setLoading(true);
 
     try {
-      await updateUserPassword(currentPassword, newPassword);
+      await resetUserPassword(currentEmail);
       setSuccess(true);
-      setError("");
       setLoading(false);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : PASSWORD_UPDATE_FAILED_ERROR_MESSAGE);
+      setError(err instanceof Error ? err.message : "Failed to send reset email. Please try again.");
       setLoading(false);
     }
   };
@@ -58,7 +35,8 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
     if (loading) {
       return;
     }
-    resetForm();
+    setError("");
+    setSuccess(false);
     onClose();
   };
 
@@ -69,9 +47,10 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
       <DialogBody>
         {success ? (
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <p className="text-green-800 font-medium mb-2">Password updated</p>
+            <p className="text-green-800 font-medium mb-2">Reset email sent</p>
             <p className="text-sm text-green-700">
-              Your password has been changed. Use the new password the next time you sign in.
+              We&apos;ve sent a password reset link to <strong>{currentEmail}</strong>. Check your inbox and junk folder
+              to choose a new password.
             </p>
           </div>
         ) : (
@@ -80,52 +59,20 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
 
             <div>
               <Input
-                type="password"
-                label="Current Password"
-                placeholder="Enter your current password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="current-password"
+                type="text"
+                label="Email"
+                value={currentEmail}
+                disabled
                 className="rounded-md focus:ring-0"
                 size="lg"
                 crossOrigin={undefined}
               />
             </div>
 
-            <div>
-              <Input
-                type="password"
-                label="New Password"
-                placeholder="Enter a new password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="new-password"
-                className="rounded-md focus:ring-0"
-                size="lg"
-                crossOrigin={undefined}
-              />
-              <p className="text-sm mt-2">Must be at least 6 characters</p>
-            </div>
-
-            <div>
-              <Input
-                type="password"
-                label="Confirm New Password"
-                placeholder="Re-enter your new password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={loading}
-                autoComplete="new-password"
-                className="rounded-md focus:ring-0"
-                size="lg"
-                crossOrigin={undefined}
-              />
-            </div>
+            <p className="text-sm text-gray-700">
+              We&apos;ll email you the same password reset link used on the login page. You can then choose a new
+              password from that email.
+            </p>
           </form>
         )}
       </DialogBody>
@@ -151,7 +98,7 @@ export function PasswordChangeModal({ isOpen, onClose }: PasswordChangeModalProp
               onClick={handleSubmit}
               disabled={loading}
             >
-              {loading ? "Updating..." : "Update Password"}
+              {loading ? "Sending..." : "Send reset email"}
             </button>
           </>
         )}

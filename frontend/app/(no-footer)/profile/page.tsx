@@ -463,6 +463,7 @@ const Profile = () => {
       <PasswordChangeModal
         isOpen={passwordChangeModalOpened}
         onClose={() => setPasswordChangeModalOpened(false)}
+        currentEmail={user.contactInformation.email}
       />
     </div>
   );

@@ -1,10 +1,5 @@
 import { EmptyUserData, NewUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import {
-  getPasswordChangeAuthErrorMessage,
-  PASSWORD_UNCHANGED_ERROR_MESSAGE,
-  PASSWORD_UPDATE_FAILED_ERROR_MESSAGE,
-} from "@/utilities/passwordValidationUtils";
 import { FirebaseError } from "@firebase/util";
 import {
   AuthProvider,
@@ -20,7 +15,6 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
-  updatePassword,
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
@@ -321,14 +315,11 @@ const actionCodeSettings = {
 
 export async function resetUserPassword(email: string): Promise<void> {
   try {
-    // Send password reset email
     await sendPasswordResetEmail(auth, email);
-    // Password reset email sent successfully
     authServiceLogger.info("Password reset email sent");
   } catch (error) {
-    // Handle errors
     authServiceLogger.error(`Error sending password reset email: ${error}`);
-    throw error; // Rethrow the error for the caller to handle if needed
+    throw error;
   }
 }
 
@@ -387,46 +378,6 @@ export async function updateUserEmail(newEmail: string, currentPassword: string)
         default:
           throw new Error(error.message || "Failed to update email. Please try again.");
       }
-    }
-
-    throw error;
-  }
-}
-
-/**
- * Updates the signed-in user's password after re-authentication.
- * @param currentPassword - Current password for re-authentication
- * @param newPassword - The password to set
- * @throws Error with a user-friendly message for various failure cases
- */
-export async function updateUserPassword(currentPassword: string, newPassword: string): Promise<void> {
-  try {
-    const user = auth.currentUser;
-
-    if (!user || !user.email) {
-      throw new Error("No user is currently signed in");
-    }
-
-    if (currentPassword === newPassword) {
-      throw new Error(PASSWORD_UNCHANGED_ERROR_MESSAGE);
-    }
-
-    const credential = EmailAuthProvider.credential(user.email, currentPassword);
-    await reauthenticateWithCredential(user, credential);
-
-    authServiceLogger.info("User re-authenticated successfully for password change", { userId: user.uid });
-
-    await updatePassword(user, newPassword);
-
-    authServiceLogger.info("Password updated successfully", { userId: user.uid });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    authServiceLogger.error("Error updating user password", { error: errorMessage });
-
-    if (error instanceof FirebaseError) {
-      throw new Error(
-        getPasswordChangeAuthErrorMessage(error.code) || error.message || PASSWORD_UPDATE_FAILED_ERROR_MESSAGE
-      );
     }
 
     throw error;
