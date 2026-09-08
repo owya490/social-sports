@@ -127,7 +127,11 @@ function deserialiserOrder(order: Order): Order {
 }
 
 function invalidateEventForOrganiserHub(eventId: EventId): void {
-  const metadata = read(OrganiserHubEntityType.EventMetadata, eventId, (value) => value as EventMetadata);
+  const metadata = read<EventMetadata>(
+    OrganiserHubEntityType.EventMetadata,
+    eventId,
+    (value) => value
+  );
   const orderIds = metadata?.orderIds ?? [];
 
   const ticketIds: TicketId[] = [];

@@ -1,6 +1,3 @@
-/**
- * @jest-environment jsdom
- */
 import { EmptyEventData, EmptyEventMetadata, EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -13,6 +10,28 @@ import {
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { Timestamp } from "firebase/firestore";
+
+jest.mock("lscache", () => {
+  const store = new Map<string, unknown>();
+
+  return {
+    __esModule: true,
+    default: {
+      setBucket: jest.fn(),
+      set: (key: string, value: unknown) => {
+        store.set(key, value);
+        return true;
+      },
+      get: (key: string) => store.get(key),
+      remove: (key: string) => {
+        store.delete(key);
+      },
+      flush: () => {
+        store.clear();
+      },
+    },
+  };
+});
 
 jest.mock("@/services/src/events/eventsService", () => ({
   getEventById: jest.fn(),
