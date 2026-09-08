@@ -36,7 +36,7 @@ export default function AuthSplitLayout({
   ctaBackdrop = "athlete",
 }: AuthSplitLayoutProps) {
   return (
-    <div className="flex min-h-dvh w-full flex-col bg-black md:grid md:min-h-screen md:grid-cols-2 md:bg-white">
+    <div className="flex min-h-screen w-full flex-col bg-white md:grid md:grid-cols-2">
       <div className="relative flex flex-1 flex-col justify-center overflow-y-auto bg-white px-6 pb-8 pt-14 sm:px-12 sm:pt-16 md:min-h-screen md:pb-10 md:pt-16 lg:px-16 xl:px-24">
         <div className="absolute left-5 top-4 sm:left-6 sm:top-5">
           <Logo showText size="sm" />
@@ -58,7 +58,7 @@ function AuthCtaPanel({
   backdrop: keyof typeof CTA_BACKDROPS;
 }) {
   return (
-    <div className="relative flex min-h-40 shrink-0 overflow-hidden bg-black pb-[env(safe-area-inset-bottom)] text-white md:sticky md:top-0 md:h-screen md:min-h-screen md:pb-0">
+    <div className="relative flex min-h-40 shrink-0 overflow-hidden bg-black pb-[env(safe-area-inset-bottom)] text-white max-md:shadow-[0_100vh_0_100vh_#000] md:sticky md:top-0 md:h-screen md:min-h-screen md:pb-0 md:shadow-none">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 hidden md:block"
