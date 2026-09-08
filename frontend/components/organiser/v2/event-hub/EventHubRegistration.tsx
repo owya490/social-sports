@@ -11,7 +11,8 @@ import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/inte
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
-import { getEventById, updateEventById } from "@/services/src/events/eventsService";
+import { updateEventById } from "@/services/src/events/eventsService";
+import { getOrganiserHubEvent, invalidateOrganiserHubEvent } from "@/services/src/organiser/organiserHubCache";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
@@ -164,7 +165,7 @@ export function EventHubRegistration({
       setLoading(true);
       setError(null);
 
-      const loadedEventData: EventData = await getEventById(eventId);
+      const loadedEventData: EventData = await getOrganiserHubEvent(eventId);
       setEventData(loadedEventData);
 
       if (userLoading || !user.userId) return;
@@ -276,6 +277,7 @@ export function EventHubRegistration({
           eventTicketTypes: nextTypes,
           ...(syncEventFormId ? { formId: selectedFormId } : {}),
         });
+        invalidateOrganiserHubEvent(eventId);
 
         const nextEventData: EventData = {
           ...eventData,
@@ -294,6 +296,7 @@ export function EventHubRegistration({
       }
 
       await updateEventById(eventId, { formId: selectedFormId });
+      invalidateOrganiserHubEvent(eventId);
       setEventData((prev) => (prev ? { ...prev, formId: selectedFormId } : prev));
 
       if (!selectedFormId) {
