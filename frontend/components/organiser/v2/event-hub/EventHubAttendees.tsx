@@ -859,10 +859,6 @@ export function EventHubAttendees({
               const tickets = activeMap.get(order) ?? [];
               const expanded = expandedOrderId === order.orderId;
               const detailId = `attendee-detail-${order.orderId}`;
-              const ticketLabel =
-                tickets.length > 0
-                  ? `${tickets.length} ticket${tickets.length === 1 ? "" : "s"}`
-                  : "";
               const ticketIds = tickets.length > 0 ? tickets.map((t) => t.ticketId) : order.tickets;
 
               return (
@@ -879,7 +875,7 @@ export function EventHubAttendees({
                     }
                   >
                     <EventHubInitials name={order.fullName || "Attendee"} />
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 self-start sm:self-auto">
                       <p className="text-sm font-semibold text-foreground font-sans truncate">
                         {order.fullName || "Attendee"}
                       </p>
@@ -892,21 +888,24 @@ export function EventHubAttendees({
                         {order.email || "—"}
                       </p>
                     </div>
-                    {ticketLabel ? (
-                      <span className="text-xs text-foreground-muted font-sans tabular-nums shrink-0 hidden sm:inline">
-                        {ticketLabel}
+                    <span className="flex shrink-0 flex-col items-end self-start sm:self-auto sm:flex-row sm:items-center sm:gap-3">
+                      {tickets.length > 0 ? (
+                        <span className="text-xs leading-5 text-foreground-secondary font-sans tabular-nums whitespace-nowrap sm:leading-4 sm:text-foreground-muted">
+                          <span className="font-semibold sm:font-normal">{tickets.length}</span>
+                          {tickets.length === 1 ? " ticket" : " tickets"}
+                        </span>
+                      ) : null}
+                      <span
+                        className={`text-xs font-medium font-sans shrink-0 rounded-full px-2 py-0.5 border ${
+                          activeTab === "approved"
+                            ? "border-border bg-surface text-foreground-secondary"
+                            : activeTab === "pending"
+                              ? "border-border bg-surface-muted text-foreground-secondary"
+                              : "border-border bg-surface text-foreground-muted"
+                        }`}
+                      >
+                        {statusLabel}
                       </span>
-                    ) : null}
-                    <span
-                      className={`text-xs font-medium font-sans shrink-0 rounded-full px-2 py-0.5 border ${
-                        activeTab === "approved"
-                          ? "border-border bg-surface text-foreground-secondary"
-                          : activeTab === "pending"
-                            ? "border-border bg-surface-muted text-foreground-secondary"
-                            : "border-border bg-surface text-foreground-muted"
-                      }`}
-                    >
-                      {statusLabel}
                     </span>
                     <ChevronDownIcon
                       className={`h-4 w-4 text-foreground-muted shrink-0 transition-transform duration-200 ease-out ${
@@ -978,7 +977,7 @@ export function EventHubAttendees({
                         </div>
                       ) : null}
 
-                      <div className="flex items-center gap-x-2 border-t border-border pt-2.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-t border-border pt-2.5">
                         <button
                           type="button"
                           onClick={() => {
@@ -1004,14 +1003,13 @@ export function EventHubAttendees({
                             >
                               Edit tickets
                             </button>
-                            <span className="min-w-2 flex-1" aria-hidden />
                             <button
                               type="button"
                               onClick={() => {
                                 setRemoveOrder(order);
                                 setRemoveOpen(true);
                               }}
-                              className="shrink-0 text-xs font-medium text-danger font-sans transition-colors hover:underline"
+                              className="ml-auto shrink-0 text-xs font-medium text-danger font-sans transition-colors hover:underline"
                             >
                               Remove attendee
                             </button>
