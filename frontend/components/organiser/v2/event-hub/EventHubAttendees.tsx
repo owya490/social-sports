@@ -990,19 +990,21 @@ export function EventHubAttendees({
                         </button>
                         {activeTab === "approved" ? (
                           <>
-                            <span className="shrink-0 text-xs text-foreground-muted select-none" aria-hidden>
-                              ·
+                            <span className="inline-flex shrink-0 items-center gap-x-2 whitespace-nowrap">
+                              <span className="text-xs text-foreground-muted select-none" aria-hidden>
+                                ·
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPanelOrder(order);
+                                  setDeepPanel("editTickets");
+                                }}
+                                className="text-xs font-medium text-foreground-secondary font-sans transition-colors hover:text-foreground"
+                              >
+                                Edit tickets
+                              </button>
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPanelOrder(order);
-                                setDeepPanel("editTickets");
-                              }}
-                              className="shrink-0 text-xs font-medium text-foreground-secondary font-sans transition-colors hover:text-foreground"
-                            >
-                              Edit tickets
-                            </button>
                             <button
                               type="button"
                               onClick={() => {
