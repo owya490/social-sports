@@ -4,7 +4,7 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { DASHBOARD_LOOKBACK_SECONDS } from "@/services/src/organiser/organiserConstants";
 import { fetchOrganiserDashboardMetrics } from "@/services/src/organiser/organiserDashboardMetricsService";
-import { getOrganiserEventsStartingOnOrAfter, tryGetOrganiserEventsFromCache } from "@/services/src/organiser/organiserEventsService";
+import { getOrganiserEventsStartingOnOrAfter } from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
 import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -12,9 +12,6 @@ import { Timestamp } from "firebase/firestore";
 
 jest.mock("@/services/src/organiser/organiserEventsService", () => ({
   getOrganiserEventsStartingOnOrAfter: jest.fn(),
-  tryGetOrganiserEventsFromCache: jest.fn(),
-  getOrganiserEventsCacheGeneration: () => 1,
-  onOrganiserEventsCacheBust: jest.fn(),
 }));
 
 jest.mock("@/services/src/tickets/ticketService", () => ({
@@ -31,9 +28,6 @@ jest.mock("@/services/src/tickets/ticketUtils/ticketUtils", () => ({
 
 const mockedGetOrganiserEventsStartingOnOrAfter = getOrganiserEventsStartingOnOrAfter as jest.MockedFunction<
   typeof getOrganiserEventsStartingOnOrAfter
->;
-const mockedTryGetOrganiserEventsFromCache = tryGetOrganiserEventsFromCache as jest.MockedFunction<
-  typeof tryGetOrganiserEventsFromCache
 >;
 const mockedGetTicketsPurchasedOnOrAfter = getTicketsPurchasedOnOrAfter as jest.MockedFunction<
   typeof getTicketsPurchasedOnOrAfter
@@ -86,12 +80,10 @@ describe("fetchOrganiserDashboardMetrics", () => {
   const nowSeconds = Timestamp.now().seconds;
 
   beforeEach(() => {
-    mockedTryGetOrganiserEventsFromCache.mockReset();
     mockedGetOrganiserEventsStartingOnOrAfter.mockReset();
     mockedGetTicketsPurchasedOnOrAfter.mockReset();
     mockedGetOrdersByIdsIfPresent.mockReset();
     mockedCalculateNetSales.mockReset();
-    mockedTryGetOrganiserEventsFromCache.mockReturnValue(null);
     mockedGetTicketsPurchasedOnOrAfter.mockResolvedValue([]);
     mockedGetOrdersByIdsIfPresent.mockResolvedValue([]);
     mockedCalculateNetSales.mockResolvedValue(0);
@@ -142,23 +134,21 @@ describe("fetchOrganiserDashboardMetrics", () => {
     expect(metrics.events).toEqual([recentEvent]);
   });
 
-  it("uses cached organiser events but still only queries tickets for the 30-day event window", async () => {
-    const oldEvent = eventWith({
-      eventId: "old-event" as EventId,
-      name: "Ancient open",
-      startDate: new Timestamp(nowSeconds - DASHBOARD_LOOKBACK_SECONDS - 86400, 0),
-    });
+  it("only queries tickets for events in the 30-day window", async () => {
     const upcomingEvent = eventWith({
       eventId: "upcoming-event" as EventId,
       name: "Next week",
       startDate: new Timestamp(nowSeconds + 7 * 86400, 0),
     });
-    mockedTryGetOrganiserEventsFromCache.mockReturnValue([oldEvent, upcomingEvent]);
+    mockedGetOrganiserEventsStartingOnOrAfter.mockResolvedValue({
+      events: [upcomingEvent],
+      hasAnyOrganiserEvents: true,
+    });
     mockedGetTicketsPurchasedOnOrAfter.mockResolvedValue([]);
 
     const metrics = await fetchOrganiserDashboardMetrics("organiser-cached" as UserId, { bypassCache: true });
 
-    expect(mockedGetOrganiserEventsStartingOnOrAfter).not.toHaveBeenCalled();
+    expect(mockedGetOrganiserEventsStartingOnOrAfter).toHaveBeenCalledTimes(1);
     expect(mockedGetTicketsPurchasedOnOrAfter).toHaveBeenCalledTimes(1);
     const queriedEventIds = mockedGetTicketsPurchasedOnOrAfter.mock.calls[0][0];
     expect(queriedEventIds).toEqual([upcomingEvent.eventId]);
