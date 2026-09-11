@@ -315,14 +315,11 @@ const actionCodeSettings = {
 
 export async function resetUserPassword(email: string): Promise<void> {
   try {
-    // Send password reset email
     await sendPasswordResetEmail(auth, email);
-    // Password reset email sent successfully
     authServiceLogger.info("Password reset email sent");
   } catch (error) {
-    // Handle errors
     authServiceLogger.error(`Error sending password reset email: ${error}`);
-    throw error; // Rethrow the error for the caller to handle if needed
+    throw error;
   }
 }
 
