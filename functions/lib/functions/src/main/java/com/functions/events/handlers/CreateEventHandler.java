@@ -13,7 +13,9 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.models.NewEventData;
+import com.functions.events.models.responses.CreateEventResponse;
 import com.functions.events.utils.EventsMetadataUtils;
+import com.functions.events.utils.EventIdGenerator;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.global.models.AuthContext;
@@ -25,9 +27,7 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
-import java.util.UUID;
-
-public class CreateEventHandler implements Handler<NewEventData, String> {
+public class CreateEventHandler implements Handler<NewEventData, CreateEventResponse> {
     private static final Logger logger = LoggerFactory.getLogger(CreateEventHandler.class);
 
     @Override
@@ -40,7 +40,7 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
     }
 
     @Override
-    public String handle(NewEventData request, AuthContext authContext) {
+    public CreateEventResponse handle(NewEventData request, AuthContext authContext) {
         if (request == null) {
             throw new IllegalArgumentException("Event data is required");
         }
@@ -53,12 +53,12 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
 
         try {
             Firestore db = FirebaseService.getFirestore();
-            String eventId = UUID.randomUUID().toString();
+            String eventId = EventIdGenerator.newEventId();
             db.runTransaction(transaction ->
                     createEvent(request, transaction, eventId)).get();
 
             logger.info("Event created successfully with ID: {}", eventId);
-            return "Event created successfully with ID: " + eventId;
+            return new CreateEventResponse(eventId);
         } catch (Exception e) {
             logger.error("Failed to create event", e);
             throw new RuntimeException("Failed to create event: " + e.getMessage(), e);
@@ -96,10 +96,6 @@ public class CreateEventHandler implements Handler<NewEventData, String> {
                     data.getOrganiserId(), eventId);
         }
         return eventId;
-    }
-
-    public static String createEvent(NewEventData data, Transaction transaction) throws Exception {
-        return createEvent(data, transaction, UUID.randomUUID().toString());
     }
 
     private static void createEventMetadata(Transaction transaction, String eventId,
