@@ -62,6 +62,10 @@ public class RecurringEventsService {
             return Optional.empty();
         }
         RecurrenceTemplate currentRecurrenceTemplate = maybeCurrentRecurrenceTemplate.get();
+        if (currentRecurrenceTemplate.isV2()) {
+            throw new IllegalArgumentException(
+                    "v2 recurrence templates must be updated through UPDATE_RECURRENCE_TEMPLATE_V2");
+        }
         logger.info("Recurrence template found {} {}", recurrenceTemplateId, currentRecurrenceTemplate);
         Map<String, String> pastRecurrences = currentRecurrenceTemplate.getRecurrenceData().getPastRecurrences();
 

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
+import com.functions.events.models.RecurrenceOccurrence;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
@@ -71,6 +72,87 @@ public class RecurringEventsCronService {
     }
 
     private static RecurrenceTemplateProcessingResult processRecurrenceTemplate(
+            String recurrenceTemplateId, LocalDate today, boolean createEventWorkflow) throws Exception {
+        RecurrenceTemplate peekedTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId)
+                .orElse(null);
+        if (peekedTemplate == null) {
+            logger.warn("Recurrence template not found for id: {}. Skipping.", recurrenceTemplateId);
+            return new RecurrenceTemplateProcessingResult(List.of(), false);
+        }
+        if (peekedTemplate.isV2()) {
+            return processV2RecurrenceTemplate(recurrenceTemplateId, today);
+        }
+        return processV1RecurrenceTemplate(recurrenceTemplateId, today, createEventWorkflow);
+    }
+
+    private static RecurrenceTemplateProcessingResult processV2RecurrenceTemplate(
+            String recurrenceTemplateId, LocalDate today) throws Exception {
+        Map<String, String> eventIdsByOccurrence = new HashMap<>();
+        List<CreatedRecurringEvent> createdEvents = new ArrayList<>();
+
+        while (true) {
+            RecurrenceTransactionResult transactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
+                RecurrenceTemplate recurrenceTemplate = RecurrenceTemplateRepository
+                        .getRecurrenceTemplateInTransaction(recurrenceTemplateId, transaction)
+                        .orElse(null);
+                if (recurrenceTemplate == null) {
+                    logger.warn("Recurrence template not found for id: {} during v2 transaction. Skipping.",
+                            recurrenceTemplateId);
+                    return new RecurrenceTransactionResult(null, false);
+                }
+
+                RecurrenceData recurrenceData = recurrenceTemplate.getRecurrenceData();
+                RecurrenceOccurrence dueOccurrence = RecurringEventsV2Service.findNextOccurrenceToCreate(
+                        recurrenceData, today);
+                if (dueOccurrence == null) {
+                    return new RecurrenceTransactionResult(null,
+                            RecurringEventsV2Service.shouldMoveTemplateToInactive(recurrenceData));
+                }
+
+                NewEventData newEventDataDeepCopy = createEventDataForRecurrence(
+                        recurrenceTemplate.getEventData(), dueOccurrence.getEventStart());
+                String newEventId = eventIdsByOccurrence.computeIfAbsent(
+                        dueOccurrence.getOccurrenceId(), RecurringEventsV2Service::eventIdForOccurrence);
+
+                List<DocumentSnapshot> eventLinkDocuments =
+                        CustomEventLinksService.getEventLinkDocumentsPointedToRecurrence(
+                                newEventDataDeepCopy.getOrganiserId(), recurrenceTemplateId, transaction);
+                List<DocumentReference> eventCollectionDocuments =
+                        EventCollectionsService.getEventCollectionDocumentsContainingRecurringTemplate(
+                                recurrenceTemplateId, transaction);
+
+                CreateEventHandler.createEvent(newEventDataDeepCopy, transaction, newEventId);
+                CustomEventLinksService.updateEventLinks(eventLinkDocuments, newEventId, transaction);
+                EventCollectionsService.addEventToEventCollections(
+                        eventCollectionDocuments, newEventId, transaction);
+
+                List<RecurrenceOccurrence> updatedOccurrences = RecurringEventsV2Service.withEventId(
+                        recurrenceData.getOccurrences(), dueOccurrence.getOccurrenceId(), newEventId);
+                RecurrenceData newRecurrenceData = recurrenceData.toBuilder()
+                        .occurrences(updatedOccurrences)
+                        .build();
+                RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId,
+                        recurrenceTemplate.toBuilder().recurrenceData(newRecurrenceData).build(), transaction);
+
+                List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
+                return new RecurrenceTransactionResult(new CreatedRecurringEvent(newEventId,
+                        reservedSlots == null ? List.of() : new ArrayList<>(reservedSlots)),
+                        RecurringEventsV2Service.shouldMoveTemplateToInactive(newRecurrenceData));
+            });
+
+            if (transactionResult.createdEvent() == null) {
+                return new RecurrenceTemplateProcessingResult(createdEvents,
+                        transactionResult.moveToInactive());
+            }
+
+            createdEvents.add(transactionResult.createdEvent());
+            if (transactionResult.moveToInactive()) {
+                return new RecurrenceTemplateProcessingResult(createdEvents, true);
+            }
+        }
+    }
+
+    private static RecurrenceTemplateProcessingResult processV1RecurrenceTemplate(
             String recurrenceTemplateId, LocalDate today, boolean createEventWorkflow) throws Exception {
         Map<String, String> eventIdsByRecurrence = new HashMap<>();
         List<CreatedRecurringEvent> createdEvents = new ArrayList<>();

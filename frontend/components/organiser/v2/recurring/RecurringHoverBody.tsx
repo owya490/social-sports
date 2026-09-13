@@ -1,7 +1,7 @@
 "use client";
 
 import { HoverList } from "@/components/organiser/v2/shared/EntityHoverPreview";
-import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
+import { Frequency, RecurrenceTemplate, isRecurrenceTemplateV2 } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
 import { Timestamp } from "firebase/firestore";
@@ -27,15 +27,36 @@ function upcomingRecurrences(allRecurrences: Timestamp[], limit = 2): Timestamp[
     .slice(0, limit);
 }
 
+function scheduleSettings(template: RecurrenceTemplate): string {
+  if (isRecurrenceTemplateV2(template)) {
+    const count = template.recurrenceData.occurrences?.length ?? 0;
+    return `${count} ${count === 1 ? "date" : "dates"}`;
+  }
+  return `${frequencyLabel(template.recurrenceData.frequency ?? Frequency.WEEKLY)} · ${
+    template.recurrenceData.recurrenceAmount ?? 0
+  } times · creates ${template.recurrenceData.createDaysBefore ?? 0}d before`;
+}
+
+function upcomingFromTemplate(template: RecurrenceTemplate): Timestamp[] {
+  if (isRecurrenceTemplateV2(template)) {
+    const now = Date.now();
+    return (template.recurrenceData.occurrences ?? [])
+      .filter((occurrence) => !occurrence.eventId && occurrence.eventStart.toMillis() >= now)
+      .sort((a, b) => a.eventStart.toMillis() - b.eventStart.toMillis())
+      .slice(0, 2)
+      .map((occurrence) => occurrence.eventStart);
+  }
+  return upcomingRecurrences(template.recurrenceData.allRecurrences ?? [], 2);
+}
+
 type RecurringHoverBodyProps = {
   template: RecurrenceTemplate;
 };
 
 /** Schedule settings + next two dates — the glance the row cadence line cannot hold. */
 export function RecurringHoverBody({ template }: RecurringHoverBodyProps) {
-  const { recurrenceData } = template;
-  const upcoming = upcomingRecurrences(recurrenceData.allRecurrences ?? [], 2);
-  const settings = `${frequencyLabel(recurrenceData.frequency)} · ${recurrenceData.recurrenceAmount} times · creates ${recurrenceData.createDaysBefore}d before`;
+  const upcoming = upcomingFromTemplate(template);
+  const settings = scheduleSettings(template);
 
   return (
     <div className="space-y-2.5">
