@@ -12,6 +12,13 @@ on:
     branches:
       - master
 
+# Cloud Functions rejects a second update while a previous deployment is still
+# operating on the same function. Keep the complete dev/prod release together
+# so a newly merged revision cannot overlap any function or Scheduler update.
+concurrency:
+  group: cloud-functions-deploy-${{ github.repository }}
+  cancel-in-progress: false
+
 jobs:
   deploy-java-cloud-run-functions:
     name: Deploy Cloud Functions to ${{ matrix.env }}
