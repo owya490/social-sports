@@ -1068,7 +1068,8 @@ public class WebhookService {
                     
                     return orderIdResult;
                 } catch (Exception e) {
-                    logger.error("Error in fulfillment transaction: {}", e.getMessage(), e);
+                    logger.error("Error in fulfillment transaction. session={}: {}",
+                            checkoutSessionId, e.getMessage(), e);
                     throw new RuntimeException("Transaction failed", e);
                 }
             });
@@ -1133,7 +1134,8 @@ public class WebhookService {
                         logger.warn("Was unable to send organiser pending booking notification. orderId={}", orderId);
                     }
                 } catch (Exception e) {
-                    logger.warn("Failed to send organiser pending booking notification. orderId={}", orderId, e);
+                    logger.warn("Failed to send organiser pending booking notification. orderId={}, session={}",
+                            orderId, checkoutSessionId, e);
                 }
             }
             
@@ -1141,7 +1143,8 @@ public class WebhookService {
             return true;
             
         } catch (Exception e) {
-            logger.error("Error processing ticket purchase workflow: {}", e.getMessage(), e);
+            logger.error("Error processing ticket purchase workflow. session={}: {}",
+                    checkoutSessionId, e.getMessage(), e);
             return false;
         }
     }
@@ -1179,7 +1182,8 @@ public class WebhookService {
                     
                     return true;
                 } catch (Exception e) {
-                    logger.error("Error in expired session transaction: {}", e.getMessage(), e);
+                    logger.error("Error in expired session transaction. session={}: {}",
+                            checkoutSessionId, e.getMessage(), e);
                     throw new RuntimeException("Transaction failed", e);
                 }
             });
@@ -1192,7 +1196,8 @@ public class WebhookService {
             return result;
             
         } catch (Exception e) {
-            logger.error("Error processing expired session workflow: {}", e.getMessage(), e);
+            logger.error("Error processing expired session workflow. session={}: {}",
+                    checkoutSessionId, e.getMessage(), e);
             return false;
         }
     }
