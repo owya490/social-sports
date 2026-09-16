@@ -1131,7 +1131,8 @@ public class WebhookService {
                             fullName,
                             orderId);
                     if (!organiserEmailSuccess) {
-                        logger.warn("Was unable to send organiser pending booking notification. orderId={}", orderId);
+                        logger.warn("Was unable to send organiser pending booking notification. orderId={}, session={}",
+                                orderId, checkoutSessionId);
                     }
                 } catch (Exception e) {
                     logger.warn("Failed to send organiser pending booking notification. orderId={}, session={}",
