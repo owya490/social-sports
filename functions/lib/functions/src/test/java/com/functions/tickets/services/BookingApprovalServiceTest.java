@@ -50,6 +50,14 @@ public class BookingApprovalServiceTest {
     }
 
     @Test
+    public void pendingOrderDoesNotReturnIdempotentSuccess() {
+        BookingApprovalResponse response = BookingApprovalService.checkAlreadyCompletedOperation(
+                OrderAndTicketStatus.PENDING, "order-1", BookingApprovalOperation.APPROVE);
+
+        assertNull(response);
+    }
+
+    @Test
     public void repeatedRejectionOfRejectedOrderReturnsSuccess() {
         BookingApprovalResponse response = BookingApprovalService.checkAlreadyCompletedOperation(
                 OrderAndTicketStatus.REJECTED, "order-1", BookingApprovalOperation.REJECT);

@@ -66,6 +66,15 @@ public class BookingApprovalService {
             Order order = OrdersRepository.getOrderById(orderId)
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
 
+            List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets());
+            for (Ticket ticket : tickets) {
+                if (!ticket.getEventId().equals(eventId)) {
+                    throw new RuntimeException(
+                            String.format("Ticket eventId mismatch for ticket %s. Expected %s, got %s",
+                                    ticket.getTicketId(), eventId, ticket.getEventId()));
+                }
+            }
+
             if (order.getStatus() != OrderAndTicketStatus.PENDING) {
                 BookingApprovalResponse completedResponse = checkAlreadyCompletedOperation(
                         order.getStatus(), orderId, operation);
@@ -78,15 +87,6 @@ public class BookingApprovalService {
                 throw new RuntimeException(String.format(
                         "Order %s is no longer PENDING (current status: %s). Cannot %s.",
                         orderId, order.getStatus(), operation));
-            }
-
-            List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets());
-            for (Ticket ticket : tickets) {
-                if (!ticket.getEventId().equals(eventId)) {
-                    throw new RuntimeException(
-                            String.format("Ticket eventId mismatch for ticket %s. Expected %s, got %s",
-                                    ticket.getTicketId(), eventId, ticket.getEventId()));
-                }
             }
 
             String stripePaymentIntentId = order.getStripePaymentIntentId();
@@ -106,7 +106,7 @@ public class BookingApprovalService {
                     logger.warn("PaymentIntent {} is already captured for pending orderId: {}. "
                             + "A concurrent or interrupted approval likely completed the Stripe operation; "
                             + "syncing Firestore to APPROVED.", stripePaymentIntentId, orderId);
-                    updateOrderAndTicketStatusWithRetry(orderId, OrderAndTicketStatus.APPROVED);
+                    completeCapturedApproval(order, eventData);
                     return successfulResponse(orderId, operation, "Payment was already captured");
                 }
                 if (!PaymentIntentStatus.REQUIRES_CAPTURE.matches(piStatus)) {
@@ -120,8 +120,8 @@ public class BookingApprovalService {
                 try {
                     executeApprovalOperation(stripePaymentIntentId, stripeAccountId, order, eventData);
                 } catch (StripeException stripeError) {
-                    BookingApprovalResponse recovered = recoverIfPaymentIntentCanceledAfterStripeFailure(
-                            stripePaymentIntentId, stripeAccountId, orderId, operation, stripeError);
+                    BookingApprovalResponse recovered = recoverIfPaymentIntentChangedAfterStripeFailure(
+                            stripePaymentIntentId, stripeAccountId, order, eventData, operation, stripeError);
                     if (recovered != null) {
                         return recovered;
                     }
@@ -131,8 +131,8 @@ public class BookingApprovalService {
                 try {
                     executeRejectionOperation(stripePaymentIntentId, stripeAccountId, orderId);
                 } catch (StripeException stripeError) {
-                    BookingApprovalResponse recovered = recoverIfPaymentIntentCanceledAfterStripeFailure(
-                            stripePaymentIntentId, stripeAccountId, orderId, operation, stripeError);
+                    BookingApprovalResponse recovered = recoverIfPaymentIntentChangedAfterStripeFailure(
+                            stripePaymentIntentId, stripeAccountId, order, eventData, operation, stripeError);
                     if (recovered != null) {
                         return recovered;
                     }
@@ -191,18 +191,24 @@ public class BookingApprovalService {
                 "Successfully captured PaymentIntent for stripePaymentIntentId: {}, stripeAccountId: {}, orderId: {}",
                 stripePaymentIntentId, stripeAccountId, orderId);
 
-        updateOrderAndTicketStatusWithRetry(orderId, OrderAndTicketStatus.APPROVED);
+        completeCapturedApproval(order, eventData);
+    }
 
-        // Send purchase confirmation email — isolated so a failure doesn't mask the
-        // successful approval
+    private static void completeCapturedApproval(Order order, EventData eventData) {
+        boolean statusUpdated = updateOrderAndTicketStatusWithRetry(
+                order.getOrderId(), OrderAndTicketStatus.APPROVED);
+        if (!statusUpdated) {
+            return;
+        }
+
         try {
             boolean purchaseEmailSent = sendPurchaseEmailAfterApproval(order, eventData);
             if (!purchaseEmailSent) {
-                logger.warn("Failed to send purchase email after approving booking for orderId: {}", orderId);
+                logger.warn("Failed to send purchase email after approving booking for orderId: {}", order.getOrderId());
             }
         } catch (Exception e) {
             logger.error("Failed to send purchase confirmation email for orderId: {}. "
-                    + "Approval was successful but email delivery failed.", orderId, e);
+                    + "Approval was successful but email delivery failed.", order.getOrderId(), e);
         }
     }
 
@@ -269,14 +275,16 @@ public class BookingApprovalService {
         return new BookingApprovalResponse(false, orderId, operation, message);
     }
 
-    private static BookingApprovalResponse recoverIfPaymentIntentCanceledAfterStripeFailure(
+    private static BookingApprovalResponse recoverIfPaymentIntentChangedAfterStripeFailure(
             String stripePaymentIntentId,
             String stripeAccountId,
-            String orderId,
+            Order order,
+            EventData eventData,
             BookingApprovalOperation operation,
             StripeException stripeError) {
+        String orderId = order.getOrderId();
         logger.warn("Stripe operation failed for order {} and PaymentIntent {}. "
-                + "Checking latest PaymentIntent status for canceled-state recovery.",
+                + "Checking latest PaymentIntent status for recovery.",
                 orderId, stripePaymentIntentId, stripeError);
         try {
             PaymentIntent latestPaymentIntent = StripeService.retrievePaymentIntent(stripePaymentIntentId, stripeAccountId);
@@ -287,6 +295,13 @@ public class BookingApprovalService {
                         + "PaymentIntent {} transitioned to canceled and cancellation workflow has been synced.",
                         orderId, stripePaymentIntentId);
                 return canceledResponse;
+            }
+            if (isCapturedApproval(latestPaymentIntent.getStatus(), operation)) {
+                logger.info("Recovered from Stripe mutation race for order {}. "
+                        + "PaymentIntent {} transitioned to succeeded; syncing Firestore to APPROVED.",
+                        orderId, stripePaymentIntentId);
+                completeCapturedApproval(order, eventData);
+                return successfulResponse(orderId, operation, "Payment was already captured");
             }
         } catch (Exception recoveryError) {
             logger.error("Failed recovery check after Stripe operation failure for order {} and PaymentIntent {}.",
@@ -466,13 +481,13 @@ public class BookingApprovalService {
      * (capture/cancel), so we must persist the status change to avoid
      * inconsistency.
      */
-    private static void updateOrderAndTicketStatusWithRetry(String orderId, OrderAndTicketStatus status) {
+    private static boolean updateOrderAndTicketStatusWithRetry(String orderId, OrderAndTicketStatus status) {
         for (int attempt = 1; attempt <= MAX_FIRESTORE_RETRIES; attempt++) {
             try {
-                TicketsService.updateOrderAndTicketStatus(orderId, status);
-                logger.info("Successfully updated order and ticket status for orderId: {} on attempt {}", orderId,
-                        attempt);
-                return;
+                boolean statusUpdated = TicketsService.updatePendingOrderAndTicketStatus(orderId, status);
+                logger.info("Order and ticket status {} for orderId: {} on attempt {}",
+                        statusUpdated ? "updated" : "was already current", orderId, attempt);
+                return statusUpdated;
             } catch (Exception e) {
                 logger.error("Failed to update order and ticket status for orderId: {} on attempt {}/{}",
                         orderId, attempt, MAX_FIRESTORE_RETRIES, e);
@@ -486,5 +501,6 @@ public class BookingApprovalService {
                 }
             }
         }
+        throw new IllegalStateException("Unreachable Firestore status update retry state");
     }
 }

@@ -83,11 +83,19 @@ public class TicketsService {
         return totalTicketSales - totalDiscounts;
     }
 
-    public static void updateOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
+    public static boolean updatePendingOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
             throws Exception {
-        FirebaseService.createFirestoreTransaction(transaction -> {
+        return FirebaseService.createFirestoreTransaction(transaction -> {
             Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
+            if (order.getStatus() == orderAndTicketStatus) {
+                return false;
+            }
+            if (order.getStatus() != OrderAndTicketStatus.PENDING) {
+                throw new IllegalStateException(String.format(
+                        "Order %s is %s and cannot transition to %s",
+                        orderId, order.getStatus(), orderAndTicketStatus));
+            }
             List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets(), Optional.of(transaction));
 
             for (Ticket ticket : tickets) {
@@ -96,7 +104,7 @@ public class TicketsService {
             }
             order.setStatus(orderAndTicketStatus);
             OrdersRepository.updateOrder(orderId, order, Optional.of(transaction));
-            return null;
+            return true;
         });
     }
 
