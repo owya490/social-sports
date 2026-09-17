@@ -83,6 +83,7 @@ public class TicketsService {
         return totalTicketSales - totalDiscounts;
     }
 
+    // Returns a boolean indicating whether the OrderAndTicketStatus of order/ticket has been updated.
     public static boolean updatePendingOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
             throws Exception {
         return FirebaseService.createFirestoreTransaction(transaction -> {

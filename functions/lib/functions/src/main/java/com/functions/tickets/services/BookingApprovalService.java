@@ -154,6 +154,11 @@ public class BookingApprovalService {
         }
     }
 
+    /**
+     * Treats only matching terminal states as idempotent: APPROVE/APPROVED and REJECT/REJECTED mean a prior request
+     * completed, so Stripe must not be called again. A pending or opposite terminal state returns null so the caller
+     * can reject a conflicting or concurrently completed operation.
+     */
     static BookingApprovalResponse checkAlreadyCompletedOperation(OrderAndTicketStatus orderStatus,
             String orderId, BookingApprovalOperation operation) {
         boolean alreadyCompleted = (operation == BookingApprovalOperation.APPROVE
