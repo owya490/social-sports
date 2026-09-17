@@ -85,7 +85,7 @@ public class TicketsService {
 
     public static boolean updatePendingOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
             throws Exception {
-        return FirebaseService.createFirestoreTransactionAwaitingCommit(transaction -> {
+        return FirebaseService.createFirestoreTransaction(transaction -> {
             Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
             if (order.getStatus() == orderAndTicketStatus) {

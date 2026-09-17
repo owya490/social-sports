@@ -135,20 +135,9 @@ public class FirebaseService {
     public static <T> T createFirestoreTransaction(Transaction.Function<T> consumer) throws Exception {
         Firestore db = FirebaseService.getFirestore();
         ApiFuture<T> futureTransaction = db.runTransaction(consumer);
-        return awaitFirestoreTransaction(futureTransaction, 30L);
-    }
-
-    public static <T> T createFirestoreTransactionAwaitingCommit(Transaction.Function<T> consumer) throws Exception {
-        Firestore db = FirebaseService.getFirestore();
-        ApiFuture<T> futureTransaction = db.runTransaction(consumer);
-        return awaitFirestoreTransaction(futureTransaction, null);
-    }
-
-    private static <T> T awaitFirestoreTransaction(ApiFuture<T> futureTransaction, Long timeoutSeconds) throws Exception {
         try {
-            T result = timeoutSeconds == null
-                    ? futureTransaction.get()
-                    : futureTransaction.get(timeoutSeconds, TimeUnit.SECONDS);
+            // Wait for the transaction to complete
+            T result = futureTransaction.get(30, TimeUnit.SECONDS);
             logger.info("Transaction completed with result: " + result);
             return result;
         } catch (ExecutionException e) {
