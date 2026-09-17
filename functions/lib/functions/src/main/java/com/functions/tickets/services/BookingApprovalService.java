@@ -336,6 +336,8 @@ public class BookingApprovalService {
             if (capturedResponse != null) {
                 return capturedResponse;
             }
+        } catch (OrderStatusConflictException e) {
+            throw e;
         } catch (Exception recoveryError) {
             logger.error("Failed recovery check after Stripe operation failure for order {} and PaymentIntent {}.",
                     orderId, stripePaymentIntentId, recoveryError);
