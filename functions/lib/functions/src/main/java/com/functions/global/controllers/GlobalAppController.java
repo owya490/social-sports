@@ -17,6 +17,7 @@ import com.functions.global.models.responses.UnifiedResponse;
 import com.functions.global.services.AuthService;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
+import com.functions.tickets.exceptions.OrderStatusConflictException;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
@@ -82,6 +83,11 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         } catch (AuthorizationException e) {
             logger.warn("Authorization failed: {}", e.getMessage());
             response.setStatusCode(403);
+            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
+                    new ErrorResponse(e.getMessage())));
+        } catch (OrderStatusConflictException e) {
+            logger.warn("Order status conflict: {}", e.getMessage());
+            response.setStatusCode(409);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse(e.getMessage())));
         } catch (FulfilmentProgressionBlockedException e) {

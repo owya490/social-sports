@@ -15,6 +15,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.models.PaymentIntentStatus;
 import com.functions.stripe.services.StripeService;
 import com.functions.stripe.services.WebhookService;
+import com.functions.tickets.exceptions.OrderStatusConflictException;
 import com.functions.tickets.models.BookingApprovalOperation;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -84,7 +85,7 @@ public class BookingApprovalService {
                 logger.warn("Order {} is no longer PENDING (current status: {}). "
                         + "A concurrent operation may have already processed this order.",
                         orderId, order.getStatus());
-                throw new RuntimeException(String.format(
+                throw new OrderStatusConflictException(String.format(
                         "Order %s is no longer PENDING (current status: %s). Cannot %s.",
                         orderId, order.getStatus(), operation));
             }
@@ -145,6 +146,8 @@ public class BookingApprovalService {
 
             return successfulResponse(orderId, operation,
                     String.format("Successfully executed %s operation", operation));
+        } catch (OrderStatusConflictException e) {
+            throw e;
         } catch (Exception e) {
             logger.error(
                     "Failed to handle booking approval for eventId: {}, organiserId: {}, orderId: {}, operation: {}",
@@ -518,6 +521,8 @@ public class BookingApprovalService {
                 logger.info("Order and ticket status {} for orderId: {} on attempt {}",
                         statusUpdated ? "updated" : "was already current", orderId, attempt);
                 return statusUpdated;
+            } catch (OrderStatusConflictException e) {
+                throw e;
             } catch (Exception e) {
                 logger.error("Failed to update order and ticket status for orderId: {} on attempt {}/{}",
                         orderId, attempt, MAX_FIRESTORE_RETRIES, e);

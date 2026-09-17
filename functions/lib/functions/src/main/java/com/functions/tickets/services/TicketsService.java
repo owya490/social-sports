@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.tickets.exceptions.OrderStatusConflictException;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
@@ -93,7 +94,7 @@ public class TicketsService {
                 return false;
             }
             if (order.getStatus() != OrderAndTicketStatus.PENDING) {
-                throw new IllegalStateException(String.format(
+                throw new OrderStatusConflictException(String.format(
                         "Order %s is %s and cannot transition to %s",
                         orderId, order.getStatus(), orderAndTicketStatus));
             }
