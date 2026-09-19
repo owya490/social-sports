@@ -26,18 +26,15 @@ import {
   EventMetadata,
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
-import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
+import { OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
-import { getOrdersByIds } from "@/services/src/tickets/orderService";
-import { getTicketsByIds } from "@/services/src/tickets/ticketService";
-import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -85,7 +82,7 @@ export function OrganiserEventHubView() {
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
-  const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
+  const { loading: ordersLoading, orders } = useEventOrderAndTickets(eventId);
 
   useEffect(() => {
     if (!user.userId) return;
@@ -141,35 +138,6 @@ export function OrganiserEventHubView() {
         );
 
         setEventMetadata(nextEventMetadata);
-        if (isActive) setLoading(false);
-
-        const allOrders = await getOrdersByIds(nextEventMetadata.orderIds);
-        const allTickets = await getTicketsByIds(allOrders.flatMap((order) => order.tickets));
-        const nextOrderTicketsMap = new Map<Order, Ticket[]>();
-        allOrders.forEach((order) => {
-          nextOrderTicketsMap.set(
-            order,
-            allTickets.filter((ticket) => ticket.orderId === order.orderId)
-          );
-        });
-        if (!isActive) return;
-        setOrderTicketsMap(nextOrderTicketsMap);
-
-        if (!hasAppliedPendingLandingRef.current) {
-          hasAppliedPendingLandingRef.current = true;
-          const hasPendingBooking = allOrders.some(
-            (order) => order.status === OrderAndTicketStatus.PENDING
-          );
-          if (hasPendingBooking) {
-            setSection("Registrations");
-          }
-        }
-
-        try {
-          await calculateNetSales(nextOrderTicketsMap);
-        } catch (error) {
-          eventServiceLogger.error(`Error calculating net sales: ${error}`);
-        }
       } catch (error) {
         if (!isActive) return;
         eventServiceLogger.error(`Error fetching event for organiser v2 event hub: ${error}`);
@@ -184,6 +152,16 @@ export function OrganiserEventHubView() {
       isActive = false;
     };
   }, [eventId, router, user.userId]);
+
+  useEffect(() => {
+    if (loading || ordersLoading || !eventData.eventId || hasAppliedPendingLandingRef.current) {
+      return;
+    }
+    hasAppliedPendingLandingRef.current = true;
+    if (orders.some((order) => order.status === OrderAndTicketStatus.PENDING)) {
+      setSection("Registrations");
+    }
+  }, [eventData.eventId, loading, orders, ordersLoading]);
 
   const handleTogglePause = useCallback(async () => {
     const next = !eventPaused;
@@ -255,7 +233,6 @@ export function OrganiserEventHubView() {
             isActive={eventIsActive}
             isPrivate={eventIsPrivate}
             eventTicketTypes={eventTicketTypes}
-            orderTicketsMap={orderTicketsMap}
             setEventTicketTypes={(types) => {
               setEventTicketTypes(types);
               setEventData((prev) => ({ ...prev, eventTicketTypes: types }));
@@ -291,7 +268,6 @@ export function OrganiserEventHubView() {
             eventMetadata={eventMetadata}
             setEventMetadata={setEventMetadata}
             eventId={eventId}
-            orderTicketsMap={orderTicketsMap}
             setEventVacancy={setEventVacancy}
             onEventRefresh={(event) => {
               setEventData(event);
@@ -301,14 +277,12 @@ export function OrganiserEventHubView() {
               setEventVacancy(inventory.vacancy);
               setEventPrice(inventory.price);
             }}
-            setOrderTicketsMap={setOrderTicketsMap}
           />
         )}
 
         {section === "Forms" && (
           <EventHubRegistration
             eventId={eventId}
-            orderTicketsMap={orderTicketsMap}
             eventTicketTypes={eventTicketTypes}
             setEventTicketTypes={(types) => {
               setEventTicketTypes(types);
@@ -323,7 +297,6 @@ export function OrganiserEventHubView() {
 
         {section === "Settings" && (
           <EventHubSettings
-            orderTicketsMap={orderTicketsMap}
             eventName={eventName}
             eventStartDate={eventStartDate}
             eventId={eventId}

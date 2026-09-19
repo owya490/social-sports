@@ -1,8 +1,8 @@
 import Loading from "@/components/loading/Loading";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
@@ -19,7 +19,6 @@ interface RemoveAttendeeDialogProps {
   tickets: Ticket[];
   setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
-  setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
 const RemoveAttendeeDialog = ({
@@ -31,8 +30,8 @@ const RemoveAttendeeDialog = ({
   tickets,
   setEventMetadata,
   setEventVacancy,
-  setOrderTicketsMap,
 }: RemoveAttendeeDialogProps) => {
+  const { setAttendeeTickets } = useEventOrderAndTickets(eventId);
   const [loading, setLoading] = useState<boolean>(false);
 
   const [showSuccessAlert, setShowSuccessAlert] = useState<boolean>(false);
@@ -47,16 +46,9 @@ const RemoveAttendeeDialog = ({
     try {
       setLoading(true);
       await setAttendeeTickets({
-        eventId,
         orderId: order.orderId,
         numTickets: 0,
         eventTicketTypeId: tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
-      });
-      setOrderTicketsMap((prev) => {
-        const next = new Map(prev);
-        const [oldOrder] = Array.from(next.entries()).find(([o]) => o.orderId === order.orderId) ?? [];
-        if (oldOrder) next.delete(oldOrder);
-        return next;
       });
       setEventVacancy(eventData.vacancy + tickets.length);
       setEventMetadata((prev) => ({
