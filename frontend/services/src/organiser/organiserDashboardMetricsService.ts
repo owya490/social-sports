@@ -6,13 +6,7 @@ import {
   DASHBOARD_LOOKBACK_SECONDS,
   ORGANISER_EVENTS_REFRESH_MILLIS,
 } from "@/services/src/organiser/organiserConstants";
-import {
-  getOrganiserEventsCacheGeneration,
-  getOrganiserEventsStartingOnOrAfter,
-  onOrganiserEventsCacheBust,
-  tryGetOrganiserEventsFromCache,
-} from "@/services/src/organiser/organiserEventsService";
-import { filterEventsStartingOnOrAfter } from "@/services/src/organiser/organiserLookback";
+import { getOrganiserEventsStartingOnOrAfter } from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
 import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
@@ -266,29 +260,24 @@ function buildSalesByEvent30d(
 type MetricsCacheEntry = {
   userId: UserId;
   fetchedAt: number;
-  generation: number;
   metrics: OrganiserDashboardMetrics;
 };
 
 type MetricsInflight = {
   userId: UserId;
-  generation: number;
   promise: Promise<OrganiserDashboardMetrics>;
 };
 
 let metricsCache: MetricsCacheEntry | null = null;
 let metricsInflight: MetricsInflight | null = null;
 
-onOrganiserEventsCacheBust(() => {
+export function bustOrganiserDashboardMetricsCache(): void {
   metricsCache = null;
   metricsInflight = null;
-});
+}
 
 export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
   if (!metricsCache || metricsCache.userId !== userId) {
-    return null;
-  }
-  if (metricsCache.generation !== getOrganiserEventsCacheGeneration()) {
     return null;
   }
   if (Date.now() - metricsCache.fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
@@ -301,14 +290,6 @@ async function loadDashboardEvents(
   userId: UserId,
   since: Timestamp
 ): Promise<{ events: EventData[]; hasAnyEvents: boolean }> {
-  const cached = tryGetOrganiserEventsFromCache(userId);
-  if (cached) {
-    return {
-      events: filterEventsStartingOnOrAfter(cached, since),
-      hasAnyEvents: cached.length > 0,
-    };
-  }
-
   const result = await getOrganiserEventsStartingOnOrAfter(userId, since);
   return { events: result.events, hasAnyEvents: result.hasAnyOrganiserEvents };
 }
@@ -356,26 +337,23 @@ export async function fetchOrganiserDashboardMetrics(
   userId: UserId,
   options?: { bypassCache?: boolean }
 ): Promise<OrganiserDashboardMetrics> {
-  const generation = getOrganiserEventsCacheGeneration();
   if (!options?.bypassCache) {
     const cached = tryGetCachedOrganiserDashboardMetrics(userId);
     if (cached) {
       return cached;
     }
-    if (metricsInflight && metricsInflight.userId === userId && metricsInflight.generation === generation) {
+    if (metricsInflight && metricsInflight.userId === userId) {
       return metricsInflight.promise;
     }
   }
 
   const promise = (async () => {
     const metrics = await loadOrganiserDashboardMetrics(userId);
-    if (generation === getOrganiserEventsCacheGeneration()) {
-      metricsCache = { userId, fetchedAt: Date.now(), generation, metrics };
-    }
+    metricsCache = { userId, fetchedAt: Date.now(), metrics };
     return metrics;
   })();
 
-  metricsInflight = { userId, generation, promise };
+  metricsInflight = { userId, promise };
   try {
     return await promise;
   } finally {

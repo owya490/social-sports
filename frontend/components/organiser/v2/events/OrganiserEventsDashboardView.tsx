@@ -6,10 +6,11 @@ import { EventsGrid } from "@/components/organiser/v2/events/EventsGrid";
 import { EventsToolbar } from "@/components/organiser/v2/events/EventsToolbar";
 import { useOrganiserEventFilters } from "@/components/organiser/v2/events/useOrganiserEventFilters";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
+import { useEventsForOrganiserHub } from "@/components/organiser/v2/event-hub/useEventsForOrganiserHub";
 import { useUser } from "@/components/utility/UserContext";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
-import { getOrganiserEvents, tryGetOrganiserEventsFromCache } from "@/services/src/organiser/organiserEventsService";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { useEffect, useLayoutEffect, useState } from "react";
 
 const logger = new Logger("OrganiserEventsDashboardV2");
@@ -17,6 +18,7 @@ const logger = new Logger("OrganiserEventsDashboardV2");
 /** Shared events catalogue body — real dashboard + welcome twin. */
 export function OrganiserEventsDashboardView() {
   const { user } = useUser();
+  const { getEvents } = useEventsForOrganiserHub();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [allEvents, setAllEvents] = useState<EventData[]>([]);
@@ -53,17 +55,11 @@ export function OrganiserEventsDashboardView() {
       if (user.userId === "") {
         return;
       }
-      const cached = tryGetOrganiserEventsFromCache(user.userId);
-      if (cached) {
-        setAllEvents(cached);
-        setError(false);
-        setLoading(false);
-        return;
-      }
+      const eventIds = user.organiserEvents as EventId[];
       setError(false);
       setLoading(true);
       try {
-        const events = await getOrganiserEvents(user.userId);
+        const events = await getEvents(eventIds);
         setAllEvents(events);
       } catch (fetchError) {
         logger.error(`Failed to get organiser events: ${fetchError}`);
@@ -74,7 +70,7 @@ export function OrganiserEventsDashboardView() {
     };
 
     fetchEvents();
-  }, [user.userId]);
+  }, [user.userId, user.organiserEvents, getEvents]);
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-2">
@@ -92,7 +88,9 @@ export function OrganiserEventsDashboardView() {
               onClick={() => {
                 setLoading(true);
                 setError(false);
-                getOrganiserEvents(user.userId, { bypassCache: true })
+                const eventIds = user.organiserEvents as EventId[];
+                bustOrganiserHubCache();
+                getEvents(eventIds)
                   .then(setAllEvents)
                   .catch((fetchError) => {
                     logger.error(`Failed to get organiser events: ${fetchError}`);

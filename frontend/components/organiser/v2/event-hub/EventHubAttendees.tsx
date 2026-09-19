@@ -4,14 +4,14 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import Loading from "@/components/loading/Loading";
 import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAttendeeDialog";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
-import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfaces/EventTypes";
+import { EventData, EventId, EventMetadata, OrderId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
-import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
-import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
+import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
-import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
+import { getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
   getAttachedFormIdsForEvent,
   getSortedEventTicketTypes,
@@ -26,9 +26,8 @@ import {
   filterOrderTicketsMapByTicketType,
   ticketMatchesEventTicketType,
 } from "@/services/src/forms/formsUtils/formsUtils";
+import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import { approveBooking, rejectBooking } from "@/services/src/tickets/bookingApprovalsService";
-import { getOrderById } from "@/services/src/tickets/orderService";
-import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { getEntryFromOrderTicketsMapByOrderId } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import {
@@ -40,8 +39,7 @@ import {
   TicketIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Timestamp } from "firebase/firestore";
-import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { Dispatch, FormEvent, SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
@@ -114,6 +112,29 @@ const showFailureToastWithRefresh = (message: string, toastId: string) => {
     { id: toastId, duration: 10000 }
   );
 };
+
+function buildOrderTicketsMap(orders: Order[], tickets: Ticket[]): Map<Order, Ticket[]> {
+  const nextOrderTicketsMap = new Map<Order, Ticket[]>();
+  for (const order of orders) {
+    nextOrderTicketsMap.set(
+      order,
+      tickets.filter((ticket) => ticket.orderId === order.orderId)
+    );
+  }
+  return nextOrderTicketsMap;
+}
+
+async function readThroughEventAttendeeDocuments(eventId: EventId): Promise<{
+  event: EventData;
+  metadata: EventMetadata;
+  orderTicketsMap: Map<Order, Ticket[]>;
+}> {
+  const event = await organiserHub.getEvent(eventId);
+  const metadata = await organiserHub.getEventMetadata(eventId);
+  const orders = await organiserHub.getOrders(metadata.orderIds);
+  const tickets = await organiserHub.getTickets(orders.flatMap((order) => order.tickets));
+  return { event, metadata, orderTicketsMap: buildOrderTicketsMap(orders, tickets) };
+}
 
 function AttendeeFormResponsesPanel({
   order,
@@ -252,20 +273,14 @@ function AttendeeEditTicketsPanel({
   tickets,
   eventId,
   eventData,
-  setEventMetadata,
-  setEventVacancy,
-  onEventRefresh,
-  setOrderTicketsMap,
+  refreshAttendeeRecords,
   onClose,
 }: {
   order: Order;
   tickets: Ticket[];
   eventId: EventId;
   eventData: EventData;
-  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
-  setEventVacancy: Dispatch<SetStateAction<number>>;
-  onEventRefresh?: (event: EventData) => void;
-  setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
+  refreshAttendeeRecords: () => Promise<void>;
   onClose: () => void;
 }) {
   const numTickets = tickets.length;
@@ -290,25 +305,8 @@ function AttendeeEditTicketsPanel({
         eventTicketTypeId:
           tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
-      const updatedOrder = await getOrderById(order.orderId);
-      const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
-      setOrderTicketsMap((prev) => {
-        const next = new Map(prev);
-        const [oldOrder] = Array.from(next.entries()).find(([o]) => o.orderId === order.orderId) ?? [];
-        if (oldOrder) next.delete(oldOrder);
-        next.set(updatedOrder, updatedTickets);
-        return next;
-      });
-      const updatedEventData = await getEventById(eventId);
-      if (onEventRefresh) {
-        onEventRefresh(updatedEventData);
-      } else {
-        setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
-      }
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount - numTickets + parseInt(newNumTickets, 10),
-      }));
+      organiserHub.invalidateEventForOrganiserHub(eventId);
+      await refreshAttendeeRecords();
       toast.success("Tickets updated");
       onClose();
     } catch (error) {
@@ -484,54 +482,27 @@ export function EventHubAttendees({
     }
   }, [orderTicketsMap]);
 
-  const deleteFromMapByOrderId = (map: Map<Order, Ticket[]>, orderId: string) => {
-    const next = new Map(map);
-    for (const [key] of next) {
-      if (key.orderId === orderId) {
-        next.delete(key);
-        break;
-      }
+  const refreshAttendeeRecords = useCallback(async () => {
+    const { event, metadata, orderTicketsMap: nextOrderTicketsMap } =
+      await readThroughEventAttendeeDocuments(eventId);
+    setOrderTicketsMap(nextOrderTicketsMap);
+    setEventMetadata(metadata);
+    if (onEventRefresh) {
+      onEventRefresh(event);
+    } else {
+      setEventVacancy(resolveEventInventory(event).vacancy);
     }
-    return next;
-  };
-
-  const moveOrderFromPending = (order: Order, tickets: Ticket[], targetStatus: OrderAndTicketStatus) => {
-    setPendingMap((prev) => deleteFromMapByOrderId(prev, order.orderId));
-    const updatedOrder: Order = { ...order, status: targetStatus };
-    const ticketsWithStatus = tickets.map((t) => ({ ...t, status: targetStatus }));
-
-    if (targetStatus === OrderAndTicketStatus.APPROVED) {
-      setApprovedMap((prev) => {
-        const next = new Map(prev);
-        next.set(updatedOrder, ticketsWithStatus);
-        return next;
-      });
-    } else if (targetStatus === OrderAndTicketStatus.REJECTED) {
-      setDeclinedMap((prev) => {
-        const next = new Map(prev);
-        next.set(updatedOrder, ticketsWithStatus);
-        return next;
-      });
-      setEventVacancy((prev) => prev + order.tickets.length);
-    }
-
-    setOrderTicketsMap((prev) => {
-      const next = deleteFromMapByOrderId(prev, order.orderId);
-      next.set(updatedOrder, ticketsWithStatus);
-      return next;
-    });
-  };
+  }, [eventId, onEventRefresh, setEventMetadata, setEventVacancy, setOrderTicketsMap]);
 
   const handleApproveOrder = async (order: Order) => {
     const toastId = toast.loading("Approving order...");
     try {
       const response = await approveBooking(eventId, eventData.organiserId, order.orderId);
-      const tickets = pendingMap.get(order) ?? [];
+      organiserHub.invalidateEventForOrganiserHub(eventId);
+      await refreshAttendeeRecords();
       if (response.success) {
-        moveOrderFromPending(order, tickets, OrderAndTicketStatus.APPROVED);
         toast.success("Order approved", { id: toastId });
       } else {
-        moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
         showFailureToastWithRefresh(
           response.message || "Order could not be approved and was declined.",
           toastId
@@ -547,8 +518,8 @@ export function EventHubAttendees({
     const toastId = toast.loading("Declining order...");
     try {
       const response = await rejectBooking(eventId, eventData.organiserId, order.orderId);
-      const tickets = pendingMap.get(order) ?? [];
-      moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
+      organiserHub.invalidateEventForOrganiserHub(eventId);
+      await refreshAttendeeRecords();
       if (response.success) {
         toast.success("Order declined", { id: toastId });
       } else {
@@ -595,7 +566,7 @@ export function EventHubAttendees({
         showTypeSelector && addTicketTypeId
           ? addTicketTypeId
           : resolveCheckoutTicketTypeId(eventData);
-      const { orderId, ticketIds } = await addAttendee({
+      await addAttendee({
         eventId,
         email: addEmail,
         fullName: addName,
@@ -604,43 +575,8 @@ export function EventHubAttendees({
         price: 0,
         eventTicketTypeId,
       });
-      const now = Timestamp.now();
-      const newOrder: Order = {
-        ...EMPTY_ORDER_DEFAULTS,
-        orderId: orderId as OrderId,
-        email: addEmail,
-        fullName: addName,
-        phone: addPhone,
-        tickets: ticketIds as TicketId[],
-        datePurchased: now,
-        status: OrderAndTicketStatus.APPROVED,
-        type: OrderAndTicketType.MANUAL,
-      };
-      const newTickets: Ticket[] = ticketIds.map((ticketId) => ({
-        ...EMPTY_TICKET,
-        ticketId: ticketId as TicketId,
-        eventId,
-        orderId: orderId as OrderId,
-        purchaseDate: now,
-        status: OrderAndTicketStatus.APPROVED,
-        type: OrderAndTicketType.MANUAL,
-        eventTicketTypeId,
-      }));
-      setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
-      try {
-        const updatedEventData = await getEventById(eventId);
-        if (onEventRefresh) {
-          onEventRefresh(updatedEventData);
-        } else {
-          setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
-        }
-      } catch {
-        setEventVacancy((prev) => Math.max(0, prev - qty));
-      }
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount + qty,
-      }));
+      organiserHub.invalidateEventForOrganiserHub(eventId);
+      await refreshAttendeeRecords();
       toast.success("Attendee added");
       closeAddPanel();
     } catch (error) {
@@ -880,7 +816,7 @@ export function EventHubAttendees({
                         {order.fullName || "Attendee"}
                       </p>
                       {order.type === OrderAndTicketType.MANUAL ? (
-                        <p className="text-[10px] text-foreground-muted font-sans leading-tight">
+                        <p className="text-xs text-foreground-muted font-sans leading-tight">
                           Direct Addition
                         </p>
                       ) : null}
@@ -1060,10 +996,7 @@ export function EventHubAttendees({
             tickets={panelTickets}
             eventId={eventId}
             eventData={eventData}
-            setEventMetadata={setEventMetadata}
-            setEventVacancy={setEventVacancy}
-            onEventRefresh={onEventRefresh}
-            setOrderTicketsMap={setOrderTicketsMap}
+            refreshAttendeeRecords={refreshAttendeeRecords}
             onClose={closeDeepPanel}
           />
         ) : null}
@@ -1185,9 +1118,7 @@ export function EventHubAttendees({
           }
           eventId={eventId}
           eventData={eventData}
-          setEventMetadata={setEventMetadata}
-          setEventVacancy={setEventVacancy}
-          setOrderTicketsMap={setOrderTicketsMap}
+          onRemoved={refreshAttendeeRecords}
         />
       ) : null}
     </EventHubStage>
