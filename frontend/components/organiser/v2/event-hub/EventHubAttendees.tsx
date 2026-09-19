@@ -37,14 +37,17 @@ import {
   ChevronDownIcon,
   ExclamationCircleIcon,
   PlusIcon,
+  QrCodeIcon,
   TicketIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import { usePathname, useRouter } from "next/navigation";
 import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
+import { welcomeAwareCheckinHref } from "./checkin/eventHubCheckinPaths";
 import { EventHubPanel } from "./EventHubPanel";
 import {
   EventHubEmpty,
@@ -378,6 +381,8 @@ export function EventHubAttendees({
   setOrderTicketsMap,
 }: EventHubAttendeesProps) {
   const logger = useMemo(() => new Logger("EventHubAttendees"), []);
+  const pathname = usePathname();
+  const router = useRouter();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [addEmail, setAddEmail] = useState("");
   const [addName, setAddName] = useState("");
@@ -822,6 +827,12 @@ export function EventHubAttendees({
                 </select>
               </label>
             ) : null}
+            <EventHubGhostButton
+              onClick={() => router.push(welcomeAwareCheckinHref(pathname, eventId))}
+            >
+              <QrCodeIcon className="h-4 w-4" aria-hidden />
+              Check in
+            </EventHubGhostButton>
             <EventHubPrimaryButton onClick={() => setIsAddOpen(true)}>
               <PlusIcon className="h-4 w-4" aria-hidden />
               Add attendee

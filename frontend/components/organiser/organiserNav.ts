@@ -156,6 +156,14 @@ export function resolveOrganiserBreadcrumbs(
 ): OrganiserBreadcrumb[] {
   if (isWelcomeFlowPath(pathname)) {
     if (pathname.startsWith(`${WELCOME_PATH}/event/`)) {
+      const welcomeEventMatch = pathname.match(/^\/organiser\/v2\/welcome\/event\/([^/]+)/);
+      if (welcomeEventMatch && /\/checkin\/?$/.test(pathname)) {
+        return [
+          crumb("Events", `${WELCOME_PATH}/events`, CalendarIcon),
+          crumb("Event", `${WELCOME_PATH}/event/${welcomeEventMatch[1]}`),
+          crumb("Check in"),
+        ];
+      }
       return [
         crumb("Events", `${WELCOME_PATH}/events`, CalendarIcon),
         crumb(pageTitle?.trim() || "Event"),
@@ -236,6 +244,14 @@ export function resolveOrganiserBreadcrumbs(
   }
 
   if (isEventDetailPage(pathname)) {
+    const eventMatch = pathname.match(/^\/organiser\/v2\/event\/([^/]+)/);
+    if (eventMatch && /\/checkin\/?$/.test(pathname)) {
+      return [
+        crumb("Events", "/organiser/v2/event/dashboard", CalendarIcon),
+        crumb("Event", `/organiser/v2/event/${eventMatch[1]}`),
+        crumb("Check in"),
+      ];
+    }
     return [
       crumb("Events", "/organiser/v2/event/dashboard", CalendarIcon),
       crumb(pageTitle?.trim() || "Event"),
