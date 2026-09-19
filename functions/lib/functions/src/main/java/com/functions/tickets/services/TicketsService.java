@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventMetadata;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.tickets.exceptions.OrderStatusConflictException;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
@@ -83,11 +84,20 @@ public class TicketsService {
         return totalTicketSales - totalDiscounts;
     }
 
-    public static void updateOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
+    // Returns a boolean indicating whether the OrderAndTicketStatus of order/ticket has been updated.
+    public static boolean updatePendingOrderAndTicketStatus(String orderId, OrderAndTicketStatus orderAndTicketStatus)
             throws Exception {
-        FirebaseService.createFirestoreTransaction(transaction -> {
+        return FirebaseService.createFirestoreTransaction(transaction -> {
             Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
                     .orElseThrow(() -> new RuntimeException("Order not found " + orderId));
+            if (order.getStatus() == orderAndTicketStatus) {
+                return false;
+            }
+            if (order.getStatus() != OrderAndTicketStatus.PENDING) {
+                throw new OrderStatusConflictException(String.format(
+                        "Order %s is %s and cannot transition to %s",
+                        orderId, order.getStatus(), orderAndTicketStatus));
+            }
             List<Ticket> tickets = TicketsRepository.getTicketsByIds(order.getTickets(), Optional.of(transaction));
 
             for (Ticket ticket : tickets) {
@@ -96,7 +106,7 @@ public class TicketsService {
             }
             order.setStatus(orderAndTicketStatus);
             OrdersRepository.updateOrder(orderId, order, Optional.of(transaction));
-            return null;
+            return true;
         });
     }
 

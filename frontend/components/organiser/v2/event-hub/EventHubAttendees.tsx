@@ -8,6 +8,7 @@ import { EventData, EventId, EventMetadata, OrderId, TicketId } from "@/interfac
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
+import { ConflictError } from "@/interfaces/exceptions/ConflictError";
 import { Logger } from "@/observability/logger";
 import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
@@ -539,7 +540,10 @@ export function EventHubAttendees({
       }
     } catch (error) {
       logger.error(`Failed to approve order ${order.orderId}: ${error}`);
-      showFailureToastWithRefresh("Failed to approve order. Try again or contact SPORTSHUB support.", toastId);
+      showFailureToastWithRefresh(
+        error instanceof ConflictError ? error.message : "Failed to approve order. Try again or contact SPORTSHUB support.",
+        toastId
+      );
     }
   };
 
@@ -556,7 +560,10 @@ export function EventHubAttendees({
       }
     } catch (error) {
       logger.error(`Failed to decline order ${order.orderId}: ${error}`);
-      showFailureToastWithRefresh("Failed to decline order. Try again or contact SPORTSHUB support.", toastId);
+      showFailureToastWithRefresh(
+        error instanceof ConflictError ? error.message : "Failed to decline order. Try again or contact SPORTSHUB support.",
+        toastId
+      );
     }
   };
 
