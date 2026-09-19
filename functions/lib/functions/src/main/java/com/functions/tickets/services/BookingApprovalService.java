@@ -182,7 +182,7 @@ public class BookingApprovalService {
 
     static BookingApprovalResponse capturedPaymentResponse(String orderId, BookingApprovalOperation operation) {
         if (operation == BookingApprovalOperation.REJECT) {
-            throw new RuntimeException(String.format(
+            throw new OrderStatusConflictException(String.format(
                     "Order %s has already been approved because its payment was captured. Cannot REJECT.", orderId));
         }
         return successfulResponse(orderId, operation, "Payment was already captured");

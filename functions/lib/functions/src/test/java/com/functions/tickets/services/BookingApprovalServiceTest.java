@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.functions.tickets.exceptions.OrderStatusConflictException;
 import com.functions.tickets.models.BookingApprovalOperation;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.responses.BookingApprovalResponse;
@@ -30,7 +31,7 @@ public class BookingApprovalServiceTest {
         assertEquals(BookingApprovalOperation.APPROVE, response.bookingApprovalOperation());
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test(expected = OrderStatusConflictException.class)
     public void capturedPaymentRejectionThrowsConflict() {
         BookingApprovalService.capturedPaymentResponse("order-1", BookingApprovalOperation.REJECT);
     }
