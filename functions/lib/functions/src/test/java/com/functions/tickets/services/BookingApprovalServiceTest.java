@@ -8,26 +8,31 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.functions.stripe.models.PaymentIntentStatus;
 import com.functions.tickets.models.BookingApprovalOperation;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.responses.BookingApprovalResponse;
 
 public class BookingApprovalServiceTest {
     @Test
-    public void succeededPaymentIntentStatusIsRecognized() {
-        assertTrue(PaymentIntentStatus.SUCCEEDED.matches("succeeded"));
-        assertFalse(PaymentIntentStatus.SUCCEEDED.matches("requires_capture"));
+    public void succeededPaymentIntentIsRecognizedAsCaptured() {
+        assertTrue(BookingApprovalService.isCapturedPaymentIntent("succeeded"));
+        assertFalse(BookingApprovalService.isCapturedPaymentIntent("requires_capture"));
+        assertFalse(BookingApprovalService.isCapturedPaymentIntent("canceled"));
     }
 
     @Test
-    public void succeededPaymentIntentIsRecoverableOnlyForApproval() {
-        assertTrue(BookingApprovalService.isCapturedApproval(
-                "succeeded", BookingApprovalOperation.APPROVE));
-        assertFalse(BookingApprovalService.isCapturedApproval(
-                "succeeded", BookingApprovalOperation.REJECT));
-        assertFalse(BookingApprovalService.isCapturedApproval(
-                "requires_capture", BookingApprovalOperation.APPROVE));
+    public void capturedPaymentApprovalReturnsSuccess() {
+        BookingApprovalResponse response = BookingApprovalService.capturedPaymentResponse(
+                "order-1", BookingApprovalOperation.APPROVE);
+
+        assertTrue(response.success());
+        assertEquals("order-1", response.orderId());
+        assertEquals(BookingApprovalOperation.APPROVE, response.bookingApprovalOperation());
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void capturedPaymentRejectionThrowsConflict() {
+        BookingApprovalService.capturedPaymentResponse("order-1", BookingApprovalOperation.REJECT);
     }
 
     @Test

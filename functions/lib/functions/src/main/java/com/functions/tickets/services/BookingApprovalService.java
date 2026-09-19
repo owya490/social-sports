@@ -101,14 +101,13 @@ public class BookingApprovalService {
                 return canceledResponse;
             }
 
+            BookingApprovalResponse capturedResponse = checkAndSyncCapturedPaymentIntent(
+                    piStatus, stripePaymentIntentId, order, eventData, operation);
+            if (capturedResponse != null) {
+                return capturedResponse;
+            }
+
             if (operation == BookingApprovalOperation.APPROVE) {
-                if (isCapturedApproval(piStatus, operation)) {
-                    logger.warn("PaymentIntent {} is already captured for pending orderId: {}. "
-                            + "A concurrent or interrupted approval likely completed the Stripe operation; "
-                            + "syncing Firestore to APPROVED.", stripePaymentIntentId, orderId);
-                    completeCapturedApproval(order, eventData);
-                    return successfulResponse(orderId, operation, "Payment was already captured");
-                }
                 if (!PaymentIntentStatus.REQUIRES_CAPTURE.matches(piStatus)) {
                     logger.error("Cannot approve orderId: {}. PaymentIntent {} is in unexpected status: {}",
                             orderId, stripePaymentIntentId, piStatus);
@@ -174,9 +173,16 @@ public class BookingApprovalService {
         return successfulResponse(orderId, operation, "Operation was already completed");
     }
 
-    static boolean isCapturedApproval(String paymentIntentStatus, BookingApprovalOperation operation) {
-        return operation == BookingApprovalOperation.APPROVE
-                && PaymentIntentStatus.SUCCEEDED.matches(paymentIntentStatus);
+    static boolean isCapturedPaymentIntent(String paymentIntentStatus) {
+        return PaymentIntentStatus.SUCCEEDED.matches(paymentIntentStatus);
+    }
+
+    static BookingApprovalResponse capturedPaymentResponse(String orderId, BookingApprovalOperation operation) {
+        if (operation == BookingApprovalOperation.REJECT) {
+            throw new RuntimeException(String.format(
+                    "Order %s has already been approved because its payment was captured. Cannot REJECT.", orderId));
+        }
+        return successfulResponse(orderId, operation, "Payment was already captured");
     }
 
     private static BookingApprovalResponse successfulResponse(String orderId, BookingApprovalOperation operation,
@@ -280,6 +286,27 @@ public class BookingApprovalService {
         return new BookingApprovalResponse(false, orderId, operation, message);
     }
 
+    /**
+     * Reconciles a captured Stripe payment when Firestore may still be PENDING. Stripe capture and the Firestore
+     * update cannot be atomic, so either an approval retry or a concurrent rejection may discover the succeeded
+     * PaymentIntent first. The payment outcome remains authoritative: approval is idempotent, while rejection is a
+     * conflict after the order has been synchronized to APPROVED.
+     */
+    private static BookingApprovalResponse checkAndSyncCapturedPaymentIntent(String piStatus,
+            String stripePaymentIntentId, Order order, EventData eventData, BookingApprovalOperation operation) {
+        if (!isCapturedPaymentIntent(piStatus)) {
+            return null;
+        }
+        if (operation != BookingApprovalOperation.APPROVE && operation != BookingApprovalOperation.REJECT) {
+            return null;
+        }
+
+        logger.warn("PaymentIntent {} is already captured for orderId: {}. Syncing Firestore to APPROVED.",
+                stripePaymentIntentId, order.getOrderId());
+        completeCapturedApproval(order, eventData);
+        return capturedPaymentResponse(order.getOrderId(), operation);
+    }
+
     private static BookingApprovalResponse recoverIfPaymentIntentChangedAfterStripeFailure(
             String stripePaymentIntentId,
             String stripeAccountId,
@@ -301,12 +328,10 @@ public class BookingApprovalService {
                         orderId, stripePaymentIntentId);
                 return canceledResponse;
             }
-            if (isCapturedApproval(latestPaymentIntent.getStatus(), operation)) {
-                logger.info("Recovered from Stripe mutation race for order {}. "
-                        + "PaymentIntent {} transitioned to succeeded; syncing Firestore to APPROVED.",
-                        orderId, stripePaymentIntentId);
-                completeCapturedApproval(order, eventData);
-                return successfulResponse(orderId, operation, "Payment was already captured");
+            BookingApprovalResponse capturedResponse = checkAndSyncCapturedPaymentIntent(
+                    latestPaymentIntent.getStatus(), stripePaymentIntentId, order, eventData, operation);
+            if (capturedResponse != null) {
+                return capturedResponse;
             }
         } catch (Exception recoveryError) {
             logger.error("Failed recovery check after Stripe operation failure for order {} and PaymentIntent {}.",
