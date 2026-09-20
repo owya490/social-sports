@@ -2,6 +2,7 @@
 
 import {
   EventHubPreferenceRow,
+  EventHubSavingIndicator,
   EventHubSettingTile,
   EventHubSettingTileRow,
   EventHubStage,
@@ -124,11 +125,7 @@ export function RecurringHubSettings({
 
   return (
     <EventHubStage>
-      {saving ? (
-        <p className="text-xs text-foreground-muted font-sans pb-2" aria-live="polite">
-          Saving…
-        </p>
-      ) : null}
+      <EventHubSavingIndicator saving={saving} />
 
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>

@@ -16,6 +16,27 @@ export function EventHubStage({ children, className = "" }: EventHubStageProps) 
   return <div className={`min-w-0 ${className}`}>{children}</div>;
 }
 
+export function EventHubSavingIndicator({ saving }: { saving: boolean }) {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className={`pointer-events-none fixed inset-x-0 bottom-5 z-50 flex justify-center px-4 transition-all duration-200 sm:inset-x-auto sm:right-6 sm:justify-end sm:px-0 ${
+        saving ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
+      }`}
+    >
+      <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur font-sans">
+        <span
+          className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-foreground/20 border-t-foreground"
+          aria-hidden="true"
+        />
+        {saving ? "Saving changes…" : ""}
+      </div>
+    </div>
+  );
+}
+
 type EventHubToolbarProps = {
   meta: ReactNode;
   action?: ReactNode;

@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useMemo, useState } from "react";
 import {
   EventHubPreferenceRow,
+  EventHubSavingIndicator,
   EventHubSettingTile,
   EventHubSettingTileRow,
   EventHubStage,
@@ -165,11 +166,7 @@ export function EventHubSettings({
 
   return (
     <EventHubStage>
-      {saving ? (
-        <p className="text-xs text-foreground-muted font-sans pb-2" aria-live="polite">
-          Saving…
-        </p>
-      ) : null}
+      <EventHubSavingIndicator saving={saving} />
 
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>
