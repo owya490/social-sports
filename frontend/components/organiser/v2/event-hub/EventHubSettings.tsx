@@ -30,10 +30,12 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useMemo, useState } from "react";
 import {
   EventHubPreferenceRow,
+  EventHubSavingIndicator,
   EventHubSettingTile,
   EventHubSettingTileRow,
   EventHubStage,
 } from "./EventHubStage";
+import { useSettingsAutosave } from "./useSettingsAutosave";
 
 type EventHubSettingsProps = {
   eventId: EventId;
@@ -114,33 +116,45 @@ export function EventHubSettings({
   const logger = useMemo(() => new Logger("EventHubSettings"), []);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const { status: saveStatus, isSaving, run: runSave, retry: retrySave } = useSettingsAutosave();
 
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
   const isFree = isFreeEvent(eventPrice);
   const stripeReady = isStripeAccountActive(user.stripeAccountActive);
   const paymentsLockedDescription = "Connect Stripe to enable this setting.";
 
-  const saveEventSettings = async (data: Partial<EventData>) => {
-    setSaving(true);
-    try {
-      await updateEventById(eventId, data);
-      bustOrganiserEventsCache();
-    } finally {
-      setSaving(false);
-    }
+  const saveEventSettings = (
+    data: Partial<EventData>,
+    apply: () => void,
+    rollback: () => void
+  ) => {
+    return runSave({
+      apply,
+      rollback,
+      persist: async () => {
+        await updateEventById(eventId, data);
+        bustOrganiserEventsCache();
+      },
+    });
   };
 
   const persistToggle =
-    (setLocal: (v: boolean) => void, key: keyof EventData) => async (next: boolean) => {
-      setLocal(next);
-      await saveEventSettings({ [key]: next } as Partial<EventData>);
+    (setLocal: (v: boolean) => void, key: keyof EventData) => (next: boolean) => {
+      void saveEventSettings(
+        { [key]: next } as Partial<EventData>,
+        () => setLocal(next),
+        () => setLocal(!next)
+      );
     };
 
   const persistMaxTickets = (next: number) => {
     const clamped = clampMaxTicketsPerTransaction(next, eventCapacity);
-    setMaxTicketsPerTransaction(clamped);
-    void saveEventSettings({ maxTicketsPerTransaction: clamped });
+    const previous = maxTicketsPerTransaction;
+    void saveEventSettings(
+      { maxTicketsPerTransaction: clamped },
+      () => setMaxTicketsPerTransaction(clamped),
+      () => setMaxTicketsPerTransaction(previous)
+    );
   };
 
   const onConfirm = async () => {
@@ -165,11 +179,7 @@ export function EventHubSettings({
 
   return (
     <EventHubStage>
-      {saving ? (
-        <p className="text-xs text-foreground-muted font-sans pb-2" aria-live="polite">
-          Saving…
-        </p>
-      ) : null}
+      <EventHubSavingIndicator status={saveStatus} onRetry={retrySave} />
 
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>
@@ -180,6 +190,7 @@ export function EventHubSettings({
               icon={<TicketIcon />}
               tone="green"
               checked={!paused}
+              disabled={isSaving}
               onLabel="Open"
               offLabel="Paused"
               onChange={(open) => persistToggle(setPaused, "paused")(!open)}
@@ -196,7 +207,7 @@ export function EventHubSettings({
               icon={isFree ? <TicketIcon /> : <CreditCardIcon />}
               tone="stripe"
               checked={stripeReady && paymentsActive}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setPaymentsActive, "paymentsActive")}
@@ -211,7 +222,7 @@ export function EventHubSettings({
               icon={<CheckBadgeIcon />}
               tone="blue"
               checked={stripeReady && bookingApprovalEnabled}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
@@ -223,6 +234,7 @@ export function EventHubSettings({
                 icon={<QueueListIcon />}
                 tone="sky"
                 checked={waitlistEnabled}
+                disabled={isSaving}
                 onLabel="On"
                 offLabel="Off"
                 onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
@@ -238,14 +250,14 @@ export function EventHubSettings({
               title="Pass Stripe fee to customer"
               description="Add card surcharges and Stripe fees at checkout for the customer to pay."
               checked={stripeFeeToCustomer}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onChange={persistToggle(setStripeFeeToCustomer, "stripeFeeToCustomer")}
             />
             <EventHubPreferenceRow
               title="Promotional codes"
               description="Let customers apply promotional codes at checkout."
               checked={promotionalCodesEnabled}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onChange={persistToggle(setPromotionalCodesEnabled, "promotionalCodesEnabled")}
             />
           </SettingsGroup>
@@ -256,12 +268,14 @@ export function EventHubSettings({
             title="Hide vacancy"
             description="Hide remaining ticket count on the public event page."
             checked={hideVacancy}
+            disabled={isSaving}
             onChange={persistToggle(setHideVacancy, "hideVacancy")}
           />
           <EventHubPreferenceRow
             title="Show attendees on event page"
             description="Display registered attendees on the public listing."
             checked={showAttendeesOnEventPage}
+            disabled={isSaving}
             onChange={persistToggle(setShowAttendeesOnEventPage, "showAttendeesOnEventPage")}
           />
         </SettingsGroup>
@@ -279,7 +293,8 @@ export function EventHubSettings({
               <select
                 value={maxTicketsPerTransaction}
                 onChange={(e) => persistMaxTickets(Number(e.target.value))}
-                className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                disabled={isSaving}
+                className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {getTicketCountOptions(maxTicketsAllowed).map((count) => (
                   <option key={count} value={count}>

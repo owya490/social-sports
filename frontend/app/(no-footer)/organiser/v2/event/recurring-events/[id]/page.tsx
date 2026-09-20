@@ -46,7 +46,7 @@ import {
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const logger = new Logger("RecurringHubV2Page");
 const EMPTY_ORDER_TICKETS_MAP = new Map<Order, Ticket[]>();
@@ -98,6 +98,7 @@ export default function OrganiserRecurringHubV2Page() {
     null
   );
   const [saveNotice, setSaveNotice] = useState<"success" | "error" | null>(null);
+  const recurrenceSaveNoticeRequestRef = useRef(0);
 
   useEffect(() => {
     if (!user.userId) return;
@@ -185,6 +186,8 @@ export default function OrganiserRecurringHubV2Page() {
 
   const handleSectionChange = (next: RecurringHubSection) => {
     if (next === section) return;
+    recurrenceSaveNoticeRequestRef.current += 1;
+    setSaveNotice(null);
     setSectionReady(false);
     window.setTimeout(() => {
       setSection(next);
@@ -193,16 +196,22 @@ export default function OrganiserRecurringHubV2Page() {
   };
 
   const submitNewRecurrenceData = async () => {
+    const requestId = recurrenceSaveNoticeRequestRef.current + 1;
+    recurrenceSaveNoticeRequestRef.current = requestId;
     setUpdatingRecurrenceData(true);
     setSaveNotice(null);
     try {
       await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
       setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
       setFrequency(newRecurrenceData.frequency);
-      setSaveNotice("success");
+      if (recurrenceSaveNoticeRequestRef.current === requestId) {
+        setSaveNotice("success");
+      }
     } catch (error) {
       logger.error(`Failed to update recurrence data for ${recurrenceTemplateId}: ${error}`);
-      setSaveNotice("error");
+      if (recurrenceSaveNoticeRequestRef.current === requestId) {
+        setSaveNotice("error");
+      }
     } finally {
       setUpdatingRecurrenceData(false);
     }

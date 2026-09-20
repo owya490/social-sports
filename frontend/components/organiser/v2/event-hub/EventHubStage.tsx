@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import type { SettingsAutosaveStatus } from "./useSettingsAutosave";
 
 /**
  * Continuous workbench primitives for event hub tab bodies (A+B).
@@ -14,6 +15,49 @@ type EventHubStageProps = {
 
 export function EventHubStage({ children, className = "" }: EventHubStageProps) {
   return <div className={`min-w-0 ${className}`}>{children}</div>;
+}
+
+export function EventHubSavingIndicator({
+  status,
+  onRetry,
+}: {
+  status: SettingsAutosaveStatus;
+  onRetry: () => void;
+}) {
+  const saving = status === "saving";
+  const failed = status === "error";
+
+  return (
+    <div
+      role={failed ? "alert" : "status"}
+      aria-live={failed ? "assertive" : "polite"}
+      aria-atomic="true"
+      className={`pointer-events-none fixed inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-4 transition-[transform,opacity] duration-200 sm:inset-x-auto sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:justify-end sm:px-0 ${
+        status === "idle" ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
+      }`}
+    >
+      {saving ? (
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur font-sans">
+          <span
+            className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none rounded-full border-2 border-foreground/20 border-t-foreground"
+            aria-hidden="true"
+          />
+          Saving changes…
+        </div>
+      ) : failed ? (
+        <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-danger/30 bg-background/95 px-3.5 py-2 text-xs font-medium text-danger shadow-lg backdrop-blur font-sans">
+          <span>Couldn’t save changes.</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-full border border-danger/30 px-2 py-0.5 text-xs font-semibold text-danger hover:bg-danger/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 type EventHubToolbarProps = {
