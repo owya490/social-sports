@@ -1,5 +1,5 @@
 import Loading from "@/components/loading/Loading";
-import { EventData, EventId, EventMetadata } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { setAttendeeTickets } from "@/services/src/attendee/attendeeService";
@@ -7,7 +7,7 @@ import { resolveCheckoutTicketTypeId } from "@/services/src/events/eventsUtils/e
 import { Description, Dialog, DialogPanel, DialogTitle, Transition, TransitionChild } from "@headlessui/react";
 import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
-import React, { Dispatch, Fragment, SetStateAction, useState } from "react";
+import React, { Fragment, useState } from "react";
 
 interface RemoveAttendeeDialogProps {
   setIsRemoveAttendeeModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -17,8 +17,7 @@ interface RemoveAttendeeDialogProps {
   eventId: EventId;
   eventData: EventData;
   tickets: Ticket[];
-  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
-  setEventVacancy: Dispatch<SetStateAction<number>>;
+  setEventVacancy: React.Dispatch<React.SetStateAction<number>>;
   setOrderTicketsMap: React.Dispatch<React.SetStateAction<Map<Order, Ticket[]>>>;
 }
 
@@ -29,7 +28,6 @@ const RemoveAttendeeDialog = ({
   eventId,
   eventData,
   tickets,
-  setEventMetadata,
   setEventVacancy,
   setOrderTicketsMap,
 }: RemoveAttendeeDialogProps) => {
@@ -59,10 +57,6 @@ const RemoveAttendeeDialog = ({
         return next;
       });
       setEventVacancy(eventData.vacancy + tickets.length);
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount - tickets.length,
-      }));
       setShowSuccessAlert(true);
       setShowErrorMessage(false);
       closeModal();
