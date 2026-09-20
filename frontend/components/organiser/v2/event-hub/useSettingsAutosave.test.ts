@@ -22,4 +22,14 @@ describe("runOptimisticSave", () => {
     expect(apply).toHaveBeenCalledTimes(1);
     expect(rollback).toHaveBeenCalledTimes(1);
   });
+
+  it("surfaces an unexpected rollback failure", async () => {
+    const apply = jest.fn();
+    const persist = jest.fn().mockRejectedValue(new Error("write failed"));
+    const rollback = jest.fn(() => {
+      throw new Error("rollback failed");
+    });
+
+    await expect(runOptimisticSave({ apply, persist, rollback })).rejects.toThrow("rollback failed");
+  });
 });

@@ -33,8 +33,17 @@ export function useSettingsAutosave() {
 
     inFlightRef.current = true;
     setStatus("saving");
-    const succeeded = await runOptimisticSave(operation);
-    inFlightRef.current = false;
+    let succeeded = false;
+    try {
+      succeeded = await runOptimisticSave(operation);
+    } catch {
+      retryOperationRef.current = operation;
+      setStatus("error");
+      return;
+    } finally {
+      inFlightRef.current = false;
+    }
+
     if (succeeded) {
       retryOperationRef.current = null;
       setStatus("idle");
