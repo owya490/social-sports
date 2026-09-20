@@ -7,6 +7,7 @@ import {
   EventHubSettingTileRow,
   EventHubStage,
 } from "@/components/organiser/v2/event-hub/EventHubStage";
+import { useSettingsAutosave } from "@/components/organiser/v2/event-hub/useSettingsAutosave";
 import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { useUser } from "@/components/utility/UserContext";
 import { NewEventData } from "@/interfaces/EventTypes";
@@ -26,7 +27,7 @@ import {
   QueueListIcon,
   TicketIcon,
 } from "@heroicons/react/24/outline";
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 
 type RecurringHubSettingsProps = {
   recurrenceTemplateId: RecurrenceTemplateId;
@@ -92,40 +93,48 @@ export function RecurringHubSettings({
   eventCapacity,
   eventPrice,
 }: RecurringHubSettingsProps) {
-  const [saving, setSaving] = useState(false);
+  const { status: saveStatus, isSaving, run: runSave, retry: retrySave } = useSettingsAutosave();
   const { user } = useUser();
   const isFree = isFreeEvent(eventPrice);
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
   const stripeReady = isStripeAccountActive(user.stripeAccountActive);
   const paymentsLockedDescription = "Connect Stripe to enable this setting.";
 
-  const save = async (data: Partial<NewEventData>) => {
-    setSaving(true);
-    try {
-      const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, data);
-      if (!success) {
-        window.location.reload();
-      }
-    } finally {
-      setSaving(false);
-    }
+  const save = (data: Partial<NewEventData>, apply: () => void, rollback: () => void) => {
+    return runSave({
+      apply,
+      rollback,
+      persist: async () => {
+        const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, data);
+        if (!success) {
+          throw new Error("Failed to update recurrence template settings");
+        }
+      },
+    });
   };
 
   const persistToggle =
-    (setLocal: (v: boolean) => void, key: keyof NewEventData) => async (next: boolean) => {
-      setLocal(next);
-      await save({ [key]: next } as Partial<NewEventData>);
+    (setLocal: (v: boolean) => void, key: keyof NewEventData) => (next: boolean) => {
+      void save(
+        { [key]: next } as Partial<NewEventData>,
+        () => setLocal(next),
+        () => setLocal(!next)
+      );
     };
 
   const persistMaxTickets = (next: number) => {
     const clamped = clampMaxTicketsPerTransaction(next, eventCapacity);
-    setMaxTicketsPerTransaction(clamped);
-    void save({ maxTicketsPerTransaction: clamped });
+    const previous = maxTicketsPerTransaction;
+    void save(
+      { maxTicketsPerTransaction: clamped },
+      () => setMaxTicketsPerTransaction(clamped),
+      () => setMaxTicketsPerTransaction(previous)
+    );
   };
 
   return (
     <EventHubStage>
-      <EventHubSavingIndicator saving={saving} />
+      <EventHubSavingIndicator status={saveStatus} onRetry={retrySave} />
 
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>
@@ -142,7 +151,7 @@ export function RecurringHubSettings({
               icon={isFree ? <TicketIcon /> : <CreditCardIcon />}
               tone="stripe"
               checked={stripeReady && paymentsActive}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setPaymentsActive, "paymentsActive")}
@@ -157,7 +166,7 @@ export function RecurringHubSettings({
               icon={<CheckBadgeIcon />}
               tone="blue"
               checked={stripeReady && bookingApprovalEnabled}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onLabel="On"
               offLabel="Off"
               onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
@@ -169,6 +178,7 @@ export function RecurringHubSettings({
                 icon={<QueueListIcon />}
                 tone="sky"
                 checked={waitlistEnabled}
+                disabled={isSaving}
                 onLabel="On"
                 offLabel="Off"
                 onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
@@ -184,14 +194,14 @@ export function RecurringHubSettings({
               title="Pass Stripe fee to customer"
               description="Add card surcharges and Stripe fees at checkout for the customer to pay."
               checked={stripeFeeToCustomer}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onChange={persistToggle(setStripeFeeToCustomer, "stripeFeeToCustomer")}
             />
             <EventHubPreferenceRow
               title="Promotional codes"
               description="Let customers apply promotional codes at checkout."
               checked={promotionalCodesEnabled}
-              disabled={!stripeReady}
+              disabled={!stripeReady || isSaving}
               onChange={persistToggle(setPromotionalCodesEnabled, "promotionalCodesEnabled")}
             />
           </SettingsGroup>
@@ -202,12 +212,14 @@ export function RecurringHubSettings({
             title="Hide vacancy"
             description="Hide remaining ticket count on the public event page."
             checked={hideVacancy}
+            disabled={isSaving}
             onChange={persistToggle(setHideVacancy, "hideVacancy")}
           />
           <EventHubPreferenceRow
             title="Show attendees on event page"
             description="Display registered attendees on the public listing."
             checked={showAttendeesOnEventPage}
+            disabled={isSaving}
             onChange={persistToggle(setShowAttendeesOnEventPage, "showAttendeesOnEventPage")}
           />
         </SettingsGroup>
@@ -226,7 +238,8 @@ export function RecurringHubSettings({
               <select
                 value={maxTicketsPerTransaction}
                 onChange={(e) => persistMaxTickets(Number(e.target.value))}
-                className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                disabled={isSaving}
+                className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {getTicketCountOptions(maxTicketsAllowed).map((count) => (
                   <option key={count} value={count}>

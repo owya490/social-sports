@@ -185,6 +185,7 @@ export default function OrganiserRecurringHubV2Page() {
 
   const handleSectionChange = (next: RecurringHubSection) => {
     if (next === section) return;
+    setSaveNotice(null);
     setSectionReady(false);
     window.setTimeout(() => {
       setSection(next);
