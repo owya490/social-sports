@@ -29,7 +29,8 @@ describe("EventHubSavingIndicator", () => {
     expect(markup).toContain('role="alert"');
     expect(markup).toContain("Couldn’t save changes.");
     expect(markup).toContain("Retry");
-    expect(markup).toContain("pointer-events-auto");
+    expect(markup).toContain('class="pointer-events-none fixed');
+    expect(markup).toContain('class="pointer-events-auto inline-flex');
     expect(markup).not.toContain("animate-spin");
   });
 });

@@ -32,7 +32,7 @@ export function EventHubSavingIndicator({
       role={failed ? "alert" : "status"}
       aria-live={failed ? "assertive" : "polite"}
       aria-atomic="true"
-      className={`${failed ? "pointer-events-auto" : "pointer-events-none"} fixed inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-4 transition-[transform,opacity] duration-200 sm:inset-x-auto sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:justify-end sm:px-0 ${
+      className={`pointer-events-none fixed inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-4 transition-[transform,opacity] duration-200 sm:inset-x-auto sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:justify-end sm:px-0 ${
         status === "idle" ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
       }`}
     >
@@ -45,7 +45,7 @@ export function EventHubSavingIndicator({
           Saving changes…
         </div>
       ) : failed ? (
-        <div className="inline-flex items-center gap-3 rounded-full border border-danger/30 bg-background/95 px-3.5 py-2 text-xs font-medium text-danger shadow-lg backdrop-blur font-sans">
+        <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-danger/30 bg-background/95 px-3.5 py-2 text-xs font-medium text-danger shadow-lg backdrop-blur font-sans">
           <span>Couldn’t save changes.</span>
           <button
             type="button"
