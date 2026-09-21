@@ -1,4 +1,5 @@
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import {
   Frequency,
   NewRecurrenceFormData,
@@ -13,11 +14,8 @@ import {
   applyGeneralAdmissionInventoryFields,
   mergeInventoryIntoEventData,
 } from "../events/eventsUtils/eventTicketTypesUtils";
-import {
-  findRecurrenceTemplateDoc,
-  getCreateRecurringTemplateUrl,
-  getUpdateRecurringTemplateUrl,
-} from "./recurringEventsUtils";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
+import { findRecurrenceTemplateDoc } from "./recurringEventsUtils";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -29,6 +27,11 @@ interface CreateRecurrenceTemplateResponse {
 interface UpdateRecurrenceTemplateResponse {
   recurrenceTemplateId: RecurrenceTemplateId;
 }
+
+type UpdateRecurrenceTemplateData = {
+  eventData?: NewEventData;
+  recurrenceData?: NewRecurrenceFormData;
+};
 
 export async function createRecurrenceTemplate(
   eventData: NewEventData,
@@ -45,15 +48,11 @@ export async function createRecurrenceTemplate(
     recurrenceData: recurrenceData,
   };
 
-  const rawResponse = await fetch(getCreateRecurringTemplateUrl(), {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(content),
-  });
-  const response = (await rawResponse.json()) as CreateRecurrenceTemplateResponse;
+  const response = await executeGlobalAppControllerFunction<typeof content, CreateRecurrenceTemplateResponse>(
+    EndpointType.CREATE_RECURRENCE_TEMPLATE,
+    content,
+    { attachAuth: true }
+  );
   return [response.eventId, response.recurrenceTemplateId];
 }
 
@@ -98,8 +97,10 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
   }
 }
 
-// Should be a partial of eventData or NewRecurrenceFormData
-export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
+export async function updateRecurrenceTemplate(
+  recurrenceTemplateId: RecurrenceTemplateId,
+  updatedData: UpdateRecurrenceTemplateData
+) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
   let eventData = null;
   if (updatedData.eventData) {
@@ -117,60 +118,46 @@ export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceT
     recurrenceData: recurrenceData,
   };
 
-  const rawResponse = await fetch(getUpdateRecurringTemplateUrl(), {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(content),
-  });
-  const response = (await rawResponse.json()) as UpdateRecurrenceTemplateResponse;
+  const response = await executeGlobalAppControllerFunction<typeof content, UpdateRecurrenceTemplateResponse>(
+    EndpointType.UPDATE_RECURRENCE_TEMPLATE,
+    content,
+    { attachAuth: true }
+  );
   return response.recurrenceTemplateId;
 }
 
 export async function updateRecurrenceTemplateEventData(
   recurrenceTemplateId: RecurrenceTemplateId,
   updatedData: Partial<NewEventData>
-) {
+): Promise<boolean> {
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} event data`);
-  try {
-    const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
-    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
-    const mergedEventData = mergeInventoryIntoEventData(
-      { ...recurrenceTemplate.eventData, ...restUpdatedData },
-      { price, capacity, vacancy }
-    );
-    const response = await updateRecurrenceTemplate(recurrenceTemplateId, {
-      eventData: mergedEventData,
-    });
-    return response ? true : false;
-  } catch (error) {
-    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
-    // we did not find the existing data in the existing recurrence template
-  }
+  const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+  const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
+  const mergedEventData = mergeInventoryIntoEventData(
+    { ...recurrenceTemplate.eventData, ...restUpdatedData },
+    { price, capacity, vacancy }
+  );
+  await updateRecurrenceTemplate(recurrenceTemplateId, {
+    eventData: mergedEventData,
+  });
+  return true;
 }
 
 export async function updateRecurrenceTemplateRecurrenceData(
   recurrenceTemplateId: RecurrenceTemplateId,
   updatedData: Partial<NewRecurrenceFormData>
-) {
+): Promise<void> {
   recurringEventsServiceLogger.info(`Updating recurrence template id ${recurrenceTemplateId} recurrence data`);
-  try {
-    const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
-    await updateRecurrenceTemplate(recurrenceTemplateId, {
-      recurrenceData: {
-        frequency: recurrenceTemplate.recurrenceData.frequency,
-        recurrenceAmount: recurrenceTemplate.recurrenceData.recurrenceAmount,
-        createDaysBefore: recurrenceTemplate.recurrenceData.createDaysBefore,
-        recurrenceEnabled: recurrenceTemplate.recurrenceData.recurrenceEnabled,
-        ...updatedData,
-      },
-    });
-  } catch (error) {
-    // no op as we already logged error, we just need to catch it here as we do not want to continue to update template if
-    // we did not find the existing data in the existing recurrence template
-  }
+  const recurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+  await updateRecurrenceTemplate(recurrenceTemplateId, {
+    recurrenceData: {
+      frequency: recurrenceTemplate.recurrenceData.frequency,
+      recurrenceAmount: recurrenceTemplate.recurrenceData.recurrenceAmount,
+      createDaysBefore: recurrenceTemplate.recurrenceData.createDaysBefore,
+      recurrenceEnabled: recurrenceTemplate.recurrenceData.recurrenceEnabled,
+      ...updatedData,
+    },
+  });
 }
 
 export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFormData, startDate: Timestamp) {
