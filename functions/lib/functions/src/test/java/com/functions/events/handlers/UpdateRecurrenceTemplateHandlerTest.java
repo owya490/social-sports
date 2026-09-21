@@ -38,6 +38,29 @@ public class UpdateRecurrenceTemplateHandlerTest {
                 AuthContext.authenticated("organiser-2"));
     }
 
+    @Test(expected = AuthorizationException.class)
+    public void rejectsChangingStoredOrganiser() {
+        NewEventData replacementData = new NewEventData();
+        replacementData.setOrganiserId("organiser-2");
+
+        handlerWithTemplate("organiser-1", Optional.of("template-1")).handle(
+                new UpdateRecurrenceTemplateRequest("template-1", replacementData, null),
+                AuthContext.authenticated("organiser-1"));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void propagatesRepositoryFailures() {
+        UpdateRecurrenceTemplateHandler handler = new UpdateRecurrenceTemplateHandler() {
+            @Override
+            protected Optional<RecurrenceTemplate> find(String ignored) {
+                throw new IllegalStateException("Firestore unavailable");
+            }
+        };
+
+        handler.handle(new UpdateRecurrenceTemplateRequest("template-1", null, new NewRecurrenceData()),
+                AuthContext.authenticated("organiser-1"));
+    }
+
     @Test(expected = RecurrenceTemplateNotFoundException.class)
     public void reportsMissingTemplateExplicitly() {
         UpdateRecurrenceTemplateHandler handler = new UpdateRecurrenceTemplateHandler() {

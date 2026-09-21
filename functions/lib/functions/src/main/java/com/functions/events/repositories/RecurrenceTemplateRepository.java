@@ -45,6 +45,29 @@ public class RecurrenceTemplateRepository {
         return maybeRecurrenceTemplate;
     }
 
+    public static Optional<RecurrenceTemplate> getRecurrenceTemplateOrThrow(String recurrenceTemplateId) {
+        for (boolean isActive : List.of(true, false)) {
+            for (boolean isPrivate : List.of(true, false)) {
+                DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(
+                        recurrenceTemplateId, isActive, isPrivate);
+                try {
+                    DocumentSnapshot snapshot = recurrenceTemplateDocRef.get().get();
+                    if (snapshot.exists()) {
+                        return Optional.ofNullable(snapshot.toObject(RecurrenceTemplate.class));
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Interrupted while loading recurrence template "
+                            + recurrenceTemplateId, e);
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("Failed to load recurrence template "
+                            + recurrenceTemplateId, e);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
     public static Optional<RecurrenceTemplate> getRecurrenceTemplateInTransaction(
             String recurrenceTemplateId, Transaction transaction) throws Exception {
         for (boolean isActive : List.of(true, false)) {

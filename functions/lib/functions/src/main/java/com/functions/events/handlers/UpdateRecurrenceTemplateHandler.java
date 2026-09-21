@@ -1,5 +1,6 @@
 package com.functions.events.handlers;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -9,6 +10,7 @@ import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
 import com.functions.events.services.RecurringEventsService;
+import com.functions.global.exceptions.AuthorizationException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
@@ -41,6 +43,11 @@ public class UpdateRecurrenceTemplateHandler
         EventAuthorizationService.requireMatchingUser(authContext.requireUid(),
                 existingTemplate.getEventData().getOrganiserId(),
                 "You are not allowed to update this recurrence template");
+        if (request.eventData() != null
+                && !Objects.equals(existingTemplate.getEventData().getOrganiserId(),
+                        request.eventData().getOrganiserId())) {
+            throw new AuthorizationException("A recurrence template cannot be transferred to another organiser");
+        }
 
         String recurrenceTemplateId = update(request)
                 .orElseThrow(() -> new RuntimeException("Failed to update recurrence template"));
@@ -48,7 +55,7 @@ public class UpdateRecurrenceTemplateHandler
     }
 
     protected Optional<RecurrenceTemplate> find(String recurrenceTemplateId) {
-        return RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId);
+        return RecurrenceTemplateRepository.getRecurrenceTemplateOrThrow(recurrenceTemplateId);
     }
 
     protected Optional<String> update(UpdateRecurrenceTemplateRequest request) {
