@@ -46,6 +46,10 @@ import { Dispatch, FormEvent, SetStateAction, useEffect, useMemo, useRef, useSta
 import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
+import {
+  mergeOrderTicketsByOrderId,
+  type RegistrationUpdateIssue,
+} from "./registrationLiveUpdates";
 import { EventHubPanel } from "./EventHubPanel";
 import {
   EventHubEmpty,
@@ -81,14 +85,15 @@ function countTicketsInOrderMap(
 
 type EventHubAttendeesProps = {
   eventMetadata: EventMetadata;
-  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   /** Refresh hub inventory after attendee mutations that reload the event. */
   onEventRefresh?: (event: EventData) => void;
+  onRegistrationAppended: (orderId: OrderId) => void;
   orderTicketsMap: Map<Order, Ticket[]>;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
+  registrationUpdateIssue: RegistrationUpdateIssue;
 };
 
 const showFailureToastWithRefresh = (message: string, toastId: string) => {
@@ -253,7 +258,6 @@ function AttendeeEditTicketsPanel({
   tickets,
   eventId,
   eventData,
-  setEventMetadata,
   setEventVacancy,
   onEventRefresh,
   setOrderTicketsMap,
@@ -263,7 +267,6 @@ function AttendeeEditTicketsPanel({
   tickets: Ticket[];
   eventId: EventId;
   eventData: EventData;
-  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   onEventRefresh?: (event: EventData) => void;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
@@ -306,10 +309,6 @@ function AttendeeEditTicketsPanel({
       } else {
         setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
       }
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount - numTickets + parseInt(newNumTickets, 10),
-      }));
       toast.success("Tickets updated");
       onClose();
     } catch (error) {
@@ -370,13 +369,14 @@ function AttendeeEditTicketsPanel({
 
 export function EventHubAttendees({
   eventMetadata,
-  setEventMetadata,
   eventId,
   eventData,
   setEventVacancy,
   onEventRefresh,
+  onRegistrationAppended,
   orderTicketsMap,
   setOrderTicketsMap,
+  registrationUpdateIssue,
 }: EventHubAttendeesProps) {
   const logger = useMemo(() => new Logger("EventHubAttendees"), []);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -633,7 +633,10 @@ export function EventHubAttendees({
         type: OrderAndTicketType.MANUAL,
         eventTicketTypeId,
       }));
-      setOrderTicketsMap((prev) => new Map(prev).set(newOrder, newTickets));
+      setOrderTicketsMap((prev) =>
+        mergeOrderTicketsByOrderId(prev, new Map([[newOrder, newTickets]]))
+      );
+      onRegistrationAppended(orderId as OrderId);
       try {
         const updatedEventData = await getEventById(eventId);
         if (onEventRefresh) {
@@ -644,10 +647,6 @@ export function EventHubAttendees({
       } catch {
         setEventVacancy((prev) => Math.max(0, prev - qty));
       }
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount + qty,
-      }));
       toast.success("Attendee added");
       closeAddPanel();
     } catch (error) {
@@ -790,6 +789,20 @@ export function EventHubAttendees({
           />
         </div>
       </div>
+
+      {registrationUpdateIssue ? (
+        <div
+          className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-foreground-secondary font-sans"
+          role="status"
+        >
+          <ExclamationCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden />
+          <span>
+            {registrationUpdateIssue === "listener"
+              ? "Live registration updates are unavailable. Reload the page to reconnect."
+              : "A registration update could not be loaded. Reload the page to try again."}
+          </span>
+        </div>
+      ) : null}
 
       <EventHubFilters
         activeId={activeTab}
@@ -1067,7 +1080,6 @@ export function EventHubAttendees({
             tickets={panelTickets}
             eventId={eventId}
             eventData={eventData}
-            setEventMetadata={setEventMetadata}
             setEventVacancy={setEventVacancy}
             onEventRefresh={onEventRefresh}
             setOrderTicketsMap={setOrderTicketsMap}
@@ -1192,7 +1204,6 @@ export function EventHubAttendees({
           }
           eventId={eventId}
           eventData={eventData}
-          setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
           setOrderTicketsMap={setOrderTicketsMap}
         />
