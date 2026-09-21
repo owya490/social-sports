@@ -7,8 +7,10 @@ import com.functions.attendee.handlers.AddAttendeeHandler;
 import com.functions.attendee.handlers.GetEventAttendeeNamesHandler;
 import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
+import com.functions.events.handlers.CreateRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
+import com.functions.events.handlers.UpdateRecurrenceTemplateHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
 import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentEntityInfoHandler;
@@ -37,6 +39,8 @@ public class HandlerRegistry {
     static {
         handlers.put(EndpointType.SAVE_TEMP_FORM_RESPONSE, new SaveTempFormResponseHandler());
         handlers.put(EndpointType.CREATE_EVENT, new CreateEventHandler());
+        handlers.put(EndpointType.CREATE_RECURRENCE_TEMPLATE, new CreateRecurrenceTemplateHandler());
+        handlers.put(EndpointType.UPDATE_RECURRENCE_TEMPLATE, new UpdateRecurrenceTemplateHandler());
         handlers.put(EndpointType.INIT_FULFILMENT_SESSION, new InitFulfilmentSessionHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
                 new UpdateFulfilmentEntityWithFormResponseIdHandler());
