@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Currently available functions are:
+# updateRecurrenceTemplate
+# createRecurrenceTemplate
 # recurringEventsCron
 # cleanupOldFulfilmentSessionsCron
 # expirePendingBookingsCron
@@ -11,6 +13,8 @@
 # Check if the function name is valid and it should be a list of function name and another list of endpoint class name
 
 VALID_FUNCTIONS=(
+    "updateRecurrenceTemplate" 
+    "createRecurrenceTemplate" 
     "recurringEventsCron"
     "cleanupOldFulfilmentSessionsCron"
     "expirePendingBookingsCron"
@@ -20,6 +24,8 @@ VALID_FUNCTIONS=(
 )
 
 VALID_ENDPOINTS=(
+    "com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint" 
+    "com.functions.events.controllers.CreateRecurrenceTemplateEndpoint" 
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"

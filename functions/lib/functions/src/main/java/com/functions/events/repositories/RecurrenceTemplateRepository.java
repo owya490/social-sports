@@ -22,30 +22,6 @@ public class RecurrenceTemplateRepository {
 
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId) {
-        Optional<RecurrenceTemplate> maybeRecurrenceTemplate;
-        // 1. Try Active Private Recurrence Templates
-
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, true);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-
-        // 2. Try Active Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, false);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        // 3. Try InActive Private Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, true);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        // 4. Try InActive Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false);
-        return maybeRecurrenceTemplate;
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplateOrThrow(String recurrenceTemplateId) {
         for (boolean isActive : List.of(true, false)) {
             for (boolean isPrivate : List.of(true, false)) {
                 DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(

@@ -76,6 +76,32 @@ jobs:
           # Array to track process IDs of background deployments
           PIDS=()
 
+          # Deploy updateRecurrenceTemplate in background
+          echo "Starting deployment of updateRecurrenceTemplate..."
+          (gcloud functions deploy updateRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.UpdateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --quiet 2>&1 | sed 's/^/[updateRecurrenceTemplate] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
+          # Deploy createRecurrenceTemplate in background
+          echo "Starting deployment of createRecurrenceTemplate..."
+          (gcloud functions deploy createRecurrenceTemplate \
+            --entry-point com.functions.events.controllers.CreateRecurrenceTemplateEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --quiet 2>&1 | sed 's/^/[createRecurrenceTemplate] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
           # Deploy recurringEventsCron in background
           echo "Starting deployment of recurringEventsCron..."
           (gcloud functions deploy recurringEventsCron \
@@ -220,20 +246,8 @@ jobs:
             echo "✅ All function deployments completed successfully"
           fi
 
-      - name: Remove legacy recurrence template endpoints
-        run: |
-          PROJECT_ID="${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}"
-          for FUNCTION_NAME in createRecurrenceTemplate updateRecurrenceTemplate; do
-            if gcloud functions describe "$FUNCTION_NAME" \
-              --region australia-southeast1 \
-              --project "$PROJECT_ID" >/dev/null 2>&1; then
-              gcloud functions delete "$FUNCTION_NAME" \
-                --region australia-southeast1 \
-                --project "$PROJECT_ID" \
-                --quiet
-            fi
-          done
-
+      # TODO(recurrence-gac-cutover): Delete the deployed legacy create/update functions after
+      # the production frontend cutover is verified and old bundles have drained.
       - name: Deploy Cloud Scheduler jobs
         working-directory: functions/lib/functions
         run: |

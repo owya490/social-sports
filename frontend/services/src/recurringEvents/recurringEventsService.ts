@@ -1,5 +1,4 @@
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
-import { EndpointType } from "@/interfaces/FunctionsTypes";
 import {
   Frequency,
   NewRecurrenceFormData,
@@ -14,8 +13,11 @@ import {
   applyGeneralAdmissionInventoryFields,
   mergeInventoryIntoEventData,
 } from "../events/eventsUtils/eventTicketTypesUtils";
-import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
-import { findRecurrenceTemplateDoc } from "./recurringEventsUtils";
+import {
+  findRecurrenceTemplateDoc,
+  getCreateRecurringTemplateUrl,
+  getUpdateRecurringTemplateUrl,
+} from "./recurringEventsUtils";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -27,11 +29,6 @@ interface CreateRecurrenceTemplateResponse {
 interface UpdateRecurrenceTemplateResponse {
   recurrenceTemplateId: RecurrenceTemplateId;
 }
-
-type UpdateRecurrenceTemplateData = {
-  eventData?: NewEventData;
-  recurrenceData?: NewRecurrenceFormData;
-};
 
 export async function createRecurrenceTemplate(
   eventData: NewEventData,
@@ -48,11 +45,15 @@ export async function createRecurrenceTemplate(
     recurrenceData: recurrenceData,
   };
 
-  const response = await executeGlobalAppControllerFunction<typeof content, CreateRecurrenceTemplateResponse>(
-    EndpointType.CREATE_RECURRENCE_TEMPLATE,
-    content,
-    { attachAuth: true }
-  );
+  const rawResponse = await fetch(getCreateRecurringTemplateUrl(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(content),
+  });
+  const response = (await rawResponse.json()) as CreateRecurrenceTemplateResponse;
   return [response.eventId, response.recurrenceTemplateId];
 }
 
@@ -97,10 +98,8 @@ export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemp
   }
 }
 
-export async function updateRecurrenceTemplate(
-  recurrenceTemplateId: RecurrenceTemplateId,
-  updatedData: UpdateRecurrenceTemplateData
-) {
+// Should be a partial of eventData or NewRecurrenceFormData
+export async function updateRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId, updatedData: any) {
   recurringEventsServiceLogger.info(`Updating Recurrence Template ${recurrenceTemplateId}`);
   let eventData = null;
   if (updatedData.eventData) {
@@ -118,11 +117,15 @@ export async function updateRecurrenceTemplate(
     recurrenceData: recurrenceData,
   };
 
-  const response = await executeGlobalAppControllerFunction<typeof content, UpdateRecurrenceTemplateResponse>(
-    EndpointType.UPDATE_RECURRENCE_TEMPLATE,
-    content,
-    { attachAuth: true }
-  );
+  const rawResponse = await fetch(getUpdateRecurringTemplateUrl(), {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(content),
+  });
+  const response = (await rawResponse.json()) as UpdateRecurrenceTemplateResponse;
   return response.recurrenceTemplateId;
 }
 

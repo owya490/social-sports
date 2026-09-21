@@ -53,15 +53,21 @@ public class RecurringEventsService {
         }
     }
 
-    public static Optional<String> updateRecurrenceTemplate(String recurrenceTemplateId, NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
-        // Get the current Recurrence Template
-        Optional<RecurrenceTemplate> maybeCurrentRecurrenceTemplate = RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId);
-
-        if (maybeCurrentRecurrenceTemplate.isEmpty()) {
+    public static Optional<String> updateRecurrenceTemplate(String recurrenceTemplateId,
+            NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
+        Optional<RecurrenceTemplate> currentRecurrenceTemplate = RecurrenceTemplateRepository
+                .getRecurrenceTemplate(recurrenceTemplateId);
+        if (currentRecurrenceTemplate.isEmpty()) {
             logger.warn("Updating recurrence template that does not exist {}", recurrenceTemplateId);
             return Optional.empty();
         }
-        RecurrenceTemplate currentRecurrenceTemplate = maybeCurrentRecurrenceTemplate.get();
+        return updateRecurrenceTemplate(recurrenceTemplateId, currentRecurrenceTemplate.get(), newEventData,
+                newRecurrenceData);
+    }
+
+    public static Optional<String> updateRecurrenceTemplate(String recurrenceTemplateId,
+            RecurrenceTemplate currentRecurrenceTemplate, NewEventData newEventData,
+            NewRecurrenceData newRecurrenceData) {
         logger.info("Recurrence template found {} {}", recurrenceTemplateId, currentRecurrenceTemplate);
         Map<String, String> pastRecurrences = currentRecurrenceTemplate.getRecurrenceData().getPastRecurrences();
 

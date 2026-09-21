@@ -86,7 +86,8 @@ public class UpdateRecurrenceTemplateHandlerTest {
             }
 
             @Override
-            protected Optional<String> update(UpdateRecurrenceTemplateRequest ignored) {
+            protected Optional<String> update(UpdateRecurrenceTemplateRequest ignored,
+                    RecurrenceTemplate ignoredExistingTemplate) {
                 return updateResult;
             }
         };

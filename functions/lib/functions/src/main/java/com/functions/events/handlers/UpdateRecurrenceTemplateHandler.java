@@ -49,17 +49,17 @@ public class UpdateRecurrenceTemplateHandler
             throw new AuthorizationException("A recurrence template cannot be transferred to another organiser");
         }
 
-        String recurrenceTemplateId = update(request)
+        String recurrenceTemplateId = update(request, existingTemplate)
                 .orElseThrow(() -> new RuntimeException("Failed to update recurrence template"));
         return new UpdateRecurrenceTemplateResponse(recurrenceTemplateId);
     }
 
     protected Optional<RecurrenceTemplate> find(String recurrenceTemplateId) {
-        return RecurrenceTemplateRepository.getRecurrenceTemplateOrThrow(recurrenceTemplateId);
+        return RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId);
     }
 
-    protected Optional<String> update(UpdateRecurrenceTemplateRequest request) {
-        return RecurringEventsService.updateRecurrenceTemplate(request.recurrenceTemplateId(), request.eventData(),
-                request.recurrenceData());
+    protected Optional<String> update(UpdateRecurrenceTemplateRequest request, RecurrenceTemplate existingTemplate) {
+        return RecurringEventsService.updateRecurrenceTemplate(request.recurrenceTemplateId(), existingTemplate,
+                request.eventData(), request.recurrenceData());
     }
 }
