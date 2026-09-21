@@ -9,6 +9,7 @@
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
+# explainErrorAlert
 
 # Check if the function name is valid and it should be a list of function name and another list of endpoint class name
 
@@ -21,6 +22,7 @@ VALID_FUNCTIONS=(
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
+    "explainErrorAlert"
 )
 
 VALID_ENDPOINTS=(
@@ -32,7 +34,10 @@ VALID_ENDPOINTS=(
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
+    "com.functions.alerts.controllers.ExplainErrorAlertEndpoint"
 )
+
+ERROR_LOG_ALERTS_TOPIC="error-log-alerts"
 
 # Check for exactly 2 arguments
 if [ "$#" -ne 2 ]; then
@@ -104,13 +109,17 @@ elif [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "stripeWebhookEndpoin
     )
 fi
 
+TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
+if [ "$FUNCTION_NAME" == "explainErrorAlert" ]; then
+    TRIGGER_ARGS=(--gen2 --trigger-topic "$ERROR_LOG_ALERTS_TOPIC" --no-allow-unauthenticated)
+fi
+
 echo "Deploying $FUNCTION_NAME (Entry point: $ENDPOINT_CLASS_NAME) to $ENVIRONMENT under project $PROJECT_NAME"
 
 gcloud functions deploy $FUNCTION_NAME \
     --entry-point $ENDPOINT_CLASS_NAME \
     --runtime java17 \
-    --trigger-http \
-    --allow-unauthenticated \
+    "${TRIGGER_ARGS[@]}" \
     --region australia-southeast1 \
     --project $PROJECT_NAME \
     --set-env-vars PROJECT_NAME=$PROJECT_NAME \
