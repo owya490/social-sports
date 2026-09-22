@@ -246,6 +246,8 @@ jobs:
             echo "✅ All function deployments completed successfully"
           fi
 
+      # TODO(recurrence-gac-cutover): Delete the deployed legacy create/update functions after
+      # the production frontend cutover is verified and old bundles have drained.
       - name: Deploy Cloud Scheduler jobs
         working-directory: functions/lib/functions
         run: |

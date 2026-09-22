@@ -3,11 +3,10 @@ package com.functions.global.controllers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.fulfilment.exceptions.FulfilmentEntityNotFoundException;
 import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
-import com.functions.fulfilment.exceptions.FulfilmentSessionNotFoundException;
 import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.exceptions.AuthorizationException;
+import com.functions.global.exceptions.NotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.EndpointType;
@@ -100,12 +99,7 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
             response.setStatusCode(400);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse(e.getMessage())));
-        } catch (FulfilmentEntityNotFoundException e) {
-            logger.warn("Resource not found: {}", e.getMessage());
-            response.setStatusCode(404);
-            response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
-        } catch (FulfilmentSessionNotFoundException e) {
+        } catch (NotFoundException e) {
             logger.warn("Resource not found: {}", e.getMessage());
             response.setStatusCode(404);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
