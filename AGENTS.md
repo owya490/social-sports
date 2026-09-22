@@ -25,7 +25,7 @@ SPORTSHUB is a social-sports event discovery, booking, and organiser platform.
 | `sportshub-cli/` | TypeScript CLI for SPORTSHUB operational workflows |
 | `infrastructure/` | Infrastructure utilities |
 
-See @docs/ARCHITECTURE.md for boundaries and data flow.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries and data flow.
 
 ## Terminology
 
@@ -33,22 +33,27 @@ See @docs/ARCHITECTURE.md for boundaries and data flow.
 
 ## Common Commands
 
-Run commands from the indicated directory. Tee long-running build output to `.tmp/<name>.log`.
+Set the tool's working directory to the path shown; do not prepend `cd`. Create
+the repository-root `.tmp/` when needed and tee long-running output there. From
+`frontend/`, `functions/`, or `sportshub-cli/`, use `../.tmp/<name>.log`; from
+`functions/lib/functions/`, use `../../../.tmp/<name>.log`.
 
-| Area | Command |
-| --- | --- |
-| Frontend install | `cd frontend && npm install` |
-| Frontend lint | `cd frontend && npm run lint` |
-| Frontend tests | `cd frontend && npm test -- --runInBand` |
-| Frontend single test | `cd frontend && npm test -- services/tests/eventsCrud.test.ts --runInBand` |
-| Frontend build | `cd frontend && npm run build` |
-| Python environment | `cd functions && python3.11 -m venv venv && venv/bin/pip install -r requirements.txt` |
-| Python tests | `cd functions && venv/bin/python -m unittest discover -s tests` |
-| Java verification | `cd functions/lib/functions && mvn clean verify` |
-| Java single test | `cd functions/lib/functions && mvn -Dtest=RecurringEventsServiceTest test` |
-| CLI build | `cd sportshub-cli && npm run build` |
+| Area | Working directory | Command |
+| --- | --- | --- |
+| Frontend install | `frontend/` | `rtk npm install` |
+| Frontend lint | `frontend/` | `rtk npm run lint` |
+| Frontend tests | `frontend/` | `rtk npm test -- --runInBand` |
+| Frontend single test | `frontend/` | `rtk npm test -- services/tests/eventsCrud.test.ts --runInBand` |
+| Frontend build | `frontend/` | `rtk npm run build` |
+| Python environment | `functions/` | `rtk proxy python3.11 -m venv venv`, then `rtk proxy venv/bin/pip install -r requirements.txt` |
+| Python tests | `functions/` | `rtk proxy venv/bin/python -m unittest discover -s tests` |
+| Java verification | `functions/lib/functions/` | `rtk proxy mvn clean verify` |
+| Java single test | `functions/lib/functions/` | `rtk proxy mvn -Dtest=RecurringEventsServiceTest test` |
+| CLI build | `sportshub-cli/` | `rtk npm run build` |
 
-The CI source of truth is `.github/workflows/branch_ci.yml`.
+`.github/workflows/branch_ci.yml` runs frontend lint, tests, build, and Java
+verification. Run the documented Python tests or CLI build locally when changing
+those areas; branch CI does not cover them.
 
 ## Local Prerequisites
 
@@ -61,7 +66,9 @@ The CI source of truth is `.github/workflows/branch_ci.yml`.
 
 ## Conventions And Critical Patterns
 
-See @docs/PATTERNS.md. It is **MUST READ** before changing authentication, payments, function endpoints, Firestore transactions, or shared frontend/backend contracts.
+Read [docs/PATTERNS.md](docs/PATTERNS.md) before changing authentication,
+payments, function endpoints, Firestore transactions, or shared frontend/backend
+contracts.
 
 ## Code Comments
 
@@ -73,7 +80,10 @@ See @docs/PATTERNS.md. It is **MUST READ** before changing authentication, payme
 - Avoid `&`, `$()`/backticks, brace expansion, and `\(` in jq format strings in agent Bash calls.
 - Write temporary files to `.tmp/`, not `/tmp/`.
 - Use `rg` or `rg --files` for searches. Prefix shell commands with `rtk` when its filtering will not hide required output.
-- Always use `--repo owya490/social-sports` on mutating `gh` commands.
+- Use `--repo owya490/social-sports` on mutating `gh` commands that accept it.
+  For `gh api` REST writes against this repo, use a
+  `repos/owya490/social-sports/...` endpoint. For GraphQL writes, verify the
+  target resource ID. `gh api` has no `--repo` flag.
 - Fetch current external-resource state before proposing an update. Obtain explicit approval before creating or changing PRs, issues, comments, gists, or other external artifacts.
 
 ## Branch And PR Rules

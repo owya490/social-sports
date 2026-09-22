@@ -1,5 +1,7 @@
-When Deploy only use this function otherwise will delete other functions
+# Python Firebase Functions
 
-firebase deploy --only functions:manualDatabaseUpdate
-
-here is the link
+Read [AGENTS.md](AGENTS.md) for local checks and deployment rules. Deployments
+require explicit operator approval. For an approved single-function deployment,
+run `./deployFunctionToFirebase.sh <dev|prod> <function_name>` from this directory.
+Do not run a broad `firebase deploy`; an incomplete function list can delete
+deployed functions.
