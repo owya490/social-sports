@@ -54,18 +54,6 @@ public class RecurringEventsService {
     }
 
     public static Optional<String> updateRecurrenceTemplate(String recurrenceTemplateId,
-            NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
-        Optional<RecurrenceTemplate> currentRecurrenceTemplate = RecurrenceTemplateRepository
-                .getRecurrenceTemplate(recurrenceTemplateId);
-        if (currentRecurrenceTemplate.isEmpty()) {
-            logger.warn("Updating recurrence template that does not exist {}", recurrenceTemplateId);
-            return Optional.empty();
-        }
-        return updateRecurrenceTemplate(recurrenceTemplateId, currentRecurrenceTemplate.get(), newEventData,
-                newRecurrenceData);
-    }
-
-    public static Optional<String> updateRecurrenceTemplate(String recurrenceTemplateId,
             RecurrenceTemplate currentRecurrenceTemplate, NewEventData newEventData,
             NewRecurrenceData newRecurrenceData) {
         logger.info("Recurrence template found {} {}", recurrenceTemplateId, currentRecurrenceTemplate);
