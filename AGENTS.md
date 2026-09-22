@@ -40,16 +40,16 @@ the repository-root `.tmp/` when needed and tee long-running output there. From
 
 | Area | Working directory | Command |
 | --- | --- | --- |
-| Frontend install | `frontend/` | `rtk npm install` |
-| Frontend lint | `frontend/` | `rtk npm run lint` |
-| Frontend tests | `frontend/` | `rtk npm test -- --runInBand` |
-| Frontend single test | `frontend/` | `rtk npm test -- services/tests/eventsCrud.test.ts --runInBand` |
-| Frontend build | `frontend/` | `rtk npm run build` |
-| Python environment | `functions/` | `rtk proxy python3.11 -m venv venv`, then `rtk proxy venv/bin/pip install -r requirements.txt` |
-| Python tests | `functions/` | `rtk proxy venv/bin/python -m unittest discover -s tests` |
-| Java verification | `functions/lib/functions/` | `rtk proxy mvn clean verify` |
-| Java single test | `functions/lib/functions/` | `rtk proxy mvn -Dtest=RecurringEventsServiceTest test` |
-| CLI build | `sportshub-cli/` | `rtk npm run build` |
+| Frontend install | `frontend/` | `npm install` |
+| Frontend lint | `frontend/` | `npm run lint` |
+| Frontend tests | `frontend/` | `npm test -- --runInBand` |
+| Frontend single test | `frontend/` | `npm test -- services/tests/eventsCrud.test.ts --runInBand` |
+| Frontend build | `frontend/` | `npm run build` |
+| Python environment | `functions/` | `python3.11 -m venv venv`, then `venv/bin/pip install -r requirements.txt` |
+| Python tests | `functions/` | `venv/bin/python -m unittest discover -s tests` |
+| Java verification | `functions/lib/functions/` | `mvn clean verify` |
+| Java single test | `functions/lib/functions/` | `mvn -Dtest=RecurringEventsServiceTest test` |
+| CLI build | `sportshub-cli/` | `npm run build` |
 
 `.github/workflows/branch_ci.yml` runs frontend lint, tests, build, and Java
 verification. Run the documented Python tests or CLI build locally when changing
@@ -79,7 +79,8 @@ contracts.
 
 - Avoid `&`, `$()`/backticks, brace expansion, and `\(` in jq format strings in agent Bash calls.
 - Write temporary files to `.tmp/`, not `/tmp/`.
-- Use `rg` or `rg --files` for searches. Prefix shell commands with `rtk` when its filtering will not hide required output.
+- Use `rg` or `rg --files` for searches. When `rtk` is installed, prefix shell
+  commands with it unless filtering would hide required output.
 - Use `--repo owya490/social-sports` on mutating `gh` commands that accept it.
   For `gh api` REST writes against this repo, use a
   `repos/owya490/social-sports/...` endpoint. For GraphQL writes, verify the
