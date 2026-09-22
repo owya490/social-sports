@@ -1,7 +1,10 @@
-To compile use `mvn clean install`
+# Java Cloud Functions
 
-Functions are deployed to google cloud platform using the `./deployFunctionsToGCloud.sh` script. Simply just run `./deployFunctionsToGCloud.sh`.
+Read [AGENTS.md](AGENTS.md) for verification and deployment rules. Verify with
+`mvn clean verify`. Deployment requires explicit operator approval. For an
+approved single-function deployment, run
+`./deployFunctionsToGCloud.sh <dev|prod> <function_name>` from this directory.
 
-The scheduler for the recurringEventsCron Google Cloud Run function written in Java is deployed by simply running `./deploySchedulerToGCloud.sh` script.
-
-// TODO write gcloud install docs
+Cloud Scheduler jobs are managed separately by scripts in this directory.
+Inspect their arguments and the target project before any approved
+scheduler change.
