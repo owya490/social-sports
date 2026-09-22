@@ -59,19 +59,6 @@ public class RecurrenceTemplateRepository {
         return Optional.empty();
     }
 
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate) {
-        DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(recurrenceTemplateId, isActive, isPrivate);
-        try {
-            DocumentSnapshot maybeSnapshot = recurrenceTemplateDocRef.get().get();
-            if (maybeSnapshot.exists()) {
-                return Optional.ofNullable(maybeSnapshot.toObject(RecurrenceTemplate.class));
-            }
-        } catch (InterruptedException | ExecutionException ignored) {
-            // No op, no retries for now
-        }
-        return Optional.empty();
-    }
-
     public static String createRecurrenceTemplate(boolean isActive, boolean isPrivate, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {
         DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(isActive, isPrivate);
         recurrenceTemplateDocRef.create(recurrenceTemplate).get();
