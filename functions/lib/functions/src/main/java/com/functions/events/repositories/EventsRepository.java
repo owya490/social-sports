@@ -27,6 +27,35 @@ public class EventsRepository {
         return getEventById(eventId, Optional.empty());
     }
 
+    public static Optional<EventData> getActivePublicEventById(String eventId) {
+        Firestore db = FirebaseService.getFirestore();
+        DocumentReference docRef = db.collection(FirebaseService.CollectionPaths.EVENTS)
+                .document(FirebaseService.CollectionPaths.ACTIVE)
+                .collection(FirebaseService.CollectionPaths.PUBLIC)
+                .document(eventId);
+
+        DocumentSnapshot snapshot;
+        try {
+            snapshot = docRef.get().get();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while retrieving active public event: " + eventId, e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to retrieve active public event: " + eventId, e);
+        }
+
+        if (!snapshot.exists()) {
+            return Optional.empty();
+        }
+
+        EventData eventData = snapshot.toObject(EventData.class);
+        if (eventData == null) {
+            throw new IllegalStateException("Failed to map active public event: " + eventId);
+        }
+        eventData.setEventId(eventId);
+        return Optional.of(eventData);
+    }
+
     public static Optional<EventData> getEventById(String eventId, Optional<Transaction> transaction) {
         try {
             EventData eventData = findEventDocumentSnapshot(eventId, transaction).toObject(EventData.class);
