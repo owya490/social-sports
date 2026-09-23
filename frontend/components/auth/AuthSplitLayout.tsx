@@ -58,7 +58,7 @@ function AuthCtaPanel({
   backdrop: keyof typeof CTA_BACKDROPS;
 }) {
   return (
-    <div className="relative flex min-h-40 shrink-0 overflow-hidden bg-black text-white md:sticky md:top-0 md:h-screen md:min-h-screen">
+    <div className="relative flex min-h-40 shrink-0 overflow-hidden bg-black pb-[env(safe-area-inset-bottom)] text-white max-md:shadow-[0_100vh_0_100vh_#000] md:sticky md:top-0 md:h-screen md:min-h-screen md:pb-0 md:shadow-none">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 hidden md:block"
