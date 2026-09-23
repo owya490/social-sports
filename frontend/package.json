@@ -66,6 +66,7 @@
     "react-loading-skeleton": "^3.4.0",
     "react-sortablejs": "^6.1.4",
     "sortablejs": "^1.15.6",
+    "ulid": "^3.0.2",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
