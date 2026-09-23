@@ -5,8 +5,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { DASHBOARD_LOOKBACK_SECONDS } from "@/services/src/organiser/organiserConstants";
 import { fetchOrganiserDashboardMetrics } from "@/services/src/organiser/organiserDashboardMetricsService";
 import { getOrganiserEventsStartingOnOrAfter } from "@/services/src/organiser/organiserEventsService";
-import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
-import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
+import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { Timestamp } from "firebase/firestore";
 
@@ -14,12 +13,12 @@ jest.mock("@/services/src/organiser/organiserEventsService", () => ({
   getOrganiserEventsStartingOnOrAfter: jest.fn(),
 }));
 
-jest.mock("@/services/src/tickets/ticketService", () => ({
-  getTicketsPurchasedOnOrAfter: jest.fn(),
-}));
-
-jest.mock("@/services/src/tickets/orderService", () => ({
-  getOrdersByIdsIfPresent: jest.fn(),
+jest.mock("@/services/src/organiser/organiserHubCache", () => ({
+  organiserHub: {
+    getEventMetadata: jest.fn(),
+    getOrders: jest.fn(),
+    getTickets: jest.fn(),
+  },
 }));
 
 jest.mock("@/services/src/tickets/ticketUtils/ticketUtils", () => ({
@@ -29,10 +28,11 @@ jest.mock("@/services/src/tickets/ticketUtils/ticketUtils", () => ({
 const mockedGetOrganiserEventsStartingOnOrAfter = getOrganiserEventsStartingOnOrAfter as jest.MockedFunction<
   typeof getOrganiserEventsStartingOnOrAfter
 >;
-const mockedGetTicketsPurchasedOnOrAfter = getTicketsPurchasedOnOrAfter as jest.MockedFunction<
-  typeof getTicketsPurchasedOnOrAfter
+const mockedGetEventMetadata = organiserHub.getEventMetadata as jest.MockedFunction<
+  typeof organiserHub.getEventMetadata
 >;
-const mockedGetOrdersByIdsIfPresent = getOrdersByIdsIfPresent as jest.MockedFunction<typeof getOrdersByIdsIfPresent>;
+const mockedGetOrders = organiserHub.getOrders as jest.MockedFunction<typeof organiserHub.getOrders>;
+const mockedGetTickets = organiserHub.getTickets as jest.MockedFunction<typeof organiserHub.getTickets>;
 const mockedCalculateNetSales = calculateNetSales as jest.MockedFunction<typeof calculateNetSales>;
 
 function eventWith(overrides: Partial<EventData> & { eventId: EventId; startDate: Timestamp }): EventData {
@@ -81,60 +81,68 @@ describe("fetchOrganiserDashboardMetrics", () => {
 
   beforeEach(() => {
     mockedGetOrganiserEventsStartingOnOrAfter.mockReset();
-    mockedGetTicketsPurchasedOnOrAfter.mockReset();
-    mockedGetOrdersByIdsIfPresent.mockReset();
+    mockedGetEventMetadata.mockReset();
+    mockedGetOrders.mockReset();
+    mockedGetTickets.mockReset();
     mockedCalculateNetSales.mockReset();
-    mockedGetTicketsPurchasedOnOrAfter.mockResolvedValue([]);
-    mockedGetOrdersByIdsIfPresent.mockResolvedValue([]);
+    mockedGetEventMetadata.mockResolvedValue({ eventId: "event" as EventId, orderIds: [] });
+    mockedGetOrders.mockResolvedValue([]);
+    mockedGetTickets.mockResolvedValue([]);
     mockedCalculateNetSales.mockResolvedValue(0);
   });
 
-  it("loads events and tickets with a 30-day Firestore lookback instead of full history", async () => {
+  it("loads events and hub-cached tickets with a 30-day lookback", async () => {
     const recentEvent = eventWith({
       eventId: "recent-event" as EventId,
       name: "Recent smash",
       startDate: new Timestamp(nowSeconds + 86400, 0),
       accessCount: 20,
     });
+    const approvedTicket = ticketWith({
+      ticketId: "t1" as TicketId,
+      eventId: recentEvent.eventId,
+      orderId: "o1" as OrderId,
+      price: 2500,
+      purchaseDate: new Timestamp(nowSeconds - 1000, 0),
+    });
+    const pendingTicket = ticketWith({
+      ticketId: "t2" as TicketId,
+      eventId: recentEvent.eventId,
+      orderId: "o1" as OrderId,
+      status: OrderAndTicketStatus.PENDING,
+      purchaseDate: new Timestamp(nowSeconds - 1000, 0),
+    });
+    const order = orderWith({ orderId: "o1" as OrderId, tickets: ["t1" as TicketId, "t2" as TicketId] });
+
     mockedGetOrganiserEventsStartingOnOrAfter.mockResolvedValue({
       events: [recentEvent],
       hasAnyOrganiserEvents: true,
     });
-    mockedGetTicketsPurchasedOnOrAfter.mockResolvedValue([
-      ticketWith({
-        ticketId: "t1" as TicketId,
-        eventId: recentEvent.eventId,
-        orderId: "o1" as OrderId,
-        price: 2500,
-      }),
-      ticketWith({
-        ticketId: "t2" as TicketId,
-        eventId: recentEvent.eventId,
-        orderId: "o1" as OrderId,
-        status: OrderAndTicketStatus.PENDING,
-      }),
-    ]);
-    mockedGetOrdersByIdsIfPresent.mockResolvedValue([
-      orderWith({ orderId: "o1" as OrderId, tickets: ["t1" as TicketId, "t2" as TicketId] }),
-    ]);
+    mockedGetEventMetadata.mockResolvedValue({
+      eventId: recentEvent.eventId,
+      orderIds: ["o1" as OrderId],
+    });
+    mockedGetOrders.mockResolvedValue([order]);
+    mockedGetTickets.mockResolvedValue([approvedTicket, pendingTicket]);
     mockedCalculateNetSales.mockResolvedValue(2500);
 
-    const metrics = await fetchOrganiserDashboardMetrics(userId, { bypassCache: true });
+    const metrics = await fetchOrganiserDashboardMetrics(userId);
 
     expect(mockedGetOrganiserEventsStartingOnOrAfter).toHaveBeenCalledTimes(1);
-    const since = mockedGetOrganiserEventsStartingOnOrAfter.mock.calls[0][1];
-    expect(since.seconds).toBeGreaterThanOrEqual(nowSeconds - DASHBOARD_LOOKBACK_SECONDS - 2);
-    expect(since.seconds).toBeLessThanOrEqual(nowSeconds - DASHBOARD_LOOKBACK_SECONDS + 2);
+    const calledSince = mockedGetOrganiserEventsStartingOnOrAfter.mock.calls[0][1];
+    expect(calledSince.seconds).toBeGreaterThanOrEqual(nowSeconds - DASHBOARD_LOOKBACK_SECONDS - 2);
+    expect(calledSince.seconds).toBeLessThanOrEqual(nowSeconds - DASHBOARD_LOOKBACK_SECONDS + 2);
 
-    expect(mockedGetTicketsPurchasedOnOrAfter).toHaveBeenCalledWith([recentEvent.eventId], since);
-    expect(mockedGetOrdersByIdsIfPresent).toHaveBeenCalledWith(["o1"]);
+    expect(mockedGetEventMetadata).toHaveBeenCalledWith(recentEvent.eventId);
+    expect(mockedGetOrders).toHaveBeenCalledWith(["o1"]);
+    expect(mockedGetTickets).toHaveBeenCalledWith(["t1", "t2"]);
     expect(metrics.ticketsSold30d).toBe(1);
     expect(metrics.netSales30dCents).toBe(2500);
     expect(metrics.hasAnyEvents).toBe(true);
     expect(metrics.events).toEqual([recentEvent]);
   });
 
-  it("only queries tickets for events in the 30-day window", async () => {
+  it("loads tickets through organiser hub for events in the lookback window", async () => {
     const upcomingEvent = eventWith({
       eventId: "upcoming-event" as EventId,
       name: "Next week",
@@ -144,30 +152,32 @@ describe("fetchOrganiserDashboardMetrics", () => {
       events: [upcomingEvent],
       hasAnyOrganiserEvents: true,
     });
-    mockedGetTicketsPurchasedOnOrAfter.mockResolvedValue([]);
+    mockedGetEventMetadata.mockResolvedValue({
+      eventId: upcomingEvent.eventId,
+      orderIds: [],
+    });
 
-    const metrics = await fetchOrganiserDashboardMetrics("organiser-cached" as UserId, { bypassCache: true });
+    const metrics = await fetchOrganiserDashboardMetrics("organiser-cached" as UserId);
 
     expect(mockedGetOrganiserEventsStartingOnOrAfter).toHaveBeenCalledTimes(1);
-    expect(mockedGetTicketsPurchasedOnOrAfter).toHaveBeenCalledTimes(1);
-    const queriedEventIds = mockedGetTicketsPurchasedOnOrAfter.mock.calls[0][0];
-    expect(queriedEventIds).toEqual([upcomingEvent.eventId]);
+    expect(mockedGetEventMetadata).toHaveBeenCalledWith(upcomingEvent.eventId);
+    expect(mockedGetOrders).not.toHaveBeenCalled();
+    expect(mockedGetTickets).not.toHaveBeenCalled();
     expect(metrics.events).toEqual([upcomingEvent]);
     expect(metrics.hasAnyEvents).toBe(true);
   });
 
-  it("skips ticket and order fetches when the organiser has no events in the lookback window", async () => {
+  it("skips hub ticket and order fetches when the organiser has no events in the lookback window", async () => {
     mockedGetOrganiserEventsStartingOnOrAfter.mockResolvedValue({
       events: [],
       hasAnyOrganiserEvents: true,
     });
 
-    const metrics = await fetchOrganiserDashboardMetrics("organiser-empty-window" as UserId, {
-      bypassCache: true,
-    });
+    const metrics = await fetchOrganiserDashboardMetrics("organiser-empty-window" as UserId);
 
-    expect(mockedGetTicketsPurchasedOnOrAfter).not.toHaveBeenCalled();
-    expect(mockedGetOrdersByIdsIfPresent).not.toHaveBeenCalled();
+    expect(mockedGetEventMetadata).not.toHaveBeenCalled();
+    expect(mockedGetOrders).not.toHaveBeenCalled();
+    expect(mockedGetTickets).not.toHaveBeenCalled();
     expect(metrics.ticketsSold30d).toBe(0);
     expect(metrics.hasAnyEvents).toBe(true);
     expect(metrics.events).toEqual([]);

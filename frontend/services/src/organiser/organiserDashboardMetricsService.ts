@@ -4,11 +4,10 @@ import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import {
   DASHBOARD_LOOKBACK_SECONDS,
-  ORGANISER_EVENTS_REFRESH_MILLIS,
 } from "@/services/src/organiser/organiserConstants";
 import { getOrganiserEventsStartingOnOrAfter } from "@/services/src/organiser/organiserEventsService";
-import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
-import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
+import { filterTicketsPurchasedOnOrAfter } from "@/services/src/organiser/organiserLookback";
+import { organiserHub } from "@/services/src/organiser/organiserHubCache";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { Timestamp } from "firebase/firestore";
 
@@ -257,54 +256,43 @@ function buildSalesByEvent30d(
   }));
 }
 
-type MetricsCacheEntry = {
-  userId: UserId;
-  fetchedAt: number;
-  metrics: OrganiserDashboardMetrics;
-};
-
-type MetricsInflight = {
-  userId: UserId;
-  promise: Promise<OrganiserDashboardMetrics>;
-};
-
-let metricsCache: MetricsCacheEntry | null = null;
-let metricsInflight: MetricsInflight | null = null;
-
-export function bustOrganiserDashboardMetricsCache(): void {
-  metricsCache = null;
-  metricsInflight = null;
-}
-
-export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): OrganiserDashboardMetrics | null {
-  if (!metricsCache || metricsCache.userId !== userId) {
-    return null;
-  }
-  if (Date.now() - metricsCache.fetchedAt >= ORGANISER_EVENTS_REFRESH_MILLIS) {
-    return null;
-  }
-  return metricsCache.metrics;
-}
-
-async function loadDashboardEvents(
-  userId: UserId,
+async function loadDashboardTicketsAndOrders(
+  eventIds: EventId[],
   since: Timestamp
-): Promise<{ events: EventData[]; hasAnyEvents: boolean }> {
-  const result = await getOrganiserEventsStartingOnOrAfter(userId, since);
-  return { events: result.events, hasAnyEvents: result.hasAnyOrganiserEvents };
+): Promise<{ tickets: Ticket[]; orders: Order[] }> {
+  if (eventIds.length === 0) {
+    return { tickets: [], orders: [] };
+  }
+
+  const eventIdSet = new Set(eventIds);
+  const metadataList = await Promise.all(eventIds.map((eventId) => organiserHub.getEventMetadata(eventId)));
+  const orderIds = [...new Set(metadataList.flatMap((metadata) => metadata.orderIds))] as OrderId[];
+  if (orderIds.length === 0) {
+    return { tickets: [], orders: [] };
+  }
+
+  const orders = (await organiserHub.getOrders(orderIds)).filter(isApprovedOrder);
+  const tickets = await organiserHub.getTickets(orders.flatMap((order) => order.tickets));
+  const recentTickets = filterTicketsPurchasedOnOrAfter(tickets, since).filter(
+    (ticket) => eventIdSet.has(ticket.eventId) && isApprovedTicket(ticket)
+  );
+
+  const orderIdsForTickets = new Set(recentTickets.map((ticket) => ticket.orderId));
+  const recentOrders = orders.filter((order) => orderIdsForTickets.has(order.orderId));
+
+  return { tickets: recentTickets, orders: recentOrders };
 }
 
 async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
   const since = new Timestamp(Timestamp.now().seconds - DASHBOARD_LOOKBACK_SECONDS, 0);
-  const { events, hasAnyEvents } = await loadDashboardEvents(userId, since);
+  const { events, hasAnyOrganiserEvents } = await getOrganiserEventsStartingOnOrAfter(userId, since);
+  const hasAnyEvents = hasAnyOrganiserEvents;
 
   const eventIds = events.map((event) => event.eventId);
-  const tickets = eventIds.length > 0 ? await getTicketsPurchasedOnOrAfter(eventIds, since) : [];
-  const approvedTickets = tickets.filter(isApprovedTicket);
-
-  const orderIds = [...new Set(approvedTickets.map((ticket) => ticket.orderId))] as OrderId[];
-  const orders = orderIds.length > 0 ? await getOrdersByIdsIfPresent(orderIds) : [];
-  const approvedOrders = orders.filter(isApprovedOrder);
+  const { tickets: approvedTickets, orders: approvedOrders } = await loadDashboardTicketsAndOrders(
+    eventIds,
+    since
+  );
 
   const recentOrderTicketsMap = buildOrderTicketsMap(approvedOrders, approvedTickets);
   const netSales30dCents = await calculateNetSales(recentOrderTicketsMap);
@@ -333,32 +321,6 @@ async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserD
   };
 }
 
-export async function fetchOrganiserDashboardMetrics(
-  userId: UserId,
-  options?: { bypassCache?: boolean }
-): Promise<OrganiserDashboardMetrics> {
-  if (!options?.bypassCache) {
-    const cached = tryGetCachedOrganiserDashboardMetrics(userId);
-    if (cached) {
-      return cached;
-    }
-    if (metricsInflight && metricsInflight.userId === userId) {
-      return metricsInflight.promise;
-    }
-  }
-
-  const promise = (async () => {
-    const metrics = await loadOrganiserDashboardMetrics(userId);
-    metricsCache = { userId, fetchedAt: Date.now(), metrics };
-    return metrics;
-  })();
-
-  metricsInflight = { userId, promise };
-  try {
-    return await promise;
-  } finally {
-    if (metricsInflight?.promise === promise) {
-      metricsInflight = null;
-    }
-  }
+export async function fetchOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
+  return loadOrganiserDashboardMetrics(userId);
 }
