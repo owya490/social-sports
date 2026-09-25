@@ -71,6 +71,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                     .numTickets(numTickets)
                     .eventTicketTypeId(ticketType.getId())
                     .eventTicketTypeName(ticketType.getName())
+                    .price(ticketType.getPrice())
                     .build();
 
             return session;
