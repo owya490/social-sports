@@ -76,6 +76,7 @@ public class CheckoutFulfilmentService implements FulfilmentSessionService<Check
                     .numTickets(numTickets)
                     .eventTicketTypeId(ticketType.getId())
                     .eventTicketTypeName(ticketType.getName())
+                    .price(ticketType.getPrice())
                     .build();
 
             return session;

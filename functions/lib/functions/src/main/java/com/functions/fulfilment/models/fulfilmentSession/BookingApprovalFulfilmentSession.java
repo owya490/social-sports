@@ -15,6 +15,8 @@ public class BookingApprovalFulfilmentSession extends FulfilmentSession {
     private String eventTicketTypeId;
     @Nullable
     private String eventTicketTypeName;
+    @Nullable
+    private Integer price;
 
     {
         setType(FulfilmentSessionType.BOOKING_APPROVAL);

@@ -129,59 +129,57 @@ public abstract class FulfilmentSession {
         FulfilmentSessionType sessionType =
                 FulfilmentSessionType.valueOf((String) snapshot.get("type"));
 
+        Integer numTickets = getInteger(snapshot, "numTickets");
+        Integer price = getInteger(snapshot, "price");
+
         // Create the appropriate session type
         switch (sessionType) {
             case CHECKOUT:
-                Integer numTicketsCheckout = null;
-                Long numTicketsLongCheckout = snapshot.getLong("numTickets");
-                if (numTicketsLongCheckout != null) {
-                    numTicketsCheckout = numTicketsLongCheckout.intValue();
-                }
                 return CheckoutFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"),
                                 EventData.class))
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsCheckout)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .price(price)
                         .build();
             case BOOKING_APPROVAL:
-                Integer numTicketsBookingApproval = null;
-                Long numTicketsLongBookingApproval = snapshot.getLong("numTickets");
-                if (numTicketsLongBookingApproval != null) {
-                    numTicketsBookingApproval = numTicketsLongBookingApproval.intValue();
-                }
                 return BookingApprovalFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"),
                                 EventData.class))
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsBookingApproval)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .price(price)
                         .build();
             case WAITLIST:
-                Integer numTicketsWaitlist = null;
-                Long numTicketsLongWaitlist = snapshot.getLong("numTickets");
-                // Firestore does not separate Ints vs Longs 
-                if (numTicketsLongWaitlist != null) {
-                    numTicketsWaitlist = numTicketsLongWaitlist.intValue();
-                }
                 return WaitlistFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
                             EventData.class))
                         .fulfilmentSessionStartTime(
                             snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsWaitlist)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
+                        .price(price)
                         .build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);
         }
+    }
+
+    /**
+     * Firestore stores integers as longs and does not distinguish the two.
+     */
+    private static Integer getInteger(DocumentSnapshot snapshot, String field) {
+        Long value = snapshot.getLong(field);
+        return value == null ? null : value.intValue();
     }
 }
