@@ -42,6 +42,7 @@ public class FirebaseService {
                 "Events/InActive/Public",
                 "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final String FULFILMENT_COMPLETION_JOBS = "FulfilmentCompletionJobs";
         public static final String TICKETS = "Tickets";
         public static final String ORDERS = "Orders";
         public static final String ATTENDEES = "Attendees";
