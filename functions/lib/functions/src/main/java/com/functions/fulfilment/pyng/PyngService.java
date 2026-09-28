@@ -36,6 +36,7 @@ public final class PyngService {
     private static final int MAX_METADATA_BYTES = 4096;
     private static final int MAX_RETURN_URL_LENGTH = 2048;
 
+    // Replaced in tests so checkout calls do not hit Pyng or Firestore.
     static volatile PyngCheckoutClient client = PyngCheckoutClient.http();
     static volatile Continuation continuation;
     static volatile StatusRecorder statusRecorder;

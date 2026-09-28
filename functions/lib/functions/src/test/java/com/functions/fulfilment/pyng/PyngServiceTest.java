@@ -86,10 +86,10 @@ public class PyngServiceTest {
 
     @Test
     public void createHostedCheckoutRejectsNonPositiveAmount() {
-        PyngService.client = request -> {
+        PyngService.client = new PyngCheckoutClient(request -> {
             fail("Pyng must not be called for a non-positive amount");
             return null;
-        };
+        });
         PyngCheckoutFulfilmentSession checkout = session(null);
         checkout.getEventData().getEventTicketTypes().get("ticket-1").setPrice(0);
 
@@ -206,10 +206,10 @@ public class PyngServiceTest {
     public void refreshCheckoutContinuesAStoredTerminalStatus() throws Exception {
         AtomicInteger continuations = new AtomicInteger();
         PyngService.continuation = (sessionId, session) -> continuations.incrementAndGet();
-        PyngService.client = request -> {
+        PyngService.client = new PyngCheckoutClient(request -> {
             fail("A terminal checkout must not be polled again before continuing");
             return null;
-        };
+        });
 
         PyngService.refreshCheckout(SESSION_ID, session(PaymentStatus.EXPIRED));
 
