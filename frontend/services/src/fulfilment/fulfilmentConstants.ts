@@ -18,25 +18,29 @@ export const COMPLETE_FULFILMENT_SESSION_URL = {
 };
 
 /**
- * Generates localStorage key for fulfilment session ID with event and ticket context.
- * Format: "fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>"
+ * Stripe checkout keeps the original key. Any other provider is appended so a
+ * cached Stripe session is not resumed for a different payment method.
+ * Format: "fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>[#<paymentProvider>]"
  */
 export function getFulfilmentSessionIdKey(
   eventId: string,
   numTickets: number,
-  eventTicketTypeId: string
+  eventTicketTypeId: string,
+  paymentProvider?: string
 ): string {
-  return `fulfilmentSessionId#${eventId}#${numTickets}#${eventTicketTypeId}`;
+  const base = `fulfilmentSessionId#${eventId}#${numTickets}#${eventTicketTypeId}`;
+  return paymentProvider && paymentProvider !== "STRIPE" ? `${base}#${paymentProvider}` : base;
 }
 
 /**
- * Generates localStorage key for fulfilment session expiry timestamp with event and ticket context.
- * Format: "fulfilmentSessionLocalStorageExpiryTimestamp#<eventId>#<numTickets>#<eventTicketTypeId>"
+ * Format: "fulfilmentSessionLocalStorageExpiryTimestamp#<eventId>#<numTickets>#<eventTicketTypeId>[#<paymentProvider>]"
  */
 export function getFulfilmentSessionExpiryTimestampKey(
   eventId: string,
   numTickets: number,
-  eventTicketTypeId: string
+  eventTicketTypeId: string,
+  paymentProvider?: string
 ): string {
-  return `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}#${eventTicketTypeId}`;
+  const base = `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}#${eventTicketTypeId}`;
+  return paymentProvider && paymentProvider !== "STRIPE" ? `${base}#${paymentProvider}` : base;
 }

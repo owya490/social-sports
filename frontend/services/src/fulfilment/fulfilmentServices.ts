@@ -15,6 +15,7 @@ import {
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
+  PaymentProvider,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
@@ -64,10 +65,15 @@ export async function initFulfilmentSession(
   try {
     switch (fulfilmentSessionType.type) {
       case FulfilmentSessionType.CHECKOUT: {
-        const { eventId, numTickets, eventTicketTypeId } = fulfilmentSessionType;
+        const { eventId, numTickets, eventTicketTypeId, paymentProvider } = fulfilmentSessionType;
 
-        // Check for existing session in localStorage specific to this event, ticket count, and type
-        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
+        // Check for existing session in localStorage specific to this event, ticket count, type, and provider
+        const existingSessionId = getStoredFulfilmentSessionId(
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
 
         if (existingSessionId) {
           fulfilmentServiceLogger.info(
@@ -89,16 +95,27 @@ export async function initFulfilmentSession(
             fulfilmentServiceLogger.warn(
               `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
             );
-            clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
+            clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId, paymentProvider);
             // Session is invalid, continue to create a new one
           }
         }
 
         // No valid existing session, create a new one
-        const response = await initCheckoutFulfilmentSession(eventId, numTickets, eventTicketTypeId);
+        const response = await initCheckoutFulfilmentSession(
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
 
         // Store the new session ID in localStorage with event and ticket context
-        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
+        storeFulfilmentSessionId(
+          response.fulfilmentSessionId,
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
 
         return response;
       }
@@ -122,7 +139,8 @@ export async function initFulfilmentSession(
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
   numTickets: number,
-  eventTicketTypeId: EventTicketTypeId
+  eventTicketTypeId: EventTicketTypeId,
+  paymentProvider?: InitCheckoutFulfilmentSessionRequest["paymentProvider"]
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
@@ -135,6 +153,8 @@ async function initCheckoutFulfilmentSession(
       eventId,
       numTickets,
       eventTicketTypeId,
+      // Missing provider stays Stripe. Only PYNG is sent explicitly.
+      ...(paymentProvider === PaymentProvider.PYNG ? { paymentProvider } : {}),
     });
     return response;
   } catch (error) {

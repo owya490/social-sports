@@ -3,7 +3,7 @@
 import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
 import { EventData } from "@/interfaces/EventTypes";
-import { timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { findGeneralAdmissionTicketType } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -20,7 +20,8 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
   const [ticketCount, setTicketCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const ticketOptions = getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction);
-  const eventTicketTypeId = findGeneralAdmissionTicketType(event.eventTicketTypes)?.id ?? null;
+  const admission = findGeneralAdmissionTicketType(event.eventTicketTypes);
+  const eventTicketTypeId = admission?.id ?? null;
   const priceLabel = getEventPriceDisplay(event.price);
   const timeLabel = timestampToTimeOfDay(event.startDate);
 
@@ -94,6 +95,11 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
                 ticketCount={ticketCount}
                 eventTicketTypeId={eventTicketTypeId}
                 setLoading={setLoading}
+                unitPriceCents={event.price}
+                itemName={admission?.name ?? "Ticket"}
+                eventName={event.name}
+                organiser={event.organiser}
+                eventDate={timestampToDateString(event.startDate)}
                 className="shrink-0 rounded-xl bg-foreground px-3.5 py-2 text-sm font-semibold text-background font-sans hover:opacity-90 disabled:opacity-60"
               />
             </div>
