@@ -100,7 +100,9 @@ export function BookingCheckoutActions({ pendingProvider, onPay }: BookingChecko
         {pendingProvider === PaymentProvider.PYNG ? "Booking..." : "Pay with PYNG"}
       </button>
       <p className="text-xs font-sans leading-5 text-foreground-muted">
-        No Credit Card Fees with Pyng. Uses PayTo, save 50c every payment.{" "}
+        No Credit Card Fees with Pyng.{" "}
+        <span className="md:hidden">Save 50c every payment.</span>
+        <span className="hidden md:inline">Uses PayTo, save 50c every payment.</span>{" "}
         <a
           href={PYNG_SIGNUP_URL}
           target="_blank"
