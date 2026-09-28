@@ -415,7 +415,7 @@ public class FulfilmentService {
             return Optional.of(new GetNextFulfilmentEntityResponse(
                     nextEntityId));
         } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
-                | IllegalArgumentException | UnsupportedOperationException e) {
+                | IllegalArgumentException | IllegalStateException | UnsupportedOperationException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
@@ -572,7 +572,7 @@ public class FulfilmentService {
             // Get the next entity
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
         } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
-                | IllegalArgumentException | UnsupportedOperationException e) {
+                | IllegalArgumentException | IllegalStateException | UnsupportedOperationException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity by current ID for session: {}",
