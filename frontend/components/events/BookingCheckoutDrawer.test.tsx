@@ -62,7 +62,11 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain("Pay with PYNG");
     expect(markup).toContain("/images/pyng-mark.png");
     expect(markup).not.toContain("About PayTo");
-    expect(markup).toContain("No Credit Card Fees with Pyng. Uses PayTo, save 50c every payment.");
+    expect(markup).toContain("No Credit Card Fees with Pyng.");
+    expect(markup).toContain("md:hidden");
+    expect(markup).toContain("Save 50c every payment.");
+    expect(markup).toContain("hidden md:inline");
+    expect(markup).toContain("Uses PayTo, save 50c every payment.");
     expect(markup).toContain("https://pyng.com.au/customer-referral?referralCode=6YNCMZ");
     expect(markup).toContain("Sign up");
   });
