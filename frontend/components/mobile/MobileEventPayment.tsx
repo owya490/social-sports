@@ -2,7 +2,7 @@
 
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
 import { EventId } from "@/interfaces/EventTypes";
-import { UserId } from "@/interfaces/UserTypes";
+import { UserId, PublicUserData } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import {
   formatMobileDifferentDayDateTime,
@@ -40,6 +40,8 @@ interface MobileEventPaymentProps {
   maxTicketsPerTransaction?: number;
   bookingApprovalEnabled?: boolean;
   ticketCheckout: EventTicketTypeCheckout;
+  eventName: string;
+  organiser: PublicUserData;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -51,6 +53,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
     selectedTypeId,
     handleTicketTypeChange,
     effectivePrice,
+    selectedType,
     effectiveEventTicketTypeId,
     allCounts,
     attendeeCount,
@@ -202,6 +205,11 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         eventTicketTypeId={effectiveEventTicketTypeId}
                         setLoading={props.setLoading}
                         bookingApprovalEnabled={props.bookingApprovalEnabled}
+                        unitPriceCents={effectivePrice}
+                        itemName={selectedType?.eventTicketType.name ?? "Ticket"}
+                        eventName={props.eventName}
+                        organiser={props.organiser}
+                        eventDate={timestampToDateString(startDate)}
                         className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
                       />
                     </div>
