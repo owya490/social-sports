@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.cloud.Timestamp;
 
 import lombok.Data;
 
@@ -43,11 +42,7 @@ public abstract class AbstractUserData {
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
 	private List<String> privateEventCollections = new ArrayList<>();
-	private String onboardingPersona;
-	private Timestamp onboardingCompletedAt;
-	private Timestamp stripeConnectSetupCompletedAt;
-	private Timestamp stripeConnectSetupSkippedAt;
-	private Timestamp onboardingSkippedAt;
+
 	@Data
 	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class ContactInformation {
