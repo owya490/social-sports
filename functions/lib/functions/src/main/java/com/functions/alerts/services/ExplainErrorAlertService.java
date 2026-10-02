@@ -72,9 +72,12 @@ public class ExplainErrorAlertService {
     static String buildPrompt(ParsedErrorLog parsed) {
         return """
                 You page SPORTSHUB on-call via SMS.
-                Summarize this Cloud Function ERROR in at most 320 characters.
-                No markdown. No quotes. Be specific.
-                Include: function name, what failed, likely cause, and the first class/method to open if present.
+                Write 1–2 full sentences, about 200–320 characters. No markdown. No quotes.
+                Do NOT emit 4-6 word stubs such as "globalAppController failed Stripe".
+                The reply MUST include all of: function name, the concrete operation that failed \
+                (for example webhook fulfillment or checkout session expired), exception type, \
+                the first class.method from the stack if present, and the likely cause.
+                Prefer one compact sentence over a headline.
 
                 Function: %s
                 Exception: %s

@@ -23,6 +23,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 public class GeminiClient implements LlmClient {
     private static final Logger logger = LoggerFactory.getLogger(GeminiClient.class);
     static final String MODEL = "gemini-2.5-flash";
+    /** Includes thinking tokens on gemini-2.5; 160 left almost no room for the SMS. */
+    static final int MAX_OUTPUT_TOKENS = 1024;
     private static final String LOCATION = "us-central1";
     private static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
@@ -47,7 +49,7 @@ public class GeminiClient implements LlmClient {
             content.putArray("parts").addObject().put("text", prompt);
             ObjectNode generationConfig = body.putObject("generationConfig");
             generationConfig.put("temperature", 0.2);
-            generationConfig.put("maxOutputTokens", 160);
+            generationConfig.put("maxOutputTokens", MAX_OUTPUT_TOKENS);
 
             try (CloseableHttpClient client = HttpClients.createDefault()) {
                 HttpPost post = new HttpPost(url);

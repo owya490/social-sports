@@ -41,4 +41,9 @@ public class GeminiClientTest {
         assertEquals("gemini-2.5-flash", GeminiClient.MODEL);
         assertTrue(!GeminiClient.MODEL.contains("2.0"));
     }
+
+    @Test
+    public void maxOutputTokens_leavesRoomForThinkingAndSms() {
+        assertTrue(GeminiClient.MAX_OUTPUT_TOKENS >= 512);
+    }
 }

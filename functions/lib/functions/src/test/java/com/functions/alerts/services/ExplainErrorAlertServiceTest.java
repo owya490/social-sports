@@ -134,6 +134,21 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
+    public void buildPrompt_requiresConcreteSmsFieldsNotShortStubs() {
+        String prompt = ExplainErrorAlertService.buildPrompt(sampleLog());
+        assertTrue(prompt.contains("Do NOT emit 4-6 word stubs"));
+        assertTrue(prompt.contains("globalAppController failed Stripe"));
+        assertTrue(prompt.contains("concrete operation"));
+        assertTrue(prompt.contains("exception type"));
+        assertTrue(prompt.contains("class.method"));
+        assertTrue(prompt.contains("likely cause"));
+        assertTrue(prompt.contains("full sentences"));
+        assertTrue(prompt.contains("Function: globalAppController"));
+        assertTrue(prompt.contains("Exception: RuntimeException"));
+        assertTrue(prompt.contains("WebhookService.process"));
+    }
+
+    @Test
     public void fallbackSms_includesFunctionExceptionAndFrame() {
         String body = ExplainErrorAlertService.fallbackSms(sampleLog());
         assertTrue(body.contains("globalAppController"));
