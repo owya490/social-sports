@@ -8,5 +8,6 @@ public enum FulfilmentEntityType {
     DELAYED_STRIPE,
     FORMS,
     WAITLIST,
-    END;
+    END,
+    PYNG;
 }

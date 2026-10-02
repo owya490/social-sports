@@ -1,7 +1,9 @@
 package com.functions.fulfilment.repositories;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
@@ -9,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.functions.utils.JavaUtils.objectMapper;
@@ -113,11 +116,55 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    public static void updatePyngMetadata(String sessionId, PyngMetadata pyngMetadata) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
+                    new TypeReference<Map<String, Object>>() {
+                    });
+            sessionDocRef.update("pyngMetadata", metadataMap).get();
+        } catch (Exception e) {
+            logger.error("Failed to update pyngMetadata for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to update pyngMetadata for sessionId: " + sessionId, e);
+        }
+    }
+
+    public static void updateCrystallized(String sessionId, boolean crystallized) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            sessionDocRef.update("crystallized", crystallized).get();
+        } catch (Exception e) {
+            logger.error("Failed to update crystallized for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to update crystallized for sessionId: " + sessionId, e);
+        }
+    }
+
     /**
      * Deletes a fulfilment session (convenience method without transaction)
      */
     public static void deleteFulfilmentSession(String sessionId) throws Exception {
         deleteFulfilmentSession(sessionId, Optional.empty());
+    }
+
+    /**
+     * Sessions still waiting for payment completion to crystallize them.
+     * Pending Pyng checkouts are stored with {@code crystallized == false}.
+     */
+    public static List<String> listUncrystallizedSessionIds() throws Exception {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            Query query = db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
+                    .whereEqualTo("crystallized", false);
+            QuerySnapshot snapshots = query.get().get();
+            List<String> ids = new ArrayList<>();
+            for (QueryDocumentSnapshot doc : snapshots.getDocuments()) {
+                ids.add(doc.getId());
+            }
+            return ids;
+        } catch (Exception e) {
+            logger.error("Failed to list uncrystallized fulfilment sessions", e);
+            throw new Exception("Failed to list uncrystallized fulfilment sessions", e);
+        }
     }
 
     public static List<String> listFulfilmentSessionIdsOlderThan(Timestamp cutoff)

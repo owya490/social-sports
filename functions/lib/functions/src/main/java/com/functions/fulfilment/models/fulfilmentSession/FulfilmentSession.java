@@ -15,6 +15,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
 import com.google.cloud.Timestamp;
@@ -107,6 +108,9 @@ public abstract class FulfilmentSession {
                     case END:
                         entity = objectMapper.readValue(json, EndFulfilmentEntity.class);
                         break;
+                    case PYNG:
+                        entity = objectMapper.readValue(json, PyngFulfilmentEntity.class);
+                        break;
                     default:
                         throw new IllegalArgumentException(
                                 "Unknown FulfilmentEntity type: " + entityData.get("type"));
@@ -168,6 +172,29 @@ public abstract class FulfilmentSession {
                         .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .price(price)
+                        .build();
+            case PYNG_CHECKOUT:
+                Integer numTicketsPyngCheckout = null;
+                Long numTicketsLongPyngCheckout = snapshot.getLong("numTickets");
+                if (numTicketsLongPyngCheckout != null) {
+                    numTicketsPyngCheckout = numTicketsLongPyngCheckout.intValue();
+                }
+                PyngMetadata pyngMetadata = null;
+                if (snapshot.get("pyngMetadata") != null) {
+                    pyngMetadata = objectMapper.convertValue(snapshot.get("pyngMetadata"), PyngMetadata.class);
+                }
+                return PyngCheckoutFulfilmentSession.builder()
+                        .id(snapshot.getId())
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"),
+                                EventData.class))
+                        .fulfilmentSessionStartTime(
+                                snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
+                        .numTickets(numTicketsPyngCheckout)
+                        .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
+                        .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .pyngMetadata(pyngMetadata)
+                        .crystallized(snapshot.getBoolean("crystallized"))
                         .build();
             default:
                 throw new IllegalArgumentException(

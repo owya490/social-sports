@@ -4,6 +4,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.payment.PaymentStatus;
 
 // TODO: refactor this in a way where we don't have to overload this one response model with all information
 // from all different fulfilment entity types.
@@ -19,5 +20,9 @@ public record GetFulfilmentEntityInfoResponse(
                  */
                 @Nullable String eventId,
                 @Nullable String formId,
-                @Nullable String formResponseId) {
+                @Nullable String formResponseId,
+                /**
+                 * Payment step status. Empty unless the entity is a payment step.
+                 */
+                @Nullable PaymentStatus paymentStatus) {
 }
