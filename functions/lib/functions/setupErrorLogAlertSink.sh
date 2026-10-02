@@ -38,6 +38,7 @@ REGION="australia-southeast1"
 POLICY_DISPLAY_NAME="SPORTSHUB AI error summary"
 SUMMARY_MARKER="SPORTSHUB_ALERT_SUMMARY"
 KIND_MARKER="SPORTSHUB_ALERT_KIND=errorSummary"
+SUMMARY_LOG_ID="sportshub-alert-sms"
 
 # Exclude the explainer itself. Gen2 names are Cloud Run service names (lowercase).
 LOG_FILTER="severity>=ERROR
@@ -47,15 +48,21 @@ AND (
 )
 AND NOT resource.labels.function_name=\"explainErrorAlert\"
 AND NOT resource.labels.service_name=\"explainerroralert\"
+AND NOT logName:\"${SUMMARY_LOG_ID}\"
 AND NOT textPayload:\"${SUMMARY_MARKER}\"
-AND NOT textPayload:\"${KIND_MARKER}\""
+AND NOT textPayload:\"${KIND_MARKER}\"
+AND NOT jsonPayload.message:\"${SUMMARY_MARKER}\""
 
-# Only the explainer service can page. The marker in other functions' logs is ignored.
-SUMMARY_ALERT_FILTER="textPayload:\"${KIND_MARKER}\"
-AND textPayload:\"${SUMMARY_MARKER}\"
+# Dedicated Logging API textPayload. Do not AND function_name (absent on Gen2).
+# jsonPayload.message is kept as a backup match only.
+SUMMARY_ALERT_FILTER="logName:\"${SUMMARY_LOG_ID}\"
 AND (
-  resource.labels.service_name=\"explainerroralert\"
-  OR resource.labels.function_name=\"explainErrorAlert\"
+  textPayload:\"${KIND_MARKER}\"
+  OR jsonPayload.message:\"${KIND_MARKER}\"
+)
+AND (
+  textPayload:\"${SUMMARY_MARKER}\"
+  OR jsonPayload.message:\"${SUMMARY_MARKER}\"
 )"
 
 echo "Setting up error log alert sink in $ENVIRONMENT project $PROJECT_NAME"
@@ -174,7 +181,8 @@ cat > "$POLICY_FILE" <<EOF
       "conditionMatchedLog": {
         "filter": $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SUMMARY_ALERT_FILTER"),
         "labelExtractors": {
-          "summary": "REGEXP_EXTRACT(textPayload, \"${SUMMARY_MARKER} (.*)\")"
+          "summary": "REGEXP_EXTRACT(textPayload, \"${SUMMARY_MARKER} (.*)\")",
+          "summary_json": "REGEXP_EXTRACT(jsonPayload.message, \"${SUMMARY_MARKER} (.*)\")"
         }
       }
     }

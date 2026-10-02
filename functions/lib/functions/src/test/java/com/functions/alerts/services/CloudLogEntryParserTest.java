@@ -82,6 +82,23 @@ public class CloudLogEntryParserTest {
     }
 
     @Test
+    public void parse_skipsDedicatedSmsSummaryLogName() {
+        String log = """
+                {
+                  "severity": "ERROR",
+                  "logName": "projects/socialsports-44162/logs/sportshub-alert-sms",
+                  "textPayload": "unrelated",
+                  "resource": {
+                    "labels": {
+                      "function_name": "globalAppController"
+                    }
+                  }
+                }
+                """;
+        assertTrue(CloudLogEntryParser.parse(log).isEmpty());
+    }
+
+    @Test
     public void parse_skipsPublishedAlertSummary() {
         String log = """
                 {

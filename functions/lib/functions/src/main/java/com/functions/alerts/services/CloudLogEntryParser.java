@@ -54,8 +54,15 @@ public final class CloudLogEntryParser {
                 return Optional.empty();
             }
 
+            String logName = root.path("logName").asText("");
+            if (logName.contains("sportshub-alert-sms")) {
+                logger.info("Skipping dedicated SMS summary log");
+                return Optional.empty();
+            }
+
             String message = extractMessage(root);
-            if (message.contains("SPORTSHUB_ALERT_SUMMARY")) {
+            if (message.contains("SPORTSHUB_ALERT_SUMMARY")
+                    || message.contains("SPORTSHUB_ALERT_KIND=errorSummary")) {
                 logger.info("Skipping already-published alert summary log");
                 return Optional.empty();
             }
