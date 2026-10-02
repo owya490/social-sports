@@ -6,8 +6,8 @@
 #
 # Usage: ./setupErrorLogAlertSink.sh <dev|prod> [sms_channel_resource_name]
 #
-# If you omit the channel, the script copies SMS channels from an existing
-# ERROR log-based policy. It does not attach every SMS channel in the project.
+# If you omit the channel, the script attaches every SMS channel in the project
+# plus email channels (Compass Digital on DEV).
 #
 # Also enable Vertex AI and grant the default Compute Engine runtime identity
 # roles/aiplatform.user on the project.
@@ -53,13 +53,8 @@ AND NOT textPayload:\"${SUMMARY_MARKER}\"
 AND NOT textPayload:\"${KIND_MARKER}\"
 AND NOT jsonPayload.message:\"${SUMMARY_MARKER}\""
 
-# Dedicated Logging API textPayload. Do not AND function_name (absent on Gen2).
-# jsonPayload.message is kept as a backup match only.
-SUMMARY_ALERT_FILTER="logName:\"${SUMMARY_LOG_ID}\"
-AND (
-  textPayload:\"${KIND_MARKER}\"
-  OR jsonPayload.message:\"${KIND_MARKER}\"
-)
+# Dedicated NOTICE log. Do not AND function_name (absent on Gen2 / global resource).
+SUMMARY_ALERT_FILTER="logName=\"projects/${PROJECT_NAME}/logs/${SUMMARY_LOG_ID}\"
 AND (
   textPayload:\"${SUMMARY_MARKER}\"
   OR jsonPayload.message:\"${SUMMARY_MARKER}\"
@@ -114,47 +109,31 @@ else
     CHANNEL_LIST_FILE="$(dirname "$0")/../../../.tmp/error-alert-sms-channels.txt"
     mkdir -p "$(dirname "$CHANNEL_LIST_FILE")"
     set +e
-    gcloud alpha monitoring policies list \
+    gcloud beta monitoring channels list \
         --project="$PROJECT_NAME" \
-        --format='json' > "$CHANNEL_LIST_FILE.policies.json"
-    POLICY_LIST_STATUS=$?
+        --format='json' > "$CHANNEL_LIST_FILE.channels.json"
+    CHANNEL_LIST_STATUS=$?
     set -e
-    if [ "$POLICY_LIST_STATUS" -ne 0 ]; then
-        echo "Failed to list Cloud Monitoring policies (exit $POLICY_LIST_STATUS)"
+    if [ "$CHANNEL_LIST_STATUS" -ne 0 ]; then
+        echo "Failed to list Cloud Monitoring channels (exit $CHANNEL_LIST_STATUS)"
         exit 1
     fi
-    python3 - "$CHANNEL_LIST_FILE.policies.json" "$POLICY_DISPLAY_NAME" > "$CHANNEL_LIST_FILE" <<'PY'
+    python3 - "$CHANNEL_LIST_FILE.channels.json" > "$CHANNEL_LIST_FILE" <<'PY'
 import json, sys
-path, skip_name = sys.argv[1], sys.argv[2]
-policies = json.load(open(path))
-channels = []
+channels = json.load(open(sys.argv[1]))
+names = []
 seen = set()
-for policy in policies:
-    if policy.get("displayName") == skip_name:
+for channel in channels:
+    if not channel.get("enabled", True):
         continue
-    conditions = policy.get("conditions") or []
-    is_error_policy = False
-    for condition in conditions:
-        matched = condition.get("conditionMatchedLog") or {}
-        filt = matched.get("filter") or ""
-        if "severity" in filt and "ERROR" in filt:
-            is_error_policy = True
-            break
-    if not is_error_policy:
+    kind = channel.get("type")
+    if kind not in ("sms", "email"):
         continue
-    for channel in policy.get("notificationChannels") or []:
-        if channel and channel not in seen:
-            seen.add(channel)
-            channels.append(channel)
-if not channels:
-    for policy in policies:
-        if policy.get("displayName") != skip_name:
-            continue
-        for channel in policy.get("notificationChannels") or []:
-            if channel and channel not in seen:
-                seen.add(channel)
-                channels.append(channel)
-print("\n".join(channels))
+    name = channel.get("name")
+    if name and name not in seen:
+        seen.add(name)
+        names.append(name)
+print("\n".join(names))
 PY
     while IFS= read -r channel; do
         if [ -n "$channel" ]; then
@@ -164,7 +143,7 @@ PY
 fi
 
 if [ "${#SMS_CHANNELS[@]}" -eq 0 ]; then
-    echo "No SMS notification channels selected from the existing ERROR policy."
+    echo "No SMS or email notification channels found in the project."
     echo "Pass the intended channel explicitly:"
     echo "  $0 $ENVIRONMENT projects/${PROJECT_NAME}/notificationChannels/CHANNEL_ID"
     exit 1
@@ -179,29 +158,28 @@ cat > "$POLICY_FILE" <<EOF
 {
   "displayName": "${POLICY_DISPLAY_NAME}",
   "documentation": {
-    "subject": "\${log.extracted_label.summary}",
-    "content": "\${log.extracted_label.summary}",
+    "subject": "${POLICY_DISPLAY_NAME}",
+    "content": "AI-summarized Cloud Function error. See log ${SUMMARY_LOG_ID} for SPORTSHUB_ALERT_SUMMARY.",
     "mimeType": "text/markdown"
   },
   "conditions": [
     {
       "displayName": "AI error summary log",
       "conditionMatchedLog": {
-        "filter": $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SUMMARY_ALERT_FILTER"),
-        "labelExtractors": {
-          "summary": "REGEXP_EXTRACT(textPayload, \"${SUMMARY_MARKER} (.*)\")",
-          "summary_json": "REGEXP_EXTRACT(jsonPayload.message, \"${SUMMARY_MARKER} (.*)\")"
-        }
+        "filter": $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SUMMARY_ALERT_FILTER")
       }
     }
   ],
   "combiner": "OR",
   "enabled": true,
   "alertStrategy": {
+    "notificationPrompts": [
+      "OPENED"
+    ],
     "notificationRateLimit": {
       "period": "300s"
     },
-    "autoClose": "1800s"
+    "autoClose": "604800s"
   },
   "notificationChannels": ${CHANNEL_JSON}
 }
