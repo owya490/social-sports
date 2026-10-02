@@ -35,4 +35,10 @@ public class GeminiClientTest {
     public void parseText_emptyCandidates() throws Exception {
         assertTrue(GeminiClient.parseText("{\"candidates\":[]}").isEmpty());
     }
+
+    @Test
+    public void model_isCurrentFlashNotRetired20() {
+        assertEquals("gemini-2.5-flash", GeminiClient.MODEL);
+        assertTrue(!GeminiClient.MODEL.contains("2.0"));
+    }
 }

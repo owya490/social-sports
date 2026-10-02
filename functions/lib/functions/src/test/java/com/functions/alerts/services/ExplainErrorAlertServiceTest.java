@@ -29,7 +29,7 @@ public class ExplainErrorAlertServiceTest {
         service.process(sampleLog());
 
         assertEquals(1, publisher.bodies.size());
-        assertEquals(SmsText.MAX_CHARS, publisher.bodies.get(0).length());
+        assertTrue(publisher.bodies.get(0).length() <= SmsText.MAX_UTF8_BYTES);
         assertTrue(publisher.bodies.get(0).endsWith("..."));
     }
 
@@ -82,6 +82,58 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
+    public void process_redactsEmailBeforePublishAndPrompt() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        RecordingLlm llm = new RecordingLlm();
+        ExplainErrorAlertService service = new ExplainErrorAlertService(
+                new AllowOnceDedup(),
+                llm,
+                publisher);
+
+        service.process(new ParsedErrorLog(
+                "emailService",
+                "Failed to send to jane.doe@example.com token=sk_live_abc123XYZ",
+                "RuntimeException",
+                "EmailService.send(EmailService.java:155)"));
+
+        assertEquals(1, publisher.bodies.size());
+        assertTrue(publisher.bodies.get(0).contains("[REDACTED_EMAIL]"));
+        assertTrue(publisher.bodies.get(0).contains("[REDACTED]"));
+        assertTrue(!publisher.bodies.get(0).contains("jane.doe@example.com"));
+        assertTrue(!publisher.bodies.get(0).contains("sk_live_abc123XYZ"));
+        assertTrue(llm.prompts.get(0).contains("[REDACTED_EMAIL]"));
+        assertTrue(!llm.prompts.get(0).contains("jane.doe@example.com"));
+    }
+
+    @Test
+    public void process_doesNotMarkSentWhenPublishFails() {
+        TrackingDedup dedup = new TrackingDedup();
+        ExplainErrorAlertService service = new ExplainErrorAlertService(
+                dedup,
+                prompt -> Optional.of("summary"),
+                summary -> false);
+
+        service.process(sampleLog());
+
+        assertEquals(1, dedup.claims);
+        assertEquals(0, dedup.markedSent);
+    }
+
+    @Test
+    public void process_marksSentAfterSuccessfulPublish() {
+        TrackingDedup dedup = new TrackingDedup();
+        ExplainErrorAlertService service = new ExplainErrorAlertService(
+                dedup,
+                prompt -> Optional.empty(),
+                summary -> true);
+
+        service.process(sampleLog());
+
+        assertEquals(1, dedup.claims);
+        assertEquals(1, dedup.markedSent);
+    }
+
+    @Test
     public void fallbackSms_includesFunctionExceptionAndFrame() {
         String body = ExplainErrorAlertService.fallbackSms(sampleLog());
         assertTrue(body.contains("globalAppController"));
@@ -114,6 +166,32 @@ public class ExplainErrorAlertServiceTest {
         @Override
         public boolean tryClaim(String fingerprint) {
             return claimed.add(fingerprint);
+        }
+    }
+
+    private static final class TrackingDedup implements ErrorAlertDedupStore {
+        private int claims;
+        private int markedSent;
+
+        @Override
+        public boolean tryClaim(String fingerprint) {
+            claims++;
+            return true;
+        }
+
+        @Override
+        public void markSent(String fingerprint) {
+            markedSent++;
+        }
+    }
+
+    private static final class RecordingLlm implements LlmClient {
+        private final List<String> prompts = new ArrayList<>();
+
+        @Override
+        public Optional<String> summarize(String prompt) {
+            prompts.add(prompt);
+            return Optional.empty();
         }
     }
 }

@@ -52,8 +52,11 @@ public class ExplainErrorAlertService {
             return;
         }
 
-        String body = SmsText.truncate(summarize(parsed));
+        String body = SmsText.forSms(AlertTextRedactor.redact(summarize(parsed)));
         boolean published = summaryPublisher.publish(body);
+        if (published) {
+            dedupStore.markSent(fingerprint);
+        }
         logger.info("Error alert summary publish complete. function={} fingerprint={} published={}",
                 parsed.functionName(), fingerprint, published);
     }
@@ -82,7 +85,7 @@ public class ExplainErrorAlertService {
                 parsed.functionName(),
                 parsed.exceptionType(),
                 parsed.topFrame() == null || parsed.topFrame().isBlank() ? "unknown" : parsed.topFrame(),
-                SmsText.truncate(parsed.message(), 2500));
+                AlertTextRedactor.redact(SmsText.truncate(parsed.message(), 2500)));
     }
 
     static String fallbackSms(ParsedErrorLog parsed) {
@@ -91,6 +94,6 @@ public class ExplainErrorAlertService {
                 : parsed.exceptionType();
         String firstLine = parsed.message() == null ? "" : parsed.message().strip().split("\\R", 2)[0];
         String frame = parsed.topFrame() == null || parsed.topFrame().isBlank() ? "" : " at " + parsed.topFrame();
-        return parsed.functionName() + ": " + exception + " " + firstLine + frame;
+        return AlertTextRedactor.redact(parsed.functionName() + ": " + exception + " " + firstLine + frame);
     }
 }

@@ -6,10 +6,10 @@
 #
 # Usage: ./setupErrorLogAlertSink.sh <dev|prod> [sms_channel_resource_name]
 #
-# If you omit the channel, the script attaches every existing SMS notification
-# channel in the project (the same numbers that already get ERROR pages).
+# If you omit the channel, the script copies SMS channels from an existing
+# ERROR log-based policy. It does not attach every SMS channel in the project.
 #
-# Also enable Vertex AI and grant the function service account
+# Also enable Vertex AI and grant the default Compute Engine runtime identity
 # roles/aiplatform.user on the project.
 
 set -euo pipefail
@@ -37,6 +37,7 @@ SINK="error-log-alerts-sink"
 REGION="australia-southeast1"
 POLICY_DISPLAY_NAME="SPORTSHUB AI error summary"
 SUMMARY_MARKER="SPORTSHUB_ALERT_SUMMARY"
+KIND_MARKER="SPORTSHUB_ALERT_KIND=errorSummary"
 
 # Exclude the explainer itself. Gen2 names are Cloud Run service names (lowercase).
 LOG_FILTER="severity>=ERROR
@@ -46,12 +47,30 @@ AND (
 )
 AND NOT resource.labels.function_name=\"explainErrorAlert\"
 AND NOT resource.labels.service_name=\"explainerroralert\"
-AND NOT textPayload:\"${SUMMARY_MARKER}\""
+AND NOT textPayload:\"${SUMMARY_MARKER}\"
+AND NOT textPayload:\"${KIND_MARKER}\""
+
+# Only the explainer service can page. The marker in other functions' logs is ignored.
+SUMMARY_ALERT_FILTER="textPayload:\"${KIND_MARKER}\"
+AND textPayload:\"${SUMMARY_MARKER}\"
+AND (
+  resource.labels.service_name=\"explainerroralert\"
+  OR resource.labels.function_name=\"explainErrorAlert\"
+)"
 
 echo "Setting up error log alert sink in $ENVIRONMENT project $PROJECT_NAME"
 
 gcloud services enable pubsub.googleapis.com logging.googleapis.com aiplatform.googleapis.com monitoring.googleapis.com \
     --project="$PROJECT_NAME"
+
+PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_NAME" --format='value(projectNumber)')
+RUNTIME_SA="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+echo "Granting roles/aiplatform.user to $RUNTIME_SA"
+gcloud projects add-iam-policy-binding "$PROJECT_NAME" \
+    --member="serviceAccount:${RUNTIME_SA}" \
+    --role="roles/aiplatform.user" \
+    --condition=None \
+    --quiet
 
 if gcloud pubsub topics describe "$TOPIC" --project="$PROJECT_NAME" >/dev/null 2>&1; then
     echo "Pub/Sub topic $TOPIC already exists"
@@ -85,26 +104,63 @@ SMS_CHANNELS=()
 if [ "$#" -eq 2 ]; then
     SMS_CHANNELS=("$2")
 else
+    CHANNEL_LIST_FILE="$(dirname "$0")/../../../.tmp/error-alert-sms-channels.txt"
+    mkdir -p "$(dirname "$CHANNEL_LIST_FILE")"
+    set +e
+    gcloud alpha monitoring policies list \
+        --project="$PROJECT_NAME" \
+        --format='json' > "$CHANNEL_LIST_FILE.policies.json"
+    POLICY_LIST_STATUS=$?
+    set -e
+    if [ "$POLICY_LIST_STATUS" -ne 0 ]; then
+        echo "Failed to list Cloud Monitoring policies (exit $POLICY_LIST_STATUS)"
+        exit 1
+    fi
+    python3 - "$CHANNEL_LIST_FILE.policies.json" "$POLICY_DISPLAY_NAME" > "$CHANNEL_LIST_FILE" <<'PY'
+import json, sys
+path, skip_name = sys.argv[1], sys.argv[2]
+policies = json.load(open(path))
+channels = []
+seen = set()
+for policy in policies:
+    if policy.get("displayName") == skip_name:
+        continue
+    conditions = policy.get("conditions") or []
+    is_error_policy = False
+    for condition in conditions:
+        matched = condition.get("conditionMatchedLog") or {}
+        filt = matched.get("filter") or ""
+        if "severity" in filt and "ERROR" in filt:
+            is_error_policy = True
+            break
+    if not is_error_policy:
+        continue
+    for channel in policy.get("notificationChannels") or []:
+        if channel and channel not in seen:
+            seen.add(channel)
+            channels.append(channel)
+print("\n".join(channels))
+PY
     while IFS= read -r channel; do
         if [ -n "$channel" ]; then
             SMS_CHANNELS+=("$channel")
         fi
-    done < <(gcloud beta monitoring channels list \
-        --project="$PROJECT_NAME" \
-        --filter='type="sms"' \
-        --format='value(name)')
+    done < "$CHANNEL_LIST_FILE"
 fi
 
 if [ "${#SMS_CHANNELS[@]}" -eq 0 ]; then
-    echo "No SMS notification channels found. Create one in Cloud Monitoring (same as today's ERROR texts), then re-run:"
+    echo "No SMS notification channels selected from the existing ERROR policy."
+    echo "Pass the intended channel explicitly:"
     echo "  $0 $ENVIRONMENT projects/${PROJECT_NAME}/notificationChannels/CHANNEL_ID"
-else
-    CHANNEL_JSON=$(printf '"%s",' "${SMS_CHANNELS[@]}")
-    CHANNEL_JSON="[${CHANNEL_JSON%,}]"
-    POLICY_FILE="$(dirname "$0")/../../../.tmp/error-alert-summary-policy.json"
-    mkdir -p "$(dirname "$POLICY_FILE")"
+    exit 1
+fi
 
-    cat > "$POLICY_FILE" <<EOF
+CHANNEL_JSON=$(printf '"%s",' "${SMS_CHANNELS[@]}")
+CHANNEL_JSON="[${CHANNEL_JSON%,}]"
+POLICY_FILE="$(dirname "$0")/../../../.tmp/error-alert-summary-policy.json"
+mkdir -p "$(dirname "$POLICY_FILE")"
+
+cat > "$POLICY_FILE" <<EOF
 {
   "displayName": "${POLICY_DISPLAY_NAME}",
   "documentation": {
@@ -116,7 +172,7 @@ else
     {
       "displayName": "AI error summary log",
       "conditionMatchedLog": {
-        "filter": "textPayload:\"${SUMMARY_MARKER}\"",
+        "filter": $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SUMMARY_ALERT_FILTER"),
         "labelExtractors": {
           "summary": "REGEXP_EXTRACT(textPayload, \"${SUMMARY_MARKER} (.*)\")"
         }
@@ -135,22 +191,21 @@ else
 }
 EOF
 
-    EXISTING_POLICY=$(gcloud alpha monitoring policies list \
-        --project="$PROJECT_NAME" \
-        --filter="displayName=\"${POLICY_DISPLAY_NAME}\"" \
-        --format='value(name)' | head -n 1)
+EXISTING_POLICY=$(gcloud alpha monitoring policies list \
+    --project="$PROJECT_NAME" \
+    --filter="displayName=\"${POLICY_DISPLAY_NAME}\"" \
+    --format='value(name)' | head -n 1)
 
-    if [ -n "$EXISTING_POLICY" ]; then
-        echo "Updating existing alerting policy $EXISTING_POLICY"
-        gcloud alpha monitoring policies update "$EXISTING_POLICY" \
-            --policy-from-file="$POLICY_FILE" \
-            --project="$PROJECT_NAME"
-    else
-        echo "Creating log-based SMS alert on marker ${SUMMARY_MARKER}"
-        gcloud alpha monitoring policies create \
-            --policy-from-file="$POLICY_FILE" \
-            --project="$PROJECT_NAME"
-    fi
+if [ -n "$EXISTING_POLICY" ]; then
+    echo "Updating existing alerting policy $EXISTING_POLICY"
+    gcloud alpha monitoring policies update "$EXISTING_POLICY" \
+        --policy-from-file="$POLICY_FILE" \
+        --project="$PROJECT_NAME"
+else
+    echo "Creating log-based SMS alert on marker ${SUMMARY_MARKER}"
+    gcloud alpha monitoring policies create \
+        --policy-from-file="$POLICY_FILE" \
+        --project="$PROJECT_NAME"
 fi
 
 echo "Done. Topic=$TOPIC sink=$SINK region=$REGION"

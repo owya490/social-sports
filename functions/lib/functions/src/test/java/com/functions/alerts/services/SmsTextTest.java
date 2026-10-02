@@ -30,4 +30,11 @@ public class SmsTextTest {
         String result = SmsText.truncate("x".repeat(500));
         assertEquals(SmsText.MAX_CHARS, result.length());
     }
+
+    @Test
+    public void forSms_capsUtf8BytesForMonitoringSubject() {
+        String result = SmsText.forSms("é".repeat(200));
+        assertTrue(result.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(result.endsWith("..."));
+    }
 }

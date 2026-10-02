@@ -24,6 +24,10 @@ public final class CloudLogEntryParser {
             "(?:^|\\n)\\s*([\\w.$]*(?:Exception|Error|Throwable))\\s*:");
     private static final Pattern TOP_FRAME = Pattern.compile(
             "\\bat ((?:[\\w.$]+)\\.[\\w$]+\\([^)]*\\))");
+    private static final Pattern UUID = Pattern.compile(
+            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
+    private static final Pattern WEBHOOK_UUID_PREFIX = Pattern.compile(
+            "(?i)\\[Webhook-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\]");
 
     private CloudLogEntryParser() {
     }
@@ -96,7 +100,7 @@ public final class CloudLogEntryParser {
                 nullToEmpty(parsed.functionName()),
                 nullToEmpty(parsed.exceptionType()),
                 nullToEmpty(parsed.topFrame()),
-                firstLine(parsed.message()));
+                firstLineForFingerprint(parsed.message()));
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256")
                     .digest(seed.getBytes(StandardCharsets.UTF_8));
@@ -187,6 +191,13 @@ public final class CloudLogEntryParser {
         }
         int newline = message.indexOf('\n');
         return newline >= 0 ? message.substring(0, newline) : message;
+    }
+
+    private static String firstLineForFingerprint(String message) {
+        String line = firstLine(message);
+        line = WEBHOOK_UUID_PREFIX.matcher(line).replaceAll("");
+        line = UUID.matcher(line).replaceAll("");
+        return line.replaceAll(" +", " ").trim();
     }
 
     private static String toHex(byte[] bytes) {

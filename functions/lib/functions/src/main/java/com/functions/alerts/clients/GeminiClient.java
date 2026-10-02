@@ -22,7 +22,7 @@ import com.google.auth.oauth2.GoogleCredentials;
 
 public class GeminiClient implements LlmClient {
     private static final Logger logger = LoggerFactory.getLogger(GeminiClient.class);
-    private static final String MODEL = "gemini-2.0-flash";
+    static final String MODEL = "gemini-2.5-flash";
     private static final String LOCATION = "us-central1";
     private static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 

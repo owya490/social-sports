@@ -138,4 +138,20 @@ public class CloudLogEntryParserTest {
         assertFalse(CloudLogEntryParser.fingerprint(
                 CloudLogEntryParser.parse(PYTHON_ERROR_LOG).orElseThrow()).equals(first));
     }
+
+    @Test
+    public void fingerprint_ignoresRequestUuidsInFirstLine() {
+        ParsedErrorLog first = new ParsedErrorLog(
+                "stripeWebhook",
+                "[Webhook-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa] Failed to fulfill purchase",
+                "RuntimeException",
+                "WebhookService.process(WebhookService.java:1)");
+        ParsedErrorLog second = new ParsedErrorLog(
+                "stripeWebhook",
+                "[Webhook-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb] Failed to fulfill purchase",
+                "RuntimeException",
+                "WebhookService.process(WebhookService.java:1)");
+
+        assertEquals(CloudLogEntryParser.fingerprint(first), CloudLogEntryParser.fingerprint(second));
+    }
 }

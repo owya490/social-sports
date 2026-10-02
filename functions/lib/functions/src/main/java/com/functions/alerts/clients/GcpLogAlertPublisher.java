@@ -13,6 +13,7 @@ public class GcpLogAlertPublisher implements AlertSummaryPublisher {
     private static final Logger logger = LoggerFactory.getLogger(GcpLogAlertPublisher.class);
 
     public static final String LOG_MARKER = "SPORTSHUB_ALERT_SUMMARY";
+    public static final String KIND_MARKER = "SPORTSHUB_ALERT_KIND=errorSummary";
 
     @Override
     public boolean publish(String summary) {
@@ -20,7 +21,7 @@ public class GcpLogAlertPublisher implements AlertSummaryPublisher {
             logger.warn("Skipping GCP alert log; summary was blank");
             return false;
         }
-        logger.info("{} {}", LOG_MARKER, summary);
+        logger.info("{} {} {}", KIND_MARKER, LOG_MARKER, summary);
         return true;
     }
 }
