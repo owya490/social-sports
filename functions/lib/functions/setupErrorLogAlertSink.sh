@@ -146,6 +146,14 @@ for policy in policies:
         if channel and channel not in seen:
             seen.add(channel)
             channels.append(channel)
+if not channels:
+    for policy in policies:
+        if policy.get("displayName") != skip_name:
+            continue
+        for channel in policy.get("notificationChannels") or []:
+            if channel and channel not in seen:
+                seen.add(channel)
+                channels.append(channel)
 print("\n".join(channels))
 PY
     while IFS= read -r channel; do
