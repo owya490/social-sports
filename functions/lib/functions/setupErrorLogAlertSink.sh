@@ -158,8 +158,8 @@ cat > "$POLICY_FILE" <<EOF
 {
   "displayName": "${POLICY_DISPLAY_NAME}",
   "documentation": {
-    "subject": "\${log.extracted_label.summary}",
-    "content": "\${log.extracted_label.summary}",
+    "subject": "\${log.extracted_label.summary}\${log.extracted_label.summary_json}",
+    "content": "\${log.extracted_label.summary}\${log.extracted_label.summary_json}",
     "mimeType": "text/markdown"
   },
   "conditions": [
