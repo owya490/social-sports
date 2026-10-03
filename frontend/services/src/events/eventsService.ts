@@ -8,6 +8,7 @@ import {
   NewEventData,
   Purchaser,
 } from "@/interfaces/EventTypes";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import {
   DocumentData,
   DocumentReference,
@@ -33,9 +34,9 @@ import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
 import { db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
-import { findEventMetadataDocRefByEventId } from "./eventsMetadata/eventsMetadataUtils/getEventsMetadataUtils";
 import {
   createEventCollectionRef,
   createEventDocRef,
@@ -44,7 +45,7 @@ import {
   processEventData,
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
-import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
+import { rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
 import {
   applyGeneralAdmissionInventoryFields,
   buildGeneralAdmissionInventoryUpdates,
@@ -59,7 +60,6 @@ import {
 
 export const eventServiceLogger = new Logger("eventServiceLogger");
 
-//Function to create a Event
 export async function createEvent(data: NewEventData): Promise<EventId> {
   if (!rateLimitCreateEvents()) {
     eventServiceLogger.warn("Rate Limited!!!");
@@ -67,42 +67,23 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
   }
   eventServiceLogger.info(`createEvent`);
   try {
-    // Simplified object spreading with tokenized values
-    const eventDataWithTokens = {
+    const createEventRequest = {
       ...data,
-      nameTokens: tokenizeText(data.name),
-      locationTokens: tokenizeText(data.location),
+      startDate: data.startDate.toDate(),
+      endDate: data.endDate.toDate(),
+      registrationDeadline: data.registrationDeadline.toDate(),
     };
-    const isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
-    const isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
+    const response = await executeGlobalAppControllerFunction<typeof createEventRequest, CreateEventResponse>(
+      EndpointType.CREATE_EVENT,
+      createEventRequest,
+      { attachAuth: true }
+    );
 
-    const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
-
-    await runTransaction(db, async (transaction) => {
-      transaction.set(docRef, eventDataWithTokens);
-      const eventMetadataRef = doc(db, CollectionPaths.EventsMetadata, docRef.id);
-      transaction.set(eventMetadataRef, extractEventsMetadataFields(data));
-      eventServiceLogger.info(`createEventMetadata succedded for ${docRef.id}`);
-
-      const privateUserRef = doc(db, "Users", "Active", "Private", data.organiserId);
-      transaction.update(privateUserRef, {
-        organiserEvents: arrayUnion(docRef.id),
-      });
-
-      if (!eventDataWithTokens.isPrivate) {
-        const publicUserRef = doc(db, "Users", "Active", "Public", data.organiserId);
-        transaction.update(publicUserRef, {
-          publicUpcomingOrganiserEvents: arrayUnion(docRef.id),
-        });
-      }
-    });
-
-    // We want to bust all our caches when we create a new event.
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
 
-    eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
-    return docRef.id as EventId;
+    eventServiceLogger.info(`createEvent succeeded for ${response.eventId}`);
+    return response.eventId;
   } catch (error) {
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
