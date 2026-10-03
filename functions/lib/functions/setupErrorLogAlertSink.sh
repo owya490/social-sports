@@ -158,15 +158,19 @@ cat > "$POLICY_FILE" <<EOF
 {
   "displayName": "${POLICY_DISPLAY_NAME}",
   "documentation": {
-    "subject": "${POLICY_DISPLAY_NAME}",
-    "content": "AI-summarized Cloud Function error. See log ${SUMMARY_LOG_ID} for SPORTSHUB_ALERT_SUMMARY.",
+    "subject": "\${log.extracted_label.summary}",
+    "content": "\${log.extracted_label.summary}",
     "mimeType": "text/markdown"
   },
   "conditions": [
     {
       "displayName": "AI error summary log",
       "conditionMatchedLog": {
-        "filter": $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SUMMARY_ALERT_FILTER")
+        "filter": $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SUMMARY_ALERT_FILTER"),
+        "labelExtractors": {
+          "summary": "REGEXP_EXTRACT(textPayload, \"SPORTSHUB_ALERT_SUMMARY (.*)\")",
+          "summary_json": "REGEXP_EXTRACT(jsonPayload.message, \"SPORTSHUB_ALERT_SUMMARY (.*)\")"
+        }
       }
     }
   ],
