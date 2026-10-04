@@ -118,6 +118,20 @@ jobs:
             --quiet 2>&1 | sed 's/^/[expirePendingBookingsCron] /') &
           PIDS+=($!)  # Capture PID of last background process ($!)
 
+          # Deploy pollPendingPyngCheckoutsCron in background
+          echo "Starting deployment of pollPendingPyngCheckoutsCron..."
+          (gcloud functions deploy pollPendingPyngCheckoutsCron \
+            --entry-point com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[pollPendingPyngCheckoutsCron] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
           # Deploy completeFulfilmentSession in background
           echo "Starting deployment of completeFulfilmentSession..."
           (gcloud functions deploy completeFulfilmentSession \
@@ -226,6 +240,7 @@ jobs:
           bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
           bash ./deployExpirePendingBookingsSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/expirePendingBookingsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/expirePendingBookingsCron' }}
+          bash ./deployPollPendingPyngCheckoutsSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/pollPendingPyngCheckoutsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/pollPendingPyngCheckoutsCron' }}
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}

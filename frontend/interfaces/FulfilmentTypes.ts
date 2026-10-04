@@ -13,6 +13,19 @@ export enum FulfilmentSessionType {
   CHECKOUT = "CHECKOUT",
   WAITLIST = "WAITLIST",
   BOOKING_APPROVAL = "BOOKING_APPROVAL",
+  PYNG_CHECKOUT = "PYNG_CHECKOUT",
+}
+
+export enum PaymentProvider {
+  STRIPE = "STRIPE",
+  PYNG = "PYNG",
+}
+
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  SUCCEEDED = "SUCCEEDED",
+  EXPIRED = "EXPIRED",
+  CANCELLED = "CANCELLED",
 }
 
 /**
@@ -24,7 +37,9 @@ export type FulfilmentSessionBase = {
   eventTicketTypeId: EventTicketTypeId;
 };
 
-export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
+export type CheckoutFulfilmentSessionType = FulfilmentSessionBase & {
+  paymentProvider?: PaymentProvider;
+};
 
 export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
 
@@ -50,6 +65,7 @@ export enum FulfilmentEntityType {
   FORMS = "FORMS",
   END = "END",
   WAITLIST = "WAITLIST",
+  PYNG = "PYNG",
 }
 
 /**
@@ -59,6 +75,7 @@ export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
   eventTicketTypeId: EventTicketTypeId;
+  paymentProvider?: PaymentProvider;
 };
 
 /**
@@ -131,6 +148,10 @@ export type GetFulfilmentEntityInfoResponse = {
   eventId: EventId | null;
   formId: FormId | null;
   formResponseId: FormResponseId | null;
+  /**
+   * Present for the Pyng payment step. Empty for other entity types.
+   */
+  paymentStatus: PaymentStatus | null;
 };
 
 /**

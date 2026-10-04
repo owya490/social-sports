@@ -4,6 +4,7 @@
 # recurringEventsCron
 # cleanupOldFulfilmentSessionsCron
 # expirePendingBookingsCron
+# pollPendingPyngCheckoutsCron
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
@@ -15,6 +16,7 @@ VALID_FUNCTIONS=(
     "recurringEventsCron"
     "cleanupOldFulfilmentSessionsCron"
     "expirePendingBookingsCron"
+    "pollPendingPyngCheckoutsCron"
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
@@ -25,6 +27,7 @@ VALID_ENDPOINTS=(
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
+    "com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
