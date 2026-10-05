@@ -2,6 +2,8 @@ package com.functions.fulfilment.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,10 +57,15 @@ public class ProcessFulfilmentSessionServiceTest {
     }
 
     @Test
-    public void nullStatusIsIgnored() throws Exception {
+    public void nullStatusFailsSoPubSubCanDeadLetterIt() throws Exception {
         RecordingTicketWriter tickets = new RecordingTicketWriter();
         String json = sessionJson("COMPLETED", 2).replace("\"status\": \"COMPLETED\"", "\"status\": null");
-        service(tickets, new ArrayList<>(), true).process(json);
+        try {
+            service(tickets, new ArrayList<>(), true).process(json);
+            fail("missing status should fail the invocation");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage().contains("session-1"));
+        }
 
         assertNull(tickets.createdFor);
         assertNull(tickets.refunded);

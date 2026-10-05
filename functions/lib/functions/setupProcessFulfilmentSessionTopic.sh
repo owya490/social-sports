@@ -2,7 +2,8 @@
 
 # Creates the fulfilment-session Pub/Sub topic and its dead-letter topic.
 # Pass attach-dead-letter after processFulfilmentSession has been deployed so the
-# trigger subscription stops retrying a failing message after 5 attempts.
+# trigger subscription moves a failing message to the dead-letter topic.
+# Pub/Sub rejects a dead-letter policy below 5 delivery attempts, so 5 is the smallest retry count.
 #
 # Usage: ./setupProcessFulfilmentSessionTopic.sh <dev|prod> [attach-dead-letter]
 

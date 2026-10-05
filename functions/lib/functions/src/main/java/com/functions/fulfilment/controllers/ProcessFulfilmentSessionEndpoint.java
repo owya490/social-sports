@@ -16,6 +16,7 @@ import io.cloudevents.CloudEvent;
 /**
  * Pub/Sub consumer for process-fulfilment-sessions-topic.
  * The message body is the fulfilment session. A thrown exception asks Pub/Sub to redeliver.
+ * After 5 deliveries the subscription moves the message to the dead-letter topic.
  */
 public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
     private static final Logger logger = LoggerFactory.getLogger(ProcessFulfilmentSessionEndpoint.class);

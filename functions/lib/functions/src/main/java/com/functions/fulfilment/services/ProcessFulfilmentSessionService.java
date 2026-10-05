@@ -41,7 +41,7 @@ public class ProcessFulfilmentSessionService {
         if (session.getStatus() == null) {
             String sessionId = session.getId() == null || session.getId().isBlank() ? "unknown" : session.getId();
             logger.error("Fulfilment session {} has no status", sessionId);
-            return;
+            throw new IllegalStateException("Fulfilment session " + sessionId + " has no status");
         }
         if (session.getId() == null || session.getId().isBlank()) {
             logger.warn("Ignoring fulfilment session message without id");

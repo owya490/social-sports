@@ -105,6 +105,12 @@ elif [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "stripeWebhookEndpoin
         --max-instances 5
         --cpu 0.5
     )
+elif [ "$FUNCTION_NAME" == "processFulfilmentSession" ]; then
+    EXTRA_DEPLOY_ARGS=(
+        --concurrency 1
+        --min-instances 0
+        --max-instances 1
+    )
 fi
 
 TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
