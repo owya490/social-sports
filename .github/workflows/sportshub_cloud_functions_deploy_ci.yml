@@ -65,6 +65,10 @@ jobs:
           echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
           echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
 
+      - name: Create process fulfilment session topic
+        working-directory: functions/lib/functions
+        run: bash ./setupProcessFulfilmentSessionTopic.sh ${{ matrix.env }}
+
       # Deploy Java Cloud Run functions in parallel
       # All functions deploy simultaneously using & to run commands in the background in a non-blocking way
       - name: Deploy all Java Cloud Run functions in parallel
@@ -130,6 +134,22 @@ jobs:
             --set-env-vars PROJECT_NAME=$PROJECT_ID \
             --memory 512 \
             --quiet 2>&1 | sed 's/^/[completeFulfilmentSession] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
+          # Deploy processFulfilmentSession after its topic exists. No minimum instances.
+          echo "Starting deployment of processFulfilmentSession..."
+          (gcloud functions deploy processFulfilmentSession \
+            --entry-point com.functions.fulfilment.controllers.ProcessFulfilmentSessionEndpoint \
+            --runtime java17 \
+            --gen2 \
+            --trigger-topic process-fulfilment-sessions-topic \
+            --retry \
+            --no-allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[processFulfilmentSession] /') &
           PIDS+=($!)  # Capture PID of last background process ($!)
 
           # Deploy globalAppController in background (with conditional prod flags)
@@ -219,6 +239,10 @@ jobs:
             echo ""
             echo "✅ All function deployments completed successfully"
           fi
+
+      - name: Attach process fulfilment session dead letter
+        working-directory: functions/lib/functions
+        run: bash ./setupProcessFulfilmentSessionTopic.sh ${{ matrix.env }} attach-dead-letter
 
       - name: Deploy Cloud Scheduler jobs
         working-directory: functions/lib/functions

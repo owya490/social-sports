@@ -22,4 +22,5 @@ SPORTSHUB combines a Next.js web application with two serverless backend generat
 - Authentication and authorization span frontend function callers, Java controllers, endpoint metadata, and handlers. Trace the entire request path before changing access rules.
 - TypeScript frontend types and Java request/model classes represent shared domain contracts. Update both sides when the wire contract changes.
 - Stripe checkout and webhook flows cross controllers, handlers, Firestore state, and external Stripe state. Preserve idempotency and ownership checks.
+- A fulfilment session published to `process-fulfilment-sessions-topic` is handled by `processFulfilmentSession`: completed sessions mint tickets, and expired sessions refund vacancy.
 - Hugo source lives in `sportshub-blogs-docs/`; its generated frontend assets are outputs, not source.
