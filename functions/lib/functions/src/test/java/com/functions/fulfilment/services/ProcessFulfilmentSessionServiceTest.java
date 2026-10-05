@@ -2,7 +2,6 @@ package com.functions.fulfilment.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,14 +64,18 @@ public class ProcessFulfilmentSessionServiceTest {
     }
 
     @Test
-    public void purchaseEmailFailureIsRetried() throws Exception {
+    public void purchaseEmailFailureIsAcknowledged() throws Exception {
         RecordingStore store = new RecordingStore();
-        try {
-            service(store, new ArrayList<>(), false).process(sessionJson("COMPLETED", 2));
-            fail("expected purchase email failure to propagate");
-        } catch (IllegalStateException e) {
-            assertEquals("session-1", store.minted.getId());
-        }
+        service(store, new ArrayList<>(), false).process(sessionJson("COMPLETED", 2));
+        assertEquals("session-1", store.minted.getId());
+    }
+
+    @Test
+    public void completedWithoutPriceOrEmailIsIgnored() throws Exception {
+        RecordingStore store = new RecordingStore();
+        service(store, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, null, "ada@example.com"));
+        service(store, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, 1000, null));
+        assertNull(store.minted);
     }
 
     private static ProcessFulfilmentSessionService service(
@@ -84,22 +87,29 @@ public class ProcessFulfilmentSessionServiceTest {
     }
 
     private static String sessionJson(String status, Integer numTickets) {
-        String tickets = numTickets == null ? "null" : numTickets.toString();
+        return sessionJson(status, numTickets, 1000, "ada@example.com");
+    }
+
+    private static String sessionJson(String status, Integer numTickets, Integer price, String email) {
         return """
                 {
                   "id": "session-1",
                   "type": "CHECKOUT",
                   "status": "%s",
-                  "purchaserEmail": "ada@example.com",
+                  "purchaserEmail": %s,
                   "purchaserName": "Ada",
                   "numTickets": %s,
-                  "price": 1000,
+                  "price": %s,
                   "eventTicketTypeId": "general",
                   "eventData": { "eventId": "event-1", "isPrivate": true },
                   "fulfilmentEntityIds": [],
                   "fulfilmentEntityMap": {}
                 }
-                """.formatted(status, tickets);
+                """.formatted(
+                status,
+                email == null ? "null" : "\"" + email + "\"",
+                numTickets == null ? "null" : numTickets.toString(),
+                price == null ? "null" : price.toString());
     }
 
     private static final class RecordingStore implements ProcessFulfilmentSessionService.Store {

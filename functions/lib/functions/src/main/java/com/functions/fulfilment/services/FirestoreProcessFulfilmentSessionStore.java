@@ -1,11 +1,12 @@
 package com.functions.fulfilment.services;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.functions.events.models.EventData;
-import com.functions.events.models.EventMetadata;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.repositories.EventsRepository;
@@ -22,12 +23,14 @@ import com.functions.tickets.models.Ticket;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.SetOptions;
 import com.google.cloud.firestore.Transaction;
 
 /**
- * Mints tickets or refunds vacancy for a fulfilment session carried on the queue.
- * Idempotency is {@code EventMetadata.completedFulfilmentSessionIds}.
+ * Mints tickets or refunds vacancy. Idempotency is a merge into
+ * {@code completedFulfilmentSessionIds}, so the rest of the event metadata document is left as it is.
  */
 class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSessionService.Store {
 
@@ -36,27 +39,15 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
         Purchase purchase = ProcessFulfilmentSessionService.purchaseOf(session);
         String eventId = session.getEventData().getEventId();
         return FirebaseService.createFirestoreTransaction(transaction -> {
-            Optional<EventData> maybeEvent = EventsRepository.getEventById(eventId, Optional.of(transaction));
-            if (maybeEvent.isEmpty()) {
-                throw new IllegalStateException("Event not found for fulfilment session " + session.getId());
-            }
-            EventData event = maybeEvent.get();
-            event.setEventId(eventId);
-
-            MetadataDocument metadataDocument = readMetadata(transaction, eventId, event.getOrganiserId());
-            if (alreadyProcessed(metadataDocument.metadata(), session.getId())) {
+            EventData event = requireEvent(transaction, eventId);
+            if (alreadyProcessed(transaction, eventId, session.getId())) {
                 return null;
             }
 
             ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, purchase.eventTicketTypeId());
-            long unitAmount = purchase.price() == null ? 0L : purchase.price().longValue();
-            String orderId = createTicketsAndOrder(transaction, session, eventId, purchase.numTickets(), unitAmount, ticketType);
-
-            EventMetadata metadata = metadataDocument.metadata();
-            metadata.setCompleteTicketCount(metadata.getCompleteTicketCount() + purchase.numTickets());
-            metadata.getOrderIds().add(orderId);
-            metadata.getCompletedFulfilmentSessionIds().add(session.getId());
-            transaction.set(metadataDocument.reference(), metadata);
+            String orderId = createTicketsAndOrder(
+                    transaction, session, eventId, purchase.numTickets(), purchase.price().longValue(), ticketType);
+            markProcessed(transaction, eventId, session.getId(), orderId, purchase.numTickets());
             return orderId;
         });
     }
@@ -67,24 +58,43 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
         String eventId = session.getEventData().getEventId();
         FirebaseService.createFirestoreTransaction(transaction -> {
             DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
-            Optional<EventData> maybeEvent = EventsRepository.getEventById(eventId, Optional.of(transaction));
-            if (maybeEvent.isEmpty()) {
-                throw new IllegalStateException("Event not found for fulfilment session " + session.getId());
-            }
-            EventData event = maybeEvent.get();
-            event.setEventId(eventId);
-
-            MetadataDocument metadataDocument = readMetadata(transaction, eventId, event.getOrganiserId());
-            if (alreadyProcessed(metadataDocument.metadata(), session.getId())) {
+            EventData event = requireEvent(transaction, eventId);
+            if (alreadyProcessed(transaction, eventId, session.getId())) {
                 return null;
             }
 
             ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, purchase.eventTicketTypeId());
             EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, purchase.numTickets());
-            metadataDocument.metadata().getCompletedFulfilmentSessionIds().add(session.getId());
-            transaction.set(metadataDocument.reference(), metadataDocument.metadata());
+            markProcessed(transaction, eventId, session.getId(), null, 0);
             return null;
         });
+    }
+
+    private static EventData requireEvent(Transaction transaction, String eventId) throws Exception {
+        Optional<EventData> maybeEvent = EventsRepository.getEventById(eventId, Optional.of(transaction));
+        if (maybeEvent.isEmpty()) {
+            throw new IllegalStateException("Event not found: " + eventId);
+        }
+        EventData event = maybeEvent.get();
+        event.setEventId(eventId);
+        return event;
+    }
+
+    private static boolean alreadyProcessed(Transaction transaction, String eventId, String sessionId) throws Exception {
+        DocumentSnapshot snapshot = transaction.get(EventsRepository.getEventMetadataDocumentReference(eventId)).get();
+        Object completed = snapshot.get("completedFulfilmentSessionIds");
+        return completed instanceof List<?> ids && ids.contains(sessionId);
+    }
+
+    private static void markProcessed(
+            Transaction transaction, String eventId, String sessionId, String orderId, int quantity) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("completedFulfilmentSessionIds", FieldValue.arrayUnion(sessionId));
+        if (orderId != null) {
+            updates.put("orderIds", FieldValue.arrayUnion(orderId));
+            updates.put("completeTicketCount", FieldValue.increment(quantity));
+        }
+        transaction.set(EventsRepository.getEventMetadataDocumentReference(eventId), updates, SetOptions.merge());
     }
 
     private static String createTicketsAndOrder(
@@ -127,34 +137,6 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
         return orderRef.getId();
     }
 
-    private static MetadataDocument readMetadata(Transaction transaction, String eventId, String organiserId)
-            throws Exception {
-        DocumentReference metadataRef = EventsRepository.getEventMetadataDocumentReference(eventId);
-        DocumentSnapshot snapshot = transaction.get(metadataRef).get();
-        EventMetadata metadata = snapshot.exists() ? snapshot.toObject(EventMetadata.class) : new EventMetadata();
-        if (metadata == null) {
-            metadata = new EventMetadata();
-        }
-        if (metadata.getOrganiserId() == null || metadata.getOrganiserId().isBlank()) {
-            metadata.setOrganiserId(organiserId);
-        }
-        if (metadata.getCompleteTicketCount() == null) {
-            metadata.setCompleteTicketCount(0);
-        }
-        if (metadata.getOrderIds() == null) {
-            metadata.setOrderIds(new ArrayList<>());
-        }
-        if (metadata.getCompletedFulfilmentSessionIds() == null) {
-            metadata.setCompletedFulfilmentSessionIds(new ArrayList<>());
-        }
-        return new MetadataDocument(metadataRef, metadata);
-    }
-
-    private static boolean alreadyProcessed(EventMetadata metadata, String sessionId) {
-        List<String> completed = metadata.getCompletedFulfilmentSessionIds();
-        return completed != null && completed.contains(sessionId);
-    }
-
     private static List<String> formResponseIds(FulfilmentSession session) {
         List<String> formResponseIds = new ArrayList<>();
         if (session.getFulfilmentEntityIds() == null || session.getFulfilmentEntityMap() == null) {
@@ -169,8 +151,5 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
             }
         }
         return formResponseIds;
-    }
-
-    private record MetadataDocument(DocumentReference reference, EventMetadata metadata) {
     }
 }

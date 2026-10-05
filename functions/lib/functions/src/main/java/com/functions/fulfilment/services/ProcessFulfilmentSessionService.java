@@ -58,6 +58,13 @@ public class ProcessFulfilmentSessionService {
 
         switch (session.getStatus()) {
             case COMPLETED:
+                if (purchase.price() == null
+                        || session.getPurchaserEmail() == null
+                        || session.getPurchaserEmail().isBlank()) {
+                    logger.warn("Ignoring completed fulfilment session {} without price or purchaser email",
+                            session.getId());
+                    return;
+                }
                 processCompleted(session);
                 break;
             case EXPIRED:
@@ -73,21 +80,15 @@ public class ProcessFulfilmentSessionService {
             return;
         }
         EventData eventData = session.getEventData();
-        if (session.getPurchaserEmail() == null || session.getPurchaserEmail().isBlank()) {
-            logger.warn("Minted tickets for fulfilment session {} without a purchaser email", session.getId());
-            return;
-        }
-        String visibility = Boolean.TRUE.equals(eventData.getIsPrivate()) ? "Private" : "Public";
         String purchaserName = session.getPurchaserName() == null ? "" : session.getPurchaserName();
         boolean sent = purchaseEmailSender.send(
                 eventData.getEventId(),
-                visibility,
+                Boolean.TRUE.equals(eventData.getIsPrivate()) ? "Private" : "Public",
                 session.getPurchaserEmail(),
                 purchaserName,
                 orderId);
-        // Mint already recorded the session id, so a redelivery will not send this email again.
         if (!sent) {
-            throw new IllegalStateException("Purchase email failed for fulfilment session " + session.getId());
+            logger.warn("Purchase email failed for fulfilment session {}", session.getId());
         }
     }
 
