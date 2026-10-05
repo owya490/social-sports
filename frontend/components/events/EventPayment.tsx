@@ -43,7 +43,7 @@ interface EventPaymentProps {
   ticketCheckout: EventTicketTypeCheckout;
   eventName: string;
   organiser: PublicUserData;
-  supportedPaymentProviders?: PaymentProvider[] | null;
+  supportedPaymentProviders: PaymentProvider[];
 }
 
 export default function EventPayment(props: EventPaymentProps) {

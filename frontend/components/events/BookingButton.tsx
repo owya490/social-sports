@@ -23,7 +23,7 @@ interface BookingButtonProps {
   eventName?: string;
   organiser?: PublicUserData;
   eventDate?: string;
-  supportedPaymentProviders?: PaymentProvider[] | null;
+  supportedPaymentProviders: PaymentProvider[];
 }
 
 export default function BookingButton({

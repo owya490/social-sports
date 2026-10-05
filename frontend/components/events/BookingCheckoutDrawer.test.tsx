@@ -1,5 +1,5 @@
 import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
-import { PaymentProvider } from "@/interfaces/EventTypes";
+import { EmptyEventData, PaymentProvider } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -16,7 +16,7 @@ jest.mock("@/services/featureFlags", () => ({
 
 const pyngFlag = isPayWithPyngEnabled as jest.MockedFunction<typeof isPayWithPyngEnabled>;
 
-function actionsMarkup(supportedPaymentProviders?: PaymentProvider[] | null, bookingApprovalEnabled?: boolean) {
+function actionsMarkup(supportedPaymentProviders: PaymentProvider[], bookingApprovalEnabled?: boolean) {
   return renderToStaticMarkup(
     <BookingCheckoutActions
       onPay={() => {}}
@@ -52,7 +52,10 @@ describe("BookingCheckoutSummary", () => {
           eventTicketType={{ ...EMPTY_EVENT_TICKET_TYPE, name: "General Admission", price: 1500 }}
           quantity={2}
         />
-        <BookingCheckoutActions onPay={() => {}} />
+        <BookingCheckoutActions
+          onPay={() => {}}
+          supportedPaymentProviders={EmptyEventData.supportedPaymentProviders}
+        />
       </>
     );
 
@@ -74,6 +77,6 @@ describe("BookingCheckoutSummary", () => {
     const enabled = actionsMarkup([PaymentProvider.STRIPE]);
     expect(enabled).toContain("Pay with PYNG");
     expect(enabled).not.toContain("Coming Soon");
-    expect(actionsMarkup(undefined, true)).toContain("Book with Card");
+    expect(actionsMarkup(EmptyEventData.supportedPaymentProviders, true)).toContain("Book with Card");
   });
 });
