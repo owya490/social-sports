@@ -1,6 +1,7 @@
 import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
 import { PYNG_PAYMENT_PROVIDER, resolveSupportedPaymentProviders, STRIPE_PAYMENT_PROVIDER } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
+import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BookingCheckoutActions, BookingCheckoutSummary, offersPaymentChoice } from "./BookingCheckoutDrawer";
 
@@ -8,6 +9,12 @@ jest.mock("next/image", () => ({
   __esModule: true,
   default: () => null,
 }));
+
+jest.mock("@/services/featureFlags", () => ({
+  isPayWithPyngEnabled: jest.fn(() => false),
+}));
+
+const pyngFlag = isPayWithPyngEnabled as jest.MockedFunction<typeof isPayWithPyngEnabled>;
 
 describe("offersPaymentChoice", () => {
   it("skips the checkout drawer for free events", () => {
@@ -21,6 +28,10 @@ describe("offersPaymentChoice", () => {
 });
 
 describe("BookingCheckoutSummary", () => {
+  beforeEach(() => {
+    pyngFlag.mockReturnValue(false);
+  });
+
   it("lists the ticket and both payment actions", () => {
     const markup = renderToStaticMarkup(
       <>
@@ -46,7 +57,7 @@ describe("BookingCheckoutSummary", () => {
     expect(markup.match(/disabled=""/g)).toHaveLength(1);
   });
 
-  it("keeps Stripe clickable when supported providers are missing or empty, and always disables Pyng", () => {
+  it("keeps Stripe clickable when supported providers are missing or empty, and leaves Pyng disabled while the flag is off", () => {
     for (const supportedPaymentProviders of [undefined, null, []]) {
       const markup = renderToStaticMarkup(
         <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={supportedPaymentProviders} />
@@ -64,6 +75,29 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).not.toContain("Pay with Card");
     expect(markup).toContain("Pay with Pyng - Coming Soon...");
     expect(markup).toContain('disabled=""');
+  });
+
+  it("keeps Pyng disabled when the flag is off, even if the event lists Pyng", () => {
+    const markup = renderToStaticMarkup(
+      <BookingCheckoutActions
+        onPay={() => {}}
+        supportedPaymentProviders={[STRIPE_PAYMENT_PROVIDER, PYNG_PAYMENT_PROVIDER]}
+      />
+    );
+    expect(markup).toContain("Pay with Card");
+    expect(markup).toContain("Pay with Pyng - Coming Soon...");
+    expect(markup).toContain('disabled=""');
+  });
+
+  it("enables Pyng from the feature flag even when the event does not list Pyng", () => {
+    pyngFlag.mockReturnValue(true);
+    const markup = renderToStaticMarkup(
+      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[STRIPE_PAYMENT_PROVIDER]} />
+    );
+    expect(markup).toContain("Pay with Card");
+    expect(markup).toContain("Pay with PYNG");
+    expect(markup).not.toContain("Coming Soon");
+    expect(markup).not.toContain('disabled=""');
   });
 
   it("labels the card action Book with Card when organiser approval is required", () => {

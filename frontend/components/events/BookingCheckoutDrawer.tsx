@@ -5,6 +5,7 @@ import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
 import { resolveSupportedPaymentProviders, STRIPE_PAYMENT_PROVIDER } from "@/interfaces/EventTypes";
 import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
+import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import Image from "next/image";
 import { OrganiserPill } from "./OrganiserPill";
@@ -86,6 +87,7 @@ export function BookingCheckoutActions({
   bookingApprovalEnabled = false,
 }: BookingCheckoutActionsProps) {
   const stripeSupported = resolveSupportedPaymentProviders(supportedPaymentProviders).includes(STRIPE_PAYMENT_PROVIDER);
+  const pyngEnabled = isPayWithPyngEnabled();
 
   return (
     <div className="flex flex-col gap-2">
@@ -94,9 +96,14 @@ export function BookingCheckoutActions({
           {bookingApprovalEnabled ? "Book with Card" : "Pay with Card"}
         </button>
       ) : null}
-      <button type="button" className={pyngButtonClassName} disabled>
+      <button
+        type="button"
+        className={pyngButtonClassName}
+        disabled={!pyngEnabled}
+        onClick={() => onPay(PaymentProvider.PYNG)}
+      >
         <Image src="/images/pyng-mark.png" alt="" width={20} height={20} className="h-5 w-5" />
-        Pay with Pyng - Coming Soon...
+        {pyngEnabled ? "Pay with PYNG" : "Pay with Pyng - Coming Soon..."}
       </button>
       <p className="text-xs font-sans leading-5 text-foreground-muted">
         No Processing Fees with Pyng.{" "}
