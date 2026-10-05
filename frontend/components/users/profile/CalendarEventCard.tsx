@@ -98,6 +98,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
                 organiser={event.organiser}
                 eventDate={timestampToDateString(event.startDate)}
                 supportedPaymentProviders={event.supportedPaymentProviders}
+                bookingApprovalEnabled={event.bookingApprovalEnabled}
                 className="shrink-0 rounded-xl bg-foreground px-3.5 py-2 text-sm font-semibold text-background font-sans hover:opacity-90 disabled:opacity-60"
               />
             </div>

@@ -65,6 +65,13 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain("Pay with Pyng - Coming Soon...");
     expect(markup).toContain('disabled=""');
   });
+
+  it("labels the card action Book with Card when organiser approval is required", () => {
+    const markup = renderToStaticMarkup(<BookingCheckoutActions onPay={() => {}} bookingApprovalEnabled />);
+
+    expect(markup).toContain("Book with Card");
+    expect(markup).not.toContain("Pay with Card");
+  });
 });
 
 describe("resolveSupportedPaymentProviders", () => {

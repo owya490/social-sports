@@ -126,6 +126,7 @@ export default function BookingButton({
           eventTicketType={eventTicketType}
           quantity={ticketCount}
           supportedPaymentProviders={supportedPaymentProviders}
+          bookingApprovalEnabled={bookingApprovalEnabled}
           onPay={(provider) => {
             void startCheckout(provider);
           }}

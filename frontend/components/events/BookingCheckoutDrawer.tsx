@@ -32,6 +32,7 @@ type BookingCheckoutLineProps = {
 type BookingCheckoutActionsProps = {
   onPay: (provider: PaymentProvider) => void;
   supportedPaymentProviders?: string[] | null;
+  bookingApprovalEnabled?: boolean;
 };
 
 export function BookingCheckoutSummary({
@@ -79,14 +80,18 @@ export function BookingCheckoutSummary({
   );
 }
 
-export function BookingCheckoutActions({ onPay, supportedPaymentProviders }: BookingCheckoutActionsProps) {
+export function BookingCheckoutActions({
+  onPay,
+  supportedPaymentProviders,
+  bookingApprovalEnabled = false,
+}: BookingCheckoutActionsProps) {
   const stripeSupported = resolveSupportedPaymentProviders(supportedPaymentProviders).includes(STRIPE_PAYMENT_PROVIDER);
 
   return (
     <div className="flex flex-col gap-2">
       {stripeSupported ? (
         <button type="button" className={creditCardButtonClassName} onClick={() => onPay(PaymentProvider.STRIPE)}>
-          Pay with Card
+          {bookingApprovalEnabled ? "Book with Card" : "Pay with Card"}
         </button>
       ) : null}
       <button type="button" className={pyngButtonClassName} disabled>
@@ -126,13 +131,20 @@ export default function BookingCheckoutDrawer({
   quantity,
   onPay,
   supportedPaymentProviders,
+  bookingApprovalEnabled = false,
 }: BookingCheckoutDrawerProps) {
   return (
     <EventHubPanel
       open={open}
       onClose={onClose}
       title="Checkout"
-      footer={<BookingCheckoutActions onPay={onPay} supportedPaymentProviders={supportedPaymentProviders} />}
+      footer={
+        <BookingCheckoutActions
+          onPay={onPay}
+          supportedPaymentProviders={supportedPaymentProviders}
+          bookingApprovalEnabled={bookingApprovalEnabled}
+        />
+      }
     >
       <BookingCheckoutSummary
         eventName={eventName}
