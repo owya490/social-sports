@@ -1,5 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { createEmptyEventTicketTypes, EventTicketTypesMap } from "./EventTicketTypeTypes";
+import { PaymentProvider } from "./FulfilmentTypes";
 import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
@@ -59,6 +60,7 @@ interface AbstractEventData {
   waitlistEnabled: boolean; // should default to true
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
+  supportedPaymentProviders: PaymentProvider[];
   maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
   /** Source of truth for pricing and vacancy (General Admission). */
   eventTicketTypes?: EventTicketTypesMap;
@@ -120,6 +122,7 @@ export const EmptyEventData: EventData = {
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
+  supportedPaymentProviders: [PaymentProvider.STRIPE],
   maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
   eventTicketTypes: createEmptyEventTicketTypes(),
 };

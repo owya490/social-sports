@@ -2,6 +2,7 @@
 
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
 import { EventId } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { UserId, PublicUserData } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import {
@@ -42,6 +43,7 @@ interface MobileEventPaymentProps {
   ticketCheckout: EventTicketTypeCheckout;
   eventName: string;
   organiser: PublicUserData;
+  supportedPaymentProviders: PaymentProvider[];
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {
@@ -208,6 +210,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         eventName={props.eventName}
                         organiser={props.organiser}
                         eventDate={timestampToDateString(startDate)}
+                        supportedPaymentProviders={props.supportedPaymentProviders}
                         className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"
                       />
                     </div>

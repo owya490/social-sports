@@ -1,5 +1,8 @@
 import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
+import { EmptyEventData } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
+import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BookingCheckoutActions, BookingCheckoutSummary, offersPaymentChoice } from "./BookingCheckoutDrawer";
 
@@ -7,6 +10,22 @@ jest.mock("next/image", () => ({
   __esModule: true,
   default: () => null,
 }));
+
+jest.mock("@/services/featureFlags", () => ({
+  isPayWithPyngEnabled: jest.fn(() => false),
+}));
+
+const pyngFlag = isPayWithPyngEnabled as jest.MockedFunction<typeof isPayWithPyngEnabled>;
+
+function actionsMarkup(supportedPaymentProviders: PaymentProvider[], bookingApprovalEnabled?: boolean) {
+  return renderToStaticMarkup(
+    <BookingCheckoutActions
+      onPay={() => {}}
+      supportedPaymentProviders={supportedPaymentProviders}
+      bookingApprovalEnabled={bookingApprovalEnabled}
+    />
+  );
+}
 
 describe("offersPaymentChoice", () => {
   it("skips the checkout drawer for free events", () => {
@@ -20,6 +39,10 @@ describe("offersPaymentChoice", () => {
 });
 
 describe("BookingCheckoutSummary", () => {
+  beforeEach(() => {
+    pyngFlag.mockReturnValue(false);
+  });
+
   it("lists the ticket and both payment actions", () => {
     const markup = renderToStaticMarkup(
       <>
@@ -30,7 +53,10 @@ describe("BookingCheckoutSummary", () => {
           eventTicketType={{ ...EMPTY_EVENT_TICKET_TYPE, name: "General Admission", price: 1500 }}
           quantity={2}
         />
-        <BookingCheckoutActions onPay={() => {}} />
+        <BookingCheckoutActions
+          onPay={() => {}}
+          supportedPaymentProviders={EmptyEventData.supportedPaymentProviders}
+        />
       </>
     );
 
@@ -44,10 +70,14 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain('disabled=""');
   });
 
-  it("labels the card action Book with Card when organiser approval is required", () => {
-    const markup = renderToStaticMarkup(<BookingCheckoutActions onPay={() => {}} bookingApprovalEnabled />);
+  it("follows supported providers, with the Pyng flag overriding that list", () => {
+    expect(actionsMarkup([PaymentProvider.PYNG])).not.toContain("Pay with Card");
+    expect(actionsMarkup([PaymentProvider.STRIPE, PaymentProvider.PYNG])).toContain("Pay with Pyng - Coming Soon...");
 
-    expect(markup).toContain("Book with Card");
-    expect(markup).not.toContain("Pay with Card");
+    pyngFlag.mockReturnValue(true);
+    const enabled = actionsMarkup([PaymentProvider.STRIPE]);
+    expect(enabled).toContain("Pay with PYNG");
+    expect(enabled).not.toContain("Coming Soon");
+    expect(actionsMarkup(EmptyEventData.supportedPaymentProviders, true)).toContain("Book with Card");
   });
 });
