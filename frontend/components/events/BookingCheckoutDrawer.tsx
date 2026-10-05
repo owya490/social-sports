@@ -31,6 +31,7 @@ type BookingCheckoutLineProps = {
 
 type BookingCheckoutActionsProps = {
   onPay: (provider: PaymentProvider) => void;
+  bookingApprovalEnabled?: boolean;
 };
 
 export function BookingCheckoutSummary({
@@ -78,13 +79,13 @@ export function BookingCheckoutSummary({
   );
 }
 
-export function BookingCheckoutActions({ onPay }: BookingCheckoutActionsProps) {
+export function BookingCheckoutActions({ onPay, bookingApprovalEnabled = false }: BookingCheckoutActionsProps) {
   const pyngEnabled = isPayWithPyngEnabled();
 
   return (
     <div className="flex flex-col gap-2">
       <button type="button" className={creditCardButtonClassName} onClick={() => onPay(PaymentProvider.STRIPE)}>
-        Pay with Card
+        {bookingApprovalEnabled ? "Book with Card" : "Pay with Card"}
       </button>
       <button
         type="button"
@@ -127,13 +128,14 @@ export default function BookingCheckoutDrawer({
   eventTicketType,
   quantity,
   onPay,
+  bookingApprovalEnabled = false,
 }: BookingCheckoutDrawerProps) {
   return (
     <EventHubPanel
       open={open}
       onClose={onClose}
       title="Checkout"
-      footer={<BookingCheckoutActions onPay={onPay} />}
+      footer={<BookingCheckoutActions onPay={onPay} bookingApprovalEnabled={bookingApprovalEnabled} />}
     >
       <BookingCheckoutSummary
         eventName={eventName}
