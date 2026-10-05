@@ -1,6 +1,6 @@
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
-import { EventId, PaymentProvider } from "@/interfaces/EventTypes";
-import { FulfilmentSessionId } from "@/interfaces/FulfilmentTypes";
+import { EventId } from "@/interfaces/EventTypes";
+import { FulfilmentSessionId, PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
 import { Environment, getEnvironment } from "@/utilities/environment";
 import {

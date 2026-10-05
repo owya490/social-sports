@@ -1,7 +1,7 @@
 "use client";
-import { EventId, PaymentProvider } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
-import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
+import { FulfilmentSessionType, PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { isBookingMaintenanceActive } from "@/services/featureFlags";

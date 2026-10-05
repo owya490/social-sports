@@ -1,6 +1,7 @@
 "use client";
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
-import { EventId, PaymentProvider } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { UserId, PublicUserData } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import { duration, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";

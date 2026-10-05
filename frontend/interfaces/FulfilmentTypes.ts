@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { EventTicketTypeId } from "./EventTicketTypeTypes";
-import { EventId, PaymentProvider } from "./EventTypes";
+import { EventId } from "./EventTypes";
 import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
 import { URL } from "./Types";
@@ -14,6 +14,11 @@ export enum FulfilmentSessionType {
   WAITLIST = "WAITLIST",
   BOOKING_APPROVAL = "BOOKING_APPROVAL",
   PYNG_CHECKOUT = "PYNG_CHECKOUT",
+}
+
+export enum PaymentProvider {
+  STRIPE = "STRIPE",
+  PYNG = "PYNG",
 }
 
 /**

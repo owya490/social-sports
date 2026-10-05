@@ -1,5 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { createEmptyEventTicketTypes, EventTicketTypesMap } from "./EventTicketTypeTypes";
+import { PaymentProvider } from "./FulfilmentTypes";
 import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
@@ -19,11 +20,6 @@ export const DEFAULT_MAX_TICKETS_PER_ORDER = 7;
 
 /** Organiser-configurable max is capped at this value. */
 export const MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP = 10;
-
-export enum PaymentProvider {
-  STRIPE = "STRIPE",
-  PYNG = "PYNG",
-}
 
 export type EventAttendees = { [emailHash: string]: number };
 

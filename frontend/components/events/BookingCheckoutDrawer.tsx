@@ -2,7 +2,7 @@
 
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
-import { PaymentProvider } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";

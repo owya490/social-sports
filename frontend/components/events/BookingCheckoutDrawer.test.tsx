@@ -1,5 +1,6 @@
 import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
-import { EmptyEventData, PaymentProvider } from "@/interfaces/EventTypes";
+import { EmptyEventData } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { renderToStaticMarkup } from "react-dom/server";
