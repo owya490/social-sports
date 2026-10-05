@@ -209,11 +209,9 @@ export default function EventPayment(props: EventPaymentProps) {
                       <BookingButton
                         eventId={props.eventId}
                         ticketCount={attendeeCount}
-                        eventTicketTypeId={effectiveEventTicketTypeId}
                         setLoading={props.setLoading}
                         bookingApprovalEnabled={props.bookingApprovalEnabled}
-                        unitPriceCents={effectivePrice}
-                        itemName={selectedType?.eventTicketType.name ?? "Ticket"}
+                        eventTicketType={selectedType?.eventTicketType}
                         eventName={props.eventName}
                         organiser={props.organiser}
                         eventDate={timestampToDateString(startDate)}

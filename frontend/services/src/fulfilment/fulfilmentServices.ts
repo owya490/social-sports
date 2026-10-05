@@ -57,7 +57,7 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  *
  * Before creating a new session, checks if there's an existing valid session in localStorage (within 20 minutes).
  * If found and still valid on the backend, returns the existing session instead of creating a new one.
- * Sessions are keyed by eventId, numTickets, and eventTicketTypeId to ensure proper context isolation.
+ * Sessions are keyed by eventId, numTickets, eventTicketTypeId, and paymentProvider.
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionDataType
@@ -140,7 +140,7 @@ async function initCheckoutFulfilmentSession(
   eventId: EventId,
   numTickets: number,
   eventTicketTypeId: EventTicketTypeId,
-  paymentProvider?: InitCheckoutFulfilmentSessionRequest["paymentProvider"]
+  paymentProvider: PaymentProvider
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
@@ -153,8 +153,7 @@ async function initCheckoutFulfilmentSession(
       eventId,
       numTickets,
       eventTicketTypeId,
-      // Missing provider stays Stripe. Only PYNG is sent explicitly.
-      ...(paymentProvider === PaymentProvider.PYNG ? { paymentProvider } : {}),
+      paymentProvider,
     });
     return response;
   } catch (error) {

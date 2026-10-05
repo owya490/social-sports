@@ -1,6 +1,6 @@
 "use client";
 import { EventId } from "@/interfaces/EventTypes";
-import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
+import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
 import { FulfilmentSessionType, PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -16,12 +16,10 @@ const logger = new Logger("BookingButtonLogger");
 interface BookingButtonProps {
   eventId: EventId;
   ticketCount: number;
-  eventTicketTypeId: EventTicketTypeId | null;
   setLoading?: (value: boolean) => void;
   className?: string;
   bookingApprovalEnabled?: boolean;
-  unitPriceCents?: number;
-  itemName?: string;
+  eventTicketType?: EventTicketType | null;
   eventName?: string;
   organiser?: PublicUserData;
   eventDate?: string;
@@ -30,29 +28,26 @@ interface BookingButtonProps {
 export default function BookingButton({
   eventId,
   ticketCount,
-  eventTicketTypeId,
   setLoading,
   className = "",
   bookingApprovalEnabled = false,
-  unitPriceCents,
-  itemName = "Ticket",
+  eventTicketType,
   eventName,
   organiser,
   eventDate,
 }: BookingButtonProps) {
   const router = useRouter();
   const [internalLoading, setInternalLoading] = useState(false);
-  const [pendingProvider, setPendingProvider] = useState<PaymentProvider | null>(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const eventTicketTypeId = eventTicketType?.id ?? null;
   const checkoutUnavailable = eventTicketTypeId === null;
-  const showPaymentChoice = offersPaymentChoice(unitPriceCents);
+  const showPaymentChoice = offersPaymentChoice(eventTicketType?.price);
 
-  const startCheckout = async (paymentProvider?: PaymentProvider) => {
-    if (eventTicketTypeId === null || isBookingMaintenanceActive()) {
+  const startCheckout = async (paymentProvider: PaymentProvider) => {
+    if (eventTicketTypeId === null || internalLoading || isBookingMaintenanceActive()) {
       return;
     }
 
-    setPendingProvider(paymentProvider ?? null);
     setInternalLoading(true);
     setLoading?.(true);
 
@@ -95,7 +90,7 @@ export default function BookingButton({
       return;
     }
 
-    void startCheckout();
+    void startCheckout(PaymentProvider.STRIPE);
   };
 
   const closeCheckout = () => {
@@ -119,17 +114,15 @@ export default function BookingButton({
       >
         {internalLoading && !showPaymentChoice ? "Booking..." : label}
       </button>
-      {showPaymentChoice && unitPriceCents !== undefined ? (
+      {showPaymentChoice ? (
         <BookingCheckoutDrawer
           open={checkoutOpen}
           onClose={closeCheckout}
           eventName={eventName}
           organiser={organiser}
           eventDate={eventDate}
-          itemName={itemName}
+          eventTicketType={eventTicketType}
           quantity={ticketCount}
-          unitPriceCents={unitPriceCents}
-          pendingProvider={pendingProvider}
           onPay={(provider) => {
             void startCheckout(provider);
           }}

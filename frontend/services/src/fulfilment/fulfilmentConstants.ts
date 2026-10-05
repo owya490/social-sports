@@ -18,29 +18,25 @@ export const COMPLETE_FULFILMENT_SESSION_URL = {
 };
 
 /**
- * Stripe checkout keeps the original key. Any other provider is appended so a
- * cached Stripe session is not resumed for a different payment method.
- * Format: "fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>[#<paymentProvider>]"
+ * Format: "fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>#<paymentProvider>"
  */
 export function getFulfilmentSessionIdKey(
   eventId: string,
   numTickets: number,
   eventTicketTypeId: string,
-  paymentProvider?: string
+  paymentProvider: string
 ): string {
-  const base = `fulfilmentSessionId#${eventId}#${numTickets}#${eventTicketTypeId}`;
-  return paymentProvider && paymentProvider !== "STRIPE" ? `${base}#${paymentProvider}` : base;
+  return `fulfilmentSessionId#${eventId}#${numTickets}#${eventTicketTypeId}#${paymentProvider}`;
 }
 
 /**
- * Format: "fulfilmentSessionLocalStorageExpiryTimestamp#<eventId>#<numTickets>#<eventTicketTypeId>[#<paymentProvider>]"
+ * Format: "fulfilmentSessionLocalStorageExpiryTimestamp#<eventId>#<numTickets>#<eventTicketTypeId>#<paymentProvider>"
  */
 export function getFulfilmentSessionExpiryTimestampKey(
   eventId: string,
   numTickets: number,
   eventTicketTypeId: string,
-  paymentProvider?: string
+  paymentProvider: string
 ): string {
-  const base = `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}#${eventTicketTypeId}`;
-  return paymentProvider && paymentProvider !== "STRIPE" ? `${base}#${paymentProvider}` : base;
+  return `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}#${eventTicketTypeId}#${paymentProvider}`;
 }
