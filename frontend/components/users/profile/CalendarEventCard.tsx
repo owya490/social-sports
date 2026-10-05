@@ -3,7 +3,7 @@
 import BookingButton from "@/components/events/BookingButton";
 import ContactEventButton from "@/components/events/ContactEventButton";
 import { EventData } from "@/interfaces/EventTypes";
-import { timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import { findGeneralAdmissionTicketType } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getBuyerTicketCountOptions } from "@/services/src/events/eventsUtils/ticketLimits";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
@@ -20,7 +20,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
   const [ticketCount, setTicketCount] = useState(1);
   const [loading, setLoading] = useState(false);
   const ticketOptions = getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction);
-  const eventTicketTypeId = findGeneralAdmissionTicketType(event.eventTicketTypes)?.id ?? null;
+  const admission = findGeneralAdmissionTicketType(event.eventTicketTypes);
   const priceLabel = getEventPriceDisplay(event.price);
   const timeLabel = timestampToTimeOfDay(event.startDate);
 
@@ -79,7 +79,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
               <select
                 id={`tickets-${event.eventId}`}
                 value={ticketCount}
-                disabled={loading || eventTicketTypeId === null}
+                disabled={loading || admission == null}
                 onChange={(e) => setTicketCount(parseInt(e.target.value, 10))}
                 className="w-[6.5rem] rounded-xl border border-border bg-background px-2.5 py-2 text-sm text-foreground font-sans"
               >
@@ -92,8 +92,11 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
               <BookingButton
                 eventId={event.eventId}
                 ticketCount={ticketCount}
-                eventTicketTypeId={eventTicketTypeId}
                 setLoading={setLoading}
+                eventTicketType={admission}
+                eventName={event.name}
+                organiser={event.organiser}
+                eventDate={timestampToDateString(event.startDate)}
                 className="shrink-0 rounded-xl bg-foreground px-3.5 py-2 text-sm font-semibold text-background font-sans hover:opacity-90 disabled:opacity-60"
               />
             </div>

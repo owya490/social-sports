@@ -38,7 +38,7 @@ export type FulfilmentSessionBase = {
 };
 
 export type CheckoutFulfilmentSessionType = FulfilmentSessionBase & {
-  paymentProvider?: PaymentProvider;
+  paymentProvider: PaymentProvider;
 };
 
 export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
