@@ -136,7 +136,7 @@ jobs:
             --quiet 2>&1 | sed 's/^/[completeFulfilmentSession] /') &
           PIDS+=($!)  # Capture PID of last background process ($!)
 
-          # Deploy processFulfilmentSession after its topic exists. One instance, scale to zero.
+          # Deploy processFulfilmentSession after its topic exists. Scales to zero, no instance cap.
           echo "Starting deployment of processFulfilmentSession..."
           (gcloud functions deploy processFulfilmentSession \
             --entry-point com.functions.fulfilment.controllers.ProcessFulfilmentSessionEndpoint \
@@ -145,9 +145,6 @@ jobs:
             --trigger-topic process-fulfilment-sessions-topic \
             --retry \
             --no-allow-unauthenticated \
-            --concurrency 1 \
-            --min-instances 0 \
-            --max-instances 1 \
             --region australia-southeast1 \
             --project $PROJECT_ID \
             --set-env-vars PROJECT_NAME=$PROJECT_ID \
