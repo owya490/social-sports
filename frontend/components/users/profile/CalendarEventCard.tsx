@@ -21,7 +21,6 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
   const [loading, setLoading] = useState(false);
   const ticketOptions = getBuyerTicketCountOptions(event.vacancy, event.maxTicketsPerTransaction);
   const admission = findGeneralAdmissionTicketType(event.eventTicketTypes);
-  const eventTicketTypeId = admission?.id ?? null;
   const priceLabel = getEventPriceDisplay(event.price);
   const timeLabel = timestampToTimeOfDay(event.startDate);
 
@@ -80,7 +79,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
               <select
                 id={`tickets-${event.eventId}`}
                 value={ticketCount}
-                disabled={loading || eventTicketTypeId === null}
+                disabled={loading || admission == null}
                 onChange={(e) => setTicketCount(parseInt(e.target.value, 10))}
                 className="w-[6.5rem] rounded-xl border border-border bg-background px-2.5 py-2 text-sm text-foreground font-sans"
               >
@@ -93,10 +92,8 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
               <BookingButton
                 eventId={event.eventId}
                 ticketCount={ticketCount}
-                eventTicketTypeId={eventTicketTypeId}
                 setLoading={setLoading}
-                unitPriceCents={event.price}
-                itemName={admission?.name ?? "Ticket"}
+                eventTicketType={admission}
                 eventName={event.name}
                 organiser={event.organiser}
                 eventDate={timestampToDateString(event.startDate)}

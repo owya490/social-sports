@@ -27,7 +27,7 @@ export function purgeExpiredFulfilmentSessions(): void {
     eventId: EventId;
     numTickets: number;
     eventTicketTypeId: EventTicketTypeId;
-    paymentProvider?: PaymentProvider;
+    paymentProvider: PaymentProvider;
   }[] = [];
   const legacyKeysToRemove: string[] = [];
 
@@ -35,38 +35,56 @@ export function purgeExpiredFulfilmentSessions(): void {
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (key && key.startsWith("fulfilmentSessionId#")) {
-      // Format: fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>[#<paymentProvider>]
+      // Format: fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>#<paymentProvider>
       const parts = key.split("#");
-      if (parts.length === 4 || parts.length === 5) {
-        const eventId = parts[1] as EventId;
-        const numTickets = parseInt(parts[2]);
-        const eventTicketTypeId = parts[3];
-        const paymentProvider = parts.length === 5 ? (parts[4] as PaymentProvider) : undefined;
-
-        if (paymentProvider && paymentProvider !== PaymentProvider.PYNG) {
-          legacyKeysToRemove.push(key);
-          continue;
-        }
-
-        // Drop pre-ticket-type cache entries that used "_" as a sentinel.
-        if (!eventTicketTypeId || eventTicketTypeId === "_") {
-          legacyKeysToRemove.push(key);
+      if (parts.length !== 5) {
+        legacyKeysToRemove.push(key);
+        if (parts.length === 4) {
           legacyKeysToRemove.push(
-            `fulfilmentSessionLocalStorageExpiryTimestamp#${eventId}#${numTickets}#${eventTicketTypeId || "_"}`
+            `fulfilmentSessionLocalStorageExpiryTimestamp#${parts[1]}#${parts[2]}#${parts[3]}`
           );
-          continue;
         }
+        continue;
+      }
 
-        if (!isNaN(numTickets)) {
-          const timestampKey = getFulfilmentSessionExpiryTimestampKey(
+      const eventId = parts[1] as EventId;
+      const numTickets = parseInt(parts[2]);
+      const eventTicketTypeId = parts[3];
+      const paymentProvider = parts[4] as PaymentProvider;
+
+      if (paymentProvider !== PaymentProvider.STRIPE && paymentProvider !== PaymentProvider.PYNG) {
+        legacyKeysToRemove.push(key);
+        continue;
+      }
+
+      // Drop pre-ticket-type cache entries that used "_" as a sentinel.
+      if (!eventTicketTypeId || eventTicketTypeId === "_") {
+        legacyKeysToRemove.push(key);
+        legacyKeysToRemove.push(
+          getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId || "_", paymentProvider)
+        );
+        continue;
+      }
+
+      if (!isNaN(numTickets)) {
+        const timestampKey = getFulfilmentSessionExpiryTimestampKey(
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
+        const storedTimestamp = localStorage.getItem(timestampKey);
+
+        if (storedTimestamp === null) {
+          sessionsToRemove.push({
             eventId,
             numTickets,
-            eventTicketTypeId,
-            paymentProvider
-          );
-          const storedTimestamp = localStorage.getItem(timestampKey);
-
-          if (storedTimestamp === null) {
+            eventTicketTypeId: eventTicketTypeId as EventTicketTypeId,
+            paymentProvider,
+          });
+        } else {
+          const sessionTimestamp = new Date(storedTimestamp);
+          if (isNaN(sessionTimestamp.valueOf())) {
             sessionsToRemove.push({
               eventId,
               numTickets,
@@ -74,24 +92,14 @@ export function purgeExpiredFulfilmentSessions(): void {
               paymentProvider,
             });
           } else {
-            const sessionTimestamp = new Date(storedTimestamp);
-            if (isNaN(sessionTimestamp.valueOf())) {
+            const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
+            if (timeDifference >= FULFILMENT_SESSION_CACHE_TTL_MILLIS) {
               sessionsToRemove.push({
                 eventId,
                 numTickets,
                 eventTicketTypeId: eventTicketTypeId as EventTicketTypeId,
                 paymentProvider,
               });
-            } else {
-              const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
-              if (timeDifference >= FULFILMENT_SESSION_CACHE_TTL_MILLIS) {
-                sessionsToRemove.push({
-                  eventId,
-                  numTickets,
-                  eventTicketTypeId: eventTicketTypeId as EventTicketTypeId,
-                  paymentProvider,
-                });
-              }
             }
           }
         }
@@ -117,14 +125,14 @@ export function purgeExpiredFulfilmentSessions(): void {
 
 /**
  * Stores a fulfilment session ID in localStorage with the current timestamp.
- * Keys are specific to eventId, numTickets, and ticket type.
+ * Keys are specific to eventId, numTickets, ticket type, and payment provider.
  */
 export function storeFulfilmentSessionId(
   fulfilmentSessionId: FulfilmentSessionId,
   eventId: EventId,
   numTickets: number,
   eventTicketTypeId: EventTicketTypeId,
-  paymentProvider?: PaymentProvider
+  paymentProvider: PaymentProvider
 ): void {
   purgeExpiredFulfilmentSessions();
 
@@ -151,7 +159,7 @@ export function getStoredFulfilmentSessionId(
   eventId: EventId,
   numTickets: number,
   eventTicketTypeId: EventTicketTypeId,
-  paymentProvider?: PaymentProvider
+  paymentProvider: PaymentProvider
 ): FulfilmentSessionId | null {
   try {
     const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets, eventTicketTypeId, paymentProvider);
@@ -211,7 +219,7 @@ export function clearStoredFulfilmentSessionId(
   eventId: EventId,
   numTickets: number,
   eventTicketTypeId: EventTicketTypeId,
-  paymentProvider?: PaymentProvider
+  paymentProvider: PaymentProvider
 ): void {
   const sessionIdKey = getFulfilmentSessionIdKey(eventId, numTickets, eventTicketTypeId, paymentProvider);
   const timestampKey = getFulfilmentSessionExpiryTimestampKey(

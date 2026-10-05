@@ -1,4 +1,4 @@
-import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
+import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BookingCheckoutActions, BookingCheckoutSummary, offersPaymentChoice } from "./BookingCheckoutDrawer";
@@ -39,11 +39,10 @@ describe("BookingCheckoutSummary", () => {
             profilePicture: "/images/pyng-mark.png",
           }}
           eventDate="Fri Jan 01 2100"
-          itemName="General Admission"
+          eventTicketType={{ ...EMPTY_EVENT_TICKET_TYPE, name: "General Admission", price: 1500 }}
           quantity={2}
-          unitPriceCents={1500}
         />
-        <BookingCheckoutActions pendingProvider={null} onPay={() => {}} />
+        <BookingCheckoutActions onPay={() => {}} />
       </>
     );
 
@@ -69,15 +68,5 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain("Uses PayTo, save 50c every payment.");
     expect(markup).toContain("https://pyng.com.au/customer-referral?referralCode=6YNCMZ");
     expect(markup).toContain("Sign up");
-  });
-
-  it("shows the pending state on the selected payment button", () => {
-    const markup = renderToStaticMarkup(
-      <BookingCheckoutActions pendingProvider={PaymentProvider.PYNG} onPay={() => {}} />
-    );
-
-    expect(markup).toContain("Booking...");
-    expect(markup).toContain("Credit card");
-    expect(markup).not.toContain("Pay with PYNG");
   });
 });

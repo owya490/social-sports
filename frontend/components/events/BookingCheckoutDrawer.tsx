@@ -1,6 +1,7 @@
 "use client";
 
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
+import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
 import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
@@ -23,13 +24,11 @@ type BookingCheckoutLineProps = {
   eventName?: string;
   organiser?: PublicUserData;
   eventDate?: string;
-  itemName: string;
+  eventTicketType?: EventTicketType | null;
   quantity: number;
-  unitPriceCents: number;
 };
 
 type BookingCheckoutActionsProps = {
-  pendingProvider: PaymentProvider | null;
   onPay: (provider: PaymentProvider) => void;
 };
 
@@ -37,10 +36,11 @@ export function BookingCheckoutSummary({
   eventName,
   organiser,
   eventDate,
-  itemName,
+  eventTicketType,
   quantity,
-  unitPriceCents,
 }: BookingCheckoutLineProps) {
+  const lineName = eventTicketType?.name.trim() || "Ticket";
+  const unitPriceCents = eventTicketType?.price ?? 0;
   const lineTotalCents = unitPriceCents * quantity;
 
   return (
@@ -61,7 +61,7 @@ export function BookingCheckoutSummary({
       ) : null}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground font-sans">{itemName}</p>
+          <p className="text-sm font-medium text-foreground font-sans">{lineName}</p>
           <p className="mt-1 text-sm text-foreground-muted font-sans">{getEventPriceDisplay(unitPriceCents)} each</p>
         </div>
         <div className="shrink-0 text-right">
@@ -77,27 +77,15 @@ export function BookingCheckoutSummary({
   );
 }
 
-export function BookingCheckoutActions({ pendingProvider, onPay }: BookingCheckoutActionsProps) {
-  const pending = pendingProvider !== null;
-
+export function BookingCheckoutActions({ onPay }: BookingCheckoutActionsProps) {
   return (
     <div className="flex flex-col gap-2">
-      <button
-        type="button"
-        className={creditCardButtonClassName}
-        disabled={pending}
-        onClick={() => onPay(PaymentProvider.STRIPE)}
-      >
-        {pendingProvider === PaymentProvider.STRIPE ? "Booking..." : "Credit card"}
+      <button type="button" className={creditCardButtonClassName} onClick={() => onPay(PaymentProvider.STRIPE)}>
+        Credit card
       </button>
-      <button
-        type="button"
-        className={pyngButtonClassName}
-        disabled={pending}
-        onClick={() => onPay(PaymentProvider.PYNG)}
-      >
+      <button type="button" className={pyngButtonClassName} onClick={() => onPay(PaymentProvider.PYNG)}>
         <Image src="/images/pyng-mark.png" alt="" width={20} height={20} className="h-5 w-5" />
-        {pendingProvider === PaymentProvider.PYNG ? "Booking..." : "Pay with PYNG"}
+        Pay with PYNG
       </button>
       <p className="text-xs font-sans leading-5 text-foreground-muted">
         No Credit Card Fees with Pyng.{" "}
@@ -128,10 +116,8 @@ export default function BookingCheckoutDrawer({
   eventName,
   organiser,
   eventDate,
-  itemName,
+  eventTicketType,
   quantity,
-  unitPriceCents,
-  pendingProvider,
   onPay,
 }: BookingCheckoutDrawerProps) {
   return (
@@ -139,15 +125,14 @@ export default function BookingCheckoutDrawer({
       open={open}
       onClose={onClose}
       title="Checkout"
-      footer={<BookingCheckoutActions pendingProvider={pendingProvider} onPay={onPay} />}
+      footer={<BookingCheckoutActions onPay={onPay} />}
     >
       <BookingCheckoutSummary
         eventName={eventName}
         organiser={organiser}
         eventDate={eventDate}
-        itemName={itemName}
+        eventTicketType={eventTicketType}
         quantity={quantity}
-        unitPriceCents={unitPriceCents}
       />
     </EventHubPanel>
   );
