@@ -318,7 +318,7 @@ public class CheckoutService {
 
             paramsBuilder.addShippingOption(SessionCreateParams.ShippingOption.builder()
                     .setShippingRateData(SessionCreateParams.ShippingOption.ShippingRateData.builder()
-                            .setDisplayName("Stripe Card Surcharge Fees")
+                            .setDisplayName("Stripe Platform Fee")
                             .setFixedAmount(SessionCreateParams.ShippingOption.ShippingRateData.FixedAmount.builder()
                                     .setAmount(stripeFee)
                                     .setCurrency(StripeConfig.CURRENCY)
