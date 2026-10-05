@@ -16,7 +16,7 @@ import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
-import com.functions.fulfilment.services.ProcessFulfilmentSessionService.Purchase;
+import com.functions.fulfilment.services.ProcessFulfilmentSessionService.RequestedTickets;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
 import com.functions.tickets.models.Ticket;
@@ -29,43 +29,43 @@ import com.google.cloud.firestore.SetOptions;
 import com.google.cloud.firestore.Transaction;
 
 /**
- * Mints tickets or refunds vacancy. Idempotency is a merge into
- * {@code completedFulfilmentSessionIds}, so the rest of the event metadata document is left as it is.
+ * Saves the result of a queued fulfilment session.
+ * Completed sessions become tickets and an order. Expired sessions put that many tickets back on sale.
  */
-class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSessionService.Store {
+class FulfilmentSessionTicketWriter implements ProcessFulfilmentSessionService.TicketWriter {
 
     @Override
-    public String mint(FulfilmentSession session) throws Exception {
-        Purchase purchase = ProcessFulfilmentSessionService.purchaseOf(session);
+    public String createTicketsAndOrder(FulfilmentSession session) throws Exception {
+        RequestedTickets tickets = ProcessFulfilmentSessionService.requestedTickets(session);
         String eventId = session.getEventData().getEventId();
         return FirebaseService.createFirestoreTransaction(transaction -> {
             EventData event = requireEvent(transaction, eventId);
-            if (alreadyProcessed(transaction, eventId, session.getId())) {
+            if (sessionAlreadyRecorded(transaction, eventId, session.getId())) {
                 return null;
             }
 
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, purchase.eventTicketTypeId());
-            String orderId = createTicketsAndOrder(
-                    transaction, session, eventId, purchase.numTickets(), purchase.price().longValue(), ticketType);
-            markProcessed(transaction, eventId, session.getId(), orderId, purchase.numTickets());
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, tickets.ticketTypeId());
+            String orderId = writeTicketsAndOrder(
+                    transaction, session, eventId, tickets.count(), tickets.priceCents().longValue(), ticketType);
+            recordSessionOnEvent(transaction, eventId, session.getId(), orderId, tickets.count());
             return orderId;
         });
     }
 
     @Override
     public void refundVacancy(FulfilmentSession session) throws Exception {
-        Purchase purchase = ProcessFulfilmentSessionService.purchaseOf(session);
+        RequestedTickets tickets = ProcessFulfilmentSessionService.requestedTickets(session);
         String eventId = session.getEventData().getEventId();
         FirebaseService.createFirestoreTransaction(transaction -> {
             DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
             EventData event = requireEvent(transaction, eventId);
-            if (alreadyProcessed(transaction, eventId, session.getId())) {
+            if (sessionAlreadyRecorded(transaction, eventId, session.getId())) {
                 return null;
             }
 
-            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, purchase.eventTicketTypeId());
-            EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, purchase.numTickets());
-            markProcessed(transaction, eventId, session.getId(), null, 0);
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, tickets.ticketTypeId());
+            EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, tickets.count());
+            recordSessionOnEvent(transaction, eventId, session.getId(), null, 0);
             return null;
         });
     }
@@ -80,13 +80,14 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
         return event;
     }
 
-    private static boolean alreadyProcessed(Transaction transaction, String eventId, String sessionId) throws Exception {
+    private static boolean sessionAlreadyRecorded(Transaction transaction, String eventId, String sessionId)
+            throws Exception {
         DocumentSnapshot snapshot = transaction.get(EventsRepository.getEventMetadataDocumentReference(eventId)).get();
         Object completed = snapshot.get("completedFulfilmentSessionIds");
         return completed instanceof List<?> ids && ids.contains(sessionId);
     }
 
-    private static void markProcessed(
+    private static void recordSessionOnEvent(
             Transaction transaction, String eventId, String sessionId, String orderId, int quantity) {
         Map<String, Object> updates = new HashMap<>();
         updates.put("completedFulfilmentSessionIds", FieldValue.arrayUnion(sessionId));
@@ -97,12 +98,12 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
         transaction.set(EventsRepository.getEventMetadataDocumentReference(eventId), updates, SetOptions.merge());
     }
 
-    private static String createTicketsAndOrder(
+    private static String writeTicketsAndOrder(
             Transaction transaction,
             FulfilmentSession session,
             String eventId,
             int quantity,
-            long unitAmount,
+            long priceCents,
             ResolvedEventTicketType ticketType) {
         Firestore db = FirebaseService.getFirestore();
         DocumentReference orderRef = db.collection(CollectionPaths.ORDERS).document();
@@ -115,7 +116,7 @@ class FirestoreProcessFulfilmentSessionStore implements ProcessFulfilmentSession
             Ticket ticket = new Ticket();
             ticket.setEventId(eventId);
             ticket.setOrderId(orderRef.getId());
-            ticket.setPrice(unitAmount);
+            ticket.setPrice(priceCents);
             ticket.setPurchaseDate(purchaseTime);
             ticket.setStatus(OrderAndTicketStatus.APPROVED);
             if (i < formResponseIds.size()) {

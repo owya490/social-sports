@@ -20,14 +20,14 @@ import io.cloudevents.CloudEvent;
 public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
     private static final Logger logger = LoggerFactory.getLogger(ProcessFulfilmentSessionEndpoint.class);
 
-    private final SessionProcessor processor;
+    private final SessionJsonHandler sessionJsonHandler;
 
     public ProcessFulfilmentSessionEndpoint() {
         this(new ProcessFulfilmentSessionService()::process);
     }
 
-    ProcessFulfilmentSessionEndpoint(SessionProcessor processor) {
-        this.processor = processor;
+    ProcessFulfilmentSessionEndpoint(SessionJsonHandler sessionJsonHandler) {
+        this.sessionJsonHandler = sessionJsonHandler;
     }
 
     @Override
@@ -37,7 +37,7 @@ public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
             return;
         }
         String cloudEventJson = new String(event.getData().toBytes(), StandardCharsets.UTF_8);
-        processor.process(fulfilmentSessionJson(cloudEventJson));
+        sessionJsonHandler.handle(fulfilmentSessionJson(cloudEventJson));
     }
 
     static String fulfilmentSessionJson(String cloudEventJson) {
@@ -57,7 +57,7 @@ public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
     }
 
     @FunctionalInterface
-    interface SessionProcessor {
-        void process(String sessionJson) throws Exception;
+    interface SessionJsonHandler {
+        void handle(String sessionJson) throws Exception;
     }
 }

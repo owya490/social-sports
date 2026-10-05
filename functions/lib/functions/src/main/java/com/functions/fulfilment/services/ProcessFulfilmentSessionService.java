@@ -11,20 +11,22 @@ import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
 
 /**
- * Post-payment fulfilment for a session already present on the Pub/Sub message.
+ * Handles one fulfilment session from the queue.
+ * A completed session becomes tickets, an order, and a purchase email.
+ * An expired session puts those tickets back on sale.
  */
 public class ProcessFulfilmentSessionService {
     private static final Logger logger = LoggerFactory.getLogger(ProcessFulfilmentSessionService.class);
 
-    private final Store store;
+    private final TicketWriter ticketWriter;
     private final PurchaseEmailSender purchaseEmailSender;
 
     public ProcessFulfilmentSessionService() {
-        this(new FirestoreProcessFulfilmentSessionStore(), EmailService::sendPurchaseEmail);
+        this(new FulfilmentSessionTicketWriter(), EmailService::sendPurchaseEmail);
     }
 
-    ProcessFulfilmentSessionService(Store store, PurchaseEmailSender purchaseEmailSender) {
-        this.store = store;
+    ProcessFulfilmentSessionService(TicketWriter ticketWriter, PurchaseEmailSender purchaseEmailSender) {
+        this.ticketWriter = ticketWriter;
         this.purchaseEmailSender = purchaseEmailSender;
     }
 
@@ -46,19 +48,19 @@ public class ProcessFulfilmentSessionService {
             logger.warn("Ignoring fulfilment session {} without an event", session.getId());
             return;
         }
-        Purchase purchase = purchaseOf(session);
-        if (purchase == null
-                || purchase.numTickets() == null
-                || purchase.numTickets() <= 0
-                || purchase.eventTicketTypeId() == null
-                || purchase.eventTicketTypeId().isBlank()) {
+        RequestedTickets tickets = requestedTickets(session);
+        if (tickets == null
+                || tickets.count() == null
+                || tickets.count() <= 0
+                || tickets.ticketTypeId() == null
+                || tickets.ticketTypeId().isBlank()) {
             logger.warn("Ignoring fulfilment session {} without ticket quantity or ticket type", session.getId());
             return;
         }
 
         switch (session.getStatus()) {
             case COMPLETED:
-                if (purchase.price() == null
+                if (tickets.priceCents() == null
                         || session.getPurchaserEmail() == null
                         || session.getPurchaserEmail().isBlank()) {
                     logger.warn("Ignoring completed fulfilment session {} without price or purchaser email",
@@ -68,13 +70,13 @@ public class ProcessFulfilmentSessionService {
                 processCompleted(session);
                 break;
             case EXPIRED:
-                store.refundVacancy(session);
+                ticketWriter.refundVacancy(session);
                 break;
         }
     }
 
     private void processCompleted(FulfilmentSession session) throws Exception {
-        String orderId = store.mint(session);
+        String orderId = ticketWriter.createTicketsAndOrder(session);
         if (orderId == null) {
             logger.info("Fulfilment session {} already processed", session.getId());
             return;
@@ -92,27 +94,27 @@ public class ProcessFulfilmentSessionService {
         }
     }
 
-    static Purchase purchaseOf(FulfilmentSession session) {
+    static RequestedTickets requestedTickets(FulfilmentSession session) {
         if (session instanceof CheckoutFulfilmentSession checkout) {
-            return new Purchase(checkout.getNumTickets(), checkout.getEventTicketTypeId(), checkout.getPrice());
+            return new RequestedTickets(checkout.getNumTickets(), checkout.getEventTicketTypeId(), checkout.getPrice());
         }
         if (session instanceof BookingApprovalFulfilmentSession booking) {
-            return new Purchase(booking.getNumTickets(), booking.getEventTicketTypeId(), booking.getPrice());
+            return new RequestedTickets(booking.getNumTickets(), booking.getEventTicketTypeId(), booking.getPrice());
         }
         if (session instanceof WaitlistFulfilmentSession waitlist) {
-            return new Purchase(waitlist.getNumTickets(), waitlist.getEventTicketTypeId(), waitlist.getPrice());
+            return new RequestedTickets(waitlist.getNumTickets(), waitlist.getEventTicketTypeId(), waitlist.getPrice());
         }
         return null;
     }
 
-    record Purchase(Integer numTickets, String eventTicketTypeId, Integer price) {
+    record RequestedTickets(Integer count, String ticketTypeId, Integer priceCents) {
     }
 
-    interface Store {
+    interface TicketWriter {
         /**
-         * @return the new order id, or null when this session was already fulfilled
+         * @return the new order id, or null when this session was already recorded on the event
          */
-        String mint(FulfilmentSession session) throws Exception;
+        String createTicketsAndOrder(FulfilmentSession session) throws Exception;
 
         void refundVacancy(FulfilmentSession session) throws Exception;
     }

@@ -14,73 +14,73 @@ public class ProcessFulfilmentSessionServiceTest {
 
     @Test
     public void completedMintsTicketsAndSendsPurchaseEmail() throws Exception {
-        RecordingStore store = new RecordingStore();
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
         List<String> emails = new ArrayList<>();
-        service(store, emails, true).process(sessionJson("COMPLETED", 2));
+        service(tickets, emails, true).process(sessionJson("COMPLETED", 2));
 
-        assertEquals("session-1", store.minted.getId());
-        assertNull(store.expired);
+        assertEquals("session-1", tickets.createdFor.getId());
+        assertNull(tickets.refunded);
         assertEquals(List.of("ada@example.com"), emails);
     }
 
     @Test
     public void alreadyProcessedCompletedSessionDoesNotSendEmail() throws Exception {
-        RecordingStore store = new RecordingStore();
-        store.orderId = null;
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
+        tickets.orderId = null;
         List<String> emails = new ArrayList<>();
-        service(store, emails, true).process(sessionJson("COMPLETED", 2));
+        service(tickets, emails, true).process(sessionJson("COMPLETED", 2));
 
-        assertEquals("session-1", store.minted.getId());
+        assertEquals("session-1", tickets.createdFor.getId());
         assertEquals(0, emails.size());
     }
 
     @Test
     public void expiredRefundsVacancy() throws Exception {
-        RecordingStore store = new RecordingStore();
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
         List<String> emails = new ArrayList<>();
-        service(store, emails, true).process(sessionJson("EXPIRED", 2));
+        service(tickets, emails, true).process(sessionJson("EXPIRED", 2));
 
-        assertEquals("session-1", store.expired.getId());
-        assertNull(store.minted);
+        assertEquals("session-1", tickets.refunded.getId());
+        assertNull(tickets.createdFor);
         assertEquals(0, emails.size());
     }
 
     @Test
     public void malformedMessageIsIgnored() throws Exception {
-        RecordingStore store = new RecordingStore();
-        service(store, new ArrayList<>(), true).process("{not json");
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
+        service(tickets, new ArrayList<>(), true).process("{not json");
 
-        assertNull(store.minted);
-        assertNull(store.expired);
+        assertNull(tickets.createdFor);
+        assertNull(tickets.refunded);
     }
 
     @Test
     public void missingTicketQuantityIsIgnored() throws Exception {
-        RecordingStore store = new RecordingStore();
-        service(store, new ArrayList<>(), true).process(sessionJson("COMPLETED", null));
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
+        service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", null));
 
-        assertNull(store.minted);
-        assertNull(store.expired);
+        assertNull(tickets.createdFor);
+        assertNull(tickets.refunded);
     }
 
     @Test
     public void purchaseEmailFailureIsAcknowledged() throws Exception {
-        RecordingStore store = new RecordingStore();
-        service(store, new ArrayList<>(), false).process(sessionJson("COMPLETED", 2));
-        assertEquals("session-1", store.minted.getId());
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
+        service(tickets, new ArrayList<>(), false).process(sessionJson("COMPLETED", 2));
+        assertEquals("session-1", tickets.createdFor.getId());
     }
 
     @Test
     public void completedWithoutPriceOrEmailIsIgnored() throws Exception {
-        RecordingStore store = new RecordingStore();
-        service(store, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, null, "ada@example.com"));
-        service(store, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, 1000, null));
-        assertNull(store.minted);
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
+        service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, null, "ada@example.com"));
+        service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, 1000, null));
+        assertNull(tickets.createdFor);
     }
 
     private static ProcessFulfilmentSessionService service(
-            RecordingStore store, List<String> emails, boolean emailSent) {
-        return new ProcessFulfilmentSessionService(store, (eventId, visibility, email, firstName, orderId) -> {
+            RecordingTicketWriter tickets, List<String> emails, boolean emailSent) {
+        return new ProcessFulfilmentSessionService(tickets, (eventId, visibility, email, firstName, orderId) -> {
             emails.add(email);
             return emailSent;
         });
@@ -112,20 +112,20 @@ public class ProcessFulfilmentSessionServiceTest {
                 price == null ? "null" : price.toString());
     }
 
-    private static final class RecordingStore implements ProcessFulfilmentSessionService.Store {
-        private FulfilmentSession minted;
-        private FulfilmentSession expired;
+    private static final class RecordingTicketWriter implements ProcessFulfilmentSessionService.TicketWriter {
+        private FulfilmentSession createdFor;
+        private FulfilmentSession refunded;
         private String orderId = "order-1";
 
         @Override
-        public String mint(FulfilmentSession session) {
-            minted = session;
+        public String createTicketsAndOrder(FulfilmentSession session) {
+            createdFor = session;
             return orderId;
         }
 
         @Override
         public void refundVacancy(FulfilmentSession session) {
-            expired = session;
+            refunded = session;
         }
     }
 }
