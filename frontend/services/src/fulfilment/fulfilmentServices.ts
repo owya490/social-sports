@@ -183,6 +183,7 @@ async function initWaitlistFulfilmentSession(
       eventId,
       numTickets,
       eventTicketTypeId,
+      paymentProvider: PaymentProvider.STRIPE,
     });
     return response;
   } catch (error) {

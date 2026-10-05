@@ -29,86 +29,39 @@ export function purgeExpiredFulfilmentSessions(): void {
     eventTicketTypeId: EventTicketTypeId;
     paymentProvider: PaymentProvider;
   }[] = [];
-  const legacyKeysToRemove: string[] = [];
 
-  // Find all fulfilment session ID keys
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (key && key.startsWith("fulfilmentSessionId#")) {
-      // Format: fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>#<paymentProvider>
-      const parts = key.split("#");
-      if (parts.length !== 5) {
-        legacyKeysToRemove.push(key);
-        if (parts.length === 4) {
-          legacyKeysToRemove.push(
-            `fulfilmentSessionLocalStorageExpiryTimestamp#${parts[1]}#${parts[2]}#${parts[3]}`
-          );
-        }
-        continue;
-      }
-
-      const eventId = parts[1] as EventId;
-      const numTickets = parseInt(parts[2]);
-      const eventTicketTypeId = parts[3];
-      const paymentProvider = parts[4] as PaymentProvider;
-
-      if (paymentProvider !== PaymentProvider.STRIPE && paymentProvider !== PaymentProvider.PYNG) {
-        legacyKeysToRemove.push(key);
-        continue;
-      }
-
-      // Drop pre-ticket-type cache entries that used "_" as a sentinel.
-      if (!eventTicketTypeId || eventTicketTypeId === "_") {
-        legacyKeysToRemove.push(key);
-        legacyKeysToRemove.push(
-          getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId || "_", paymentProvider)
-        );
-        continue;
-      }
-
-      if (!isNaN(numTickets)) {
-        const timestampKey = getFulfilmentSessionExpiryTimestampKey(
-          eventId,
-          numTickets,
-          eventTicketTypeId,
-          paymentProvider
-        );
-        const storedTimestamp = localStorage.getItem(timestampKey);
-
-        if (storedTimestamp === null) {
-          sessionsToRemove.push({
-            eventId,
-            numTickets,
-            eventTicketTypeId: eventTicketTypeId as EventTicketTypeId,
-            paymentProvider,
-          });
-        } else {
-          const sessionTimestamp = new Date(storedTimestamp);
-          if (isNaN(sessionTimestamp.valueOf())) {
-            sessionsToRemove.push({
-              eventId,
-              numTickets,
-              eventTicketTypeId: eventTicketTypeId as EventTicketTypeId,
-              paymentProvider,
-            });
-          } else {
-            const timeDifference = now.valueOf() - sessionTimestamp.valueOf();
-            if (timeDifference >= FULFILMENT_SESSION_CACHE_TTL_MILLIS) {
-              sessionsToRemove.push({
-                eventId,
-                numTickets,
-                eventTicketTypeId: eventTicketTypeId as EventTicketTypeId,
-                paymentProvider,
-              });
-            }
-          }
-        }
-      }
+    if (!key?.startsWith("fulfilmentSessionId#")) {
+      continue;
     }
-  }
 
-  for (const legacyKey of legacyKeysToRemove) {
-    localStorage.removeItem(legacyKey);
+    // fulfilmentSessionId#<eventId>#<numTickets>#<eventTicketTypeId>#<paymentProvider>
+    const parts = key.split("#");
+    if (parts.length !== 5) {
+      continue;
+    }
+
+    const numTickets = parseInt(parts[2]);
+    if (isNaN(numTickets)) {
+      continue;
+    }
+
+    const eventId = parts[1] as EventId;
+    const eventTicketTypeId = parts[3] as EventTicketTypeId;
+    const paymentProvider = parts[4] as PaymentProvider;
+    const storedTimestamp = localStorage.getItem(
+      getFulfilmentSessionExpiryTimestampKey(eventId, numTickets, eventTicketTypeId, paymentProvider)
+    );
+    const sessionTimestamp = storedTimestamp === null ? null : new Date(storedTimestamp);
+    const expired =
+      sessionTimestamp === null ||
+      isNaN(sessionTimestamp.valueOf()) ||
+      now.valueOf() - sessionTimestamp.valueOf() >= FULFILMENT_SESSION_CACHE_TTL_MILLIS;
+
+    if (expired) {
+      sessionsToRemove.push({ eventId, numTickets, eventTicketTypeId, paymentProvider });
+    }
   }
 
   for (const session of sessionsToRemove) {

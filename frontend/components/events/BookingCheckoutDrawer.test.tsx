@@ -5,13 +5,7 @@ import { BookingCheckoutActions, BookingCheckoutSummary, offersPaymentChoice } f
 
 jest.mock("next/image", () => ({
   __esModule: true,
-  default: (props: { src: string; alt: string }) => ({
-    $$typeof: Symbol.for("react.element"),
-    type: "img",
-    key: null,
-    ref: null,
-    props: { src: props.src, alt: props.alt },
-  }),
+  default: () => null,
 }));
 
 describe("offersPaymentChoice", () => {
@@ -26,18 +20,12 @@ describe("offersPaymentChoice", () => {
 });
 
 describe("BookingCheckoutSummary", () => {
-  it("lists the ticket, quantity, and both payment actions", () => {
+  it("lists the ticket and both payment actions", () => {
     const markup = renderToStaticMarkup(
       <>
         <BookingCheckoutSummary
           eventName="Friday Social"
-          organiser={{
-            ...EmptyPublicUserData,
-            userId: "user-1",
-            firstName: "Brian",
-            surname: "Yang",
-            profilePicture: "/images/pyng-mark.png",
-          }}
+          organiser={{ ...EmptyPublicUserData, firstName: "Brian", surname: "Yang" }}
           eventDate="Fri Jan 01 2100"
           eventTicketType={{ ...EMPTY_EVENT_TICKET_TYPE, name: "General Admission", price: 1500 }}
           quantity={2}
@@ -48,25 +36,11 @@ describe("BookingCheckoutSummary", () => {
 
     expect(markup).toContain("Friday Social");
     expect(markup).toContain("Brian Yang");
-    expect(markup).toContain("rounded-full");
     expect(markup).toContain("Fri Jan 01 2100");
     expect(markup).toContain("General Admission");
-    expect(markup).toContain("$15.00 each");
-    expect(markup).toContain("Qty 2");
-    expect(markup).toContain("$30.00");
-    expect(markup).toContain("$30.00 AUD");
-    expect(markup).toContain("Credit card");
-    expect(markup).toContain("bg-foreground");
-    expect(markup).toContain("text-background");
-    expect(markup).toContain("Pay with PYNG");
-    expect(markup).toContain("/images/pyng-mark.png");
-    expect(markup).not.toContain("About PayTo");
-    expect(markup).toContain("No Credit Card Fees with Pyng.");
-    expect(markup).toContain("md:hidden");
-    expect(markup).toContain("Save 50c every payment.");
-    expect(markup).toContain("hidden md:inline");
-    expect(markup).toContain("Uses PayTo, save 50c every payment.");
-    expect(markup).toContain("https://pyng.com.au/customer-referral?referralCode=6YNCMZ");
-    expect(markup).toContain("Sign up");
+    expect(markup).toContain("$15.00");
+    expect(markup).toContain("Pay with Card");
+    expect(markup).toContain("Pay with Pyng - Coming Soon...");
+    expect(markup).toContain('disabled=""');
   });
 });

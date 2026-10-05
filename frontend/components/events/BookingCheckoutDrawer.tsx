@@ -4,6 +4,7 @@ import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel
 import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
 import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
+import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import Image from "next/image";
 import { OrganiserPill } from "./OrganiserPill";
@@ -78,17 +79,24 @@ export function BookingCheckoutSummary({
 }
 
 export function BookingCheckoutActions({ onPay }: BookingCheckoutActionsProps) {
+  const pyngEnabled = isPayWithPyngEnabled();
+
   return (
     <div className="flex flex-col gap-2">
       <button type="button" className={creditCardButtonClassName} onClick={() => onPay(PaymentProvider.STRIPE)}>
-        Credit card
+        Pay with Card
       </button>
-      <button type="button" className={pyngButtonClassName} onClick={() => onPay(PaymentProvider.PYNG)}>
+      <button
+        type="button"
+        className={pyngButtonClassName}
+        disabled={!pyngEnabled}
+        onClick={() => onPay(PaymentProvider.PYNG)}
+      >
         <Image src="/images/pyng-mark.png" alt="" width={20} height={20} className="h-5 w-5" />
-        Pay with PYNG
+        {pyngEnabled ? "Pay with PYNG" : "Pay with Pyng - Coming Soon..."}
       </button>
       <p className="text-xs font-sans leading-5 text-foreground-muted">
-        No Credit Card Fees with Pyng.{" "}
+        No Processing Fees with Pyng.{" "}
         <span className="md:hidden">Save 50c every payment.</span>
         <span className="hidden md:inline">Uses PayTo, save 50c every payment.</span>{" "}
         <a
