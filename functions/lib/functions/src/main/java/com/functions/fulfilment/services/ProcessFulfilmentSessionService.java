@@ -38,8 +38,13 @@ public class ProcessFulfilmentSessionService {
             logger.warn("Ignoring malformed fulfilment session message: {}", e.getMessage());
             return;
         }
-        if (session.getId() == null || session.getId().isBlank() || session.getStatus() == null) {
-            logger.warn("Ignoring fulfilment session message without id or status");
+        if (session.getStatus() == null) {
+            String sessionId = session.getId() == null || session.getId().isBlank() ? "unknown" : session.getId();
+            logger.error("Fulfilment session {} has no status", sessionId);
+            return;
+        }
+        if (session.getId() == null || session.getId().isBlank()) {
+            logger.warn("Ignoring fulfilment session message without id");
             return;
         }
         if (session.getEventData() == null

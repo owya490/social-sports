@@ -55,6 +55,16 @@ public class ProcessFulfilmentSessionServiceTest {
     }
 
     @Test
+    public void nullStatusIsIgnored() throws Exception {
+        RecordingTicketWriter tickets = new RecordingTicketWriter();
+        String json = sessionJson("COMPLETED", 2).replace("\"status\": \"COMPLETED\"", "\"status\": null");
+        service(tickets, new ArrayList<>(), true).process(json);
+
+        assertNull(tickets.createdFor);
+        assertNull(tickets.refunded);
+    }
+
+    @Test
     public void missingTicketQuantityIsIgnored() throws Exception {
         RecordingTicketWriter tickets = new RecordingTicketWriter();
         service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", null));
