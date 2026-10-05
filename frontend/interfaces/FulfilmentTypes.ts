@@ -1,6 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { EventTicketTypeId } from "./EventTicketTypeTypes";
-import { EventId } from "./EventTypes";
+import { EventId, PaymentProvider } from "./EventTypes";
 import { FormId, FormResponseId } from "./FormTypes";
 import { Branded } from "./index";
 import { URL } from "./Types";
@@ -16,10 +16,7 @@ export enum FulfilmentSessionType {
   PYNG_CHECKOUT = "PYNG_CHECKOUT",
 }
 
-export enum PaymentProvider {
-  STRIPE = "STRIPE",
-  PYNG = "PYNG",
-}
+export { PaymentProvider };
 
 /**
  * Base type for fulfilment session data shared across all session types.

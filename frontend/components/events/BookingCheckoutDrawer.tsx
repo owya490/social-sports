@@ -2,8 +2,7 @@
 
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
-import { resolveSupportedPaymentProviders, STRIPE_PAYMENT_PROVIDER } from "@/interfaces/EventTypes";
-import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
+import { EmptyEventData, PaymentProvider } from "@/interfaces/EventTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
@@ -32,7 +31,7 @@ type BookingCheckoutLineProps = {
 
 type BookingCheckoutActionsProps = {
   onPay: (provider: PaymentProvider) => void;
-  supportedPaymentProviders?: string[] | null;
+  supportedPaymentProviders?: PaymentProvider[] | null;
   bookingApprovalEnabled?: boolean;
 };
 
@@ -86,7 +85,8 @@ export function BookingCheckoutActions({
   supportedPaymentProviders,
   bookingApprovalEnabled = false,
 }: BookingCheckoutActionsProps) {
-  const stripeSupported = resolveSupportedPaymentProviders(supportedPaymentProviders).includes(STRIPE_PAYMENT_PROVIDER);
+  const providers = supportedPaymentProviders ?? EmptyEventData.supportedPaymentProviders;
+  const stripeSupported = providers.includes(PaymentProvider.STRIPE);
   const pyngEnabled = isPayWithPyngEnabled();
 
   return (

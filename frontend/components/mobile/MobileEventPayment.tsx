@@ -1,7 +1,7 @@
 "use client";
 
 import JoinWaitlistButton from "@/components/waitlist/JoinWaitlistButton";
-import { EventId } from "@/interfaces/EventTypes";
+import { EventId, PaymentProvider } from "@/interfaces/EventTypes";
 import { UserId, PublicUserData } from "@/interfaces/UserTypes";
 import { BOOKING_MAINTENANCE_MESSAGE, isBookingMaintenanceActive } from "@/services/featureFlags";
 import {
@@ -42,7 +42,7 @@ interface MobileEventPaymentProps {
   ticketCheckout: EventTicketTypeCheckout;
   eventName: string;
   organiser: PublicUserData;
-  supportedPaymentProviders?: string[] | null;
+  supportedPaymentProviders?: PaymentProvider[] | null;
 }
 
 export default function MobileEventPayment(props: MobileEventPaymentProps) {

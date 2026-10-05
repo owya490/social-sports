@@ -1,5 +1,5 @@
 import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
-import { PYNG_PAYMENT_PROVIDER, resolveSupportedPaymentProviders, STRIPE_PAYMENT_PROVIDER } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -57,8 +57,8 @@ describe("BookingCheckoutSummary", () => {
     expect(markup.match(/disabled=""/g)).toHaveLength(1);
   });
 
-  it("keeps Stripe clickable when supported providers are missing or empty, and leaves Pyng disabled while the flag is off", () => {
-    for (const supportedPaymentProviders of [undefined, null, []]) {
+  it("uses the EmptyEventData Stripe default when supported providers are missing", () => {
+    for (const supportedPaymentProviders of [undefined, null]) {
       const markup = renderToStaticMarkup(
         <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={supportedPaymentProviders} />
       );
@@ -70,7 +70,7 @@ describe("BookingCheckoutSummary", () => {
 
   it("hides Stripe when the event does not support it", () => {
     const markup = renderToStaticMarkup(
-      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[PYNG_PAYMENT_PROVIDER]} />
+      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[PaymentProvider.PYNG]} />
     );
     expect(markup).not.toContain("Pay with Card");
     expect(markup).toContain("Pay with Pyng - Coming Soon...");
@@ -81,7 +81,7 @@ describe("BookingCheckoutSummary", () => {
     const markup = renderToStaticMarkup(
       <BookingCheckoutActions
         onPay={() => {}}
-        supportedPaymentProviders={[STRIPE_PAYMENT_PROVIDER, PYNG_PAYMENT_PROVIDER]}
+        supportedPaymentProviders={[PaymentProvider.STRIPE, PaymentProvider.PYNG]}
       />
     );
     expect(markup).toContain("Pay with Card");
@@ -92,7 +92,7 @@ describe("BookingCheckoutSummary", () => {
   it("enables Pyng from the feature flag even when the event does not list Pyng", () => {
     pyngFlag.mockReturnValue(true);
     const markup = renderToStaticMarkup(
-      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[STRIPE_PAYMENT_PROVIDER]} />
+      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[PaymentProvider.STRIPE]} />
     );
     expect(markup).toContain("Pay with Card");
     expect(markup).toContain("Pay with PYNG");
@@ -105,20 +105,5 @@ describe("BookingCheckoutSummary", () => {
 
     expect(markup).toContain("Book with Card");
     expect(markup).not.toContain("Pay with Card");
-  });
-});
-
-describe("resolveSupportedPaymentProviders", () => {
-  it("defaults missing and empty lists to Stripe", () => {
-    expect(resolveSupportedPaymentProviders(undefined)).toEqual([STRIPE_PAYMENT_PROVIDER]);
-    expect(resolveSupportedPaymentProviders(null)).toEqual([STRIPE_PAYMENT_PROVIDER]);
-    expect(resolveSupportedPaymentProviders([])).toEqual([STRIPE_PAYMENT_PROVIDER]);
-  });
-
-  it("keeps an explicit provider list", () => {
-    expect(resolveSupportedPaymentProviders([STRIPE_PAYMENT_PROVIDER, PYNG_PAYMENT_PROVIDER])).toEqual([
-      STRIPE_PAYMENT_PROVIDER,
-      PYNG_PAYMENT_PROVIDER,
-    ]);
   });
 });

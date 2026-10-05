@@ -66,7 +66,7 @@ public abstract class AbstractEventData {
 	private Boolean bookingApprovalEnabled = false; // Optional field
 	private Boolean showAttendeesOnEventPage = false; // Optional field
 	@Nullable
-	private List<String> supportedPaymentProviders = new ArrayList<>(List.of("Stripe")); // Optional; empty or missing defaults to Stripe
+	private List<PaymentProvider> supportedPaymentProviders = new ArrayList<>(List.of(PaymentProvider.STRIPE));
 	@Nullable
 	private Integer maxTicketsPerTransaction = 10; // Max tickets per checkout; optional for legacy docs
 	/**

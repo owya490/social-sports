@@ -7,7 +7,7 @@ import {
 } from "@/components/events/create/createEventFormTypes";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
-import { DEFAULT_SUPPORTED_PAYMENT_PROVIDERS, EventId, NewEventData } from "@/interfaces/EventTypes";
+import { EmptyEventData, EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
@@ -186,7 +186,7 @@ export default function CreateEvent() {
       bookingApprovalEnabled: paymentFields.bookingApprovalEnabled,
       formId: formData.formId,
       showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
-      supportedPaymentProviders: [...DEFAULT_SUPPORTED_PAYMENT_PROVIDERS],
+      supportedPaymentProviders: [...EmptyEventData.supportedPaymentProviders],
       maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
         formData.maxTicketsPerTransaction,
         formData.capacity

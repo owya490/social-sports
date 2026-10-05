@@ -20,17 +20,9 @@ export const DEFAULT_MAX_TICKETS_PER_ORDER = 7;
 /** Organiser-configurable max is capped at this value. */
 export const MAX_TICKETS_PER_TRANSACTION_ORGANISER_CAP = 10;
 
-export const STRIPE_PAYMENT_PROVIDER = "Stripe";
-export const PYNG_PAYMENT_PROVIDER = "Pyng";
-
-/** Used when an event has no supportedPaymentProviders value, or the array is empty. */
-export const DEFAULT_SUPPORTED_PAYMENT_PROVIDERS = [STRIPE_PAYMENT_PROVIDER];
-
-export function resolveSupportedPaymentProviders(providers?: string[] | null): string[] {
-  if (!providers || providers.length === 0) {
-    return [...DEFAULT_SUPPORTED_PAYMENT_PROVIDERS];
-  }
-  return providers;
+export enum PaymentProvider {
+  STRIPE = "STRIPE",
+  PYNG = "PYNG",
 }
 
 export type EventAttendees = { [emailHash: string]: number };
@@ -72,7 +64,7 @@ interface AbstractEventData {
   waitlistEnabled: boolean; // should default to true
   bookingApprovalEnabled: boolean; // should default to false
   showAttendeesOnEventPage: boolean; // should default to false
-  supportedPaymentProviders: string[]; // "Stripe" | "Pyng"; missing or empty defaults to Stripe
+  supportedPaymentProviders: PaymentProvider[];
   maxTicketsPerTransaction: number; // max tickets per checkout; should default to 7, capped at min(capacity, 10) in UI
   /** Source of truth for pricing and vacancy (General Admission). */
   eventTicketTypes?: EventTicketTypesMap;
@@ -134,7 +126,7 @@ export const EmptyEventData: EventData = {
   waitlistEnabled: true,
   bookingApprovalEnabled: false,
   showAttendeesOnEventPage: false,
-  supportedPaymentProviders: [...DEFAULT_SUPPORTED_PAYMENT_PROVIDERS],
+  supportedPaymentProviders: [PaymentProvider.STRIPE],
   maxTicketsPerTransaction: DEFAULT_MAX_TICKETS_PER_ORDER,
   eventTicketTypes: createEmptyEventTicketTypes(),
 };
