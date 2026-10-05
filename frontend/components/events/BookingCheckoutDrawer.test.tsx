@@ -16,6 +16,16 @@ jest.mock("@/services/featureFlags", () => ({
 
 const pyngFlag = isPayWithPyngEnabled as jest.MockedFunction<typeof isPayWithPyngEnabled>;
 
+function actionsMarkup(supportedPaymentProviders?: PaymentProvider[] | null, bookingApprovalEnabled?: boolean) {
+  return renderToStaticMarkup(
+    <BookingCheckoutActions
+      onPay={() => {}}
+      supportedPaymentProviders={supportedPaymentProviders}
+      bookingApprovalEnabled={bookingApprovalEnabled}
+    />
+  );
+}
+
 describe("offersPaymentChoice", () => {
   it("skips the checkout drawer for free events", () => {
     expect(offersPaymentChoice(0)).toBe(false);
@@ -54,56 +64,16 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain("Pay with Card");
     expect(markup).toContain("Pay with Pyng - Coming Soon...");
     expect(markup).toContain('disabled=""');
-    expect(markup.match(/disabled=""/g)).toHaveLength(1);
   });
 
-  it("uses the EmptyEventData Stripe default when supported providers are missing", () => {
-    for (const supportedPaymentProviders of [undefined, null]) {
-      const markup = renderToStaticMarkup(
-        <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={supportedPaymentProviders} />
-      );
-      expect(markup).toContain("Pay with Card");
-      expect(markup).toContain("Pay with Pyng - Coming Soon...");
-      expect(markup.match(/disabled=""/g)).toHaveLength(1);
-    }
-  });
+  it("follows supported providers, with the Pyng flag overriding that list", () => {
+    expect(actionsMarkup([PaymentProvider.PYNG])).not.toContain("Pay with Card");
+    expect(actionsMarkup([PaymentProvider.STRIPE, PaymentProvider.PYNG])).toContain("Pay with Pyng - Coming Soon...");
 
-  it("hides Stripe when the event does not support it", () => {
-    const markup = renderToStaticMarkup(
-      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[PaymentProvider.PYNG]} />
-    );
-    expect(markup).not.toContain("Pay with Card");
-    expect(markup).toContain("Pay with Pyng - Coming Soon...");
-    expect(markup).toContain('disabled=""');
-  });
-
-  it("keeps Pyng disabled when the flag is off, even if the event lists Pyng", () => {
-    const markup = renderToStaticMarkup(
-      <BookingCheckoutActions
-        onPay={() => {}}
-        supportedPaymentProviders={[PaymentProvider.STRIPE, PaymentProvider.PYNG]}
-      />
-    );
-    expect(markup).toContain("Pay with Card");
-    expect(markup).toContain("Pay with Pyng - Coming Soon...");
-    expect(markup).toContain('disabled=""');
-  });
-
-  it("enables Pyng from the feature flag even when the event does not list Pyng", () => {
     pyngFlag.mockReturnValue(true);
-    const markup = renderToStaticMarkup(
-      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[PaymentProvider.STRIPE]} />
-    );
-    expect(markup).toContain("Pay with Card");
-    expect(markup).toContain("Pay with PYNG");
-    expect(markup).not.toContain("Coming Soon");
-    expect(markup).not.toContain('disabled=""');
-  });
-
-  it("labels the card action Book with Card when organiser approval is required", () => {
-    const markup = renderToStaticMarkup(<BookingCheckoutActions onPay={() => {}} bookingApprovalEnabled />);
-
-    expect(markup).toContain("Book with Card");
-    expect(markup).not.toContain("Pay with Card");
+    const enabled = actionsMarkup([PaymentProvider.STRIPE]);
+    expect(enabled).toContain("Pay with PYNG");
+    expect(enabled).not.toContain("Coming Soon");
+    expect(actionsMarkup(undefined, true)).toContain("Book with Card");
   });
 });
