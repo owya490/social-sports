@@ -16,8 +16,6 @@ export enum FulfilmentSessionType {
   PYNG_CHECKOUT = "PYNG_CHECKOUT",
 }
 
-export { PaymentProvider };
-
 /**
  * Base type for fulfilment session data shared across all session types.
  */

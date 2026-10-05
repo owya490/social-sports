@@ -1,4 +1,4 @@
-import { EventId } from "@/interfaces/EventTypes";
+import { EventId, PaymentProvider } from "@/interfaces/EventTypes";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import {
   FulfilmentEntityId,
@@ -15,7 +15,6 @@ import {
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
-  PaymentProvider,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";

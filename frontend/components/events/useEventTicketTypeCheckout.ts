@@ -1,6 +1,5 @@
-import { EventId } from "@/interfaces/EventTypes";
+import { EventId, PaymentProvider } from "@/interfaces/EventTypes";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
-import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
