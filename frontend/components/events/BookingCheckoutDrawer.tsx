@@ -2,9 +2,9 @@
 
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { EventTicketType } from "@/interfaces/EventTicketTypeTypes";
+import { resolveSupportedPaymentProviders, STRIPE_PAYMENT_PROVIDER } from "@/interfaces/EventTypes";
 import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
-import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import Image from "next/image";
 import { OrganiserPill } from "./OrganiserPill";
@@ -31,6 +31,7 @@ type BookingCheckoutLineProps = {
 
 type BookingCheckoutActionsProps = {
   onPay: (provider: PaymentProvider) => void;
+  supportedPaymentProviders?: string[] | null;
 };
 
 export function BookingCheckoutSummary({
@@ -78,22 +79,19 @@ export function BookingCheckoutSummary({
   );
 }
 
-export function BookingCheckoutActions({ onPay }: BookingCheckoutActionsProps) {
-  const pyngEnabled = isPayWithPyngEnabled();
+export function BookingCheckoutActions({ onPay, supportedPaymentProviders }: BookingCheckoutActionsProps) {
+  const stripeSupported = resolveSupportedPaymentProviders(supportedPaymentProviders).includes(STRIPE_PAYMENT_PROVIDER);
 
   return (
     <div className="flex flex-col gap-2">
-      <button type="button" className={creditCardButtonClassName} onClick={() => onPay(PaymentProvider.STRIPE)}>
-        Pay with Card
-      </button>
-      <button
-        type="button"
-        className={pyngButtonClassName}
-        disabled={!pyngEnabled}
-        onClick={() => onPay(PaymentProvider.PYNG)}
-      >
+      {stripeSupported ? (
+        <button type="button" className={creditCardButtonClassName} onClick={() => onPay(PaymentProvider.STRIPE)}>
+          Pay with Card
+        </button>
+      ) : null}
+      <button type="button" className={pyngButtonClassName} disabled>
         <Image src="/images/pyng-mark.png" alt="" width={20} height={20} className="h-5 w-5" />
-        {pyngEnabled ? "Pay with PYNG" : "Pay with Pyng - Coming Soon..."}
+        Pay with Pyng - Coming Soon...
       </button>
       <p className="text-xs font-sans leading-5 text-foreground-muted">
         No Processing Fees with Pyng.{" "}
@@ -127,13 +125,14 @@ export default function BookingCheckoutDrawer({
   eventTicketType,
   quantity,
   onPay,
+  supportedPaymentProviders,
 }: BookingCheckoutDrawerProps) {
   return (
     <EventHubPanel
       open={open}
       onClose={onClose}
       title="Checkout"
-      footer={<BookingCheckoutActions onPay={onPay} />}
+      footer={<BookingCheckoutActions onPay={onPay} supportedPaymentProviders={supportedPaymentProviders} />}
     >
       <BookingCheckoutSummary
         eventName={eventName}

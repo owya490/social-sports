@@ -11,13 +11,6 @@ export function isBookingMaintenanceActive(): boolean {
   return BOOKING_MAINTENANCE_ENABLED;
 }
 
-// Pay with PYNG — set PAY_WITH_PYNG_ENABLED to true to enable the PYNG checkout button.
-export const PAY_WITH_PYNG_ENABLED = false;
-
-export function isPayWithPyngEnabled(): boolean {
-  return PAY_WITH_PYNG_ENABLED;
-}
-
 /** Organisers who see the Hub v2 promo banner on the v1 dashboard. */
 export const ORGANISER_HUB_V2_BANNER_USER_IDS: readonly string[] = [
   "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball

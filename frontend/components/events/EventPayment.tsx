@@ -43,6 +43,7 @@ interface EventPaymentProps {
   ticketCheckout: EventTicketTypeCheckout;
   eventName: string;
   organiser: PublicUserData;
+  supportedPaymentProviders?: string[] | null;
 }
 
 export default function EventPayment(props: EventPaymentProps) {
@@ -215,6 +216,7 @@ export default function EventPayment(props: EventPaymentProps) {
                         eventName={props.eventName}
                         organiser={props.organiser}
                         eventDate={timestampToDateString(startDate)}
+                        supportedPaymentProviders={props.supportedPaymentProviders}
                         className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"
                       />
                       {props.bookingApprovalEnabled && (

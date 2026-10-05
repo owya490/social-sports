@@ -182,6 +182,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
       waitlistEnabled: event.waitlistEnabled,
       bookingApprovalEnabled: event.bookingApprovalEnabled,
       showAttendeesOnEventPage: event.showAttendeesOnEventPage,
+      supportedPaymentProviders: event.supportedPaymentProviders,
       maxTicketsPerTransaction: event.maxTicketsPerTransaction,
       eventTicketTypes: event.eventTicketTypes,
     })

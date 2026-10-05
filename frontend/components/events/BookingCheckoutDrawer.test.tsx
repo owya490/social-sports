@@ -1,4 +1,5 @@
 import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
+import { PYNG_PAYMENT_PROVIDER, resolveSupportedPaymentProviders, STRIPE_PAYMENT_PROVIDER } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData } from "@/interfaces/UserTypes";
 import { renderToStaticMarkup } from "react-dom/server";
 import { BookingCheckoutActions, BookingCheckoutSummary, offersPaymentChoice } from "./BookingCheckoutDrawer";
@@ -42,5 +43,41 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain("Pay with Card");
     expect(markup).toContain("Pay with Pyng - Coming Soon...");
     expect(markup).toContain('disabled=""');
+    expect(markup.match(/disabled=""/g)).toHaveLength(1);
+  });
+
+  it("keeps Stripe clickable when supported providers are missing or empty, and always disables Pyng", () => {
+    for (const supportedPaymentProviders of [undefined, null, []]) {
+      const markup = renderToStaticMarkup(
+        <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={supportedPaymentProviders} />
+      );
+      expect(markup).toContain("Pay with Card");
+      expect(markup).toContain("Pay with Pyng - Coming Soon...");
+      expect(markup.match(/disabled=""/g)).toHaveLength(1);
+    }
+  });
+
+  it("hides Stripe when the event does not support it", () => {
+    const markup = renderToStaticMarkup(
+      <BookingCheckoutActions onPay={() => {}} supportedPaymentProviders={[PYNG_PAYMENT_PROVIDER]} />
+    );
+    expect(markup).not.toContain("Pay with Card");
+    expect(markup).toContain("Pay with Pyng - Coming Soon...");
+    expect(markup).toContain('disabled=""');
+  });
+});
+
+describe("resolveSupportedPaymentProviders", () => {
+  it("defaults missing and empty lists to Stripe", () => {
+    expect(resolveSupportedPaymentProviders(undefined)).toEqual([STRIPE_PAYMENT_PROVIDER]);
+    expect(resolveSupportedPaymentProviders(null)).toEqual([STRIPE_PAYMENT_PROVIDER]);
+    expect(resolveSupportedPaymentProviders([])).toEqual([STRIPE_PAYMENT_PROVIDER]);
+  });
+
+  it("keeps an explicit provider list", () => {
+    expect(resolveSupportedPaymentProviders([STRIPE_PAYMENT_PROVIDER, PYNG_PAYMENT_PROVIDER])).toEqual([
+      STRIPE_PAYMENT_PROVIDER,
+      PYNG_PAYMENT_PROVIDER,
+    ]);
   });
 });
