@@ -13,6 +13,12 @@ export enum FulfilmentSessionType {
   CHECKOUT = "CHECKOUT",
   WAITLIST = "WAITLIST",
   BOOKING_APPROVAL = "BOOKING_APPROVAL",
+  PYNG_CHECKOUT = "PYNG_CHECKOUT",
+}
+
+export enum PaymentProvider {
+  STRIPE = "STRIPE",
+  PYNG = "PYNG",
 }
 
 /**
@@ -24,7 +30,9 @@ export type FulfilmentSessionBase = {
   eventTicketTypeId: EventTicketTypeId;
 };
 
-export type CheckoutFulfilmentSessionType = FulfilmentSessionBase;
+export type CheckoutFulfilmentSessionType = FulfilmentSessionBase & {
+  paymentProvider: PaymentProvider;
+};
 
 export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
 
@@ -59,6 +67,7 @@ export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
   eventTicketTypeId: EventTicketTypeId;
+  paymentProvider: PaymentProvider;
 };
 
 /**
