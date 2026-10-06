@@ -149,6 +149,26 @@ public class CloudLogEntryParserTest {
     }
 
     @Test
+    public void parse_objectTimestampOutOfRange_keepsAlertWithNullTimestamp() {
+        String log = """
+                {
+                  "severity": "ERROR",
+                  "timestamp": { "seconds": 999999999999999999, "nanos": 0 },
+                  "textPayload": "boom",
+                  "resource": {
+                    "labels": {
+                      "function_name": "globalAppController"
+                    }
+                  }
+                }
+                """;
+        ParsedErrorLog parsed = CloudLogEntryParser.parse(log).orElseThrow();
+        assertEquals("globalAppController", parsed.functionName());
+        assertTrue(parsed.message().contains("boom"));
+        assertEquals(null, parsed.timestamp());
+    }
+
+    @Test
     public void fingerprint_isStableForSameError() {
         ParsedErrorLog parsed = CloudLogEntryParser.parse(JAVA_ERROR_LOG).orElseThrow();
         String first = CloudLogEntryParser.fingerprint(parsed);

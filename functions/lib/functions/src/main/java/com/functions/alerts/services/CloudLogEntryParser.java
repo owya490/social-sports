@@ -151,7 +151,11 @@ public final class CloudLogEntryParser {
             }
         }
         if (timestamp.isObject() && timestamp.has("seconds")) {
-            return Instant.ofEpochSecond(timestamp.path("seconds").asLong(), timestamp.path("nanos").asLong());
+            try {
+                return Instant.ofEpochSecond(timestamp.path("seconds").asLong(), timestamp.path("nanos").asLong());
+            } catch (Exception e) {
+                return null;
+            }
         }
         return null;
     }
