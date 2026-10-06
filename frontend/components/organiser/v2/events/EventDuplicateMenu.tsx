@@ -1,17 +1,27 @@
 "use client";
 
 import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
+import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
+import {
+  EventHubScheduleFields,
+  type EventHubScheduleValue,
+} from "@/components/organiser/v2/event-hub/EventHubScheduleFields";
+import { EventHubPrimaryButton } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
 import { createEvent } from "@/services/src/events/eventsService";
 import { buildDuplicatedNewEventData } from "@/services/src/events/eventsUtils/duplicateEventUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
-import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { DocumentDuplicateIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const logger = new Logger("EventDuplicateMenu");
+
+function copyTitle(eventName: string) {
+  return `Copy of ${eventName.trim() || "event"}`;
+}
 
 type EventDuplicateMenuProps = {
   event: EventData;
@@ -21,19 +31,35 @@ type EventDuplicateMenuProps = {
 export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [name, setName] = useState(copyTitle(event.name));
+  const [schedule, setSchedule] = useState<EventHubScheduleValue | null>(null);
 
-  const closeConfirm = () => {
+  const closePanel = () => {
     if (duplicating) return;
-    setConfirmOpen(false);
+    setOpen(false);
+  };
+
+  const openPanel = () => {
+    setName(copyTitle(event.name));
+    setSchedule(null);
+    setOpen(true);
   };
 
   const handleDuplicate = async () => {
-    if (disabled || duplicating) return;
+    const nextName = name.trim();
+    if (disabled || duplicating || !schedule || schedule.hasBlockingWarning || !nextName) return;
     setDuplicating(true);
     try {
-      const newEventId = await createEvent(buildDuplicatedNewEventData(event));
+      const newEventId = await createEvent(
+        buildDuplicatedNewEventData(event, {
+          name: nextName,
+          startDate: schedule.startDate,
+          endDate: schedule.endDate,
+          registrationDeadline: schedule.registrationDeadline,
+        })
+      );
       bustOrganiserEventsCache();
       router.push(welcomeAwareEventHref(pathname, newEventId));
     } catch (error) {
@@ -68,7 +94,7 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
             {({ focus }) => (
               <button
                 type="button"
-                onClick={() => setConfirmOpen(true)}
+                onClick={openPanel}
                 className={`${
                   focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
                 } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
@@ -81,41 +107,48 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
         </MenuItems>
       </Menu>
 
-      <Dialog open={confirmOpen} onClose={closeConfirm} className="relative z-[110]">
-        <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-[0_8px_28px_rgba(10,10,10,0.12)]">
-            <DialogTitle className="text-base font-semibold text-foreground font-sans tracking-tight">
-              Duplicate event?
-            </DialogTitle>
-            <p className="mt-2 text-sm text-foreground-muted font-sans leading-relaxed">
-              Create a copy of{" "}
-              <span className="font-semibold text-foreground">{event.name || "this event"}</span>.
-              <span className="block mt-1.5">You can edit the new event after.</span>
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeConfirm}
-                disabled={duplicating}
-                className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-40"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void handleDuplicate();
-                }}
-                disabled={duplicating}
-                className="inline-flex items-center justify-center rounded-xl bg-accent px-3.5 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-40"
-              >
-                {duplicating ? "Duplicating…" : "Duplicate"}
-              </button>
+      <EventHubPanel
+        open={open}
+        onClose={closePanel}
+        title="Duplicate event"
+        footer={
+          <EventHubPrimaryButton
+            onClick={() => {
+              void handleDuplicate();
+            }}
+            disabled={disabled || duplicating || !name.trim() || !schedule || schedule.hasBlockingWarning}
+          >
+            {duplicating ? "Duplicating…" : "Duplicate"}
+          </EventHubPrimaryButton>
+        }
+      >
+        {open ? (
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={100}
+                required
+                aria-label="Event title"
+                placeholder="Event title"
+                className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none"
+              />
+              <p className="text-sm text-foreground-muted font-sans leading-relaxed">
+                Create a copy of{" "}
+                <span className="font-semibold text-foreground">{event.name || "this event"}</span>.
+                <span className="block mt-1.5">You can edit the new event after.</span>
+              </p>
             </div>
-          </DialogPanel>
-        </div>
-      </Dialog>
+            <EventHubScheduleFields
+              eventStartDate={event.startDate}
+              eventEndDate={event.endDate}
+              eventRegistrationDeadline={event.registrationDeadline}
+              onChange={setSchedule}
+            />
+          </div>
+        ) : null}
+      </EventHubPanel>
     </>
   );
 }

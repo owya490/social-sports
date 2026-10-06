@@ -25,8 +25,12 @@ function cloneTicketTypesForDuplicate(event: EventData): EventTicketTypesMap | u
   return cloned;
 }
 
+type DuplicateEventOverrides = Partial<
+  Pick<NewEventData, "name" | "startDate" | "endDate" | "registrationDeadline">
+>;
+
 /** Same listing details for createEvent, with a new name, empty attendance, and unsold inventory. */
-export function buildDuplicatedNewEventData(event: EventData): NewEventData {
+export function buildDuplicatedNewEventData(event: EventData, overrides: DuplicateEventOverrides = {}): NewEventData {
   const {
     eventId: _eventId,
     organiser: _organiser,
@@ -41,7 +45,10 @@ export function buildDuplicatedNewEventData(event: EventData): NewEventData {
 
   return {
     ...rest,
-    name: `Copy of ${event.name.trim() || "event"}`,
+    name: overrides.name?.trim() || `Copy of ${event.name.trim() || "event"}`,
+    ...(overrides.startDate ? { startDate: overrides.startDate } : {}),
+    ...(overrides.endDate ? { endDate: overrides.endDate } : {}),
+    ...(overrides.registrationDeadline ? { registrationDeadline: overrides.registrationDeadline } : {}),
     attendees: {},
     attendeesMetadata: {},
     accessCount: 0,
