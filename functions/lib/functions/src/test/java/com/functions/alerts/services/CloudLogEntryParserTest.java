@@ -15,6 +15,8 @@ public class CloudLogEntryParserTest {
     private static final String JAVA_ERROR_LOG = """
             {
               "severity": "ERROR",
+              "timestamp": "2026-10-06T01:00:00.123Z",
+              "trace": "projects/socialsportsprod/traces/abc123",
               "textPayload": "ERROR com.functions.stripe.services.WebhookService - Error processing ticket purchase workflow: boom\\njava.lang.RuntimeException: boom\\n\\tat com.functions.stripe.services.WebhookService.process(WebhookService.java:1128)\\n\\tat com.functions.stripe.handlers.StripeWebhookHandler.handleWebhook(StripeWebhookHandler.java:80)\\n",
               "resource": {
                 "type": "cloud_run_revision",
@@ -53,6 +55,8 @@ public class CloudLogEntryParserTest {
         assertEquals("com.functions.stripe.services.WebhookService.process(WebhookService.java:1128)",
                 parsed.topFrame());
         assertTrue(parsed.message().contains("Error processing ticket purchase workflow"));
+        assertEquals("projects/socialsportsprod/traces/abc123", parsed.trace());
+        assertEquals(java.time.Instant.parse("2026-10-06T01:00:00.123Z"), parsed.timestamp());
     }
 
     @Test
@@ -142,6 +146,26 @@ public class CloudLogEntryParserTest {
 
         assertEquals("globalAppController", parsed.orElseThrow().functionName());
         assertTrue(parsed.get().message().contains("boom"));
+    }
+
+    @Test
+    public void parse_objectTimestampOutOfRange_keepsAlertWithNullTimestamp() {
+        String log = """
+                {
+                  "severity": "ERROR",
+                  "timestamp": { "seconds": 999999999999999999, "nanos": 0 },
+                  "textPayload": "boom",
+                  "resource": {
+                    "labels": {
+                      "function_name": "globalAppController"
+                    }
+                  }
+                }
+                """;
+        ParsedErrorLog parsed = CloudLogEntryParser.parse(log).orElseThrow();
+        assertEquals("globalAppController", parsed.functionName());
+        assertTrue(parsed.message().contains("boom"));
+        assertEquals(null, parsed.timestamp());
     }
 
     @Test
