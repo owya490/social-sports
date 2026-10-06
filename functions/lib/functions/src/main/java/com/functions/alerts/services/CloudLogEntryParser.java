@@ -3,6 +3,7 @@ package com.functions.alerts.services;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -74,7 +75,9 @@ public final class CloudLogEntryParser {
                     functionName,
                     message,
                     extractExceptionType(message),
-                    extractTopFrame(message)));
+                    extractTopFrame(message),
+                    parseTimestamp(root),
+                    textOrNull(root.path("trace"))));
         } catch (Exception e) {
             logger.warn("Failed to parse Cloud Logging entry: {}", e.getMessage());
             return Optional.empty();
@@ -130,6 +133,27 @@ public final class CloudLogEntryParser {
                 || "CRITICAL".equalsIgnoreCase(severity)
                 || "ALERT".equalsIgnoreCase(severity)
                 || "EMERGENCY".equalsIgnoreCase(severity);
+    }
+
+    static Instant parseTimestamp(JsonNode root) {
+        if (root == null) {
+            return null;
+        }
+        JsonNode timestamp = root.get("timestamp");
+        if (timestamp == null || timestamp.isNull() || timestamp.isMissingNode()) {
+            return null;
+        }
+        if (timestamp.isTextual()) {
+            try {
+                return Instant.parse(timestamp.asText());
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        if (timestamp.isObject() && timestamp.has("seconds")) {
+            return Instant.ofEpochSecond(timestamp.path("seconds").asLong(), timestamp.path("nanos").asLong());
+        }
+        return null;
     }
 
     private static String extractMessage(JsonNode root) {

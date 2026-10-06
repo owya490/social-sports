@@ -1,15 +1,19 @@
 package com.functions.alerts.services;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.alerts.clients.AlertSummaryPublisher;
+import com.functions.alerts.clients.CloudLoggingNearbyLogFetcher;
 import com.functions.alerts.clients.ErrorAlertDedupStore;
 import com.functions.alerts.clients.GcpLogAlertPublisher;
 import com.functions.alerts.clients.GeminiClient;
 import com.functions.alerts.clients.LlmClient;
+import com.functions.alerts.clients.NearbyLogFetcher;
 import com.functions.alerts.models.ParsedErrorLog;
 import com.functions.alerts.repositories.ErrorAlertDedupRepository;
 
@@ -19,21 +23,32 @@ public class ExplainErrorAlertService {
     private final ErrorAlertDedupStore dedupStore;
     private final LlmClient llmClient;
     private final AlertSummaryPublisher summaryPublisher;
+    private final NearbyLogFetcher nearbyLogFetcher;
 
     public ExplainErrorAlertService(
             ErrorAlertDedupStore dedupStore,
             LlmClient llmClient,
             AlertSummaryPublisher summaryPublisher) {
+        this(dedupStore, llmClient, summaryPublisher, parsed -> List.of());
+    }
+
+    public ExplainErrorAlertService(
+            ErrorAlertDedupStore dedupStore,
+            LlmClient llmClient,
+            AlertSummaryPublisher summaryPublisher,
+            NearbyLogFetcher nearbyLogFetcher) {
         this.dedupStore = dedupStore;
         this.llmClient = llmClient;
         this.summaryPublisher = summaryPublisher;
+        this.nearbyLogFetcher = nearbyLogFetcher;
     }
 
     public static ExplainErrorAlertService fromEnv() {
         return new ExplainErrorAlertService(
                 new ErrorAlertDedupRepository(),
                 new GeminiClient(),
-                new GcpLogAlertPublisher());
+                new GcpLogAlertPublisher(),
+                new CloudLoggingNearbyLogFetcher());
     }
 
     public void processLogEntryJson(String logEntryJson) {
@@ -62,14 +77,28 @@ public class ExplainErrorAlertService {
     }
 
     private String summarize(ParsedErrorLog parsed) {
-        Optional<String> summary = llmClient.summarize(buildPrompt(parsed));
+        Optional<String> summary = llmClient.summarize(buildPrompt(parsed, fetchNearbyLogs(parsed)));
         if (summary.isPresent() && !summary.get().isBlank()) {
             return summary.get();
         }
         return fallbackSms(parsed);
     }
 
+    private List<String> fetchNearbyLogs(ParsedErrorLog parsed) {
+        try {
+            List<String> nearby = nearbyLogFetcher.fetchNearby(parsed);
+            return nearby == null ? List.of() : nearby;
+        } catch (Exception e) {
+            logger.warn("Failed to fetch nearby logs; summarizing from the ERROR alone: {}", e.getMessage());
+            return List.of();
+        }
+    }
+
     static String buildPrompt(ParsedErrorLog parsed) {
+        return buildPrompt(parsed, List.of());
+    }
+
+    static String buildPrompt(ParsedErrorLog parsed, List<String> nearbyLogs) {
         return """
                 You page SPORTSHUB on-call via SMS.
                 Write 1–2 full sentences, about 200–320 characters. No markdown. No quotes.
@@ -78,17 +107,42 @@ public class ExplainErrorAlertService {
                 (for example webhook fulfillment or checkout session expired), exception type, \
                 the first class.method from the stack if present, and the likely cause.
                 Prefer one compact sentence over a headline.
+                Nearby logs are extra diagnosis context only; do not copy them into the SMS.
 
                 Function: %s
                 Exception: %s
                 Top frame: %s
                 Log:
                 %s
+
+                Nearby logs:
+                %s
                 """.formatted(
                 parsed.functionName(),
                 parsed.exceptionType(),
                 parsed.topFrame() == null || parsed.topFrame().isBlank() ? "unknown" : parsed.topFrame(),
-                AlertTextRedactor.redact(SmsText.truncate(parsed.message(), 2500)));
+                AlertTextRedactor.redact(SmsText.truncate(parsed.message(), 2500)),
+                formatNearbyLogs(nearbyLogs));
+    }
+
+    static String formatNearbyLogs(List<String> nearbyLogs) {
+        if (nearbyLogs == null || nearbyLogs.isEmpty()) {
+            return "(none)";
+        }
+        List<String> redacted = new ArrayList<>();
+        for (String line : nearbyLogs) {
+            if (CloudLoggingNearbyLogFetcher.isExcludedText(line)) {
+                continue;
+            }
+            String cleaned = AlertTextRedactor.redact(line);
+            if (!cleaned.isBlank()) {
+                redacted.add(cleaned);
+            }
+        }
+        if (redacted.isEmpty()) {
+            return "(none)";
+        }
+        return String.join("\n", CloudLoggingNearbyLogFetcher.cap(redacted));
     }
 
     static String fallbackSms(ParsedErrorLog parsed) {
