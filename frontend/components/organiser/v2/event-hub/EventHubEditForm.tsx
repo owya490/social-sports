@@ -29,6 +29,7 @@ import {
   timestampToTimeOfDay,
 } from "@/services/src/datetimeUtils";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { EventDateUpdateError } from "@/services/src/events/eventsUtils/eventDateUpdates";
 import { CalendarDaysIcon, ClockIcon, LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
@@ -112,6 +113,7 @@ export function EventHubEditForm({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const readOnly = !isActive || ended;
 
@@ -137,6 +139,7 @@ export function EventHubEditForm({
     setLocation(eventLocation);
     setSelectionMade(true);
     setLocationError("");
+    setSaveError("");
     setSport(eventSport);
     setEventLink(eventEventLink ?? "");
     // Hydration is not a user start-date change — keep the event's real end date.
@@ -249,6 +252,7 @@ export function EventHubEditForm({
       return;
     }
 
+    setSaveError("");
     setSaving(true);
     try {
       let latLng = locationLatLng;
@@ -276,8 +280,8 @@ export function EventHubEditForm({
       });
 
       onSaved();
-    } catch {
-      setLocationError("Couldn’t save — check location and try again.");
+    } catch (error) {
+      setSaveError(error instanceof EventDateUpdateError ? error.message : "Couldn't save this event. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -288,6 +292,7 @@ export function EventHubEditForm({
 
   return (
     <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-8">
+      {saveError ? <p role="alert" className="text-sm text-red-600">{saveError}</p> : null}
       {readOnly ? (
         <p className="text-sm text-foreground-secondary font-sans">
           {ended
