@@ -4,6 +4,7 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EventHubEmpty,
@@ -405,12 +406,9 @@ function PersonRow({
   onMove: (count: number, toTeamId: string | null) => void;
 }) {
   const seats = seatsFor(person);
+  const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState(String(count));
-  const [amountFor, setAmountFor] = useState(count);
-  if (count !== amountFor) {
-    setAmountFor(count);
-    setAmount(String(count));
-  }
+  const [destination, setDestination] = useState("");
   const destinations = [
     ...(teamId ? [{ id: "unassigned", name: "Unassigned" }] : []),
     ...teams.filter((team) => team.id !== teamId).map((team) => ({ id: team.id, name: team.name })),
@@ -422,57 +420,80 @@ function PersonRow({
         : `${count} of ${seats} unassigned`
       : `${count} of ${seats}`;
 
+  const openMove = () => {
+    setAmount(String(count));
+    setDestination("");
+    setOpen(true);
+  };
+
+  const submitMove = (event: FormEvent) => {
+    event.preventDefault();
+    if (!destination) return;
+    const parsed = Number.parseInt(amount, 10);
+    const moving = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), count) : count;
+    onMove(moving, destination === "unassigned" ? null : destination);
+    setOpen(false);
+  };
+
   return (
-    <li className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <EventHubInitials name={person.fullName} />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground font-sans">{person.fullName}</p>
-          <p className="text-xs text-foreground-muted font-sans">
-            <span className="break-all">{person.email || "—"}</span>
-            <span className="whitespace-nowrap">{` · ${ticketLabel}`}</span>
-          </p>
-        </div>
+    <li className="flex items-center gap-3 px-3 py-3">
+      <EventHubInitials name={person.fullName} />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground font-sans">{person.fullName}</p>
+        <p className="text-xs text-foreground-muted font-sans">
+          <span className="break-all">{person.email || "—"}</span>
+          <span className="whitespace-nowrap">{` · ${ticketLabel}`}</span>
+        </p>
       </div>
       {destinations.length > 0 ? (
-        <div className="flex shrink-0 items-center gap-2">
-          <label className="sr-only" htmlFor={`count-${teamId}-${person.orderId}`}>
-            Tickets to move for {person.fullName}
-          </label>
-          <input
-            id={`count-${teamId}-${person.orderId}`}
-            inputMode="numeric"
-            aria-label={`Tickets to move for ${person.fullName}`}
-            value={amount}
-            disabled={count <= 1}
-            onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
-            className="w-12 rounded-lg border border-border bg-background px-2 py-1.5 text-center text-xs tabular-nums text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
-          />
-          <label className="sr-only" htmlFor={`move-${teamId}-${person.orderId}`}>
-            Move {person.fullName}
-          </label>
-          <select
-            id={`move-${teamId}-${person.orderId}`}
-            aria-label={`Move ${person.fullName}`}
-            value=""
-            onChange={(event) => {
-              const destination = event.target.value;
-              if (!destination) return;
-              const parsed = Number.parseInt(amount, 10);
-              const moving = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), count) : count;
-              onMove(moving, destination === "unassigned" ? null : destination);
-            }}
-            className="max-w-[9.5rem] rounded-lg border border-border bg-background py-1.5 pl-2 pr-7 text-xs text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-          >
-            <option value="">Move…</option>
-            {destinations.map((destination) => (
-              <option key={destination.id} value={destination.id}>
-                {destination.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <EventHubGhostButton onClick={openMove}>Move</EventHubGhostButton>
       ) : null}
+      <Dialog open={open} onClose={() => setOpen(false)} className="relative z-[110]">
+        <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-[0_8px_28px_rgba(10,10,10,0.12)]">
+            <DialogTitle className="text-base font-semibold text-foreground font-sans tracking-tight">
+              Move {person.fullName}
+            </DialogTitle>
+            <p className="mt-1.5 text-sm text-foreground-muted font-sans">
+              {count} {count === 1 ? "person" : "people"} can move from here.
+            </p>
+            <form onSubmit={submitMove} className="mt-4 space-y-3">
+              <label className="block text-xs font-medium text-foreground-secondary font-sans">
+                How many people?
+                <input
+                  autoFocus
+                  required
+                  inputMode="numeric"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
+                  className={`${fieldClass} mt-1 w-full`}
+                />
+              </label>
+              <label className="block text-xs font-medium text-foreground-secondary font-sans">
+                Which team?
+                <select
+                  required
+                  value={destination}
+                  onChange={(event) => setDestination(event.target.value)}
+                  className={`${fieldClass} mt-1 w-full`}
+                >
+                  <option value="">Choose a team</option>
+                  {destinations.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="flex justify-end gap-2 pt-1">
+                <EventHubGhostButton onClick={() => setOpen(false)}>Cancel</EventHubGhostButton>
+                <EventHubPrimaryButton type="submit">Move</EventHubPrimaryButton>
+              </div>
+            </form>
+          </DialogPanel>
+        </div>
+      </Dialog>
     </li>
   );
 }
