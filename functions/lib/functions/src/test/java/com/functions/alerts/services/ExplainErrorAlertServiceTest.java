@@ -23,7 +23,7 @@ import com.functions.alerts.models.ParsedErrorLog;
 public class ExplainErrorAlertServiceTest {
 
     @Test
-    public void process_publishesTruncatedGeminiSummary() {
+    public void process_publishesLongerGeminiSummaryUpTo480Chars() {
         RecordingPublisher publisher = new RecordingPublisher();
         ExplainErrorAlertService service = new ExplainErrorAlertService(
                 new AllowOnceDedup(),
@@ -33,7 +33,22 @@ public class ExplainErrorAlertServiceTest {
         service.process(sampleLog());
 
         assertEquals(1, publisher.bodies.size());
-        assertTrue(publisher.bodies.get(0).length() <= SmsText.MAX_UTF8_BYTES);
+        assertEquals(400, publisher.bodies.get(0).length());
+        assertTrue(publisher.bodies.get(0).length() <= SmsText.MAX_CHARS);
+    }
+
+    @Test
+    public void process_truncatesSummaryAt480Characters() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        ExplainErrorAlertService service = new ExplainErrorAlertService(
+                new AllowOnceDedup(),
+                prompt -> Optional.of("x".repeat(600)),
+                publisher);
+
+        service.process(sampleLog());
+
+        assertEquals(1, publisher.bodies.size());
+        assertEquals(SmsText.MAX_CHARS, publisher.bodies.get(0).length());
         assertTrue(publisher.bodies.get(0).endsWith("..."));
     }
 
@@ -86,6 +101,39 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
+    public void processLogEntryJson_publishesErrorLogs() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        ExplainErrorAlertService service = new ExplainErrorAlertService(
+                new AllowOnceDedup(),
+                prompt -> Optional.of("ERROR checkout failed"),
+                publisher);
+
+        service.processLogEntryJson("""
+                {
+                  "severity": "ERROR",
+                  "textPayload": "Cannot checkout: vacancy",
+                  "resource": { "labels": { "function_name": "globalAppController" } }
+                }
+                """);
+
+        assertEquals(1, publisher.bodies.size());
+        assertTrue(publisher.bodies.get(0).contains("ERROR checkout failed"));
+    }
+
+    @Test
+    public void process_skipsWhenGlobalWindowRejects() {
+        RecordingPublisher publisher = new RecordingPublisher();
+        ExplainErrorAlertService service = new ExplainErrorAlertService(
+                new GlobalBlockedDedup(),
+                prompt -> Optional.of("should not send"),
+                publisher);
+
+        service.process(sampleLog());
+
+        assertTrue(publisher.bodies.isEmpty());
+    }
+
+    @Test
     public void process_redactsEmailBeforePublishAndPrompt() {
         RecordingPublisher publisher = new RecordingPublisher();
         RecordingLlm llm = new RecordingLlm();
@@ -120,7 +168,9 @@ public class ExplainErrorAlertServiceTest {
         service.process(sampleLog());
 
         assertEquals(1, dedup.claims);
+        assertEquals(1, dedup.globalClaims);
         assertEquals(0, dedup.markedSent);
+        assertEquals(0, dedup.markedSentGlobal);
     }
 
     @Test
@@ -134,7 +184,9 @@ public class ExplainErrorAlertServiceTest {
         service.process(sampleLog());
 
         assertEquals(1, dedup.claims);
+        assertEquals(1, dedup.globalClaims);
         assertEquals(1, dedup.markedSent);
+        assertEquals(1, dedup.markedSentGlobal);
     }
 
     @Test
@@ -146,7 +198,7 @@ public class ExplainErrorAlertServiceTest {
         assertTrue(prompt.contains("exception type"));
         assertTrue(prompt.contains("class.method"));
         assertTrue(prompt.contains("likely cause"));
-        assertTrue(prompt.contains("full sentences"));
+        assertTrue(prompt.contains("one paragraph"));
         assertTrue(prompt.contains("Function: globalAppController"));
         assertTrue(prompt.contains("Exception: RuntimeException"));
         assertTrue(prompt.contains("WebhookService.process"));
@@ -156,6 +208,8 @@ public class ExplainErrorAlertServiceTest {
         assertTrue(prompt.contains("-----BEGIN UNTRUSTED NEARBY LOGS-----"));
         assertTrue(prompt.contains("-----END UNTRUSTED NEARBY LOGS-----"));
         assertTrue(prompt.contains("(none)"));
+        assertTrue(prompt.contains("400–480"));
+        assertTrue(prompt.contains("nearby logs"));
     }
 
     @Test
@@ -261,7 +315,9 @@ public class ExplainErrorAlertServiceTest {
 
     private static final class TrackingDedup implements ErrorAlertDedupStore {
         private int claims;
+        private int globalClaims;
         private int markedSent;
+        private int markedSentGlobal;
 
         @Override
         public boolean tryClaim(String fingerprint) {
@@ -270,8 +326,31 @@ public class ExplainErrorAlertServiceTest {
         }
 
         @Override
+        public boolean tryClaimGlobal() {
+            globalClaims++;
+            return true;
+        }
+
+        @Override
         public void markSent(String fingerprint) {
             markedSent++;
+        }
+
+        @Override
+        public void markSentGlobal() {
+            markedSentGlobal++;
+        }
+    }
+
+    private static final class GlobalBlockedDedup implements ErrorAlertDedupStore {
+        @Override
+        public boolean tryClaim(String fingerprint) {
+            return true;
+        }
+
+        @Override
+        public boolean tryClaimGlobal() {
+            return false;
         }
     }
 

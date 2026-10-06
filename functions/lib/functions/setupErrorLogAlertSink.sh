@@ -181,7 +181,7 @@ cat > "$POLICY_FILE" <<EOF
       "OPENED"
     ],
     "notificationRateLimit": {
-      "period": "300s"
+      "period": "600s"
     },
     "autoClose": "604800s"
   },

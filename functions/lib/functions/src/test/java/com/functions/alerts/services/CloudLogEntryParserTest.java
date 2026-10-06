@@ -119,6 +119,49 @@ public class CloudLogEntryParserTest {
     }
 
     @Test
+    public void parse_skipsMissingSeverity() {
+        String log = """
+                {
+                  "textPayload": "Cannot checkout: vacancy",
+                  "resource": {
+                    "labels": {
+                      "function_name": "globalAppController"
+                    }
+                  }
+                }
+                """;
+        assertTrue(CloudLogEntryParser.parse(log).isEmpty());
+    }
+
+    @Test
+    public void parse_skipsNoticeAndInfoSeverity() {
+        String notice = """
+                {
+                  "severity": "NOTICE",
+                  "textPayload": "Cannot checkout: vacancy",
+                  "resource": {
+                    "labels": {
+                      "function_name": "globalAppController"
+                    }
+                  }
+                }
+                """;
+        String info = """
+                {
+                  "severity": "INFO",
+                  "textPayload": "Cannot checkout: vacancy",
+                  "resource": {
+                    "labels": {
+                      "function_name": "globalAppController"
+                    }
+                  }
+                }
+                """;
+        assertTrue(CloudLogEntryParser.parse(notice).isEmpty());
+        assertTrue(CloudLogEntryParser.parse(info).isEmpty());
+    }
+
+    @Test
     public void parse_skipsWarningSeverity() {
         String log = """
                 {

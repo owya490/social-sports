@@ -3,7 +3,8 @@ package com.functions.alerts.services;
 import java.nio.charset.StandardCharsets;
 
 public final class SmsText {
-    public static final int MAX_CHARS = 320;
+    /** About three GSM SMS segments. Full body goes in textPayload and documentation.content. */
+    public static final int MAX_CHARS = 480;
     /** Cloud Monitoring documentation.subject is limited to 255 UTF-8 bytes. */
     public static final int MAX_UTF8_BYTES = 255;
 
@@ -11,6 +12,11 @@ public final class SmsText {
     }
 
     public static String forSms(String text) {
+        return truncate(text, MAX_CHARS);
+    }
+
+    /** Short form for documentation.subject when GCP truncates at 255 UTF-8 bytes. */
+    public static String forSmsSubject(String text) {
         return truncateUtf8Bytes(truncate(text, MAX_CHARS), MAX_UTF8_BYTES);
     }
 
