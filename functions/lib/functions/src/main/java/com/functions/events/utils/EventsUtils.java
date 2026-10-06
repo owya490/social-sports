@@ -67,12 +67,17 @@ public class EventsUtils {
     }
 
     /**
-     * Validates event timing: not paused, not concluded, registration still open.
+     * Validates event availability: active, not paused, not concluded, registration still open.
      */
     public static void validateEventTiming(EventData event) throws Exception {
         if (event == null) {
             logger.error("Failed to validate event timing: event is null");
             throw new RuntimeException("Failed to validate event timing: event is null");
+        }
+
+        if (Boolean.FALSE.equals(event.getIsActive())) {
+            logger.warn("Event {} is inactive", event.getEventId());
+            throw new CheckoutDateTimeException("Event " + event.getEventId() + " is inactive");
         }
 
         boolean paused = event.getPaused() != null ? event.getPaused() : false;

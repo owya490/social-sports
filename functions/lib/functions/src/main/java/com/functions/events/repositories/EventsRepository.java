@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
+import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
+import com.google.api.core.ApiFuture;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -28,20 +30,33 @@ public class EventsRepository {
     }
 
     public static Optional<EventData> getActivePublicEventById(String eventId) {
-        Firestore db = FirebaseService.getFirestore();
-        DocumentReference docRef = db.collection(FirebaseService.CollectionPaths.EVENTS)
-                .document(FirebaseService.CollectionPaths.ACTIVE)
-                .collection(FirebaseService.CollectionPaths.PUBLIC)
-                .document(eventId);
+        return getActiveEventById(eventId, false);
+    }
 
+    public static Optional<EventData> getActiveEventById(String eventId) {
+        Optional<EventData> publicEvent = getActivePublicEventById(eventId);
+        return publicEvent.isPresent() ? publicEvent : getActiveEventById(eventId, true);
+    }
+
+    public static Optional<EventData> getActiveEventById(String eventId, boolean isPrivate, Transaction transaction) {
+        DocumentReference eventRef = EventsUtils.getEventRef(FirebaseService.getFirestore(), eventId, isPrivate);
+        return readActiveEvent(eventId, transaction.get(eventRef));
+    }
+
+    private static Optional<EventData> getActiveEventById(String eventId, boolean isPrivate) {
+        DocumentReference eventRef = EventsUtils.getEventRef(FirebaseService.getFirestore(), eventId, isPrivate);
+        return readActiveEvent(eventId, eventRef.get());
+    }
+
+    private static Optional<EventData> readActiveEvent(String eventId, ApiFuture<DocumentSnapshot> future) {
         DocumentSnapshot snapshot;
         try {
-            snapshot = docRef.get().get();
+            snapshot = future.get();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new IllegalStateException("Interrupted while retrieving active public event: " + eventId, e);
+            throw new IllegalStateException("Interrupted while retrieving active event: " + eventId, e);
         } catch (ExecutionException e) {
-            throw new IllegalStateException("Failed to retrieve active public event: " + eventId, e);
+            throw new IllegalStateException("Failed to retrieve active event: " + eventId, e);
         }
 
         if (!snapshot.exists()) {
@@ -50,7 +65,7 @@ public class EventsRepository {
 
         EventData eventData = snapshot.toObject(EventData.class);
         if (eventData == null) {
-            throw new IllegalStateException("Failed to map active public event: " + eventId);
+            throw new IllegalStateException("Failed to map active event: " + eventId);
         }
         eventData.setEventId(eventId);
         return Optional.of(eventData);
