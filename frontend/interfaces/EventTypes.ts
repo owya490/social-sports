@@ -133,9 +133,12 @@ export type EventTeam = {
   targetSize: number | null;
 };
 
+/** How many of one order's tickets sit on each team. */
+export type TeamTicketSplit = Record<string, number>;
+
 export type TeamBoard = {
   teams: EventTeam[];
-  assignments: Record<string, string>;
+  assignments: Record<string, TeamTicketSplit>;
 };
 
 export interface EventMetadata {

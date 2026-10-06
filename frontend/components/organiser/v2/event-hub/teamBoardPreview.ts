@@ -1,7 +1,7 @@
 import { OrderId, TicketId } from "@/interfaces/EventTypes";
 import { EMPTY_ORDER_DEFAULTS, Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { addTeam, assignPerson, type TeamBoard } from "./teamBoard";
+import { addTeam, placeAllSeats, type TeamBoard } from "./teamBoard";
 
 const SAMPLE = [
   ["maya", "Maya Chen", 1],
@@ -39,10 +39,12 @@ export function createTeamsPreview(): {
   let board = addTeam({ teams: [], assignments: {} }, "Team A", 5, "team-a");
   board = addTeam(board, "Team B", 5, "team-b");
   ["maya", "jordan", "priya", "sam"].forEach((id) => {
-    board = assignPerson(board, id, "team-a");
+    const tickets = SAMPLE.find(([sampleId]) => sampleId === id)?.[2] ?? 1;
+    board = placeAllSeats(board, id, "team-a", tickets);
   });
   ["alex", "riley", "casey", "noah"].forEach((id) => {
-    board = assignPerson(board, id, "team-b");
+    const tickets = SAMPLE.find(([sampleId]) => sampleId === id)?.[2] ?? 1;
+    board = placeAllSeats(board, id, "team-b", tickets);
   });
 
   return {

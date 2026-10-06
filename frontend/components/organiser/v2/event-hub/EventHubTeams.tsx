@@ -18,14 +18,17 @@ import {
   EMPTY_TEAM_BOARD,
   TEAM_CSV_HEADERS,
   addTeam,
-  assignPerson,
   autoFillTeams,
   buildTeamCsvRows,
   newTeamId,
   peopleFromOrders,
+  placeSeats,
   removeTeam,
   renameTeam,
+  seatsFor,
+  seatsOnTeam,
   setTeamTargetSize,
+  unassignedSeats,
   visibleBoard,
   type TeamBoard,
   type TeamPerson,
@@ -116,8 +119,11 @@ export function EventHubTeams({
   }, [enqueuePersist]);
 
   const view = useMemo(() => (board ? visibleBoard(board, people) : EMPTY_TEAM_BOARD), [board, people]);
-  const assignedIds = useMemo(() => new Set(Object.keys(view.assignments)), [view.assignments]);
-  const unassigned = people.filter((person) => !assignedIds.has(person.orderId));
+  const unassigned = people.flatMap((person) => {
+    const count = unassignedSeats(person, view.assignments[person.orderId]);
+    return count > 0 ? [{ person, count }] : [];
+  });
+  const unassignedSeatTotal = unassigned.reduce((sum, entry) => sum + entry.count, 0);
   const csvRows = useMemo(() => buildTeamCsvRows(view, people), [people, view]);
   const filename = `${(eventName || "event").trim().replace(/\s+/g, "-").toLowerCase()}-teams.csv`;
 
@@ -165,7 +171,7 @@ export function EventHubTeams({
         <p className="text-sm text-foreground-muted font-sans">
           {people.length === 0
             ? "Teams are built from approved signups."
-            : `${unassigned.length} unassigned · ${view.teams.length} ${view.teams.length === 1 ? "team" : "teams"}`}
+            : `${unassignedSeatTotal} unassigned · ${view.teams.length} ${view.teams.length === 1 ? "team" : "teams"}`}
           {onPersist ? "" : " · Preview only"}
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -189,7 +195,7 @@ export function EventHubTeams({
             {armReshuffle ? "Reshuffle everyone" : "Reshuffle"}
           </EventHubGhostButton>
           <EventHubGhostButton
-            disabled={view.teams.length === 0 || unassigned.length === 0}
+            disabled={view.teams.length === 0 || unassignedSeatTotal === 0}
             onClick={() => update(autoFillTeams(view, people, { reshuffle: false }))}
           >
             Auto-fill
@@ -216,25 +222,28 @@ export function EventHubTeams({
           <section className="rounded-xl border border-border bg-background" aria-label="Unassigned">
             <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
               <h2 className="text-sm font-semibold text-foreground font-sans">Unassigned</h2>
-              <span className="text-xs tabular-nums text-foreground-muted font-sans">{unassigned.length}</span>
+              <span className="text-xs tabular-nums text-foreground-muted font-sans">{unassignedSeatTotal}</span>
             </header>
             {people.length === 0 ? (
               <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">
                 No approved attendees yet.
               </p>
-            ) : unassigned.length === 0 ? (
+            ) : unassignedSeatTotal === 0 ? (
               <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">
-                Everyone approved is on a team.
+                Every ticket is on a team.
               </p>
             ) : (
               <ul className="divide-y divide-border">
-                {unassigned.map((person) => (
+                {unassigned.map(({ person, count }) => (
                   <PersonRow
                     key={person.orderId}
                     person={person}
                     teams={view.teams}
                     teamId=""
-                    onAssign={(teamId) => update(assignPerson(view, person.orderId, teamId))}
+                    count={count}
+                    onMove={(amount, toTeamId) =>
+                      update(placeSeats(view, person.orderId, null, toTeamId, amount, seatsFor(person)))
+                    }
                   />
                 ))}
               </ul>
@@ -287,8 +296,12 @@ export function EventHubTeams({
             ) : (
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 {view.teams.map((team) => {
-                  const members = people.filter((person) => view.assignments[person.orderId] === team.id);
-                  const overTarget = team.targetSize != null && members.length > team.targetSize;
+                  const members = people.flatMap((person) => {
+                    const count = view.assignments[person.orderId]?.[team.id] ?? 0;
+                    return count > 0 ? [{ person, count }] : [];
+                  });
+                  const filled = seatsOnTeam(view, team.id);
+                  const overTarget = team.targetSize != null && filled > team.targetSize;
                   return (
                     <section key={team.id} className="rounded-xl border border-border bg-background" aria-label={team.name}>
                       <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
@@ -324,7 +337,7 @@ export function EventHubTeams({
                             overTarget ? "font-semibold text-foreground" : "text-foreground-muted"
                           }`}
                         >
-                          {members.length}
+                          {filled}
                           {team.targetSize != null ? `/${team.targetSize}` : ""}
                         </span>
                         {pendingDeleteId === team.id ? (
@@ -350,13 +363,18 @@ export function EventHubTeams({
                         <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">No one yet.</p>
                       ) : (
                         <ul className="divide-y divide-border">
-                          {members.map((person) => (
+                          {members.map(({ person, count }) => (
                             <PersonRow
                               key={person.orderId}
                               person={person}
                               teams={view.teams}
                               teamId={team.id}
-                              onAssign={(teamId) => update(assignPerson(view, person.orderId, teamId))}
+                              count={count}
+                              onMove={(amount, toTeamId) =>
+                                update(
+                                  placeSeats(view, person.orderId, team.id, toTeamId, amount, seatsFor(person))
+                                )
+                              }
                             />
                           ))}
                         </ul>
@@ -377,42 +395,84 @@ function PersonRow({
   person,
   teams,
   teamId,
-  onAssign,
+  count,
+  onMove,
 }: {
   person: TeamPerson;
   teams: { id: string; name: string }[];
   teamId: string;
-  onAssign: (teamId: string | null) => void;
+  count: number;
+  onMove: (count: number, toTeamId: string | null) => void;
 }) {
+  const seats = seatsFor(person);
+  const [amount, setAmount] = useState(String(count));
+  const [amountFor, setAmountFor] = useState(count);
+  if (count !== amountFor) {
+    setAmountFor(count);
+    setAmount(String(count));
+  }
+  const destinations = [
+    ...(teamId ? [{ id: "unassigned", name: "Unassigned" }] : []),
+    ...teams.filter((team) => team.id !== teamId).map((team) => ({ id: team.id, name: team.name })),
+  ];
+  const ticketLabel =
+    teamId === ""
+      ? count === seats
+        ? `${seats} ${seats === 1 ? "ticket" : "tickets"}`
+        : `${count} of ${seats} unassigned`
+      : `${count} of ${seats}`;
+
   return (
-    <li className="flex items-center gap-3 px-3 py-3">
-      <EventHubInitials name={person.fullName} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground font-sans">{person.fullName}</p>
-        <p className="truncate text-xs text-foreground-muted font-sans">
-          {person.email || "—"}
-          {person.ticketCount > 0
-            ? ` · ${person.ticketCount} ${person.ticketCount === 1 ? "ticket" : "tickets"}`
-            : ""}
-        </p>
+    <li className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <EventHubInitials name={person.fullName} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground font-sans">{person.fullName}</p>
+          <p className="text-xs text-foreground-muted font-sans">
+            <span className="break-all">{person.email || "—"}</span>
+            <span className="whitespace-nowrap">{` · ${ticketLabel}`}</span>
+          </p>
+        </div>
       </div>
-      <label className="sr-only" htmlFor={`move-${person.orderId}`}>
-        Team for {person.fullName}
-      </label>
-      <select
-        id={`move-${person.orderId}`}
-        aria-label={`Team for ${person.fullName}`}
-        value={teamId}
-        onChange={(event) => onAssign(event.target.value || null)}
-        className="max-w-[9.5rem] shrink-0 rounded-lg border border-border bg-background py-1.5 pl-2 pr-7 text-xs text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-      >
-        <option value="">Unassigned</option>
-        {teams.map((team) => (
-          <option key={team.id} value={team.id}>
-            {team.name}
-          </option>
-        ))}
-      </select>
+      {destinations.length > 0 ? (
+        <div className="flex shrink-0 items-center gap-2">
+          <label className="sr-only" htmlFor={`count-${teamId}-${person.orderId}`}>
+            Tickets to move for {person.fullName}
+          </label>
+          <input
+            id={`count-${teamId}-${person.orderId}`}
+            inputMode="numeric"
+            aria-label={`Tickets to move for ${person.fullName}`}
+            value={amount}
+            disabled={count <= 1}
+            onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
+            className="w-12 rounded-lg border border-border bg-background px-2 py-1.5 text-center text-xs tabular-nums text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+          />
+          <label className="sr-only" htmlFor={`move-${teamId}-${person.orderId}`}>
+            Move {person.fullName}
+          </label>
+          <select
+            id={`move-${teamId}-${person.orderId}`}
+            aria-label={`Move ${person.fullName}`}
+            value=""
+            onChange={(event) => {
+              const destination = event.target.value;
+              if (!destination) return;
+              const parsed = Number.parseInt(amount, 10);
+              const moving = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), count) : count;
+              onMove(moving, destination === "unassigned" ? null : destination);
+            }}
+            className="max-w-[9.5rem] rounded-lg border border-border bg-background py-1.5 pl-2 pr-7 text-xs text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            <option value="">Move…</option>
+            {destinations.map((destination) => (
+              <option key={destination.id} value={destination.id}>
+                {destination.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : null}
     </li>
   );
 }
