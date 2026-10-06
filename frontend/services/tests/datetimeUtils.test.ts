@@ -1,3 +1,4 @@
+import { Timestamp } from "firebase/firestore";
 import {
   addCalendarDaysToYmd,
   dateAndTimeInLocalToDate,
@@ -5,6 +6,7 @@ import {
   dateYmdInLocalToDate,
   formatDateInLocalYmd,
   getLocalTomorrowYmd,
+  hasEventEndPassed,
 } from "../src/datetimeUtils";
 
 describe("datetimeUtils local calendar helpers", () => {
@@ -56,5 +58,12 @@ describe("datetimeUtils local calendar helpers", () => {
     const date = ts.toDate();
     expect(date.getHours()).toBe(10);
     expect(date.getDate()).toBe(14);
+  });
+
+  it("treats an event as ended only after its end instant", () => {
+    const now = Timestamp.fromMillis(1_700_000_000_000);
+    expect(hasEventEndPassed(Timestamp.fromMillis(now.toMillis() - 1), now)).toBe(true);
+    expect(hasEventEndPassed(now, now)).toBe(false);
+    expect(hasEventEndPassed(Timestamp.fromMillis(now.toMillis() + 1), now)).toBe(false);
   });
 });

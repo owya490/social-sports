@@ -6,7 +6,7 @@ import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { hasEventEndPassed, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
@@ -98,6 +98,8 @@ export function EventHubListing({
   const [publicUrl, setPublicUrl] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const isTemplate = mode === "template";
+  const ended = !isTemplate && hasEventEndPassed(eventEndDate);
+  const canEditDetails = isActive && !ended;
 
   const cover = eventImage || eventThumbnail;
   const hostName = [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "You";
@@ -279,9 +281,9 @@ export function EventHubListing({
           <div className="flex flex-wrap items-center gap-2">
             <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={loading}>
               <PencilSquareIcon className="h-4 w-4" aria-hidden />
-              Edit details
+              {ended ? "View details" : "Edit details"}
             </EventHubGhostButton>
-            <EventHubGhostButton onClick={() => setPhotoOpen(true)} disabled={!isActive || loading}>
+            <EventHubGhostButton onClick={() => setPhotoOpen(true)} disabled={!canEditDetails || loading}>
               <PhotoIcon className="h-4 w-4" aria-hidden />
               Change photo
             </EventHubGhostButton>
@@ -350,7 +352,7 @@ export function EventHubListing({
         open={editOpen}
         onClose={() => setEditOpen(false)}
         title={
-          !isActive
+          !canEditDetails
             ? isTemplate
               ? "Template details"
               : "Event details"
@@ -360,7 +362,7 @@ export function EventHubListing({
         }
         wide
         footer={
-          isActive ? (
+          canEditDetails ? (
             <EventHubPrimaryButton
               type="submit"
               form={EVENT_HUB_EDIT_FORM_ID}
@@ -385,7 +387,8 @@ export function EventHubListing({
             eventSport={eventSport}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
-            isActive={isActive}
+            isActive={canEditDetails}
+            ended={ended}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={orderTicketsMap}
             setEventTicketTypes={setEventTicketTypes}

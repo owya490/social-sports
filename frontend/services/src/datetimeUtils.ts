@@ -200,6 +200,11 @@ export function dateAndTimeInLocalToTimestamp(dateYmd: string, timeHm: string): 
   return Timestamp.fromDate(dateAndTimeInLocalToDate(dateYmd, timeHm));
 }
 
+/** True once `endDate` is strictly before `now`. An end instant equal to now has not passed. */
+export function hasEventEndPassed(endDate: Timestamp, now: Timestamp = Timestamp.now()): boolean {
+  return now.toMillis() > endDate.toMillis();
+}
+
 /** Local midnight for a `YYYY-MM-DD` calendar date (not UTC). */
 export function dateYmdInLocalToDate(dateYmd: string): Date {
   return dateAndTimeInLocalToDate(dateYmd, "00:00");
