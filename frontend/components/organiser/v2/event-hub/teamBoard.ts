@@ -1,17 +1,8 @@
-import { OrderId } from "@/interfaces/EventTypes";
+import { EventTeam, OrderId, TeamBoard } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 
-export type EventTeam = {
-  id: string;
-  name: string;
-  targetSize: number | null;
-};
-
-export type TeamBoard = {
-  teams: EventTeam[];
-  assignments: Record<string, string>;
-};
+export type { EventTeam, TeamBoard };
 
 export type TeamPerson = {
   orderId: OrderId;
@@ -185,28 +176,4 @@ export function buildTeamCsvRows(board: TeamBoard, people: TeamPerson[]) {
       email: person.email,
       tickets: person.ticketCount,
     }));
-}
-
-export function parseStoredTeamBoard(raw: string | null): TeamBoard | null {
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as Partial<TeamBoard>;
-    if (!parsed || !Array.isArray(parsed.teams) || !parsed.assignments || typeof parsed.assignments !== "object") {
-      return null;
-    }
-    const teams = parsed.teams.filter(
-      (team): team is EventTeam =>
-        !!team &&
-        typeof team.id === "string" &&
-        typeof team.name === "string" &&
-        (team.targetSize == null || typeof team.targetSize === "number")
-    );
-    const assignments: Record<string, string> = {};
-    for (const [orderId, teamId] of Object.entries(parsed.assignments)) {
-      if (typeof teamId === "string") assignments[orderId] = teamId;
-    }
-    return { teams, assignments };
-  } catch {
-    return null;
-  }
 }

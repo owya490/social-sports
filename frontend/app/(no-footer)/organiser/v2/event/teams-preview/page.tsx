@@ -48,7 +48,6 @@ export default function TeamsPreviewPage() {
           <EventHubTeams
             orderTicketsMap={preview.orderTicketsMap}
             eventName={preview.eventName}
-            storageKey="event-teams:preview"
             initialBoard={preview.initialBoard}
           />
         ) : (

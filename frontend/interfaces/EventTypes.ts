@@ -127,6 +127,17 @@ export const EmptyEventData: EventData = {
   eventTicketTypes: createEmptyEventTicketTypes(),
 };
 
+export type EventTeam = {
+  id: string;
+  name: string;
+  targetSize: number | null;
+};
+
+export type TeamBoard = {
+  teams: EventTeam[];
+  assignments: Record<string, string>;
+};
+
 export interface EventMetadata {
   eventId?: EventId;
   purchaserMap: Record<EmailHash, Purchaser>;
@@ -135,6 +146,7 @@ export interface EventMetadata {
   completedStripePaymentIntentIds: StripePaymentIntentId[];
   organiserId: UserId;
   orderIds: OrderId[];
+  teamBoard?: TeamBoard;
 }
 
 export const EmptyEventMetadata: EventMetadata = {

@@ -4,14 +4,16 @@ import DownloadCsvButton from "@/components/DownloadCsvButton";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   EventHubEmpty,
   EventHubGhostButton,
   EventHubInitials,
   EventHubPrimaryButton,
+  EventHubSavingIndicator,
   EventHubStage,
 } from "./EventHubStage";
+import type { SettingsAutosaveStatus } from "./useSettingsAutosave";
 import {
   EMPTY_TEAM_BOARD,
   TEAM_CSV_HEADERS,
@@ -20,7 +22,6 @@ import {
   autoFillTeams,
   buildTeamCsvRows,
   newTeamId,
-  parseStoredTeamBoard,
   peopleFromOrders,
   removeTeam,
   renameTeam,
@@ -33,40 +34,86 @@ import {
 type EventHubTeamsProps = {
   orderTicketsMap: Map<Order, Ticket[]>;
   eventName: string;
-  storageKey: string;
   initialBoard?: TeamBoard;
+  onPersist?: (board: TeamBoard) => Promise<void>;
 };
+
+const PERSIST_DELAY_MS = 400;
 
 const fieldClass =
   "rounded-lg border border-border bg-background px-2.5 py-1.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
-function loadBoard(storageKey: string, fallback: TeamBoard): TeamBoard {
-  if (typeof window === "undefined") return fallback;
-  return parseStoredTeamBoard(window.localStorage.getItem(storageKey)) ?? fallback;
-}
-
 export function EventHubTeams({
   orderTicketsMap,
   eventName,
-  storageKey,
   initialBoard = EMPTY_TEAM_BOARD,
+  onPersist,
 }: EventHubTeamsProps) {
   const people = useMemo(() => peopleFromOrders(orderTicketsMap), [orderTicketsMap]);
-  const [board, setBoard] = useState<TeamBoard | null>(null);
+  const [board, setBoard] = useState<TeamBoard>(initialBoard);
   const [creating, setCreating] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [draftSize, setDraftSize] = useState("");
   const [armReshuffle, setArmReshuffle] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState<SettingsAutosaveStatus>("idle");
+  const [hasPendingEdit, setHasPendingEdit] = useState(false);
+  const [appliedInitialBoard, setAppliedInitialBoard] = useState(initialBoard);
+  if (initialBoard !== appliedInitialBoard) {
+    setAppliedInitialBoard(initialBoard);
+    if (!hasPendingEdit) setBoard(initialBoard);
+  }
+  const onPersistRef = useRef(onPersist);
+  const boardRef = useRef(board);
+  const dirtyRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
+  const persistChainRef = useRef(Promise.resolve());
+  const failedBoardRef = useRef<TeamBoard | null>(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    setBoard(loadBoard(storageKey, initialBoard));
-  }, [initialBoard, storageKey]);
+    onPersistRef.current = onPersist;
+  }, [onPersist]);
 
   useEffect(() => {
-    if (!board || typeof window === "undefined") return;
-    window.localStorage.setItem(storageKey, JSON.stringify(board));
-  }, [board, storageKey]);
+    boardRef.current = board;
+  }, [board]);
+
+  const enqueuePersist = useCallback((next: TeamBoard) => {
+    const persist = onPersistRef.current;
+    if (!persist) return;
+    if (mountedRef.current) setSaveStatus("saving");
+    persistChainRef.current = persistChainRef.current
+      .catch(() => undefined)
+      .then(async () => {
+        try {
+          await persist(next);
+          if (!mountedRef.current || boardRef.current !== next) return;
+          failedBoardRef.current = null;
+          setHasPendingEdit(false);
+          setSaveStatus("idle");
+        } catch {
+          if (!mountedRef.current || boardRef.current !== next) return;
+          failedBoardRef.current = next;
+          setSaveStatus("error");
+        }
+      });
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timerRef.current != null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+      if (dirtyRef.current) {
+        dirtyRef.current = false;
+        enqueuePersist(boardRef.current);
+      }
+    };
+  }, [enqueuePersist]);
 
   const view = useMemo(() => (board ? visibleBoard(board, people) : EMPTY_TEAM_BOARD), [board, people]);
   const assignedIds = useMemo(() => new Set(Object.keys(view.assignments)), [view.assignments]);
@@ -74,10 +121,24 @@ export function EventHubTeams({
   const csvRows = useMemo(() => buildTeamCsvRows(view, people), [people, view]);
   const filename = `${(eventName || "event").trim().replace(/\s+/g, "-").toLowerCase()}-teams.csv`;
 
+  const queuePersist = (next: TeamBoard) => {
+    if (!onPersistRef.current) return;
+    dirtyRef.current = true;
+    setHasPendingEdit(true);
+    if (timerRef.current != null) window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      timerRef.current = null;
+      dirtyRef.current = false;
+      enqueuePersist(next);
+    }, PERSIST_DELAY_MS);
+  };
+
   const update = (next: TeamBoard) => {
+    boardRef.current = next;
     setBoard(next);
     setArmReshuffle(false);
     setPendingDeleteId(null);
+    queuePersist(next);
   };
 
   const createTeam = (event: FormEvent) => {
@@ -89,25 +150,23 @@ export function EventHubTeams({
     setCreating(false);
   };
 
-  if (!board) {
-    return (
-      <EventHubStage>
-        <div className="space-y-3 pt-2">
-          <div className="h-10 rounded-xl bg-surface-muted" />
-          <div className="h-40 rounded-xl bg-surface-muted" />
-        </div>
-      </EventHubStage>
-    );
-  }
-
   return (
     <EventHubStage>
+      {onPersist ? (
+        <EventHubSavingIndicator
+          status={saveStatus}
+          onRetry={() => {
+            const failed = failedBoardRef.current;
+            if (failed) enqueuePersist(failed);
+          }}
+        />
+      ) : null}
       <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-foreground-muted font-sans">
           {people.length === 0
             ? "Teams are built from approved signups."
             : `${unassigned.length} unassigned · ${view.teams.length} ${view.teams.length === 1 ? "team" : "teams"}`}
-          <span className="text-foreground-muted"> · Saved in this browser</span>
+          {onPersist ? "" : " · Preview only"}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <DownloadCsvButton

@@ -40,10 +40,12 @@ import {
   getEventsMetadataByEventId,
   subscribeToEventMetadata,
 } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import { EMPTY_TEAM_BOARD } from "@/components/organiser/v2/event-hub/teamBoard";
 import {
   eventServiceLogger,
   getEventById,
   updateEventById,
+  updateEventMetadataFromEventId,
 } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
@@ -366,9 +368,14 @@ export function OrganiserEventHubView() {
 
         {section === "Teams" && (
           <EventHubTeams
+            key={eventId}
             orderTicketsMap={orderTicketsMap}
             eventName={eventName}
-            storageKey={`event-teams:${eventId}`}
+            initialBoard={eventMetadata.teamBoard ?? EMPTY_TEAM_BOARD}
+            onPersist={async (board) => {
+              await updateEventMetadataFromEventId(eventId, { teamBoard: board });
+              setEventMetadata((current) => ({ ...current, teamBoard: board }));
+            }}
           />
         )}
 
