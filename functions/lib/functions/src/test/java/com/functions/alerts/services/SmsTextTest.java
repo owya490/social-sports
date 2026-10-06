@@ -26,14 +26,30 @@ public class SmsTextTest {
     }
 
     @Test
-    public void truncate_defaultLimitIs320() {
-        String result = SmsText.truncate("x".repeat(500));
+    public void truncate_defaultLimitIs480() {
+        String result = SmsText.truncate("x".repeat(600));
         assertEquals(SmsText.MAX_CHARS, result.length());
+        assertEquals(480, result.length());
     }
 
     @Test
-    public void forSms_capsUtf8BytesForMonitoringSubject() {
-        String result = SmsText.forSms("é".repeat(200));
+    public void forSms_keepsThreeSegmentSummaryWithoutUtf8SubjectCap() {
+        String body = "é".repeat(200);
+        String result = SmsText.forSms(body);
+        assertEquals(200, result.length());
+        assertTrue(result.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > SmsText.MAX_UTF8_BYTES);
+    }
+
+    @Test
+    public void forSms_truncatesAt480Characters() {
+        String result = SmsText.forSms("x".repeat(600));
+        assertEquals(SmsText.MAX_CHARS, result.length());
+        assertTrue(result.endsWith("..."));
+    }
+
+    @Test
+    public void forSmsSubject_capsUtf8BytesForMonitoringSubject() {
+        String result = SmsText.forSmsSubject("é".repeat(200));
         assertTrue(result.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
         assertTrue(result.endsWith("..."));
     }

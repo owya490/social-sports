@@ -9,7 +9,19 @@ public interface ErrorAlertDedupStore {
      */
     boolean tryClaim(String fingerprint);
 
+    /**
+     * Project-wide (per environment) send slot. At most one AI SMS every ten minutes.
+     *
+     * @return true if a send is allowed now
+     */
+    default boolean tryClaimGlobal() {
+        return true;
+    }
+
     /** Records a successful publish so the ten-minute window applies. */
     default void markSent(String fingerprint) {
+    }
+
+    default void markSentGlobal() {
     }
 }

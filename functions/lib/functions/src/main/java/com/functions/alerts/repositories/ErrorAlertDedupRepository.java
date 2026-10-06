@@ -19,6 +19,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     private static final Logger logger = LoggerFactory.getLogger(ErrorAlertDedupRepository.class);
     public static final Duration DEDUP_WINDOW = Duration.ofMinutes(10);
     public static final Duration IN_FLIGHT_WINDOW = Duration.ofMinutes(2);
+    public static final String GLOBAL_SEND_DOCUMENT = "_global";
 
     @Override
     public boolean tryClaim(String fingerprint) {
@@ -59,6 +60,11 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     }
 
     @Override
+    public boolean tryClaimGlobal() {
+        return tryClaim(GLOBAL_SEND_DOCUMENT);
+    }
+
+    @Override
     public void markSent(String fingerprint) {
         if (fingerprint == null || fingerprint.isBlank()) {
             return;
@@ -83,6 +89,11 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
         } catch (Exception e) {
             logger.warn("Error alert dedup markSent failed: {}", e.getMessage());
         }
+    }
+
+    @Override
+    public void markSentGlobal() {
+        markSent(GLOBAL_SEND_DOCUMENT);
     }
 
     private static boolean withinWindow(Timestamp timestamp, Timestamp now, Duration window) {

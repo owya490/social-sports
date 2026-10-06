@@ -41,7 +41,7 @@ public final class CloudLogEntryParser {
         try {
             JsonNode root = JavaUtils.objectMapper.readTree(logEntryJson);
             String severity = root.path("severity").asText("");
-            if (!severity.isBlank() && !isAlertableSeverity(severity)) {
+            if (!isAlertableSeverity(severity)) {
                 return Optional.empty();
             }
 
