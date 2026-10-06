@@ -11,6 +11,7 @@ import {
 import {
   DocumentData,
   DocumentReference,
+  Timestamp,
   WriteBatch,
   arrayRemove,
   arrayUnion,
@@ -26,7 +27,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { CollectionPaths, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
+import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus, LocalStorageKeys, USER_EVENT_PATH } from "./eventsConstants";
 
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
@@ -45,6 +46,7 @@ import {
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
+import { EventDateUpdateError, hasEventDateUpdates, validateEventDateUpdates } from "./eventsUtils/eventDateUpdates";
 import {
   applyGeneralAdmissionInventoryFields,
   buildGeneralAdmissionInventoryUpdates,
@@ -246,9 +248,51 @@ export async function getOrganiserEvents(userId: UserId): Promise<EventData[]> {
   }
 }
 
+function buildEventUpdate(current: EventDataWithoutOrganiser, updatedData: Partial<EventData>) {
+  const { price, capacity, vacancy, eventTicketTypes, ...restUpdatedData } = updatedData;
+  // Full ticket-type map writes own nested inventory; do not also patch GA nested fields.
+  if (eventTicketTypes !== undefined) {
+    return {
+      ...restUpdatedData,
+      eventTicketTypes,
+      ...(price !== undefined ? { price } : {}),
+      ...(capacity !== undefined ? { capacity } : {}),
+      ...(vacancy !== undefined ? { vacancy } : {}),
+    };
+  }
+  return {
+    ...restUpdatedData,
+    ...buildGeneralAdmissionInventoryUpdates(current.eventTicketTypes, { price, capacity, vacancy }),
+  };
+}
+
+async function updateEventDates(eventId: EventId, updatedData: Partial<EventData>, expectedPath?: string) {
+  await runTransaction(db, async (transaction) => {
+    const snapshots = await Promise.all(
+      EVENT_PATHS.map((path) => transaction.get(doc(db, path, eventId)))
+    );
+    const matches = snapshots.filter((snapshot) => snapshot.exists());
+    if (matches.length !== 1) {
+      throw new EventDateUpdateError("This event could not be uniquely located. Refresh and try again.");
+    }
+    const snapshot = matches[0];
+    if (expectedPath !== undefined && snapshot.ref.path !== expectedPath) {
+      throw new EventDateUpdateError("This event has moved. Refresh and try again.");
+    }
+    const current = snapshot.data() as EventDataWithoutOrganiser;
+    validateEventDateUpdates(current, updatedData, snapshot.ref.parent.path, Timestamp.now());
+    transaction.update(snapshot.ref, buildEventUpdate(current, updatedData));
+  });
+}
+
 export async function updateEventById(eventId: EventId, updatedData: Partial<EventData>) {
   eventServiceLogger.info(`updateEventByName ${eventId}`);
   try {
+    if (hasEventDateUpdates(updatedData)) {
+      await updateEventDates(eventId, updatedData);
+      eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
+      return;
+    }
     const eventDocRef = await findEventDocRef(eventId); // Get document reference by ID
 
     // Check if document exists
@@ -258,25 +302,7 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
     }
 
     const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
-    const { price, capacity, vacancy, eventTicketTypes, ...restUpdatedData } = updatedData;
-
-    // Full ticket-type map writes own nested inventory; do not also patch GA nested fields.
-    if (eventTicketTypes !== undefined) {
-      await updateDoc(eventDocRef, {
-        ...restUpdatedData,
-        eventTicketTypes,
-        ...(price !== undefined ? { price } : {}),
-        ...(capacity !== undefined ? { capacity } : {}),
-        ...(vacancy !== undefined ? { vacancy } : {}),
-      });
-    } else {
-      const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
-        price,
-        capacity,
-        vacancy,
-      });
-      await updateDoc(eventDocRef, { ...restUpdatedData, ...inventoryUpdates });
-    }
+    await updateDoc(eventDocRef, buildEventUpdate(eventDoc, updatedData));
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);
   } catch (error) {
@@ -403,20 +429,20 @@ export async function updateEventFromDocRef(
   updatedData: Partial<EventData>
 ): Promise<void> {
   try {
+    if (hasEventDateUpdates(updatedData)) {
+      if (eventRef.firestore !== db) {
+        throw new EventDateUpdateError("This event belongs to a different database.");
+      }
+      await updateEventDates(eventRef.id as EventId, updatedData, eventRef.path);
+      return;
+    }
     const eventDocSnapshot = await getDoc(eventRef);
     if (!eventDocSnapshot.exists()) {
       throw new Error(`Event not found at ${eventRef.path}`);
     }
 
     const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
-    const { price, capacity, vacancy, ...restUpdatedData } = updatedData;
-    const inventoryUpdates = buildGeneralAdmissionInventoryUpdates(eventDoc.eventTicketTypes, {
-      price,
-      capacity,
-      vacancy,
-    });
-
-    await updateDoc(eventRef, { ...restUpdatedData, ...inventoryUpdates });
+    await updateDoc(eventRef, buildEventUpdate(eventDoc, updatedData));
     eventServiceLogger.info("Event updated successfully.");
   } catch (error) {
     eventServiceLogger.error(`Error updating event from document reference: ${error}`);
