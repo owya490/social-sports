@@ -53,6 +53,8 @@ type EventHubEditFormProps = {
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
   isActive: boolean;
+  /** When true, details stay view-only because the event end time has passed. */
+  ended?: boolean;
   eventTicketTypes?: EventTicketTypesMap;
   orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
@@ -74,6 +76,7 @@ export function EventHubEditForm({
   eventRegistrationDeadline,
   eventEventLink,
   isActive,
+  ended = false,
   eventTicketTypes,
   orderTicketsMap,
   setEventTicketTypes,
@@ -109,6 +112,8 @@ export function EventHubEditForm({
   const [timeWarning, setTimeWarning] = useState<string | null>(null);
   const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  const readOnly = !isActive || ended;
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
@@ -148,7 +153,7 @@ export function EventHubEditForm({
   ]);
 
   useEffect(() => {
-    if (!isActive || !isLoaded || !locationInputRef.current) return;
+    if (readOnly || !isLoaded || !locationInputRef.current) return;
     if (autocompleteRef.current) {
       google.maps.event.clearInstanceListeners(autocompleteRef.current);
     }
@@ -159,7 +164,7 @@ export function EventHubEditForm({
         autocompleteRef.current = null;
       }
     };
-  }, [isActive, isLoaded]);
+  }, [readOnly, isLoaded]);
 
   useEffect(() => {
     const prevStartDate = prevStartDateRef.current;
@@ -231,7 +236,7 @@ export function EventHubEditForm({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!isActive || saving) return;
+    if (readOnly || saving) return;
 
     if (dateWarning || timeWarning || registrationDeadlineWarning) return;
 
@@ -280,13 +285,14 @@ export function EventHubEditForm({
 
   const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
   const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
-  const readOnly = !isActive;
 
   return (
     <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-8">
       {readOnly ? (
         <p className="text-sm text-foreground-secondary font-sans">
-          These details are view-only. You can copy text, but changes can&apos;t be saved.
+          {ended
+            ? "This event has ended, so its details can't be changed."
+            : "These details are view-only. You can copy text, but changes can't be saved."}
         </p>
       ) : null}
       <Section label="Basic Info">
@@ -307,7 +313,7 @@ export function EventHubEditForm({
           <EventHubDescriptionEditor
             description={description}
             updateDescription={setDescription}
-            editable={isActive}
+            editable={!readOnly}
           />
         </div>
       </Section>
@@ -395,7 +401,7 @@ export function EventHubEditForm({
             eventId={eventId}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={orderTicketsMap!}
-            isActive={isActive}
+            isActive={!readOnly}
             setEventTicketTypes={setEventTicketTypes!}
             onPersistTicketTypes={onPersistTicketTypes}
             hideFormSelector={hideTicketTypeFormSelector}
@@ -462,7 +468,7 @@ export function EventHubEditForm({
       </Section>
 
       {/* Hidden submit enables Enter-to-save; real CTA is the panel footer button */}
-      <button type="submit" className="sr-only" disabled={!isActive || saving || hasBlockingWarning} tabIndex={-1}>
+      <button type="submit" className="sr-only" disabled={readOnly || saving || hasBlockingWarning} tabIndex={-1}>
         Update event
       </button>
     </form>
