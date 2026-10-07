@@ -90,6 +90,20 @@ class EventPartitionRulesTest(unittest.TestCase):
                 self.assertEqual(self.put(target, "attacker", "attacker", event_id)[0], 403)
                 self.assertEqual(self.request("GET", f"{self.base}/Events/{target}/{event_id}")[0], 404)
 
+    def test_deleted_event_ids_stay_reserved_including_within_a_batch(self):
+        self.assertEqual(self.request(
+            "PATCH", f"{self.base}/DeletedEvents/event-1",
+            self.event("Active/Public", "victim"),
+        )[0], 200)
+        self.assertEqual(self.put("Active/Public", "attacker", "attacker")[0], 403)
+        writes = [{"update": {
+            "name": f"projects/{self.PROJECT}/databases/(default)/documents/{path}/batched-event",
+            **self.event("Active/Public"),
+        }} for path in ["DeletedEvents", "Events/Active/Public"]]
+        self.assertEqual(self.request("POST", f"{self.base}:commit", {"writes": writes}, "owner-1")[0], 403)
+        for path in ["DeletedEvents", "Events/Active/Public"]:
+            self.assertEqual(self.request("GET", f"{self.base}/{path}/batched-event")[0], 404)
+
     def test_batch_cannot_create_the_same_id_in_both_active_partitions(self):
         writes = [{"update": {
             "name": f"projects/{self.PROJECT}/databases/(default)/documents/Events/{partition}/event-1",
