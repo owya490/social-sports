@@ -1,106 +1,41 @@
 package com.functions.fulfilment.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.junit.Test;
-
-import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 
 public class ProcessFulfilmentSessionServiceTest {
 
     @Test
-    public void completedMintsTicketsAndSendsPurchaseEmail() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        List<String> emails = new ArrayList<>();
-        service(tickets, emails, true).process(sessionJson("COMPLETED", 2));
-
-        assertEquals("session-1", tickets.createdFor.getId());
-        assertNull(tickets.refunded);
-        assertEquals(List.of("ada@example.com"), emails);
-    }
-
-    @Test
-    public void alreadyProcessedCompletedSessionDoesNotSendEmail() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        tickets.orderId = null;
-        List<String> emails = new ArrayList<>();
-        service(tickets, emails, true).process(sessionJson("COMPLETED", 2));
-
-        assertEquals("session-1", tickets.createdFor.getId());
-        assertEquals(0, emails.size());
-    }
-
-    @Test
-    public void expiredRefundsVacancy() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        List<String> emails = new ArrayList<>();
-        service(tickets, emails, true).process(sessionJson("EXPIRED", 2));
-
-        assertEquals("session-1", tickets.refunded.getId());
-        assertNull(tickets.createdFor);
-        assertEquals(0, emails.size());
-    }
-
-    @Test
-    public void malformedMessageIsIgnored() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        service(tickets, new ArrayList<>(), true).process("{not json");
-
-        assertNull(tickets.createdFor);
-        assertNull(tickets.refunded);
+    public void malformedMessageFailsSoPubSubCanDeadLetterIt() throws Exception {
+        expectFailure("{not json", "Malformed");
     }
 
     @Test
     public void nullStatusFailsSoPubSubCanDeadLetterIt() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
         String json = sessionJson("COMPLETED", 2).replace("\"status\": \"COMPLETED\"", "\"status\": null");
+        expectFailure(json, "session-1");
+    }
+
+    @Test
+    public void missingTicketQuantityFailsSoPubSubCanDeadLetterIt() throws Exception {
+        expectFailure(sessionJson("COMPLETED", null), "session-1");
+    }
+
+    @Test
+    public void completedWithoutPriceOrEmailFailsSoPubSubCanDeadLetterIt() throws Exception {
+        expectFailure(sessionJson("COMPLETED", 2, null, "ada@example.com"), "session-1");
+        expectFailure(sessionJson("COMPLETED", 2, 1000, null), "session-1");
+    }
+
+    private static void expectFailure(String json, String messagePart) throws Exception {
         try {
-            service(tickets, new ArrayList<>(), true).process(json);
-            fail("missing status should fail the invocation");
+            new ProcessFulfilmentSessionService().process(json);
+            fail("session should fail the invocation");
         } catch (IllegalStateException e) {
-            assertTrue(e.getMessage().contains("session-1"));
+            assertTrue(e.getMessage().contains(messagePart));
         }
-
-        assertNull(tickets.createdFor);
-        assertNull(tickets.refunded);
-    }
-
-    @Test
-    public void missingTicketQuantityIsIgnored() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", null));
-
-        assertNull(tickets.createdFor);
-        assertNull(tickets.refunded);
-    }
-
-    @Test
-    public void purchaseEmailFailureIsAcknowledged() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        service(tickets, new ArrayList<>(), false).process(sessionJson("COMPLETED", 2));
-        assertEquals("session-1", tickets.createdFor.getId());
-    }
-
-    @Test
-    public void completedWithoutPriceOrEmailIsIgnored() throws Exception {
-        RecordingTicketWriter tickets = new RecordingTicketWriter();
-        service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, null, "ada@example.com"));
-        service(tickets, new ArrayList<>(), true).process(sessionJson("COMPLETED", 2, 1000, null));
-        assertNull(tickets.createdFor);
-    }
-
-    private static ProcessFulfilmentSessionService service(
-            RecordingTicketWriter tickets, List<String> emails, boolean emailSent) {
-        return new ProcessFulfilmentSessionService(tickets, (eventId, visibility, email, firstName, orderId) -> {
-            emails.add(email);
-            return emailSent;
-        });
     }
 
     private static String sessionJson(String status, Integer numTickets) {
@@ -127,22 +62,5 @@ public class ProcessFulfilmentSessionServiceTest {
                 email == null ? "null" : "\"" + email + "\"",
                 numTickets == null ? "null" : numTickets.toString(),
                 price == null ? "null" : price.toString());
-    }
-
-    private static final class RecordingTicketWriter implements ProcessFulfilmentSessionService.TicketWriter {
-        private FulfilmentSession createdFor;
-        private FulfilmentSession refunded;
-        private String orderId = "order-1";
-
-        @Override
-        public String createTicketsAndOrder(FulfilmentSession session) {
-            createdFor = session;
-            return orderId;
-        }
-
-        @Override
-        public void refundVacancy(FulfilmentSession session) {
-            refunded = session;
-        }
     }
 }

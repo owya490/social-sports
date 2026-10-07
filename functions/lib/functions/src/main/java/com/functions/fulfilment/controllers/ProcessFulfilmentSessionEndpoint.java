@@ -21,24 +21,14 @@ import io.cloudevents.CloudEvent;
 public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
     private static final Logger logger = LoggerFactory.getLogger(ProcessFulfilmentSessionEndpoint.class);
 
-    private final SessionJsonHandler sessionJsonHandler;
-
-    public ProcessFulfilmentSessionEndpoint() {
-        this(new ProcessFulfilmentSessionService()::process);
-    }
-
-    ProcessFulfilmentSessionEndpoint(SessionJsonHandler sessionJsonHandler) {
-        this.sessionJsonHandler = sessionJsonHandler;
-    }
-
     @Override
     public void accept(CloudEvent event) throws Exception {
         if (event == null || event.getData() == null) {
-            logger.warn("processFulfilmentSession received CloudEvent with no data");
-            return;
+            logger.error("processFulfilmentSession received CloudEvent with no data");
+            throw new IllegalStateException("processFulfilmentSession received CloudEvent with no data");
         }
         String cloudEventJson = new String(event.getData().toBytes(), StandardCharsets.UTF_8);
-        sessionJsonHandler.handle(fulfilmentSessionJson(cloudEventJson));
+        new ProcessFulfilmentSessionService().process(fulfilmentSessionJson(cloudEventJson));
     }
 
     static String fulfilmentSessionJson(String cloudEventJson) {
@@ -52,13 +42,9 @@ public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
                 return new String(decoded, StandardCharsets.UTF_8);
             }
         } catch (Exception e) {
-            logger.warn("Failed to unwrap Pub/Sub fulfilment session: {}", e.getMessage());
+            logger.error("Failed to unwrap Pub/Sub fulfilment session", e);
+            throw new IllegalStateException("Failed to unwrap Pub/Sub fulfilment session", e);
         }
         return cloudEventJson;
-    }
-
-    @FunctionalInterface
-    interface SessionJsonHandler {
-        void handle(String sessionJson) throws Exception;
     }
 }

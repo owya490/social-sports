@@ -18,40 +18,24 @@ import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSessi
 public class ProcessFulfilmentSessionService {
     private static final Logger logger = LoggerFactory.getLogger(ProcessFulfilmentSessionService.class);
 
-    private final TicketWriter ticketWriter;
-    private final PurchaseEmailSender purchaseEmailSender;
-
-    public ProcessFulfilmentSessionService() {
-        this(new FulfilmentSessionTicketWriter(), EmailService::sendPurchaseEmail);
-    }
-
-    ProcessFulfilmentSessionService(TicketWriter ticketWriter, PurchaseEmailSender purchaseEmailSender) {
-        this.ticketWriter = ticketWriter;
-        this.purchaseEmailSender = purchaseEmailSender;
-    }
-
     public void process(String sessionJson) throws Exception {
         FulfilmentSession session;
         try {
             session = FulfilmentSession.fromJson(sessionJson);
         } catch (Exception e) {
-            logger.warn("Ignoring malformed fulfilment session message: {}", e.getMessage());
-            return;
+            throw failure("Malformed fulfilment session message: " + e.getMessage(), e);
         }
         if (session.getStatus() == null) {
             String sessionId = session.getId() == null || session.getId().isBlank() ? "unknown" : session.getId();
-            logger.error("Fulfilment session {} has no status", sessionId);
-            throw new IllegalStateException("Fulfilment session " + sessionId + " has no status");
+            throw failure("Fulfilment session " + sessionId + " has no status");
         }
         if (session.getId() == null || session.getId().isBlank()) {
-            logger.warn("Ignoring fulfilment session message without id");
-            return;
+            throw failure("Fulfilment session message has no id");
         }
         if (session.getEventData() == null
                 || session.getEventData().getEventId() == null
                 || session.getEventData().getEventId().isBlank()) {
-            logger.warn("Ignoring fulfilment session {} without an event", session.getId());
-            return;
+            throw failure("Fulfilment session " + session.getId() + " has no event");
         }
         RequestedTickets tickets = requestedTickets(session);
         if (tickets == null
@@ -59,8 +43,7 @@ public class ProcessFulfilmentSessionService {
                 || tickets.count() <= 0
                 || tickets.ticketTypeId() == null
                 || tickets.ticketTypeId().isBlank()) {
-            logger.warn("Ignoring fulfilment session {} without ticket quantity or ticket type", session.getId());
-            return;
+            throw failure("Fulfilment session " + session.getId() + " has no ticket quantity or ticket type");
         }
 
         switch (session.getStatus()) {
@@ -68,34 +51,52 @@ public class ProcessFulfilmentSessionService {
                 if (tickets.priceCents() == null
                         || session.getPurchaserEmail() == null
                         || session.getPurchaserEmail().isBlank()) {
-                    logger.warn("Ignoring completed fulfilment session {} without price or purchaser email",
-                            session.getId());
-                    return;
+                    throw failure("Completed fulfilment session " + session.getId()
+                            + " has no price or purchaser email");
                 }
                 processCompleted(session);
                 break;
             case EXPIRED:
-                ticketWriter.refundVacancy(session);
+                FulfilmentSessionTicketWriter.refundVacancy(session);
                 break;
+            default:
+                throw failure("Fulfilment session " + session.getId()
+                        + " has unsupported status " + session.getStatus());
         }
     }
 
-    private void processCompleted(FulfilmentSession session) throws Exception {
-        String orderId = ticketWriter.createTicketsAndOrder(session);
+    /**
+     * Logging and throwing fails the function invocation, so Pub/Sub redelivers until the dead-letter topic.
+     */
+    private static IllegalStateException failure(String message) {
+        return failure(message, null);
+    }
+
+    private static IllegalStateException failure(String message, Exception cause) {
+        if (cause == null) {
+            logger.error(message);
+            return new IllegalStateException(message);
+        }
+        logger.error(message, cause);
+        return new IllegalStateException(message, cause);
+    }
+
+    private static void processCompleted(FulfilmentSession session) throws Exception {
+        String orderId = FulfilmentSessionTicketWriter.createTicketsAndOrder(session);
         if (orderId == null) {
             logger.info("Fulfilment session {} already processed", session.getId());
             return;
         }
         EventData eventData = session.getEventData();
         String purchaserName = session.getPurchaserName() == null ? "" : session.getPurchaserName();
-        boolean sent = purchaseEmailSender.send(
+        boolean sent = EmailService.sendPurchaseEmail(
                 eventData.getEventId(),
                 Boolean.TRUE.equals(eventData.getIsPrivate()) ? "Private" : "Public",
                 session.getPurchaserEmail(),
                 purchaserName,
                 orderId);
         if (!sent) {
-            logger.warn("Purchase email failed for fulfilment session {}", session.getId());
+            logger.error("Purchase email failed for fulfilment session {}", session.getId());
         }
     }
 
@@ -113,19 +114,5 @@ public class ProcessFulfilmentSessionService {
     }
 
     record RequestedTickets(Integer count, String ticketTypeId, Integer priceCents) {
-    }
-
-    interface TicketWriter {
-        /**
-         * @return the new order id, or null when this session was already recorded on the event
-         */
-        String createTicketsAndOrder(FulfilmentSession session) throws Exception;
-
-        void refundVacancy(FulfilmentSession session) throws Exception;
-    }
-
-    @FunctionalInterface
-    interface PurchaseEmailSender {
-        boolean send(String eventId, String visibility, String email, String firstName, String orderId);
     }
 }
