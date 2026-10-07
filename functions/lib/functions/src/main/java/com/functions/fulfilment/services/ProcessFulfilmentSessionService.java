@@ -89,7 +89,7 @@ public class ProcessFulfilmentSessionService {
         }
         EventData eventData = session.getEventData();
         String purchaserName = session.getPurchaserName() == null ? "" : session.getPurchaserName();
-        boolean sent = EmailService.sendPurchaseEmail(
+        boolean sent = EmailService.sendPurchaseEmailWithRetries(
                 eventData.getEventId(),
                 Boolean.TRUE.equals(eventData.getIsPrivate()) ? "Private" : "Public",
                 session.getPurchaserEmail(),
