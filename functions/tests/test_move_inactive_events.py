@@ -201,11 +201,23 @@ class TestMoveInactiveEvents(unittest.TestCase):
         self.api.rollback.assert_called_once()
         self.assertEqual(self.documents[self.destination.path]["vacancy"], 5)
 
+    def test_deleted_public_organiser_does_not_prevent_archival(self):
+        del self.documents[self.owner_path]
+
+        self.assertTrue(self.move())
+
+        create, delete = self.committed_writes()
+        self.assertEqual(create.update.name, self.destination._document_path)
+        self.assertEqual(
+            _helpers.decode_dict(create.update.fields, self.db),
+            {**self.event_data, "isActive": False},
+        )
+        self.assertEqual(delete.delete, self.source._document_path)
+
     def test_invalid_organiser_data_rolls_back_without_partial_archival(self):
         cases = [
             ({**self.event_data, "organiserId": ""}, {}, "organiserId"),
             ({**self.event_data, "organiserId": "nested/owner"}, {}, "organiserId"),
-            (self.event_data, {}, "missing"),
             (self.event_data, {"publicUpcomingOrganiserEvents": "event-1"}, "ID list"),
         ]
         for event, owner, error in cases:
@@ -219,11 +231,11 @@ class TestMoveInactiveEvents(unittest.TestCase):
                 self.api.commit.assert_not_called()
 
     def test_bad_event_does_not_prevent_later_valid_event_archival(self):
-        missing_owner_event = {**self.event_data, "organiserId": "missing-owner"}
-        self.documents["Events/Active/Public/bad-event"] = missing_owner_event
+        invalid_owner_event = {**self.event_data, "organiserId": "nested/owner"}
+        self.documents["Events/Active/Public/bad-event"] = invalid_owner_event
         self.stream([
             ("Events/Active/Public/malformed-event", {"endDate": "not-a-timestamp"}),
-            ("Events/Active/Public/bad-event", missing_owner_event),
+            ("Events/Active/Public/bad-event", invalid_owner_event),
             (self.source.path, self.event_data),
         ])
         logger = Mock()

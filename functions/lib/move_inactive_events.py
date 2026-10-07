@@ -55,20 +55,19 @@ def move_event_to_inactive(
             raise EventArchivalError("organiserId must identify one organiser")
         public_ref = db.collection("Users/Active/Public").document(organiser_id)
         public_snapshot = public_ref.get(transaction=transaction)
-        if not public_snapshot.exists:
-            raise EventArchivalError("public organiser document is missing")
-        upcoming_events = public_snapshot.to_dict().get(
-            "publicUpcomingOrganiserEvents", []
-        )
-        if not isinstance(upcoming_events, list) or not all(
-            isinstance(event_id, str) for event_id in upcoming_events
-        ):
-            raise EventArchivalError("publicUpcomingOrganiserEvents must be an ID list")
+        if public_snapshot.exists:
+            upcoming_events = public_snapshot.to_dict().get(
+                "publicUpcomingOrganiserEvents", []
+            )
+            if not isinstance(upcoming_events, list) or not all(
+                isinstance(event_id, str) for event_id in upcoming_events
+            ):
+                raise EventArchivalError("publicUpcomingOrganiserEvents must be an ID list")
 
     event_data["isActive"] = False
     transaction.create(new_event_ref, event_data)
     transaction.delete(old_event_ref)
-    if is_public:
+    if is_public and public_snapshot.exists:
         transaction.update(
             public_ref,
             {"publicUpcomingOrganiserEvents": firestore.ArrayRemove([old_event_ref.id])},
