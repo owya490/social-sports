@@ -124,22 +124,15 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
       >
         {open ? (
           <div className="space-y-8">
-            <div className="space-y-3">
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                maxLength={100}
-                required
-                aria-label="Event title"
-                placeholder="Event title"
-                className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none"
-              />
-              <p className="text-sm text-foreground-muted font-sans leading-relaxed">
-                Create a copy of{" "}
-                <span className="font-semibold text-foreground">{event.name || "this event"}</span>.
-                <span className="block mt-1.5">You can edit the new event after.</span>
-              </p>
-            </div>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+              required
+              aria-label="Event title"
+              placeholder="Event title"
+              className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none"
+            />
             <EventHubScheduleFields
               eventStartDate={event.startDate}
               eventEndDate={event.endDate}
