@@ -39,7 +39,6 @@ const EVENT_STATIC_ROUTES = new Set([
   "recurring-events",
   "event-collection",
   "custom-links",
-  "teams-preview",
 ]);
 
 const crumb = (label: string, href?: string, icon?: typeof Squares2X2Icon): OrganiserBreadcrumb =>
@@ -234,13 +233,6 @@ export function resolveOrganiserBreadcrumbs(
 
   if (pathname.startsWith("/organiser/v2/event/dashboard")) {
     return [crumb("Events", undefined, CalendarIcon)];
-  }
-
-  if (pathname.startsWith("/organiser/v2/event/teams-preview")) {
-    return [
-      crumb("Events", "/organiser/v2/event/dashboard", CalendarIcon),
-      crumb("Teams preview"),
-    ];
   }
 
   if (isEventDetailPage(pathname)) {
