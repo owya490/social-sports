@@ -5,8 +5,10 @@ import {
   dateAndTimeInLocalToTimestamp,
   dateYmdInLocalToDate,
   formatDateInLocalYmd,
+  formatMobileSameDayDateTime,
   getLocalTomorrowYmd,
   hasEventEndPassed,
+  timestampToEventCardDateString,
 } from "../src/datetimeUtils";
 
 describe("datetimeUtils local calendar helpers", () => {
@@ -65,5 +67,39 @@ describe("datetimeUtils local calendar helpers", () => {
     expect(hasEventEndPassed(Timestamp.fromMillis(now.toMillis() - 1), now)).toBe(true);
     expect(hasEventEndPassed(now, now)).toBe(false);
     expect(hasEventEndPassed(Timestamp.fromMillis(now.toMillis() + 1), now)).toBe(false);
+  });
+});
+
+describe("event timezone labels", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-10-08T00:00:00Z"));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it.each([
+    ["Australia/Sydney", "AEDT", "AEST"],
+    ["America/New_York", "GMT-5", "GMT-4"],
+  ])("uses each event's date for browser timezone %s", (timeZone, januaryLabel, mayLabel) => {
+    const DateTimeFormat = Intl.DateTimeFormat;
+    jest.spyOn(Intl, "DateTimeFormat").mockImplementation((locales, options) =>
+      new DateTimeFormat(locales, { ...options, timeZone })
+    );
+    const january = Timestamp.fromDate(new Date("2027-01-19T08:00:00Z"));
+    const may = Timestamp.fromDate(new Date("2027-05-04T09:00:00Z"));
+    const formatters = [
+      timestampToEventCardDateString,
+      (start: Timestamp) => formatMobileSameDayDateTime(start, Timestamp.fromMillis(start.toMillis() + 7_200_000)),
+    ];
+
+    for (const format of formatters) {
+      expect(format(january)).toMatch(new RegExp(` ${januaryLabel}$`));
+      expect(format(may)).toMatch(new RegExp(` ${mayLabel}$`));
+      expect(format(january)).toMatch(new RegExp(` ${januaryLabel}$`));
+    }
   });
 });

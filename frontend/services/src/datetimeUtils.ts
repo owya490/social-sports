@@ -25,26 +25,16 @@ export function timestampToDateString(timestamp: Timestamp): string {
   return date.toDateString();
 }
 
-let cachedTimezoneShort: string | null = null;
-
-/**
- * Returns the short timezone name for the browser's current timezone (e.g., "AEST", "AEDT", "PST")
- * Result is cached after first call.
- */
-export function getCurrentTimezoneShort(): string {
-  if (cachedTimezoneShort === null) {
-    cachedTimezoneShort =
-      new Intl.DateTimeFormat("en-AU", { timeZoneName: "short" })
-        .formatToParts(new Date())
-        .find((part) => part.type === "timeZoneName")?.value || "AEST";
-  }
-  return cachedTimezoneShort;
+export function getTimezoneShort(date: Date): string {
+  return new Intl.DateTimeFormat("en-AU", { timeZoneName: "short" })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value ?? "";
 }
 
 export function timestampToEventCardDateString(timestamp: Timestamp) {
   return `${timestampToDateString(timestamp).toUpperCase()} · ${timestampToTimeOfDay24Hour(
     timestamp
-  )} ${getCurrentTimezoneShort()}`;
+  )} ${getTimezoneShort(timestamp.toDate())}`;
 }
 
 export function formatTimeTo12Hour(time: string) {
@@ -234,7 +224,7 @@ export function formatMobileSameDayDateTime(startDate: Timestamp, endDate: Times
   const endTime = formatMobileTime(endHours, endMinutes);
 
   // Timezone
-  const timezone = getCurrentTimezoneShort();
+  const timezone = getTimezoneShort(date);
 
   return `${dayName}, ${day} ${month} ${year}, ${startTime} - ${endTime} ${timezone}`;
 }
