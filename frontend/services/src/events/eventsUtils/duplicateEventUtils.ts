@@ -43,12 +43,12 @@ export function buildDuplicatedNewEventData(event: EventData, overrides: Duplica
     ? syncEventAggregatesFromTicketTypes(eventTicketTypes as EventTicketTypesMap)
     : { price: event.price, capacity: event.capacity, vacancy: event.capacity };
 
+  const { name: overrideName, ...scheduleOverrides } = overrides;
+
   return {
     ...rest,
-    name: overrides.name?.trim() || `Copy of ${event.name.trim() || "event"}`,
-    ...(overrides.startDate ? { startDate: overrides.startDate } : {}),
-    ...(overrides.endDate ? { endDate: overrides.endDate } : {}),
-    ...(overrides.registrationDeadline ? { registrationDeadline: overrides.registrationDeadline } : {}),
+    ...scheduleOverrides,
+    name: overrideName?.trim() || `Copy of ${event.name.trim() || "event"}`,
     attendees: {},
     attendeesMetadata: {},
     accessCount: 0,

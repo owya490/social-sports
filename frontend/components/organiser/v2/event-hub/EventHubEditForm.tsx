@@ -21,7 +21,7 @@ import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } f
 import { LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
-import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { EventHubDescriptionEditor } from "./EventHubDescriptionEditor";
 import {
   EventHubFieldWithIcon as FieldWithIcon,
@@ -93,8 +93,7 @@ export function EventHubEditForm({
   const [eventLink, setEventLink] = useState(eventEventLink ?? "");
 
   const [saving, setSaving] = useState(false);
-  const [scheduleBlocking, setScheduleBlocking] = useState(false);
-  const scheduleRef = useRef<EventHubScheduleValue | null>(null);
+  const [schedule, setSchedule] = useState<EventHubScheduleValue | null>(null);
 
   const readOnly = !isActive || ended;
 
@@ -104,11 +103,6 @@ export function EventHubEditForm({
   const scriptLoadResult = useGoogleMapsScript();
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
-
-  const onScheduleChange = useCallback((value: EventHubScheduleValue) => {
-    scheduleRef.current = value;
-    setScheduleBlocking((current) => (current === value.hasBlockingWarning ? current : value.hasBlockingWarning));
-  }, []);
 
   useEffect(() => {
     setName(eventName);
@@ -158,7 +152,6 @@ export function EventHubEditForm({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const schedule = scheduleRef.current;
     if (readOnly || saving || !schedule || schedule.hasBlockingWarning) return;
 
     if (!selectionMade && location.trim() !== "") {
@@ -201,7 +194,7 @@ export function EventHubEditForm({
     }
   };
 
-  const hasBlockingWarning = scheduleBlocking || Boolean(locationError);
+  const hasBlockingWarning = Boolean(schedule?.hasBlockingWarning || locationError);
   const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
 
   return (
@@ -241,7 +234,7 @@ export function EventHubEditForm({
         eventEndDate={eventEndDate}
         eventRegistrationDeadline={eventRegistrationDeadline}
         readOnly={readOnly}
-        onChange={onScheduleChange}
+        onChange={setSchedule}
       />
 
       <Section label="Location">

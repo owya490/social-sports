@@ -62,8 +62,6 @@ export function EventHubScheduleFields({
   );
 
   const prevStartDateRef = useRef<string | null>(null);
-  const onChangeRef = useRef(onChange);
-  onChangeRef.current = onChange;
 
   useEffect(() => {
     const nextStartDate = timestampToDateString(eventStartDate);
@@ -128,7 +126,7 @@ export function EventHubScheduleFields({
     const hasBlockingWarning =
       !readOnly &&
       Boolean(warnings.dateWarning || warnings.timeWarning || warnings.registrationDeadlineWarning);
-    onChangeRef.current({
+    onChange({
       startDate: dateAndTimeInLocalToTimestamp(formatStringToDate(startDate), formatTimeTo24Hour(startTime)),
       endDate: dateAndTimeInLocalToTimestamp(formatStringToDate(endDate), formatTimeTo24Hour(endTime)),
       registrationDeadline: dateAndTimeInLocalToTimestamp(
@@ -138,6 +136,7 @@ export function EventHubScheduleFields({
       hasBlockingWarning,
     });
   }, [
+    onChange,
     startDate,
     startTime,
     endDate,
