@@ -433,7 +433,6 @@ export async function updateEventMetadataFromEventId(eventId: EventId, updatedDa
     eventServiceLogger.info(`EventMetadata with eventId '${eventId}' updated successfully.`);
   } catch (error) {
     eventServiceLogger.error(`updateEventMetadataFromEventId ${error}`);
-    throw error;
   }
 }
 

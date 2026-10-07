@@ -149,7 +149,6 @@ export interface EventMetadata {
   completedStripePaymentIntentIds: StripePaymentIntentId[];
   organiserId: UserId;
   orderIds: OrderId[];
-  teamBoard?: TeamBoard;
 }
 
 export const EmptyEventMetadata: EventMetadata = {

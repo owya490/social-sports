@@ -1,8 +1,10 @@
 "use client";
 
 import DownloadCsvButton from "@/components/DownloadCsvButton";
+import { EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { saveEventTeamBoard, subscribeToEventTeamBoard } from "@/services/src/events/eventTeams/eventTeamsService";
 import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -38,6 +40,8 @@ import {
 type EventHubTeamsProps = {
   orderTicketsMap: Map<Order, Ticket[]>;
   eventName: string;
+  /** When set, the layout is loaded from and saved to EventTeams/{eventId}. */
+  eventId?: EventId;
   initialBoard?: TeamBoard;
   onPersist?: (board: TeamBoard) => Promise<void>;
 };
@@ -50,10 +54,14 @@ const fieldClass =
 export function EventHubTeams({
   orderTicketsMap,
   eventName,
+  eventId,
   initialBoard = EMPTY_TEAM_BOARD,
   onPersist,
 }: EventHubTeamsProps) {
   const people = useMemo(() => peopleFromOrders(orderTicketsMap), [orderTicketsMap]);
+  const [remoteBoard, setRemoteBoard] = useState<TeamBoard | null>(null);
+  const [remoteError, setRemoteError] = useState(false);
+  const [trackedEventId, setTrackedEventId] = useState(eventId);
   const [board, setBoard] = useState<TeamBoard>(initialBoard);
   const [creating, setCreating] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -62,10 +70,16 @@ export function EventHubTeams({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SettingsAutosaveStatus>("idle");
   const [hasPendingEdit, setHasPendingEdit] = useState(false);
-  const [appliedInitialBoard, setAppliedInitialBoard] = useState(initialBoard);
-  if (initialBoard !== appliedInitialBoard) {
-    setAppliedInitialBoard(initialBoard);
-    if (!hasPendingEdit) setBoard(initialBoard);
+  const [appliedInitialBoard, setAppliedInitialBoard] = useState<TeamBoard | null>(eventId ? null : initialBoard);
+  if (eventId !== trackedEventId) {
+    setTrackedEventId(eventId);
+    setRemoteBoard(null);
+    setRemoteError(false);
+  }
+  const sourceBoard = !eventId ? initialBoard : eventId === trackedEventId ? remoteBoard : null;
+  if (sourceBoard && sourceBoard !== appliedInitialBoard) {
+    setAppliedInitialBoard(sourceBoard);
+    if (!hasPendingEdit) setBoard(sourceBoard);
   }
   const onPersistRef = useRef(onPersist);
   const boardRef = useRef(board);
@@ -76,8 +90,20 @@ export function EventHubTeams({
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    onPersistRef.current = onPersist;
-  }, [onPersist]);
+    onPersistRef.current = eventId ? (next) => saveEventTeamBoard(eventId, next) : onPersist;
+  }, [eventId, onPersist]);
+
+  useEffect(() => {
+    if (!eventId) return;
+    return subscribeToEventTeamBoard(
+      eventId,
+      (next) => {
+        setRemoteError(false);
+        setRemoteBoard(next);
+      },
+      () => setRemoteError(true)
+    );
+  }, [eventId]);
 
   useEffect(() => {
     boardRef.current = board;
@@ -157,9 +183,22 @@ export function EventHubTeams({
     setCreating(false);
   };
 
+  const persists = Boolean(eventId || onPersist);
+  if (eventId && remoteBoard == null) {
+    return (
+      <EventHubStage>
+        <EventHubEmpty>
+          {remoteError
+            ? "Teams could not be loaded. Reload the page to try again."
+            : "Loading teams…"}
+        </EventHubEmpty>
+      </EventHubStage>
+    );
+  }
+
   return (
     <EventHubStage>
-      {onPersist ? (
+      {persists ? (
         <EventHubSavingIndicator
           status={saveStatus}
           onRetry={() => {
@@ -173,7 +212,7 @@ export function EventHubTeams({
           {people.length === 0
             ? "Teams are built from approved signups."
             : `${unassignedSeatTotal} unassigned · ${view.teams.length} ${view.teams.length === 1 ? "team" : "teams"}`}
-          {onPersist ? "" : " · Preview only"}
+          {persists ? "" : " · Preview only"}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <DownloadCsvButton

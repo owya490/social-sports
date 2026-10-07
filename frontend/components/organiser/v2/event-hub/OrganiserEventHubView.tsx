@@ -10,7 +10,6 @@
  */
 
 import { EventHubAttendees } from "@/components/organiser/v2/event-hub/EventHubAttendees";
-import { EventHubTeams } from "@/components/organiser/v2/event-hub/EventHubTeams";
 import { EventHubHeader } from "@/components/organiser/v2/event-hub/EventHubHeader";
 import { EventHubRegistration } from "@/components/organiser/v2/event-hub/EventHubRegistration";
 import { EventHubListing } from "@/components/organiser/v2/event-hub/EventHubListing";
@@ -40,12 +39,10 @@ import {
   getEventsMetadataByEventId,
   subscribeToEventMetadata,
 } from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import { EMPTY_TEAM_BOARD } from "@/components/organiser/v2/event-hub/teamBoard";
 import {
   eventServiceLogger,
   getEventById,
   updateEventById,
-  updateEventMetadataFromEventId,
 } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
@@ -363,19 +360,6 @@ export function OrganiserEventHubView() {
             onRegistrationAppended={(orderId) => loadedOrderIdsRef.current.add(orderId)}
             setOrderTicketsMap={setOrderTicketsMap}
             registrationUpdateIssue={registrationUpdateIssue}
-          />
-        )}
-
-        {section === "Teams" && (
-          <EventHubTeams
-            key={eventId}
-            orderTicketsMap={orderTicketsMap}
-            eventName={eventName}
-            initialBoard={eventMetadata.teamBoard ?? EMPTY_TEAM_BOARD}
-            onPersist={async (board) => {
-              await updateEventMetadataFromEventId(eventId, { teamBoard: board });
-              setEventMetadata((current) => ({ ...current, teamBoard: board }));
-            }}
           />
         )}
 
