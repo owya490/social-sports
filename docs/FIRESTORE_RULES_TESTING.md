@@ -13,6 +13,7 @@ a batch, normal organiser edits, public access counts, and Admin archival.
 Branch CI runs the same checks without production credentials.
 
 Clients can create only fresh Active events belonging to the signed-in organiser.
-Inactive event creation remains an Admin operation. Existing conflicting records
+Inactive event creation remains an Admin operation. Deleted-event tombstones
+reserve their IDs, including within a batch. Existing conflicting records
 are preserved for operator investigation; the scheduler does not overwrite them.
 Applying these rules to a deployed database is a separate deployment.

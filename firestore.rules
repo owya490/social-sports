@@ -34,7 +34,9 @@ service cloud.firestore {
           && !exists(/databases/$(database)/documents/Events/Active/$(otherAccess)/$(eventId))
           && !existsAfter(/databases/$(database)/documents/Events/Active/$(otherAccess)/$(eventId))
           && !exists(/databases/$(database)/documents/Events/InActive/Public/$(eventId))
-          && !exists(/databases/$(database)/documents/Events/InActive/Private/$(eventId));
+          && !exists(/databases/$(database)/documents/Events/InActive/Private/$(eventId))
+          && !exists(/databases/$(database)/documents/DeletedEvents/$(eventId))
+          && !existsAfter(/databases/$(database)/documents/DeletedEvents/$(eventId));
       }
     	// GET
       allow read: if true;
