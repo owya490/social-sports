@@ -23,16 +23,32 @@ service cloud.firestore {
 
     // Only organisers can write to their EventData fields. Everyone can read. Allow write if EventsData doesn't exist initially.
     match /Events/{activeModifier}/{accessModifier}/{eventId} {
+      function isNewOrganiserEvent() {
+        let otherAccess = accessModifier == 'Public' ? 'Private' : 'Public';
+        return request.auth != null
+          && activeModifier == 'Active'
+          && accessModifier in ['Public', 'Private']
+          && request.resource.data.organiserId == request.auth.uid
+          && request.resource.data.isActive == true
+          && request.resource.data.isPrivate == (accessModifier == 'Private')
+          && !exists(/databases/$(database)/documents/Events/Active/$(otherAccess)/$(eventId))
+          && !existsAfter(/databases/$(database)/documents/Events/Active/$(otherAccess)/$(eventId))
+          && !exists(/databases/$(database)/documents/Events/InActive/Public/$(eventId))
+          && !exists(/databases/$(database)/documents/Events/InActive/Private/$(eventId));
+      }
     	// GET
       allow read: if true;
-      // UPDATE, DELETE
-      allow update, delete: if request.auth != null 
-      && request.auth.uid == get(/databases/$(database)/documents/Events/$(activeModifier)/$(accessModifier)/$(eventId)).data.organiserId;
+      // UPDATE
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.organiserId
+        && request.resource.data.organiserId == resource.data.organiserId;
+      // DELETE
+      allow delete: if request.auth != null && request.auth.uid == resource.data.organiserId;
       // UPDATE accessCount
-      allow write: if (request.resource.data.diff(resource.data).affectedKeys()
+      allow update: if (request.resource.data.diff(resource.data).affectedKeys()
         .hasOnly(['accessCount']));
       // CREATE
-      allow create: if request.auth != null;
+      allow create: if isNewOrganiserEvent();
     }
 
     // Only events organisers can read and write to their Events metadata fields. Allow write if EventsMetadata doesn't exist initially.
