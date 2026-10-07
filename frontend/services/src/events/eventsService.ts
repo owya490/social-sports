@@ -32,7 +32,7 @@ import { CollectionPaths, EVENT_PATHS, EventPrivacy, EventStatus, LocalStorageKe
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import * as crypto from "crypto";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import { FIREBASE_FUNCTIONS_CREATE_EVENT, getFirebaseFunctionByName } from "../firebaseFunctionsService";
 import { getPrivateUserById, getPublicUserById } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
@@ -267,11 +267,15 @@ function buildEventUpdate(current: EventDataWithoutOrganiser, updatedData: Parti
 }
 
 async function updateEventDates(eventId: EventId, updatedData: Partial<EventData>, expectedPath?: string) {
+  const organiserId = auth.currentUser?.uid;
+  if (!organiserId) {
+    throw new EventDateUpdateError("Sign in to update this event.");
+  }
   await runTransaction(db, async (transaction) => {
     const snapshots = await Promise.all(
       EVENT_PATHS.map((path) => transaction.get(doc(db, path, eventId)))
     );
-    const matches = snapshots.filter((snapshot) => snapshot.exists());
+    const matches = snapshots.filter((snapshot) => snapshot.exists() && snapshot.data().organiserId === organiserId);
     if (matches.length !== 1) {
       throw new EventDateUpdateError("This event could not be uniquely located. Refresh and try again.");
     }

@@ -1,7 +1,7 @@
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { DocumentReference, Timestamp, Transaction, doc, getDoc, runTransaction, updateDoc } from "firebase/firestore";
 import { EVENT_PATHS } from "../src/events/eventsConstants";
-import { db } from "../src/firebase";
+import { auth, db } from "../src/firebase";
 import { updateEventById, updateEventFromDocRef } from "../src/events/eventsService";
 import { findEventDocRef } from "../src/events/eventsUtils/commonEventsUtils";
 import { EventDateUpdateError } from "../src/events/eventsUtils/eventDateUpdates";
@@ -10,7 +10,7 @@ jest.mock("firebase/firestore", () => ({
   ...jest.requireActual("firebase/firestore"),
   doc: jest.fn(), getDoc: jest.fn(), runTransaction: jest.fn(), updateDoc: jest.fn(),
 }));
-jest.mock("../src/firebase", () => ({ db: {} }));
+jest.mock("../src/firebase", () => ({ db: {}, auth: { currentUser: { uid: "owner-1" } } }));
 jest.mock("@/observability/logger", () => ({
   Logger: jest.fn(() => ({ info: jest.fn(), error: jest.fn(), warn: jest.fn(), debug: jest.fn() })),
 }));
@@ -47,7 +47,8 @@ describe("event date updates", () => {
 
   function seed(collection = EVENT_PATHS[0], overrides: Partial<EventData> = {}) {
     const data = {
-      ...EmptyEventData, eventId, isActive: true, isPrivate: collection.endsWith("Private"),
+      ...EmptyEventData, eventId, organiserId: "owner-1" as EventData["organiserId"],
+      isActive: true, isPrivate: collection.endsWith("Private"),
       startDate: at(1), endDate: at(3), registrationDeadline: at(1), vacancy: 5, capacity: 14,
       ...overrides,
     };
@@ -140,6 +141,39 @@ describe("event date updates", () => {
     await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toThrow("uniquely located");
     seed(); seed(EVENT_PATHS[2], { isActive: false });
     await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toThrow("uniquely located");
+    expect(transactionUpdate).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [EVENT_PATHS[0], EVENT_PATHS[1]],
+    [EVENT_PATHS[0], EVENT_PATHS[2]],
+    [EVENT_PATHS[1], EVENT_PATHS[0]],
+  ])("ignores other organisers' copies when saving %s with a duplicate in %s", async (ownedPath, foreignPath) => {
+    const current = seed(ownedPath);
+    const foreign = seed(foreignPath, { organiserId: "attacker" as EventData["organiserId"] });
+    await updateEventById(eventId, { endDate: at(4) });
+    expect(records.get(path(ownedPath))).toEqual({ ...current, endDate: at(4) });
+    expect(records.get(path(foreignPath))).toEqual(foreign);
+  });
+
+  it("requires a signed-in organiser before starting a date transaction", async () => {
+    seed();
+    jest.replaceProperty(auth, "currentUser", null);
+    await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toThrow("Sign in");
+    expect(runTransaction).not.toHaveBeenCalled();
+  });
+
+  it("cannot update a record belonging to another organiser", async () => {
+    const current = seed(EVENT_PATHS[0], { organiserId: "attacker" as EventData["organiserId"] });
+    await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toBeInstanceOf(EventDateUpdateError);
+    expect(transactionUpdate).not.toHaveBeenCalled();
+    expect(records.get(path(EVENT_PATHS[0]))).toEqual(current);
+  });
+
+  it("does not use a foreign active copy to extend an owned inactive event", async () => {
+    seed(EVENT_PATHS[0], { organiserId: "attacker" as EventData["organiserId"] });
+    seed(EVENT_PATHS[2], { isActive: false });
+    await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toThrow("inactive");
     expect(transactionUpdate).not.toHaveBeenCalled();
   });
 
