@@ -17,23 +17,18 @@ import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import {
-  addCalendarDaysToYmd,
-  dateAndTimeInLocalToDate,
-  dateAndTimeInLocalToTimestamp,
-  formatDateToString,
-  formatStringToDate,
-  formatTimeTo12Hour,
-  formatTimeTo24Hour,
-  timestampToDateString,
-  timestampToTimeOfDay,
-} from "@/services/src/datetimeUtils";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
-import { CalendarDaysIcon, ClockIcon, LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
+import { LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { EventHubDescriptionEditor } from "./EventHubDescriptionEditor";
+import {
+  EventHubFieldWithIcon as FieldWithIcon,
+  EventHubScheduleFields,
+  eventHubFieldClass as fieldClass,
+  type EventHubScheduleValue,
+} from "./EventHubScheduleFields";
 import { EventHubTicketTypesEditor } from "./EventHubTicketTypesEditor";
 
 const FORM_ID = "event-hub-edit-details";
@@ -89,17 +84,6 @@ export function EventHubEditForm({
   const [name, setName] = useState(eventName);
   const [description, setDescription] = useState(eventDescription);
 
-  const [startDate, setStartDate] = useState(timestampToDateString(eventStartDate));
-  const [startTime, setStartTime] = useState(timestampToTimeOfDay(eventStartDate));
-  const [endDate, setEndDate] = useState(timestampToDateString(eventEndDate));
-  const [endTime, setEndTime] = useState(timestampToTimeOfDay(eventEndDate));
-  const [registrationDeadlineDate, setRegistrationDeadlineDate] = useState(
-    timestampToDateString(eventRegistrationDeadline)
-  );
-  const [registrationDeadlineTime, setRegistrationDeadlineTime] = useState(
-    timestampToTimeOfDay(eventRegistrationDeadline)
-  );
-
   const [location, setLocation] = useState(eventLocation);
   const [locationLatLng, setLocationLatLng] = useState<{ lat: number; lng: number } | null>(null);
   const [selectionMade, setSelectionMade] = useState(true);
@@ -108,10 +92,8 @@ export function EventHubEditForm({
   const [sport, setSport] = useState(eventSport);
   const [eventLink, setEventLink] = useState(eventEventLink ?? "");
 
-  const [dateWarning, setDateWarning] = useState<string | null>(null);
-  const [timeWarning, setTimeWarning] = useState<string | null>(null);
-  const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [schedule, setSchedule] = useState<EventHubScheduleValue | null>(null);
 
   const readOnly = !isActive || ended;
 
@@ -122,35 +104,15 @@ export function EventHubEditForm({
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 
-  const prevStartDateRef = useRef<string | null>(null);
-
   useEffect(() => {
-    const nextStartDate = timestampToDateString(eventStartDate);
     setName(eventName);
     setDescription(eventDescription);
-    setStartDate(nextStartDate);
-    setStartTime(timestampToTimeOfDay(eventStartDate));
-    setEndDate(timestampToDateString(eventEndDate));
-    setEndTime(timestampToTimeOfDay(eventEndDate));
-    setRegistrationDeadlineDate(timestampToDateString(eventRegistrationDeadline));
-    setRegistrationDeadlineTime(timestampToTimeOfDay(eventRegistrationDeadline));
     setLocation(eventLocation);
     setSelectionMade(true);
     setLocationError("");
     setSport(eventSport);
     setEventLink(eventEventLink ?? "");
-    // Hydration is not a user start-date change — keep the event's real end date.
-    prevStartDateRef.current = nextStartDate;
-  }, [
-    eventName,
-    eventDescription,
-    eventStartDate,
-    eventEndDate,
-    eventRegistrationDeadline,
-    eventLocation,
-    eventSport,
-    eventEventLink,
-  ]);
+  }, [eventName, eventDescription, eventLocation, eventSport, eventEventLink]);
 
   useEffect(() => {
     if (readOnly || !isLoaded || !locationInputRef.current) return;
@@ -165,52 +127,6 @@ export function EventHubEditForm({
       }
     };
   }, [readOnly, isLoaded]);
-
-  useEffect(() => {
-    const prevStartDate = prevStartDateRef.current;
-    prevStartDateRef.current = startDate;
-
-    // Skip mount / hydration — only shift when the organiser changes start date.
-    if (prevStartDate === null || prevStartDate === startDate) {
-      return;
-    }
-
-    const prevYmd = formatStringToDate(prevStartDate);
-    const nextYmd = formatStringToDate(startDate);
-    const [prevY, prevM, prevD] = prevYmd.split("-").map(Number);
-    const [nextY, nextM, nextD] = nextYmd.split("-").map(Number);
-    const dayDelta = Math.round(
-      (Date.UTC(nextY, nextM - 1, nextD) - Date.UTC(prevY, prevM - 1, prevD)) / (24 * 60 * 60 * 1000)
-    );
-    if (dayDelta !== 0) {
-      const shiftedEndYmd = addCalendarDaysToYmd(formatStringToDate(endDate), dayDelta);
-      setEndDate(formatDateToString(shiftedEndYmd < nextYmd ? nextYmd : shiftedEndYmd));
-    }
-
-    setRegistrationDeadlineDate(startDate);
-    setRegistrationDeadlineTime(startTime);
-    // endDate/startTime intentionally read from the change that triggered this effect
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate]);
-
-  useEffect(() => {
-    const currentDateTime = new Date();
-    const selectedStartDateTime = dateAndTimeInLocalToDate(
-      formatStringToDate(startDate),
-      formatTimeTo24Hour(startTime)
-    );
-    const selectedEndDateTime = dateAndTimeInLocalToDate(formatStringToDate(endDate), formatTimeTo24Hour(endTime));
-    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
-      formatStringToDate(registrationDeadlineDate),
-      formatTimeTo24Hour(registrationDeadlineTime)
-    );
-
-    setDateWarning(currentDateTime > selectedEndDateTime ? "Event end date and time is in the past!" : null);
-    setTimeWarning(selectedEndDateTime < selectedStartDateTime ? "Event must end after it starts!" : null);
-    setRegistrationDeadlineWarning(
-      selectedRegistrationDeadline > selectedEndDateTime ? "Registration deadline is after event end!" : null
-    );
-  }, [startDate, startTime, endDate, endTime, registrationDeadlineDate, registrationDeadlineTime]);
 
   useEffect(() => {
     onSavingChange?.(saving);
@@ -236,9 +152,7 @@ export function EventHubEditForm({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (readOnly || saving) return;
-
-    if (dateWarning || timeWarning || registrationDeadlineWarning) return;
+    if (readOnly || saving || !schedule || schedule.hasBlockingWarning) return;
 
     if (!selectionMade && location.trim() !== "") {
       setLocationError("Please select a location from the dropdown");
@@ -262,12 +176,9 @@ export function EventHubEditForm({
         name: nextName,
         nameTokens: nextName.toLowerCase().split(" "),
         description,
-        startDate: dateAndTimeInLocalToTimestamp(formatStringToDate(startDate), formatTimeTo24Hour(startTime)),
-        endDate: dateAndTimeInLocalToTimestamp(formatStringToDate(endDate), formatTimeTo24Hour(endTime)),
-        registrationDeadline: dateAndTimeInLocalToTimestamp(
-          formatStringToDate(registrationDeadlineDate),
-          formatTimeTo24Hour(registrationDeadlineTime)
-        ),
+        startDate: schedule.startDate,
+        endDate: schedule.endDate,
+        registrationDeadline: schedule.registrationDeadline,
         location,
         locationTokens: location.toLowerCase().split(" "),
         locationLatLng: { lat: latLng.lat, lng: latLng.lng },
@@ -283,7 +194,7 @@ export function EventHubEditForm({
     }
   };
 
-  const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
+  const hasBlockingWarning = Boolean(schedule?.hasBlockingWarning || locationError);
   const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
 
   return (
@@ -318,56 +229,13 @@ export function EventHubEditForm({
         </div>
       </Section>
 
-      <Section label="Time">
-        <div className="space-y-3">
-          <TimeRow
-            label="Start"
-            filled
-            dateValue={formatStringToDate(startDate)}
-            timeValue={formatTimeTo24Hour(startTime)}
-            onDateChange={(v) => setStartDate(formatDateToString(v))}
-            onTimeChange={(v) => setStartTime(formatTimeTo12Hour(v))}
-            readOnly={readOnly}
-          />
-          <TimeRow
-            label="End"
-            filled={false}
-            dateValue={formatStringToDate(endDate)}
-            timeValue={formatTimeTo24Hour(endTime)}
-            onDateChange={(v) => setEndDate(formatDateToString(v))}
-            onTimeChange={(v) => setEndTime(formatTimeTo12Hour(v))}
-            readOnly={readOnly}
-          />
-          <div className="pt-1">
-            <p className="text-xs font-medium text-foreground-muted font-sans mb-2">Registration deadline</p>
-            <div className="grid grid-cols-2 gap-2">
-              <FieldWithIcon icon={<CalendarDaysIcon className="h-4 w-4" aria-hidden />}>
-                <input
-                  type="date"
-                  value={formatStringToDate(registrationDeadlineDate)}
-                  onChange={(e) => setRegistrationDeadlineDate(formatDateToString(e.target.value))}
-                  className={fieldClass}
-                  aria-label="Registration deadline date"
-                  readOnly={readOnly}
-                />
-              </FieldWithIcon>
-              <FieldWithIcon icon={<ClockIcon className="h-4 w-4" aria-hidden />}>
-                <input
-                  type="time"
-                  value={formatTimeTo24Hour(registrationDeadlineTime)}
-                  onChange={(e) => setRegistrationDeadlineTime(formatTimeTo12Hour(e.target.value))}
-                  className={fieldClass}
-                  aria-label="Registration deadline time"
-                  readOnly={readOnly}
-                />
-              </FieldWithIcon>
-            </div>
-          </div>
-        </div>
-        {!readOnly && dateWarning ? <Warning>{dateWarning}</Warning> : null}
-        {!readOnly && timeWarning ? <Warning>{timeWarning}</Warning> : null}
-        {!readOnly && registrationDeadlineWarning ? <Warning>{registrationDeadlineWarning}</Warning> : null}
-      </Section>
+      <EventHubScheduleFields
+        eventStartDate={eventStartDate}
+        eventEndDate={eventEndDate}
+        eventRegistrationDeadline={eventRegistrationDeadline}
+        readOnly={readOnly}
+        onChange={setSchedule}
+      />
 
       <Section label="Location">
         {!readOnly && loadError ? <Warning>Error loading maps</Warning> : null}
@@ -475,80 +343,12 @@ export function EventHubEditForm({
   );
 }
 
-const fieldClass =
-  "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 pl-9 pr-3 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none read-only:cursor-text";
-
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
     <section className="space-y-3">
       <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted font-sans">{label}</h3>
       {children}
     </section>
-  );
-}
-
-function FieldWithIcon({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return (
-    <div className="relative flex items-center rounded-xl border border-border bg-background focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
-      <span className="pointer-events-none absolute left-3 text-foreground-muted">{icon}</span>
-      {children}
-    </div>
-  );
-}
-
-function TimeRow({
-  label,
-  filled,
-  dateValue,
-  timeValue,
-  onDateChange,
-  onTimeChange,
-  readOnly = false,
-}: {
-  label: string;
-  filled: boolean;
-  dateValue: string;
-  timeValue: string;
-  onDateChange: (v: string) => void;
-  onTimeChange: (v: string) => void;
-  readOnly?: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex flex-col items-center pt-3" aria-hidden>
-        <span
-          className={`h-2.5 w-2.5 rounded-full border-2 ${
-            filled ? "border-foreground bg-foreground" : "border-foreground-muted bg-background"
-          }`}
-        />
-        {filled ? <span className="mt-1 w-px flex-1 min-h-[2.5rem] bg-border" /> : null}
-      </div>
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <p className="text-xs font-medium text-foreground-muted font-sans">{label}</p>
-        <div className="grid grid-cols-2 gap-2">
-          <FieldWithIcon icon={<CalendarDaysIcon className="h-4 w-4" aria-hidden />}>
-            <input
-              type="date"
-              value={dateValue}
-              onChange={(e) => onDateChange(e.target.value)}
-              className={fieldClass}
-              aria-label={`${label} date`}
-              readOnly={readOnly}
-            />
-          </FieldWithIcon>
-          <FieldWithIcon icon={<ClockIcon className="h-4 w-4" aria-hidden />}>
-            <input
-              type="time"
-              value={timeValue}
-              onChange={(e) => onTimeChange(e.target.value)}
-              className={fieldClass}
-              aria-label={`${label} time`}
-              readOnly={readOnly}
-            />
-          </FieldWithIcon>
-        </div>
-      </div>
-    </div>
   );
 }
 
