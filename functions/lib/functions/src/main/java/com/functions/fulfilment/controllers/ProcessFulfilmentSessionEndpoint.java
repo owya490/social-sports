@@ -1,0 +1,50 @@
+package com.functions.fulfilment.controllers;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.functions.fulfilment.services.ProcessFulfilmentSessionService;
+import com.functions.utils.JavaUtils;
+import com.google.cloud.functions.CloudEventsFunction;
+
+import io.cloudevents.CloudEvent;
+
+/**
+ * Pub/Sub consumer for process-fulfilment-sessions-topic.
+ * The message body is the fulfilment session. A thrown exception asks Pub/Sub to redeliver.
+ * After 5 deliveries the subscription moves the message to the dead-letter topic.
+ */
+public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
+    private static final Logger logger = LoggerFactory.getLogger(ProcessFulfilmentSessionEndpoint.class);
+
+    @Override
+    public void accept(CloudEvent event) throws Exception {
+        if (event == null || event.getData() == null) {
+            logger.error("processFulfilmentSession received CloudEvent with no data");
+            throw new IllegalStateException("processFulfilmentSession received CloudEvent with no data");
+        }
+        String cloudEventJson = new String(event.getData().toBytes(), StandardCharsets.UTF_8);
+        new ProcessFulfilmentSessionService().process(fulfilmentSessionJson(cloudEventJson));
+    }
+
+    static String fulfilmentSessionJson(String cloudEventJson) {
+        if (cloudEventJson == null || cloudEventJson.isBlank()) {
+            return cloudEventJson;
+        }
+        try {
+            JsonNode dataNode = JavaUtils.objectMapper.readTree(cloudEventJson).path("message").path("data");
+            if (dataNode.isTextual() && !dataNode.asText().isBlank()) {
+                byte[] decoded = Base64.getDecoder().decode(dataNode.asText());
+                return new String(decoded, StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            logger.error("Failed to unwrap Pub/Sub fulfilment session", e);
+            throw new IllegalStateException("Failed to unwrap Pub/Sub fulfilment session", e);
+        }
+        return cloudEventJson;
+    }
+}
