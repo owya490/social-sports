@@ -1,22 +1,30 @@
 import uuid
 from datetime import date, datetime
 
-import pytz
-from firebase_admin import firestore
-from firebase_functions import https_fn, options, scheduler_fn
+from firebase_functions import https_fn, scheduler_fn
 from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
-from google.protobuf.timestamp_pb2 import Timestamp
-from lib.auth import *
-from lib.constants import *
+
 from lib.constants import (
     ACTIVE_PRIVATE,
     ACTIVE_PUBLIC,
     INACTIVE_PRIVATE,
     INACTIVE_PUBLIC,
     SYDNEY_TIMEZONE,
+    db,
 )
 from lib.logging import Logger
+
+
+class EventArchivalError(Exception):
+    pass
+
+
+def has_ended(event_data: dict, today: date) -> bool:
+    end_date = event_data.get("endDate")
+    if not isinstance(end_date, datetime) or end_date.utcoffset() is None:
+        raise EventArchivalError("endDate must be a timezone-aware timestamp")
+    return end_date.astimezone(SYDNEY_TIMEZONE).date() < today
 
 
 @firestore.transactional
@@ -24,124 +32,71 @@ def move_event_to_inactive(
     transaction: Transaction,
     old_event_ref: DocumentReference,
     new_event_ref: DocumentReference,
-):
-
-    # Get the event in the transaction to ensure operations are atomic
+    today: date,
+) -> bool:
     event_snapshot = old_event_ref.get(transaction=transaction)
-    event_dict = event_snapshot.to_dict()
-    event_dict.update({"isActive": False})
+    if not event_snapshot.exists:
+        return False
 
-    # Set the document in InActive
-    transaction.set(new_event_ref, event_dict)
+    event_data = event_snapshot.to_dict()
+    if not has_ended(event_data, today):
+        return False
+    if new_event_ref.get(transaction=transaction).exists:
+        raise EventArchivalError("inactive event already exists")
 
-    # Delete from the active partition
+    is_public = old_event_ref.path.rsplit("/", 1)[0] == ACTIVE_PUBLIC
+    if is_public:
+        organiser_id = event_data.get("organiserId")
+        if (
+            not isinstance(organiser_id, str)
+            or not organiser_id.strip()
+            or "/" in organiser_id
+        ):
+            raise EventArchivalError("organiserId must identify one organiser")
+        public_ref = db.collection("Users/Active/Public").document(organiser_id)
+        public_snapshot = public_ref.get(transaction=transaction)
+        if public_snapshot.exists:
+            upcoming_events = public_snapshot.to_dict().get(
+                "publicUpcomingOrganiserEvents", []
+            )
+            if not isinstance(upcoming_events, list) or not all(
+                isinstance(event_id, str) for event_id in upcoming_events
+            ):
+                raise EventArchivalError("publicUpcomingOrganiserEvents must be an ID list")
+
+    event_data["isActive"] = False
+    transaction.create(new_event_ref, event_data)
     transaction.delete(old_event_ref)
+    if is_public and public_snapshot.exists:
+        transaction.update(
+            public_ref,
+            {"publicUpcomingOrganiserEvents": firestore.ArrayRemove([old_event_ref.id])},
+        )
+    return True
 
 
-# Function to move an event from the upcoming organiser events to past
-def remove_event_from_upcoming_organiser_events(
-    logger: Logger, today: date, event_id: str, organiser_id: str
+def get_and_move_inactive_events(
+    today: date, logger: Logger, active_path: str, inactive_path: str
 ):
-    if organiser_id == "":
-        ValueError(f"invalid organiserId for eventId {event_id}")
-
-    # Reference to the Public organiser data
-    public_ref = db.collection("Users/Active/Public").document(organiser_id)
-
-    # Read the public organiser document data
-    public_doc = public_ref.get()
-    if not public_doc.exists:
-        raise ValueError(
-            f"Public organiser data not found for organiserId: {organiser_id}"
-        )
-
-    public_data = public_doc.to_dict()
-    upcoming_events: list = public_data.get("publicUpcomingOrganiserEvents", [])
-
-    # Check if the eventId exists in the upcoming events list and remove it
-    if event_id in upcoming_events:
-        upcoming_events.remove(event_id)
-        logger.info(
-            f"Removed eventId {event_id} from publicUpcomingOrganiserEvents of {organiser_id}"
-        )
-    else:
-        logger.warning(
-            f"eventId {event_id} not found in publicUpcomingOrganiserEvents for organiserId: {organiser_id}"
-        )
-
-    # might as well scan upcoming events to see if we missed any
-    for upcoming_event_id in upcoming_events[:]: # build a shallow copy to not cause concurrent modification issues
-        upcoming_event = db.collection(ACTIVE_PUBLIC).document(upcoming_event_id).get()
-        if not upcoming_event.exists:
-            upcoming_events.remove(upcoming_event_id)
+    for event in db.collection(active_path).stream():
+        try:
+            if not has_ended(event.to_dict(), today):
+                continue
+            moved = move_event_to_inactive(
+                db.transaction(),
+                event.reference,
+                db.collection(inactive_path).document(event.id),
+                today,
+            )
+        except EventArchivalError as error:
+            logger.error(f"Could not archive event {event.id}: {error}")
             continue
-        event_dict = upcoming_event.to_dict()
-        event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-
-        if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
-            logger.info(
-                f"today is after end date for ${upcoming_event_id} and is in upcoming events so removing"
-            )
-            upcoming_events.remove(upcoming_event_id)
-
-    public_ref.update({"publicUpcomingOrganiserEvents": upcoming_events})
-
-
-def get_and_move_public_inactive_events(today: date, logger: Logger):
-    # Get all Active Events in Public
-    public_events_ref = db.collection(ACTIVE_PUBLIC)
-    public_events = public_events_ref.stream()
-
-    # Scan through and if the endDate is past todays date then move it to Events/Inactive/Public
-    for event in public_events:
-        logger.info(event.id)
-        event_id = event.id
-        event_dict = event.to_dict()
-        event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-        organiser_id = event_dict.get("organiserId", "")
-        logger.info(event_end_date)
-
-        if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
-            logger.info(f"today is after end date for ${event.id}")
-            transaction = db.transaction()
-            # The events datetime is earlier so it has already passed, hence we should move it
-            move_event_to_inactive(
-                transaction=transaction,
-                old_event_ref=db.collection(ACTIVE_PUBLIC).document(event_id),
-                new_event_ref=db.collection(INACTIVE_PUBLIC).document(event_id),
-            )
-            try:
-                remove_event_from_upcoming_organiser_events(
-                    logger, today, event_id=event_id, organiser_id=organiser_id
-                )
-            except ValueError as e:
-                logger.error(f"An error has occured: {e}")
-
-
-def get_and_move_private_inactive_events(today: date):
-
-    # Get all Active Private Events
-    private_events_ref = db.collection(ACTIVE_PRIVATE)
-    private_events = private_events_ref.stream()
-
-    # Repeat for Private events, checking if endDate has passed and move to Events/Inactive/Private
-    for event in private_events:
-        event_id = event.id
-        event_dict = event.to_dict()
-        event_end_date: Timestamp = event_dict.get("endDate").timestamp_pb()
-
-        if event_end_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() < today:
-            transaction = db.transaction()
-            # The events datetime is earlier so it has already passed, hence we should move it
-            move_event_to_inactive(
-                transaction=transaction,
-                old_event_ref=db.collection(ACTIVE_PRIVATE).document(event_id),
-                new_event_ref=db.collection(INACTIVE_PRIVATE).document(event_id),
-            )
+        if moved:
+            logger.info(f"Archived event {event.id} from {active_path}")
 
 
 @scheduler_fn.on_schedule(
-    schedule="every day 00:05", # Ensure we don't run into concurrency issues with recurrent events cron.
+    schedule="every day 00:05",
     region="australia-southeast1",
     timezone=scheduler_fn.Timezone("Australia/Sydney"),
 )
@@ -151,14 +106,11 @@ def move_inactive_events(event: scheduler_fn.ScheduledEvent) -> None:
     logger.add_tag("uuid", uid)
 
     today = datetime.now(SYDNEY_TIMEZONE).date()
+    logger.info("Moving inactive events for date " + today.strftime("%d/%m/%Y"))
 
-    logger.info(
-        "Moving inactive events for date " + today.strftime("%d/%m/%Y, %H:%M:%S")
-    )
-
-    get_and_move_public_inactive_events(today, logger)
-    get_and_move_private_inactive_events(today)
+    get_and_move_inactive_events(today, logger, ACTIVE_PUBLIC, INACTIVE_PUBLIC)
+    get_and_move_inactive_events(today, logger, ACTIVE_PRIVATE, INACTIVE_PRIVATE)
 
     return https_fn.Response(
-        f"Moved all Public and Private Active Events which are past their end date to Inactive."
+        "Moved all Public and Private Active Events which are past their end date to Inactive."
     )
