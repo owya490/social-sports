@@ -15,6 +15,7 @@ import com.functions.events.models.EventData;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
+import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -36,6 +37,7 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.services.StripeService;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
@@ -206,20 +208,17 @@ public class FulfilmentService {
             throw new IllegalArgumentException("eventTicketTypeId is required");
         }
 
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new Exception("Failed to find event data for event ID: " + eventId);
-        }
-        EventData eventDataForLimits = maybeEventData.get();
-        Integer maxTickets = eventDataForLimits.getMaxTicketsPerTransaction();
+        EventData eventData = EventsRepository.getActiveEventById(eventId)
+                .orElseThrow(() -> new CheckoutDateTimeException("Event " + eventId + " is not available"));
+        EventsUtils.validateEventTiming(eventData);
+        Integer maxTickets = eventData.getMaxTicketsPerTransaction();
         if (maxTickets != null && numTickets > maxTickets) {
             throw new IllegalArgumentException(String.format(
                     "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
                     numTickets, maxTickets, eventId));
         }
 
-        FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventId, eventTicketTypeId);
+        FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventData, eventTicketTypeId);
 
         String fulfilmentSessionId = UUID.randomUUID().toString();
 
@@ -268,15 +267,7 @@ public class FulfilmentService {
         return fulfilmentSessionId;
     }
 
-    private static FulfilmentSessionType classifyFulfilmentSessionType(String eventId, String eventTicketTypeId) {
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new RuntimeException("Failed to find event data for event ID: " + eventId);
-        }
-        EventData eventData = maybeEventData.get();
-        eventData.setEventId(eventId);
-
+    private static FulfilmentSessionType classifyFulfilmentSessionType(EventData eventData, String eventTicketTypeId) {
         ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
         if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
                 && ticketType.getVacancy() <= 0) {

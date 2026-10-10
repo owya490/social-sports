@@ -17,6 +17,7 @@ import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.config.StripeCustomFieldKeys;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
@@ -64,16 +65,9 @@ public class CheckoutService {
 
         // Section A: Perform SPORTSHUB domain specific operations
         CheckoutTransactionResult checkoutTransactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
-            Optional<EventData> maybeEventData = EventsRepository.getEventById(request.eventId(), Optional.of(transaction));
-
-            if (maybeEventData.isEmpty()) {
-                throw new RuntimeException("No event found for eventId: " + request.eventId());
-            }
-
-            EventData eventData = maybeEventData.get();
-            if (eventData == null) {
-                throw new RuntimeException("Event data is null");
-            }
+            EventData eventData = EventsRepository.getActiveEventById(request.eventId(), request.isPrivate(), transaction)
+                    .orElseThrow(() -> new CheckoutDateTimeException("Event " + request.eventId() + " is not available"));
+            EventsUtils.validateEventTiming(eventData);
 
             String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
             PrivateUserData privateUserData = Users.getPrivateUserDataById(organiserId, Optional.of(transaction));
@@ -81,10 +75,10 @@ public class CheckoutService {
             String stripeAccountId = validateAndGetStripeAccount(organiserId, privateUserData);
 
             commitReservation(transaction, request, eventData, privateUserData);
-            logger.info("Reservation committed successfully for event {}", request.eventId());
 
             return new CheckoutTransactionResult(eventData, stripeAccountId);
         });
+        logger.info("Reservation committed successfully for event {}", request.eventId());
 
         // Section B: Create Stripe session (external I/O) with retries
         StripeSessionResult sessionResult = createStripeSessionWithRetries(request, checkoutTransactionResult.eventData(), checkoutTransactionResult.stripeAccountId());
@@ -102,9 +96,8 @@ public class CheckoutService {
 
     private static void validateEventForCheckout(EventData eventData, ResolvedEventTicketType ticketType,
             Integer quantity) throws Exception {
-        // Validate event timing and status
         EventsUtils.validateEventTiming(eventData);
-        
+
         if (!Boolean.TRUE.equals(eventData.getPaymentsActive())) {
             logger.error("Event " + eventData.getEventId() + " does not have payments enabled");
             throw new RuntimeException("Event " + eventData.getEventId() + " does not have payments enabled");
