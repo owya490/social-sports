@@ -133,6 +133,7 @@ export interface EventMetadata {
   completeTicketCount: number;
   completedStripeCheckoutSessionIds: StripeCheckoutSessionId[];
   completedStripePaymentIntentIds: StripePaymentIntentId[];
+  completedFulfilmentSessionIds: string[];
   organiserId: UserId;
   orderIds: OrderId[];
 }
@@ -143,6 +144,7 @@ export const EmptyEventMetadata: EventMetadata = {
   completeTicketCount: 0,
   completedStripeCheckoutSessionIds: [],
   completedStripePaymentIntentIds: [],
+  completedFulfilmentSessionIds: [],
   organiserId: "" as UserId,
   orderIds: [],
 };

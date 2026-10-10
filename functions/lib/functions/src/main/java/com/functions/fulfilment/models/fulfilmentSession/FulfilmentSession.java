@@ -2,6 +2,7 @@ package com.functions.fulfilment.models.fulfilmentSession;
 
 import static com.functions.utils.JavaUtils.objectMapper;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,10 @@ public abstract class FulfilmentSession {
      * List of FulfilmentEntityIds specifying their order in the fulfilment session workflow.
      */
     private List<String> fulfilmentEntityIds;
+
+    private FulfilmentSessionStatus status;
+    private String purchaserEmail;
+    private String purchaserName;
 
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
@@ -131,6 +136,9 @@ public abstract class FulfilmentSession {
 
         Integer numTickets = getInteger(snapshot, "numTickets");
         Integer price = getInteger(snapshot, "price");
+        FulfilmentSessionStatus status = status(snapshot.getString("status"));
+        String purchaserEmail = snapshot.getString("purchaserEmail");
+        String purchaserName = snapshot.getString("purchaserName");
 
         // Create the appropriate session type
         switch (sessionType) {
@@ -145,6 +153,9 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .price(price)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .build();
             case BOOKING_APPROVAL:
                 return BookingApprovalFulfilmentSession.builder()
@@ -157,6 +168,9 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .price(price)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .build();
             case WAITLIST:
                 return WaitlistFulfilmentSession.builder()
@@ -168,11 +182,18 @@ public abstract class FulfilmentSession {
                         .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .price(price)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);
         }
+    }
+
+    public static FulfilmentSession fromJson(String json) throws IOException {
+        return FulfilmentSessionParser.parse(json);
     }
 
     /**
@@ -181,5 +202,9 @@ public abstract class FulfilmentSession {
     private static Integer getInteger(DocumentSnapshot snapshot, String field) {
         Long value = snapshot.getLong(field);
         return value == null ? null : value.intValue();
+    }
+
+    private static FulfilmentSessionStatus status(String value) {
+        return value == null || value.isBlank() ? null : FulfilmentSessionStatus.valueOf(value);
     }
 }
