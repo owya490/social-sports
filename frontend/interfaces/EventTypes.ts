@@ -127,6 +127,20 @@ export const EmptyEventData: EventData = {
   eventTicketTypes: createEmptyEventTicketTypes(),
 };
 
+export type EventTeam = {
+  id: string;
+  name: string;
+  targetSize: number | null;
+};
+
+/** How many of one order's tickets sit on each team. */
+export type TeamTicketSplit = Record<string, number>;
+
+export type TeamBoard = {
+  teams: EventTeam[];
+  assignments: Record<string, TeamTicketSplit>;
+};
+
 export interface EventMetadata {
   eventId?: EventId;
   purchaserMap: Record<EmailHash, Purchaser>;
