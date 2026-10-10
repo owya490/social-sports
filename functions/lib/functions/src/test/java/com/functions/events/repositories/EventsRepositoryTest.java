@@ -77,43 +77,34 @@ public class EventsRepositoryTest {
     }
 
     @Test
-    public void returnsEmptyForMissingActivePublicEvent() {
-        when(snapshot.exists()).thenReturn(false);
-
-        assertFalse(EventsRepository.getActivePublicEventById("event-1").isPresent());
-    }
-
-    @Test
     public void propagatesFirestoreReadFailure() throws Exception {
+        Transaction transaction = mock(Transaction.class);
         ExecutionException readFailure = new ExecutionException(new RuntimeException("unavailable"));
+        when(transaction.get(eventRef)).thenReturn(future);
         when(future.get()).thenThrow(readFailure);
 
-        try {
-            EventsRepository.getActivePublicEventById("event-1");
-            fail("Expected Firestore read failure to propagate");
-        } catch (IllegalStateException expected) {
-            assertSame(readFailure, expected.getCause());
+        for (Runnable read : new Runnable[] {
+                () -> EventsRepository.getActivePublicEventById("event-1"),
+                () -> EventsRepository.getActiveEventById("event-1", false, transaction)
+        }) {
+            try {
+                read.run();
+                fail("Expected Firestore read failure to propagate");
+            } catch (IllegalStateException expected) {
+                assertSame(readFailure, expected.getCause());
+            }
         }
     }
 
     @Test
-    public void findsActivePrivateEventWhenPublicCopyIsMissing() {
+    public void privateEventsRequireTheBroaderActiveLookup() {
         EventData event = new EventData();
         when(privateSnapshot.exists()).thenReturn(true);
         when(privateSnapshot.toObject(EventData.class)).thenReturn(event);
 
+        assertFalse(EventsRepository.getActivePublicEventById("event-1").isPresent());
         assertSame(event, EventsRepository.getActiveEventById("event-1").get());
         assertEquals("event-1", event.getEventId());
-    }
-
-    @Test
-    public void activeLookupDoesNotReadInactivePartitions() {
-        assertFalse(EventsRepository.getActiveEventById("event-1").isPresent());
-
-        verify(db, never()).collection("Events/InActive/Public");
-        verify(db, never()).collection("Events/InActive/Private");
-        verify(db, never()).document("Events/InActive/Public/event-1");
-        verify(db, never()).document("Events/InActive/Private/event-1");
     }
 
     @Test
@@ -129,22 +120,7 @@ public class EventsRepositoryTest {
     }
 
     @Test
-    public void transactionReadFailurePropagates() throws Exception {
-        Transaction transaction = mock(Transaction.class);
-        ExecutionException readFailure = new ExecutionException(new RuntimeException("unavailable"));
-        when(transaction.get(eventRef)).thenReturn(future);
-        when(future.get()).thenThrow(readFailure);
-
-        try {
-            EventsRepository.getActiveEventById("event-1", false, transaction);
-            fail("Expected transaction read failure to propagate");
-        } catch (IllegalStateException expected) {
-            assertSame(readFailure, expected.getCause());
-        }
-    }
-
-    @Test
-    public void genericLookupStillReadsArchivedEvents() throws Exception {
+    public void archivedEventsRemainAvailableOnlyThroughGenericLookup() throws Exception {
         DocumentReference inactiveRef = mock(DocumentReference.class);
         DocumentSnapshot inactiveSnapshot = mock(DocumentSnapshot.class);
         EventData archivedEvent = new EventData();
@@ -155,6 +131,12 @@ public class EventsRepositoryTest {
         when(inactiveRef.get()).thenReturn(ApiFutures.immediateFuture(inactiveSnapshot));
         when(inactiveSnapshot.exists()).thenReturn(true);
         when(inactiveSnapshot.toObject(EventData.class)).thenReturn(archivedEvent);
+
+        assertFalse(EventsRepository.getActiveEventById("event-1").isPresent());
+        verify(db, never()).collection("Events/InActive/Public");
+        verify(db, never()).collection("Events/InActive/Private");
+        verify(db, never()).document("Events/InActive/Public/event-1");
+        verify(db, never()).document("Events/InActive/Private/event-1");
 
         assertSame(archivedEvent, EventsRepository.getEventById("event-1", Optional.empty()).get());
         assertEquals("event-1", archivedEvent.getEventId());

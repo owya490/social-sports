@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -55,6 +56,7 @@ public class CheckoutServiceTest {
     private MockedStatic<Session> stripeSessions;
     private Transaction transaction;
     private DocumentReference eventRef;
+    private DocumentReference privateEventRef;
     private DocumentSnapshot snapshot;
     private EventData event;
     private PrivateUserData organiser;
@@ -67,10 +69,12 @@ public class CheckoutServiceTest {
     public void setUp() throws Exception {
         Firestore db = mock(Firestore.class);
         CollectionReference events = mock(CollectionReference.class);
+        CollectionReference privateEvents = mock(CollectionReference.class);
         CollectionReference activeUsers = mock(CollectionReference.class);
         DocumentReference activeUsersRef = mock(DocumentReference.class);
         CollectionReference organisers = mock(CollectionReference.class);
         eventRef = mock(DocumentReference.class);
+        privateEventRef = mock(DocumentReference.class);
         snapshot = mock(DocumentSnapshot.class);
         transaction = mock(Transaction.class);
         event = availableEvent();
@@ -81,11 +85,14 @@ public class CheckoutServiceTest {
         firebase.when(FirebaseService::getFirestore).thenReturn(db);
         when(db.collection("Events/Active/Public")).thenReturn(events);
         when(events.document("event-1")).thenReturn(eventRef);
+        when(db.collection("Events/Active/Private")).thenReturn(privateEvents);
+        when(privateEvents.document("event-1")).thenReturn(privateEventRef);
         when(db.collection("Users")).thenReturn(activeUsers);
         when(activeUsers.document("Active")).thenReturn(activeUsersRef);
         when(activeUsersRef.collection("Private")).thenReturn(organisers);
         when(organisers.document("organiser-1")).thenReturn(mock(DocumentReference.class));
         when(transaction.get(eventRef)).thenReturn(ApiFutures.immediateFuture(snapshot));
+        when(transaction.get(privateEventRef)).thenReturn(ApiFutures.immediateFuture(snapshot));
         when(snapshot.exists()).thenReturn(true);
         when(snapshot.toObject(EventData.class)).thenReturn(event);
         when(db.runTransaction(any(Transaction.Function.class))).thenAnswer(invocation -> {
@@ -157,7 +164,7 @@ public class CheckoutServiceTest {
                         return organiser;
                     });
             try {
-                CheckoutService.createStripeCheckoutSession(request());
+                CheckoutService.createStripeCheckoutSession(request(false));
                 fail("Expected registration deadline rejection before reservation");
             } catch (CheckoutDateTimeException expected) {
                 users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)));
@@ -170,13 +177,18 @@ public class CheckoutServiceTest {
 
     @Test
     public void activeAndLegacyEventsReserveOnTheSameActiveReference() throws Exception {
-        for (Boolean isActive : new Boolean[] { true, null }) {
-            event.setIsActive(isActive);
+        for (boolean isPrivate : new boolean[] { false, true }) {
+            for (Boolean isActive : new Boolean[] { true, null }) {
+                event.setIsActive(isActive);
+                event.setIsPrivate(isPrivate);
 
-            assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request()).stripeCheckoutSessionId());
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(isPrivate)).stripeCheckoutSessionId());
+            }
+            DocumentReference expectedRef = isPrivate ? privateEventRef : eventRef;
+            verify(transaction, times(2)).get(expectedRef);
+            verify(transaction, times(2)).update(expectedRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
         }
-        verify(transaction, org.mockito.Mockito.times(2)).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
-        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), org.mockito.Mockito.times(2));
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(4));
     }
 
     @Test
@@ -184,7 +196,7 @@ public class CheckoutServiceTest {
         commitFailure = new IOException("Firestore commit unavailable");
 
         try {
-            CheckoutService.createStripeCheckoutSession(request());
+            CheckoutService.createStripeCheckoutSession(request(false));
             fail("Expected commit failure");
         } catch (IOException expected) {
             assertSame(commitFailure, expected);
@@ -195,7 +207,7 @@ public class CheckoutServiceTest {
 
     private void assertUnavailableBeforeReservation() throws Exception {
         try {
-            CheckoutService.createStripeCheckoutSession(request());
+            CheckoutService.createStripeCheckoutSession(request(false));
             fail("Expected unavailable event rejection");
         } catch (CheckoutDateTimeException expected) {
             users.verifyNoInteractions();
@@ -206,8 +218,8 @@ public class CheckoutServiceTest {
         }
     }
 
-    private static CreateStripeCheckoutSessionRequest request() {
-        return new CreateStripeCheckoutSessionRequest("event-1", false, 1, "https://example.test/cancel",
+    private static CreateStripeCheckoutSessionRequest request(boolean isPrivate) {
+        return new CreateStripeCheckoutSessionRequest("event-1", isPrivate, 1, "https://example.test/cancel",
                 "https://example.test/success", "fulfilment-1", "end-1", CaptureMethod.AUTOMATIC, "ticket-1");
     }
 
