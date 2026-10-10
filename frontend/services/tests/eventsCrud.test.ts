@@ -121,20 +121,23 @@ describe("event date updates", () => {
     expect(records.get(path(EVENT_PATHS[0]))).toMatchObject({ startDate: at(-1), registrationDeadline: at(-2), endDate: now });
   });
 
-  it("rereads partitions after an archive causes a transaction retry", async () => {
+  it.each(["inactive", "ended"])("rechecks %s events on transaction retry", async (reason) => {
     const current = seed();
+    const collection = reason === "inactive" ? EVENT_PATHS[2] : EVENT_PATHS[0];
+    const expected = reason === "inactive" ? { ...current, isActive: false } : current;
     jest.mocked(runTransaction).mockImplementation(async (_db, callback) => {
       await callback(transaction);
       pendingUpdates.length = 0;
       records.delete(path(EVENT_PATHS[0]));
-      records.set(path(EVENT_PATHS[2]), { ...current, isActive: false });
+      records.set(path(collection), expected);
+      jest.mocked(Timestamp.now).mockReturnValue(Timestamp.fromMillis(current.endDate.toMillis() + 1));
       transactionUpdate.mockClear();
       return callback(transaction);
     });
-    await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toThrow("inactive");
+    await expect(updateEventById(eventId, { endDate: at(4) })).rejects.toThrow(reason);
     expect(transactionGet).toHaveBeenCalledTimes(8);
     expect(transactionUpdate).not.toHaveBeenCalled();
-    expect(records.get(path(EVENT_PATHS[2]))).toEqual({ ...current, isActive: false });
+    expect(records.get(path(collection))).toEqual(expected);
   });
 
   it("rejects missing or duplicate partitions instead of selecting the first copy", async () => {
@@ -224,13 +227,16 @@ describe("event date updates", () => {
     expect(updateDoc).toHaveBeenCalledWith(ref, { eventTicketTypes, capacity: 14, vacancy: 5 });
   });
 
-  it("keeps settings-only updates on the existing nontransactional path", async () => {
-    seed(EVENT_PATHS[2], { isActive: false });
+  it("keeps settings and partial inventory updates on the existing nontransactional path", async () => {
+    const eventTicketTypes = {
+      "ticket-1": { id: "ticket-1", name: "General Admission", price: 1350, capacity: 14, vacancy: 5 },
+    } as EventData["eventTicketTypes"];
+    seed(EVENT_PATHS[2], { isActive: false, eventTicketTypes });
     const ref = reference(path(EVENT_PATHS[2]));
     jest.mocked(findEventDocRef).mockResolvedValue(ref);
     jest.mocked(getDoc).mockResolvedValue(snapshot(ref) as Awaited<ReturnType<typeof getDoc>>);
-    await updateEventById(eventId, { paused: true });
-    expect(updateDoc).toHaveBeenCalledWith(ref, { paused: true });
+    await updateEventById(eventId, { paused: true, capacity: 16 });
+    expect(updateDoc).toHaveBeenCalledWith(ref, { paused: true, "eventTicketTypes.ticket-1.capacity": 16 });
     expect(runTransaction).not.toHaveBeenCalled();
   });
 });
