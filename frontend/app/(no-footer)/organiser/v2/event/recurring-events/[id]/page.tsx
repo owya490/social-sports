@@ -15,7 +15,7 @@ import { RecurringHubNav } from "@/components/organiser/v2/recurring-hub/Recurri
 import { RecurringHubPastEvents } from "@/components/organiser/v2/recurring-hub/RecurringHubPastEvents";
 import { RecurringHubRecurrence } from "@/components/organiser/v2/recurring-hub/RecurringHubRecurrence";
 import { RecurringHubSettings } from "@/components/organiser/v2/recurring-hub/RecurringHubSettings";
-import { RecurringHubSection, RecurringSeriesStatus } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
+import { RecurringHubSection } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import {
@@ -85,7 +85,7 @@ export default function OrganiserRecurringHubV2Page() {
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState(false);
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] =
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
-  const [seriesStatus, setSeriesStatus] = useState<RecurringSeriesStatus>("unavailable");
+  const [seriesState, setSeriesState] = useState({ isActive: false, statusAvailable: false });
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
@@ -148,7 +148,7 @@ export default function OrganiserRecurringHubV2Page() {
         setPastEvents(recurrenceData.pastRecurrences || {});
 
         const ended = calculateRecurrenceEnded(template);
-        setSeriesStatus(eventData.isActive ? "active" : "inactive");
+        setSeriesState({ isActive: eventData.isActive, statusAvailable: true });
         setRecurrenceEnded(ended);
         if (ended) {
           setNewRecurrenceData({ ...formData, recurrenceEnabled: false });
@@ -191,11 +191,11 @@ export default function OrganiserRecurringHubV2Page() {
       try {
         const template = await getRecurrenceTemplate(recurrenceTemplateId);
         const ended = calculateRecurrenceEnded(template);
-        setSeriesStatus(template.eventData.isActive ? "active" : "inactive");
+        setSeriesState({ isActive: template.eventData.isActive, statusAvailable: true });
         setRecurrenceEnded(ended);
       } catch (error) {
         logger.error(`Schedule saved but failed to refresh series status for ${recurrenceTemplateId}: ${error}`);
-        setSeriesStatus("unavailable");
+        setSeriesState((previous) => ({ ...previous, statusAvailable: false }));
       }
       if (recurrenceSaveNoticeRequestRef.current === requestId) {
         setSaveNotice("success");
@@ -211,6 +211,9 @@ export default function OrganiserRecurringHubV2Page() {
   };
 
   const listingEventId = recurrenceTemplateId as unknown as EventId;
+  const bookingStatus = !seriesState.statusAvailable
+    ? "unavailable"
+    : seriesState.isActive ? "active" : "inactive";
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-8">
@@ -247,7 +250,7 @@ export default function OrganiserRecurringHubV2Page() {
             eventEventLink={eventEventLink}
             eventImage={eventImage}
             eventThumbnail={eventThumbnail}
-            isActive={seriesStatus === "active"}
+            isActive={seriesState.isActive}
             isPrivate={eventIsPrivate}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={EMPTY_ORDER_TICKETS_MAP}
@@ -319,7 +322,7 @@ export default function OrganiserRecurringHubV2Page() {
             recurrenceTemplateId={recurrenceTemplateId}
             paused={eventPaused}
             setPaused={setEventPaused}
-            seriesStatus={seriesStatus}
+            seriesStatus={bookingStatus}
             onManageSchedule={() => handleSectionChange("Recurrence")}
             paymentsActive={eventPaymentsActive}
             setPaymentsActive={setEventPaymentsActive}
