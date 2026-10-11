@@ -11,6 +11,10 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '.agents/skills/sportshub-weekly-ops/**'
+      - 'docs/operations/README.md'
+      - 'docs/operations/weekly/**'
 
 # Cloud Functions rejects a second update while a previous deployment is still
 # operating on the same function. Keep the complete dev/prod release together

@@ -6,7 +6,7 @@ AGENTS.md loaded
 
 - When working below a directory that contains an `AGENTS.md`, read it first.
 - Defer to existing patterns. Stop and ask before introducing a new architecture or diverging from nearby code.
-- Never push directly to `master`: every push to `master` deploys both development and production functions.
+- Never push directly to `master`: application changes on `master` deploy both development and production functions. The deployment workflow excludes changes confined to the weekly operations skill, reports and guide.
 - Never deploy Firebase or Google Cloud functions without explicit operator approval.
 - Never edit generated Hugo output under `frontend/public/blogs`, `frontend/public/docs`, `frontend/public/css`, `frontend/public/js`, or `frontend/public/tags`. Edit `sportshub-blogs-docs/` and run its integration script only when requested.
 - Do not expose or commit `.env*`, Firebase service-account files, API keys, or other credentials.

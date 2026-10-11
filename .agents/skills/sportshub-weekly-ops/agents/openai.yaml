@@ -1,0 +1,3 @@
+interface:
+  display_name: "SPORTSHUB Weekly Operations"
+  short_description: "Collect weekly usage and compare historical trends"
