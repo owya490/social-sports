@@ -1,14 +1,12 @@
 "use client";
 
-import {
-  RecurringHoverBody,
-  RecurringHoverFlags,
-} from "@/components/organiser/v2/recurring/RecurringHoverBody";
+import { RecurringHoverBody } from "@/components/organiser/v2/recurring/RecurringHoverBody";
 import {
   EntityHoverCover,
   EntityHoverPreview,
 } from "@/components/organiser/v2/shared/EntityHoverPreview";
 import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowThumbnail";
+import { EntityRowStatuses } from "@/components/organiser/v2/shared/EntityRowStatuses";
 import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
@@ -72,7 +70,7 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
       cover={<EntityHoverCover src={eventData.image || eventData.thumbnail} />}
       title={eventData.name}
       body={<RecurringHoverBody template={template} />}
-      flags={<RecurringHoverFlags template={template} />}
+      flags={eventData.formId ? "Form attached" : undefined}
     >
       <Link
         href={`/organiser/v2/event/recurring-events/${recurrenceTemplateId}`}
@@ -108,6 +106,7 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
             <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
             {eventData.location}
           </p>
+          <EntityRowStatuses labels={eventData.isPrivate ? ["Private"] : []} />
           <p className="text-xs text-foreground-muted font-sans truncate mt-1.5 flex items-center gap-1">
             <ArrowPathIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">
