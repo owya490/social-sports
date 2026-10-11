@@ -15,7 +15,7 @@ import { RecurringHubNav } from "@/components/organiser/v2/recurring-hub/Recurri
 import { RecurringHubPastEvents } from "@/components/organiser/v2/recurring-hub/RecurringHubPastEvents";
 import { RecurringHubRecurrence } from "@/components/organiser/v2/recurring-hub/RecurringHubRecurrence";
 import { RecurringHubSettings } from "@/components/organiser/v2/recurring-hub/RecurringHubSettings";
-import { RecurringHubSection } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
+import { RecurringHubSection, RecurringSeriesStatus } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import {
@@ -85,7 +85,7 @@ export default function OrganiserRecurringHubV2Page() {
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState(false);
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] =
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
-  const [eventIsActive, setEventIsActive] = useState(false);
+  const [seriesStatus, setSeriesStatus] = useState<RecurringSeriesStatus>("unavailable");
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
@@ -122,7 +122,6 @@ export default function OrganiserRecurringHubV2Page() {
         setEventImage(eventData.image);
         setEventThumbnail(eventData.thumbnail);
         setEventCapacity(inventory.capacity);
-        setEventIsActive(eventData.isActive);
         setEventRegistrationDeadline(eventData.registrationDeadline);
         setEventEventLink(eventData.eventLink ?? "");
         setEventPaused(eventData.paused);
@@ -149,6 +148,7 @@ export default function OrganiserRecurringHubV2Page() {
         setPastEvents(recurrenceData.pastRecurrences || {});
 
         const ended = calculateRecurrenceEnded(template);
+        setSeriesStatus(eventData.isActive ? "active" : "inactive");
         setRecurrenceEnded(ended);
         if (ended) {
           setNewRecurrenceData({ ...formData, recurrenceEnabled: false });
@@ -188,6 +188,15 @@ export default function OrganiserRecurringHubV2Page() {
       await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
       setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
       setFrequency(newRecurrenceData.frequency);
+      try {
+        const template = await getRecurrenceTemplate(recurrenceTemplateId);
+        const ended = calculateRecurrenceEnded(template);
+        setSeriesStatus(template.eventData.isActive ? "active" : "inactive");
+        setRecurrenceEnded(ended);
+      } catch (error) {
+        logger.error(`Schedule saved but failed to refresh series status for ${recurrenceTemplateId}: ${error}`);
+        setSeriesStatus("unavailable");
+      }
       if (recurrenceSaveNoticeRequestRef.current === requestId) {
         setSaveNotice("success");
       }
@@ -238,7 +247,7 @@ export default function OrganiserRecurringHubV2Page() {
             eventEventLink={eventEventLink}
             eventImage={eventImage}
             eventThumbnail={eventThumbnail}
-            isActive={eventIsActive}
+            isActive={seriesStatus === "active"}
             isPrivate={eventIsPrivate}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={EMPTY_ORDER_TICKETS_MAP}
@@ -310,7 +319,8 @@ export default function OrganiserRecurringHubV2Page() {
             recurrenceTemplateId={recurrenceTemplateId}
             paused={eventPaused}
             setPaused={setEventPaused}
-            isActive={eventIsActive}
+            seriesStatus={seriesStatus}
+            onManageSchedule={() => handleSectionChange("Recurrence")}
             paymentsActive={eventPaymentsActive}
             setPaymentsActive={setEventPaymentsActive}
             stripeFeeToCustomer={eventStripeFeeToCustomer}
@@ -336,7 +346,7 @@ export default function OrganiserRecurringHubV2Page() {
       {saveNotice ? (
         <div
           role="status"
-          className={`fixed left-4 bottom-4 z-40 rounded-xl border px-4 py-3 text-sm font-sans shadow-sm ${
+          className={`fixed left-4 right-4 sm:right-auto sm:max-w-md bottom-4 z-40 rounded-xl border px-4 py-3 text-sm font-sans shadow-sm ${
             saveNotice === "success"
               ? "border-border bg-background text-foreground"
               : "border-danger/30 bg-background text-danger"

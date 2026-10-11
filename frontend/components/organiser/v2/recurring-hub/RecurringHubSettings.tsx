@@ -27,15 +27,17 @@ import {
   QueueListIcon,
   TicketIcon,
 } from "@heroicons/react/24/outline";
-import { ReactNode } from "react";
+import { ReactNode, useId } from "react";
 import Skeleton from "react-loading-skeleton";
+import { RecurringSeriesStatus } from "./recurringHubTypes";
 
 type RecurringHubSettingsProps = {
   loading: boolean;
   recurrenceTemplateId: RecurrenceTemplateId;
   paused: boolean;
   setPaused: (value: boolean) => void;
-  isActive: boolean;
+  seriesStatus: RecurringSeriesStatus;
+  onManageSchedule: () => void;
   paymentsActive: boolean;
   setPaymentsActive: (value: boolean) => void;
   stripeFeeToCustomer: boolean;
@@ -82,7 +84,8 @@ export function RecurringHubSettings({
   recurrenceTemplateId,
   paused,
   setPaused,
-  isActive,
+  seriesStatus,
+  onManageSchedule,
   paymentsActive,
   setPaymentsActive,
   stripeFeeToCustomer,
@@ -108,6 +111,7 @@ export function RecurringHubSettings({
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
   const stripeReady = isStripeAccountActive(user.stripeAccountActive);
   const paymentsLockedDescription = "Connect Stripe to enable this setting.";
+  const bookingHelpId = useId();
 
   if (loading) {
     return (
@@ -159,14 +163,39 @@ export function RecurringHubSettings({
       </p>
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>
-          <EventHubPreferenceRow
-            title="Bookings on new events"
-            description={`${paused ? "Paused" : "Open"}. Pausing bookings does not stop event creation.`}
-            checked={!paused}
-            disabled={!isActive || isSaving}
-            onChange={(open) => persistToggle(setPaused, "paused")(!open)}
-          />
-          <EventHubSettingTileRow>
+          <EventHubSettingTileRow className="items-start">
+            <div className="flex w-full min-w-0 flex-none flex-col sm:w-auto sm:min-w-[12rem] sm:flex-1">
+              <EventHubSettingTile
+                title="Bookings on new events"
+                descriptionId={bookingHelpId}
+                icon={<TicketIcon />}
+                tone="green"
+                checked={!paused}
+                disabled={isSaving}
+                locked={seriesStatus !== "active"}
+                onLabel="Open"
+                offLabel="Paused"
+                onChange={(open) => persistToggle(setPaused, "paused")(!open)}
+              />
+              <div className="mt-1 flex flex-wrap items-center gap-x-3">
+                <p id={bookingHelpId} className="text-xs text-foreground-secondary font-sans leading-relaxed">
+                  {seriesStatus === "active"
+                    ? "Pausing bookings does not stop event creation."
+                    : seriesStatus === "inactive"
+                      ? "Series inactive."
+                      : "Status unavailable."}
+                </p>
+                {seriesStatus !== "active" ? (
+                  <button
+                    type="button"
+                    onClick={seriesStatus === "inactive" ? onManageSchedule : () => window.location.reload()}
+                    className="inline-flex min-h-11 items-center text-xs font-medium text-foreground font-sans underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  >
+                    {seriesStatus === "inactive" ? "Extend schedule" : "Reload page"}
+                  </button>
+                ) : null}
+              </div>
+            </div>
             <EventHubSettingTile
               title={isFree ? "Accept bookings" : "Accept payments"}
               description={

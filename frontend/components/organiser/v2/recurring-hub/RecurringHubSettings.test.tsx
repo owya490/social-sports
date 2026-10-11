@@ -53,7 +53,8 @@ describe("RecurringHubSettings booking control", () => {
     recurrenceTemplateId: "template-1" as RecurrenceTemplateId,
     paused: false,
     setPaused: jest.fn(),
-    isActive: true,
+    seriesStatus: "active",
+    onManageSchedule: jest.fn(),
     paymentsActive: true,
     setPaymentsActive: jest.fn(),
     stripeFeeToCustomer: true,
@@ -82,9 +83,9 @@ describe("RecurringHubSettings booking control", () => {
     updateTemplate.mockResolvedValue(true);
   });
 
-  function renderBookingRow(overrides: Partial<typeof props> = {}) {
+  function renderBookingTile(overrides: Partial<typeof props> = {}) {
     renderToStaticMarkup(<RecurringHubSettings {...props} {...overrides} />);
-    return preferenceRow.mock.calls.find(([row]) => row.title === "Bookings on new events")![0];
+    return settingTile.mock.calls.find(([tile]) => tile.title === "Bookings on new events")![0];
   }
 
   it("does not show editable defaults before the template loads", () => {
@@ -96,10 +97,10 @@ describe("RecurringHubSettings booking control", () => {
   });
 
   it.each([false, true])("persists the inverse booking switch state when paused=%s", async (paused) => {
-    const row = renderBookingRow({ paused });
-    expect(row.checked).toBe(!paused);
+    const tile = renderBookingTile({ paused });
+    expect(tile.checked).toBe(!paused);
 
-    row.onChange(paused);
+    tile.onChange(paused);
     const [operation] = mockRun.mock.calls[0];
     await expect(runOptimisticSave(operation)).resolves.toBe(true);
 
@@ -110,7 +111,7 @@ describe("RecurringHubSettings booking control", () => {
 
   it("rolls back a rejected booking update and can retry the same operation", async () => {
     updateTemplate.mockRejectedValueOnce(new Error("write failed"));
-    renderBookingRow().onChange(false);
+    renderBookingTile().onChange(false);
     const [operation] = mockRun.mock.calls[0];
 
     await expect(runOptimisticSave(operation)).resolves.toBe(false);
@@ -124,21 +125,49 @@ describe("RecurringHubSettings booking control", () => {
 
   it.each([0, 1500])("keeps booking availability independent of Stripe for price=%i", (eventPrice) => {
     mockStripeReady = false;
-    const row = renderBookingRow({ eventPrice });
-    const checkout = settingTile.mock.calls[0][0];
+    const tile = renderBookingTile({ eventPrice });
+    const checkout = settingTile.mock.calls.find(([setting]) => setting.title === (eventPrice === 0 ? "Accept bookings" : "Accept payments"))![0];
 
-    expect(row.disabled).toBe(false);
+    expect(tile.disabled).toBe(false);
     expect(checkout.disabled).toBe(true);
     expect(checkout.title).toBe(eventPrice === 0 ? "Accept bookings" : "Accept payments");
   });
 
-  it("retains the inactive-series guard", () => {
-    expect(renderBookingRow({ isActive: false }).disabled).toBe(true);
+  it("explains the inactive-series lock and offers schedule recovery", () => {
+    const markup = renderToStaticMarkup(<RecurringHubSettings {...props} seriesStatus="inactive" />);
+    const tile = settingTile.mock.calls.find(([setting]) => setting.title === "Bookings on new events")![0];
+
+    expect(tile.locked).toBe(true);
+    expect(markup).toContain("Locked");
+    expect(markup).toContain("Series inactive.");
+    expect(markup).toContain("Extend schedule");
+    expect(markup).toContain(`aria-describedby="${tile.descriptionId}"`);
+    expect(markup).toContain(`id="${tile.descriptionId}"`);
+
+    jest.clearAllMocks();
+    const activeTile = renderBookingTile({ seriesStatus: "active" });
+    expect(activeTile.disabled).toBe(false);
+    expect(activeTile.locked).toBe(false);
+    const activeMarkup = renderToStaticMarkup(<RecurringHubSettings {...props} />);
+    expect(activeMarkup).not.toContain("Extend schedule");
+    expect(activeMarkup).not.toContain("Locked");
+    expect(activeMarkup).toContain("Pausing bookings does not stop event creation.");
+  });
+
+  it("locks bookings with reload recovery when the series status cannot be confirmed", () => {
+    const markup = renderToStaticMarkup(<RecurringHubSettings {...props} seriesStatus="unavailable" />);
+    const tile = settingTile.mock.calls.find(([setting]) => setting.title === "Bookings on new events")![0];
+
+    expect(tile.locked).toBe(true);
+    expect(markup).toContain("Status unavailable.");
+    expect(markup).toContain("Reload page");
+    expect(markup).not.toContain("Series inactive.");
+    expect(markup).not.toContain("Extend schedule");
   });
 
   it("blocks further changes while a settings save is in flight", () => {
     mockIsSaving = true;
-    expect(renderBookingRow().disabled).toBe(true);
+    expect(renderBookingTile().disabled).toBe(true);
     expect(settingTile.mock.calls.every(([tile]) => tile.disabled)).toBe(true);
   });
 });
