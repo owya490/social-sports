@@ -1,5 +1,27 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { EventHubSavingIndicator } from "./EventHubStage";
+import { EventHubSavingIndicator, EventHubSettingTile } from "./EventHubStage";
+
+describe("EventHubSettingTile", () => {
+  it("disables a locked tile while preserving its stored switch value", () => {
+    const markup = renderToStaticMarkup(
+      <EventHubSettingTile title="Bookings" icon={null} checked locked onChange={() => {}} />
+    );
+
+    expect(markup).toContain('disabled=""');
+    expect(markup).toContain('aria-checked="true"');
+    expect(markup).toContain("Locked");
+  });
+
+  it("keeps a temporary save lock separate from a permanent availability lock", () => {
+    const markup = renderToStaticMarkup(
+      <EventHubSettingTile title="Bookings" icon={null} checked disabled onChange={() => {}} />
+    );
+
+    expect(markup).toContain('disabled=""');
+    expect(markup).toContain('aria-checked="true"');
+    expect(markup).not.toContain("Locked");
+  });
+});
 
 describe("EventHubSavingIndicator", () => {
   it("stays outside document flow while saving", () => {

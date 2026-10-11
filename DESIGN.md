@@ -599,6 +599,12 @@ One Headless UI `Dialog` — right drawer on `md+`, bottom sheet on phone.
 
 Preference switches reuse the account Settings switch (accent on / `surface-muted` off, `28×48px`). Rows stack with `divide-y divide-border` directly on the stage—no outlined settings-panel shell, no header strip. Destructive “Delete event” is a danger text link below a hairline, not a yellow button.
 
+#### Recurring-series controls
+
+The series header contains identity and the Template badge. **Bookings on new events** lives beside **Accept payments** / **Accept bookings** in Settings → Registration, using the same toggle tile with Open / Paused state and visible help directly beneath that tile. On mobile, the booking tile spans the row so its help has room to read. An inactive series uses neutral tile styling with a lock icon and **Locked** label; a compact **Series inactive.** / **Extend schedule** row explains the lock and offers recovery without requiring hover or a click on the disabled control. It autosaves with rollback and Retry, independently of Stripe; saving a schedule refreshes series status so a restarted series becomes editable immediately. If status refresh fails, bookings stay locked with **Status unavailable.** / **Reload page** recovery that persists across tab changes; details, photo and ticket editing retain the last known active state. Settings explain that changes apply to newly created events and leave existing events unchanged.
+
+**Create future events** stays in Recurrence → Schedule. It controls automatic event creation, independently of booking availability. Schedule changes require **Save schedule**; an ended series prompts the organiser to review upcoming dates before restarting.
+
 ### Create Event — centered thumbnail + essentials
 
 Organiser create surface at `/event/create` (`CreateEventWorkbench`) under the no-footer shell. Same Honest Clubhouse tokens as event hub on a white canvas; composition follows a compact Luma create frame: thumbnail beside essentials inside a centered `max-w-3xl` (side margins—not full bleed). Deep edits open `EventHubPanel`. Refuses the legacy four-step wizard and page-level scrolling on desktop.
