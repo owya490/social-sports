@@ -4,7 +4,7 @@
  * THESIS: Tabs guide the series; Details twins the event hub overview; Past events / Recurrence / Settings are peer work — refuses legacy sidebar drilldown.
  * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on Save / Update.
  * STORY: Organiser lands on Details (preview, hosts, visibility), edits via panels; schedule and prefs stay peer-findable.
- * FIRST VIEWPORT: Quiet header (← Recurring, title, Template chip, Pause) + peer tabs; Details two-column overview.
+ * FIRST VIEWPORT: Quiet header (← Recurring, title, Template chip) + peer tabs; Details two-column overview.
  * FORM: Event-hub overview twin; Comp A approved; tabs mirror-plus-series; seed overview-twin.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
@@ -46,7 +46,7 @@ import {
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const logger = new Logger("RecurringHubV2Page");
 const EMPTY_ORDER_TICKETS_MAP = new Map<Order, Ticket[]>();
@@ -60,7 +60,6 @@ export default function OrganiserRecurringHubV2Page() {
   const [section, setSection] = useState<RecurringHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [pauseUpdating, setPauseUpdating] = useState(false);
   const [updatingRecurrenceData, setUpdatingRecurrenceData] = useState(false);
 
   const [eventName, setEventName] = useState("");
@@ -169,21 +168,6 @@ export default function OrganiserRecurringHubV2Page() {
     };
   }, [recurrenceTemplateId, router, user.userId]);
 
-  const handleTogglePause = useCallback(async () => {
-    const next = !eventPaused;
-    setPauseUpdating(true);
-    setEventPaused(next);
-    try {
-      const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, { paused: next });
-      if (!success) setEventPaused(!next);
-    } catch (error) {
-      setEventPaused(!next);
-      logger.error(`Failed to toggle pause on recurring hub: ${error}`);
-    } finally {
-      setPauseUpdating(false);
-    }
-  }, [eventPaused, recurrenceTemplateId]);
-
   const handleSectionChange = (next: RecurringHubSection) => {
     if (next === section) return;
     recurrenceSaveNoticeRequestRef.current += 1;
@@ -228,10 +212,6 @@ export default function OrganiserRecurringHubV2Page() {
           startDate={eventStartDate}
           location={eventLocation}
           frequency={frequency}
-          paused={eventPaused}
-          isActive={eventIsActive}
-          onTogglePause={handleTogglePause}
-          pauseUpdating={pauseUpdating}
         />
         <RecurringHubNav current={section} onChange={handleSectionChange} />
       </div>
@@ -326,7 +306,11 @@ export default function OrganiserRecurringHubV2Page() {
 
         {section === "Settings" && (
           <RecurringHubSettings
+            loading={loading}
             recurrenceTemplateId={recurrenceTemplateId}
+            paused={eventPaused}
+            setPaused={setEventPaused}
+            isActive={eventIsActive}
             paymentsActive={eventPaymentsActive}
             setPaymentsActive={setEventPaymentsActive}
             stripeFeeToCustomer={eventStripeFeeToCustomer}
@@ -359,8 +343,8 @@ export default function OrganiserRecurringHubV2Page() {
           }`}
         >
           {saveNotice === "success"
-            ? "Recurrence settings saved."
-            : "Failed to save recurrence settings. Try again."}
+            ? "Schedule saved."
+            : "Failed to save schedule. Try again."}
           <button
             type="button"
             className="ml-3 text-xs text-foreground-muted hover:text-foreground"

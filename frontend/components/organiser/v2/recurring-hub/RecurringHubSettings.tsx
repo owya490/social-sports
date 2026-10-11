@@ -28,9 +28,14 @@ import {
   TicketIcon,
 } from "@heroicons/react/24/outline";
 import { ReactNode } from "react";
+import Skeleton from "react-loading-skeleton";
 
 type RecurringHubSettingsProps = {
+  loading: boolean;
   recurrenceTemplateId: RecurrenceTemplateId;
+  paused: boolean;
+  setPaused: (value: boolean) => void;
+  isActive: boolean;
   paymentsActive: boolean;
   setPaymentsActive: (value: boolean) => void;
   stripeFeeToCustomer: boolean;
@@ -73,7 +78,11 @@ function SettingsGroup({
 }
 
 export function RecurringHubSettings({
+  loading,
   recurrenceTemplateId,
+  paused,
+  setPaused,
+  isActive,
   paymentsActive,
   setPaymentsActive,
   stripeFeeToCustomer,
@@ -99,6 +108,15 @@ export function RecurringHubSettings({
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
   const stripeReady = isStripeAccountActive(user.stripeAccountActive);
   const paymentsLockedDescription = "Connect Stripe to enable this setting.";
+
+  if (loading) {
+    return (
+      <EventHubStage className="space-y-4">
+        <Skeleton height={20} width="70%" />
+        <Skeleton count={4} height={48} />
+      </EventHubStage>
+    );
+  }
 
   const save = (data: Partial<NewEventData>, apply: () => void, rollback: () => void) => {
     return runSave({
@@ -136,11 +154,21 @@ export function RecurringHubSettings({
     <EventHubStage>
       <EventHubSavingIndicator status={saveStatus} onRetry={retrySave} />
 
+      <p className="mb-6 text-sm text-foreground-secondary font-sans leading-relaxed">
+        These settings apply to newly created events. Existing events stay unchanged.
+      </p>
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>
+          <EventHubPreferenceRow
+            title="Bookings on new events"
+            description={`${paused ? "Paused" : "Open"}. Pausing bookings does not stop event creation.`}
+            checked={!paused}
+            disabled={!isActive || isSaving}
+            onChange={(open) => persistToggle(setPaused, "paused")(!open)}
+          />
           <EventHubSettingTileRow>
             <EventHubSettingTile
-              title={isFree ? "Bookings" : "Payments"}
+              title={isFree ? "Accept bookings" : "Accept payments"}
               description={
                 !stripeReady
                   ? paymentsLockedDescription

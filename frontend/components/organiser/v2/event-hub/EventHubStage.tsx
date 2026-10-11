@@ -199,7 +199,7 @@ export function EventHubPreferenceRow({
     <div className="flex items-start gap-4 py-4">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground font-sans">{title}</p>
-        <p className="mt-1 text-xs text-foreground-muted font-sans leading-relaxed">{description}</p>
+        <p className="mt-1 text-xs text-foreground-secondary font-sans leading-relaxed">{description}</p>
       </div>
       <button
         type="button"
@@ -306,17 +306,13 @@ export function EventHubSettingTile({
       </span>
       <span className="min-w-0">
         <span
-          className={`block truncate text-xs font-semibold font-sans leading-tight ${
+          className={`block text-xs font-semibold font-sans leading-tight ${
             checked ? "text-foreground" : "text-foreground-secondary"
           }`}
         >
           {title}
         </span>
-        <span
-          className={`mt-0.5 block text-xs font-sans leading-tight ${
-            checked ? "text-foreground-secondary" : "text-foreground-muted"
-          }`}
-        >
+        <span className="mt-0.5 block text-xs text-foreground-secondary font-sans leading-tight">
           {status}
         </span>
       </span>

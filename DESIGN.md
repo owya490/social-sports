@@ -599,6 +599,12 @@ One Headless UI `Dialog` — right drawer on `md+`, bottom sheet on phone.
 
 Preference switches reuse the account Settings switch (accent on / `surface-muted` off, `28×48px`). Rows stack with `divide-y divide-border` directly on the stage—no outlined settings-panel shell, no header strip. Destructive “Delete event” is a danger text link below a hairline, not a yellow button.
 
+#### Recurring-series controls
+
+The series header contains identity and the Template badge. **Bookings on new events** lives in Settings → Registration as a full-width preference row with visible Open / Paused state and wrapping help. It autosaves with rollback and Retry, independently of Stripe and **Accept payments** / **Accept bookings**. Settings explain that changes apply to newly created events and leave existing events unchanged.
+
+**Create future events** stays in Recurrence → Schedule. It controls automatic event creation, independently of booking availability. Schedule changes require **Save schedule**; an ended series prompts the organiser to review upcoming dates before restarting.
+
 ### Create Event — centered thumbnail + essentials
 
 Organiser create surface at `/event/create` (`CreateEventWorkbench`) under the no-footer shell. Same Honest Clubhouse tokens as event hub on a white canvas; composition follows a compact Luma create frame: thumbnail beside essentials inside a centered `max-w-3xl` (side margins—not full bleed). Deep edits open `EventHubPanel`. Refuses the legacy four-step wizard and page-level scrolling on desktop.
