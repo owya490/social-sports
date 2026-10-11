@@ -5,6 +5,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.functions.alerts.models.ParsedErrorLog;
+
 public class AlertTextRedactorTest {
 
     @Test
@@ -29,5 +31,19 @@ public class AlertTextRedactorTest {
     @Test
     public void redact_nullIsEmpty() {
         assertEquals("", AlertTextRedactor.redact(null));
+    }
+
+    @Test
+    public void redact_removesQuotedJsonSecretsBeforeTruncatingEvidence() {
+        String message = "Failed " + "x".repeat(2450)
+                + " {\"password\": \"a secret with spaces" + "z".repeat(100)
+                + "\", \"access_token\": \"private-token\"}";
+
+        ParsedErrorLog evidence = new ParsedErrorLog("emailService", message, "", "");
+
+        assertTrue(evidence.message().contains("[REDACTED]"));
+        assertTrue(!evidence.message().contains("a secret"));
+        assertTrue(!evidence.message().contains("private-token"));
+        assertTrue(evidence.message().length() <= 2500);
     }
 }

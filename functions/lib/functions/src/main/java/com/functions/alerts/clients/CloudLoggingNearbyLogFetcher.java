@@ -5,13 +5,17 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 import com.functions.alerts.models.ParsedErrorLog;
-import com.functions.firebase.services.FirebaseService;
+import com.functions.alerts.services.AlertLogPolicy;
+import com.functions.alerts.services.AlertTextRedactor;
+import com.functions.alerts.services.SmsText;
+import com.functions.utils.JavaUtils;
+import com.google.cloud.logging.HttpRequest;
 import com.google.cloud.logging.LogEntry;
 import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
@@ -22,26 +26,16 @@ import com.google.cloud.logging.Severity;
  * request context. Summary SMS logs are excluded to avoid recursion.
  */
 public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
-    private static final Logger logger = LoggerFactory.getLogger(CloudLoggingNearbyLogFetcher.class);
-
-    public static final int MAX_LINES = 30;
-    public static final int MAX_CHARS = 8000;
     public static final Duration BEFORE = Duration.ofSeconds(15);
     public static final Duration AFTER = Duration.ofSeconds(5);
+    static final int MAX_LINES = 30;
+    static final int MAX_CHARS = 8000;
+    static final int MAX_SCANNED = 100;
 
-    @FunctionalInterface
-    interface LogQuery {
-        Iterable<LogEntry> list(String filter) throws Exception;
-    }
+    private final Logging logging;
 
-    private final LogQuery query;
-
-    public CloudLoggingNearbyLogFetcher() {
-        this(CloudLoggingNearbyLogFetcher::listWithFirebaseLogging);
-    }
-
-    CloudLoggingNearbyLogFetcher(LogQuery query) {
-        this.query = query;
+    public CloudLoggingNearbyLogFetcher(Logging logging) {
+        this.logging = logging;
     }
 
     @Override
@@ -55,22 +49,41 @@ public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
         }
         List<LogEntry> entries = new ArrayList<>();
         try {
-            for (LogEntry entry : query.list(filter)) {
+            Iterator<LogEntry> iterator = logging.listLogEntriesAsync(
+                    Logging.EntryListOption.filter(filter),
+                    Logging.EntryListOption.sortOrder(Logging.SortingField.TIMESTAMP, Logging.SortingOrder.DESCENDING),
+                    Logging.EntryListOption.pageSize(MAX_SCANNED))
+                    .get(15, TimeUnit.SECONDS).getValues().iterator();
+            int scanned = 0;
+            while (scanned < MAX_SCANNED && entries.size() < MAX_LINES && iterator.hasNext()) {
+                LogEntry entry = iterator.next();
+                scanned++;
+                if (entry == null || AlertLogPolicy.isSummaryLog(entry.getLogName())) {
+                    continue;
+                }
                 entries.add(entry);
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Cloud Logging nearby query interrupted", e);
         } catch (Exception e) {
             throw new IllegalStateException("Cloud Logging nearby query failed", e);
         }
         entries.sort(Comparator.comparing(CloudLoggingNearbyLogFetcher::entryTimestamp));
         List<String> lines = new ArrayList<>();
+        int chars = 0;
         for (LogEntry entry : entries) {
             String line = formatEntry(entry);
-            if (line.isBlank() || isExcludedText(line) || isExcludedEntry(entry)) {
+            if (line.isBlank()) {
                 continue;
             }
+            while (!lines.isEmpty() && chars + line.length() + 1 > MAX_CHARS) {
+                chars -= lines.remove(0).length() + 1;
+            }
             lines.add(line);
+            chars += line.length() + 1;
         }
-        return cap(lines);
+        return lines;
     }
 
     static String buildFilter(ParsedErrorLog parsed) {
@@ -82,11 +95,10 @@ public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
         filter.append("severity>=INFO");
         filter.append(" AND timestamp>=\"").append(start).append("\"");
         filter.append(" AND timestamp<=\"").append(end).append("\"");
-        filter.append(" AND NOT logName:\"sportshub-alert-sms\"");
-        filter.append(" AND NOT textPayload:\"SPORTSHUB_ALERT_SUMMARY\"");
-        filter.append(" AND NOT jsonPayload.message:\"SPORTSHUB_ALERT_SUMMARY\"");
-        filter.append(" AND NOT resource.labels.function_name=\"explainErrorAlert\"");
-        filter.append(" AND NOT resource.labels.service_name=\"explainErrorAlert\"");
+        filter.append(" AND NOT logName:\"").append(AlertLogPolicy.SUMMARY_LOG).append("\"");
+        filter.append(" AND NOT resource.labels.function_name=\"").append(AlertLogPolicy.EXPLAINER_FUNCTION).append("\"");
+        filter.append(" AND NOT resource.labels.service_name=\"")
+                .append(AlertLogPolicy.EXPLAINER_FUNCTION.toLowerCase(Locale.ROOT)).append("\"");
 
         if (parsed.trace() != null && !parsed.trace().isBlank()) {
             filter.append(" AND trace=\"").append(escapeFilterValue(parsed.trace())).append("\"");
@@ -105,23 +117,6 @@ public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
         return filter.toString();
     }
 
-    public static boolean isExcludedText(String text) {
-        if (text == null || text.isBlank()) {
-            return true;
-        }
-        return text.contains("sportshub-alert-sms")
-                || text.contains("SPORTSHUB_ALERT_SUMMARY")
-                || text.contains("SPORTSHUB_ALERT_KIND=errorSummary");
-    }
-
-    static boolean isExcludedEntry(LogEntry entry) {
-        if (entry == null) {
-            return true;
-        }
-        String logName = entry.getLogName();
-        return logName != null && logName.contains("sportshub-alert-sms");
-    }
-
     static String formatEntry(LogEntry entry) {
         if (entry == null) {
             return "";
@@ -129,33 +124,15 @@ public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
         Severity severity = entry.getSeverity();
         String severityLabel = severity == null ? "DEFAULT" : severity.name();
         String payload = payloadText(entry);
+        HttpRequest request = entry.getHttpRequest();
+        if (request != null && request.getRequestMethod() != null) {
+            String status = request.getStatus() == null ? "" : " status=" + request.getStatus();
+            payload = "HTTP " + request.getRequestMethod() + status + (payload.isBlank() ? "" : " " + payload);
+        }
         if (payload.isBlank()) {
             return "";
         }
-        return severityLabel + " " + payload.strip();
-    }
-
-    public static List<String> cap(List<String> lines) {
-        if (lines == null || lines.isEmpty()) {
-            return List.of();
-        }
-        int from = Math.max(0, lines.size() - MAX_LINES);
-        List<String> recent = new ArrayList<>(lines.subList(from, lines.size()));
-        while (!recent.isEmpty() && joinedLength(recent) > MAX_CHARS) {
-            recent.remove(0);
-        }
-        return List.copyOf(recent);
-    }
-
-    private static int joinedLength(List<String> lines) {
-        int length = 0;
-        for (int i = 0; i < lines.size(); i++) {
-            if (i > 0) {
-                length++;
-            }
-            length += lines.get(i).length();
-        }
-        return length;
+        return SmsText.truncate(AlertTextRedactor.redact(severityLabel + " " + payload.strip()), 2000);
     }
 
     private static Instant entryTimestamp(LogEntry entry) {
@@ -172,11 +149,7 @@ public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
         }
         if (payload instanceof Payload.JsonPayload jsonPayload) {
             Map<String, Object> data = jsonPayload.getDataAsMap();
-            Object message = data.get("message");
-            if (message != null && !message.toString().isBlank()) {
-                return message.toString();
-            }
-            return data.isEmpty() ? "" : data.toString();
+            return AlertTextRedactor.structuredMessage(JavaUtils.objectMapper.valueToTree(data));
         }
         return "";
     }
@@ -185,13 +158,4 @@ public class CloudLoggingNearbyLogFetcher implements NearbyLogFetcher {
         return value.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
-    private static Iterable<LogEntry> listWithFirebaseLogging(String filter) throws Exception {
-        Logging logging = FirebaseService.getLogging();
-        if (logging == null) {
-            throw new IllegalStateException("Cloud Logging client unavailable");
-        }
-        return logging.listLogEntries(
-                Logging.EntryListOption.filter(filter),
-                Logging.EntryListOption.pageSize(50)).iterateAll();
-    }
 }

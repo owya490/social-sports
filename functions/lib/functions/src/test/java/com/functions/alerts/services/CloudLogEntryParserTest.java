@@ -1,7 +1,6 @@
 package com.functions.alerts.services;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Optional;
@@ -12,11 +11,26 @@ import com.functions.alerts.models.ParsedErrorLog;
 
 public class CloudLogEntryParserTest {
 
+    private static final String CALLABLE_GET_REJECTION = """
+            {
+              "severity": "ERROR",
+              "textPayload": "Invalid request, unable to process.",
+              "labels": { "deployment-callable": "true" },
+              "httpRequest": { "requestMethod": "GET" },
+              "sourceLocation": { "function": "_on_call_handler" },
+              "resource": {
+                "type": "cloud_run_revision",
+                "labels": { "service_name": "send-email-on-create-event-v2" }
+              }
+            }
+            """;
+
     private static final String JAVA_ERROR_LOG = """
             {
               "severity": "ERROR",
               "timestamp": "2026-10-06T01:00:00.123Z",
               "trace": "projects/socialsportsprod/traces/abc123",
+              "httpRequest": { "requestMethod": "POST" },
               "textPayload": "ERROR com.functions.stripe.services.WebhookService - Error processing ticket purchase workflow: boom\\njava.lang.RuntimeException: boom\\n\\tat com.functions.stripe.services.WebhookService.process(WebhookService.java:1128)\\n\\tat com.functions.stripe.handlers.StripeWebhookHandler.handleWebhook(StripeWebhookHandler.java:80)\\n",
               "resource": {
                 "type": "cloud_run_revision",
@@ -56,6 +70,7 @@ public class CloudLogEntryParserTest {
                 parsed.topFrame());
         assertTrue(parsed.message().contains("Error processing ticket purchase workflow"));
         assertEquals("projects/socialsportsprod/traces/abc123", parsed.trace());
+        assertEquals("POST", parsed.requestMethod());
         assertEquals(java.time.Instant.parse("2026-10-06T01:00:00.123Z"), parsed.timestamp());
     }
 
@@ -64,9 +79,26 @@ public class CloudLogEntryParserTest {
         ParsedErrorLog parsed = CloudLogEntryParser.parse(PYTHON_ERROR_LOG).orElseThrow();
 
         assertEquals("send_email_on_purchase", parsed.functionName());
-        assertEquals("Error", parsed.exceptionType());
+        assertEquals("", parsed.exceptionType());
         assertEquals("", parsed.topFrame());
         assertTrue(parsed.message().contains("Organiser does not exist"));
+    }
+
+    @Test
+    public void parse_skipsKnownCallableGetRejection() {
+        assertTrue(CloudLogEntryParser.parse(CALLABLE_GET_REJECTION).isEmpty());
+    }
+
+    @Test
+    public void parse_keepsErrorsWithoutTheFullCallableGetSignature() {
+        for (String log : java.util.List.of(
+                CALLABLE_GET_REJECTION.replace("\"GET\"", "\"POST\""),
+                CALLABLE_GET_REJECTION.replace("\"true\"", "\"false\""),
+                CALLABLE_GET_REJECTION.replace("_on_call_handler", "send_create_event_email_with_loops"),
+                CALLABLE_GET_REJECTION.replace("Invalid request, unable to process.", "Loops request failed"),
+                CALLABLE_GET_REJECTION.replace("\"requestMethod\": \"GET\"", "\"status\": 500"))) {
+            assertTrue(log, CloudLogEntryParser.parse(log).isPresent());
+        }
     }
 
     @Test
@@ -103,7 +135,7 @@ public class CloudLogEntryParserTest {
     }
 
     @Test
-    public void parse_skipsPublishedAlertSummary() {
+    public void parse_keepsApplicationErrorsContainingSummaryMarkers() {
         String log = """
                 {
                   "severity": "ERROR",
@@ -115,7 +147,35 @@ public class CloudLogEntryParserTest {
                   }
                 }
                 """;
-        assertTrue(CloudLogEntryParser.parse(log).isEmpty());
+        assertTrue(CloudLogEntryParser.parse(log).isPresent());
+    }
+
+    @Test
+    public void parse_preservesHttpOnlyErrorsAndSourceIdentity() {
+        ParsedErrorLog parsed = CloudLogEntryParser.parse("""
+                {
+                  "severity": "ERROR", "insertId": "source-entry",
+                  "logName": "projects/test/logs/run.googleapis.com%2Frequests",
+                  "httpRequest": { "requestMethod": "POST", "status": 500 },
+                  "resource": { "labels": { "service_name": "emailService" } }
+                }
+                """).orElseThrow();
+        assertEquals("HTTP POST status=500", parsed.message());
+        assertEquals(Integer.valueOf(500), parsed.httpStatus());
+        assertEquals("source-entry", parsed.insertId());
+        assertEquals("projects/test/logs/run.googleapis.com%2Frequests", parsed.logName());
+    }
+
+    @Test
+    public void parse_doesNotSerializeUnrelatedStructuredFields() {
+        ParsedErrorLog parsed = CloudLogEntryParser.parse("""
+                {
+                  "severity": "ERROR",
+                  "jsonPayload": { "error": "Request failed", "password": "synthetic-secret" },
+                  "resource": { "labels": { "service_name": "emailService" } }
+                }
+                """).orElseThrow();
+        assertEquals("Request failed", parsed.message());
     }
 
     @Test
@@ -209,33 +269,5 @@ public class CloudLogEntryParserTest {
         assertEquals("globalAppController", parsed.functionName());
         assertTrue(parsed.message().contains("boom"));
         assertEquals(null, parsed.timestamp());
-    }
-
-    @Test
-    public void fingerprint_isStableForSameError() {
-        ParsedErrorLog parsed = CloudLogEntryParser.parse(JAVA_ERROR_LOG).orElseThrow();
-        String first = CloudLogEntryParser.fingerprint(parsed);
-        String second = CloudLogEntryParser.fingerprint(parsed);
-
-        assertEquals(first, second);
-        assertEquals(40, first.length());
-        assertFalse(CloudLogEntryParser.fingerprint(
-                CloudLogEntryParser.parse(PYTHON_ERROR_LOG).orElseThrow()).equals(first));
-    }
-
-    @Test
-    public void fingerprint_ignoresRequestUuidsInFirstLine() {
-        ParsedErrorLog first = new ParsedErrorLog(
-                "stripeWebhook",
-                "[Webhook-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa] Failed to fulfill purchase",
-                "RuntimeException",
-                "WebhookService.process(WebhookService.java:1)");
-        ParsedErrorLog second = new ParsedErrorLog(
-                "stripeWebhook",
-                "[Webhook-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb] Failed to fulfill purchase",
-                "RuntimeException",
-                "WebhookService.process(WebhookService.java:1)");
-
-        assertEquals(CloudLogEntryParser.fingerprint(first), CloudLogEntryParser.fingerprint(second));
     }
 }

@@ -1,5 +1,7 @@
 package com.functions.alerts.clients;
 
+import com.functions.alerts.models.ErrorAlertNotification;
+
 public interface AlertSummaryPublisher {
-    boolean publish(String summary);
+    void publish(ErrorAlertNotification notification);
 }

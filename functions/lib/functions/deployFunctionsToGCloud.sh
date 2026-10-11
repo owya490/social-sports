@@ -106,6 +106,7 @@ fi
 TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
 if [ "$FUNCTION_NAME" == "explainErrorAlert" ]; then
     TRIGGER_ARGS=(--gen2 --trigger-topic "$ERROR_LOG_ALERTS_TOPIC" --no-allow-unauthenticated)
+    EXTRA_DEPLOY_ARGS=(--retry --timeout 120s --max-instances 2)
 fi
 
 echo "Deploying $FUNCTION_NAME (Entry point: $ENDPOINT_CLASS_NAME) to $ENVIRONMENT under project $PROJECT_NAME"

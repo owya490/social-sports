@@ -1,8 +1,6 @@
 package com.functions.alerts.services;
 
 import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Optional;
@@ -19,16 +17,10 @@ import com.functions.utils.JavaUtils;
 public final class CloudLogEntryParser {
     private static final Logger logger = LoggerFactory.getLogger(CloudLogEntryParser.class);
 
-    public static final String FUNCTION_NAME = "explainErrorAlert";
-
     private static final Pattern EXCEPTION_TYPE = Pattern.compile(
             "(?:^|\\n)\\s*([\\w.$]*(?:Exception|Error|Throwable))\\s*:");
     private static final Pattern TOP_FRAME = Pattern.compile(
             "\\bat ((?:[\\w.$]+)\\.[\\w$]+\\([^)]*\\))");
-    private static final Pattern UUID = Pattern.compile(
-            "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}");
-    private static final Pattern WEBHOOK_UUID_PREFIX = Pattern.compile(
-            "(?i)\\[Webhook-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\]");
 
     private CloudLogEntryParser() {
     }
@@ -40,8 +32,13 @@ public final class CloudLogEntryParser {
 
         try {
             JsonNode root = JavaUtils.objectMapper.readTree(logEntryJson);
-            String severity = root.path("severity").asText("");
-            if (!isAlertableSeverity(severity)) {
+            String message = extractMessage(root);
+            JsonNode request = root.path("httpRequest");
+            Integer status = request.path("status").canConvertToInt() ? request.path("status").asInt() : null;
+            if (message.isBlank() && status != null) {
+                message = "HTTP " + request.path("requestMethod").asText("unknown") + " status=" + status;
+            }
+            if (message.isBlank() || !AlertLogPolicy.isActionable(root)) {
                 return Optional.empty();
             }
 
@@ -50,36 +47,19 @@ public final class CloudLogEntryParser {
                     textOrNull(root.path("resource").path("labels").path("service_name")),
                     "unknown");
 
-            if (isSelf(functionName)) {
-                logger.info("Skipping error alert for explainer function itself");
-                return Optional.empty();
-            }
-
-            String logName = root.path("logName").asText("");
-            if (logName.contains("sportshub-alert-sms")) {
-                logger.info("Skipping dedicated SMS summary log");
-                return Optional.empty();
-            }
-
-            String message = extractMessage(root);
-            if (message.contains("SPORTSHUB_ALERT_SUMMARY")
-                    || message.contains("SPORTSHUB_ALERT_KIND=errorSummary")) {
-                logger.info("Skipping already-published alert summary log");
-                return Optional.empty();
-            }
-            if (message.isBlank()) {
-                return Optional.empty();
-            }
-
             return Optional.of(new ParsedErrorLog(
                     functionName,
                     message,
                     extractExceptionType(message),
                     extractTopFrame(message),
                     parseTimestamp(root),
-                    textOrNull(root.path("trace"))));
+                    textOrNull(root.path("trace")),
+                    request.path("requestMethod").asText(""),
+                    status,
+                    root.path("logName").asText(""),
+                    root.path("insertId").asText("")));
         } catch (Exception e) {
-            logger.warn("Failed to parse Cloud Logging entry: {}", e.getMessage());
+            logger.warn("Failed to parse Cloud Logging entry: {}", e.getClass().getSimpleName());
             return Optional.empty();
         }
     }
@@ -100,39 +80,9 @@ public final class CloudLogEntryParser {
             }
             return cloudEventDataJson;
         } catch (Exception e) {
-            logger.warn("Failed to unwrap Pub/Sub CloudEvent payload: {}", e.getMessage());
+            logger.warn("Failed to unwrap Pub/Sub CloudEvent payload: {}", e.getClass().getSimpleName());
             return cloudEventDataJson;
         }
-    }
-
-    public static String fingerprint(ParsedErrorLog parsed) {
-        String seed = String.join("|",
-                nullToEmpty(parsed.functionName()),
-                nullToEmpty(parsed.exceptionType()),
-                nullToEmpty(parsed.topFrame()),
-                firstLineForFingerprint(parsed.message()));
-        try {
-            byte[] digest = MessageDigest.getInstance("SHA-256")
-                    .digest(seed.getBytes(StandardCharsets.UTF_8));
-            return toHex(digest).substring(0, 40);
-        } catch (NoSuchAlgorithmException e) {
-            return Integer.toHexString(seed.hashCode());
-        }
-    }
-
-    static boolean isSelf(String functionName) {
-        if (functionName == null) {
-            return false;
-        }
-        String compact = functionName.replace("-", "").replace("_", "");
-        return compact.equalsIgnoreCase(FUNCTION_NAME);
-    }
-
-    private static boolean isAlertableSeverity(String severity) {
-        return "ERROR".equalsIgnoreCase(severity)
-                || "CRITICAL".equalsIgnoreCase(severity)
-                || "ALERT".equalsIgnoreCase(severity)
-                || "EMERGENCY".equalsIgnoreCase(severity);
     }
 
     static Instant parseTimestamp(JsonNode root) {
@@ -163,11 +113,7 @@ public final class CloudLogEntryParser {
     private static String extractMessage(JsonNode root) {
         String textPayload = root.path("textPayload").asText("");
         JsonNode jsonPayload = root.path("jsonPayload");
-        String jsonMessage = jsonPayload.path("message").asText("");
-        if (jsonMessage.isBlank() && jsonPayload.isObject() && jsonPayload.size() > 0) {
-            jsonMessage = jsonPayload.toString();
-        }
-        return firstNonBlank(textPayload, jsonMessage);
+        return firstNonBlank(textPayload, AlertTextRedactor.structuredMessage(jsonPayload));
     }
 
     static String extractExceptionType(String message) {
@@ -177,7 +123,7 @@ public final class CloudLogEntryParser {
             int lastDot = type.lastIndexOf('.');
             return lastDot >= 0 ? type.substring(lastDot + 1) : type;
         }
-        return "Error";
+        return "";
     }
 
     static String extractTopFrame(String message) {
@@ -214,32 +160,5 @@ public final class CloudLogEntryParser {
             }
         }
         return "";
-    }
-
-    private static String nullToEmpty(String value) {
-        return value == null ? "" : value;
-    }
-
-    private static String firstLine(String message) {
-        if (message == null) {
-            return "";
-        }
-        int newline = message.indexOf('\n');
-        return newline >= 0 ? message.substring(0, newline) : message;
-    }
-
-    private static String firstLineForFingerprint(String message) {
-        String line = firstLine(message);
-        line = WEBHOOK_UUID_PREFIX.matcher(line).replaceAll("");
-        line = UUID.matcher(line).replaceAll("");
-        return line.replaceAll(" +", " ").trim();
-    }
-
-    private static String toHex(byte[] bytes) {
-        StringBuilder hex = new StringBuilder(bytes.length * 2);
-        for (byte value : bytes) {
-            hex.append(String.format("%02x", value));
-        }
-        return hex.toString();
     }
 }

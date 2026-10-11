@@ -22,14 +22,7 @@ public class SmsTextTest {
 
     @Test
     public void truncate_nullIsEmpty() {
-        assertEquals("", SmsText.truncate(null));
-    }
-
-    @Test
-    public void truncate_defaultLimitIs480() {
-        String result = SmsText.truncate("x".repeat(600));
-        assertEquals(SmsText.MAX_CHARS, result.length());
-        assertEquals(480, result.length());
+        assertEquals("", SmsText.truncate(null, 20));
     }
 
     @Test
@@ -43,7 +36,7 @@ public class SmsTextTest {
     @Test
     public void forSms_truncatesAt480Characters() {
         String result = SmsText.forSms("x".repeat(600));
-        assertEquals(SmsText.MAX_CHARS, result.length());
+        assertEquals(480, result.length());
         assertTrue(result.endsWith("..."));
     }
 
