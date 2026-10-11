@@ -68,14 +68,26 @@ The publisher uses a deterministic insert ID for source-event redelivery.
 
 ### Configuration and rollout
 
-Merging source does not deploy `explainErrorAlert` or reconcile the live sink
-and policy. These operations require separate operator approval. Preview the
-configuration without Cloud writes:
+Merges to `master` deploy `explainErrorAlert` and reconcile its existing sink
+filter and policy after the application functions finish. Development runs
+first; a failed development rollout prevents the production rollout. Development
+notifications are always disabled, including when applying a policy manually.
+Production preserves its current recipients and enabled/disabled state. The
+sink's enabled/disabled state is preserved. When the development sink is disabled,
+direct Pub/Sub test events can exercise the function without sending notifications.
+
+CI requires an existing topic, sink and uniquely named AI policy. It never
+provisions APIs, grants IAM or discovers notification channels. The deployment
+identity needs function deployment,
+Logging sink update and Monitoring policy update permissions; its runtime service
+account needs the roles above. Complete the initial coordinated rollout and
+validate development before merging the CI change.
+
+Preview the configuration without Cloud writes:
 
 ```bash
 python3 error_alert_config.py filter --environment dev
-python3 error_alert_config.py policy --environment dev \
-  --channel 'projects/socialsports-44162/notificationChannels/<channel-id>'
+python3 error_alert_config.py policy --environment dev
 ```
 
 Use the smallest approved operation:
@@ -86,16 +98,23 @@ Use the smallest approved operation:
   --channel <channel-resource>` fetches current state, rejects ambiguous policy
   names, and updates managed fields while preserving the condition ID.
   Repeat `--channel` for every intended recipient channel. No automatic discovery.
-- Initial provisioning: `./setupErrorLogAlertSink.sh <dev|prod> <channel-resource>
-  [channel-resource...]` validates/renders the policy before enabling APIs,
+- Initial provisioning: `./setupErrorLogAlertSink.sh <dev|prod> [channel-resource...]`
+  validates/renders the policy before enabling APIs,
   granting runtime and sink IAM, creating the topic/sink, and applying the policy.
+  Production requires explicit project-scoped channels; omit channels in development.
 - Function only: `./deployFunctionsToGCloud.sh <dev|prod> explainErrorAlert`.
+- Routine coordinated rollout: `python3 error_alert_config.py deploy --environment
+  <dev|prod>` uses the same operation as CI, preserving existing recipients and
+  production notification state. It disables the development policy before
+  deploying, then updates the sink filter and managed policy fields.
 
 The structured publisher and policy filter must be rolled out together.
 Validate in development first, then deploy/reconcile production and check a
 real log-to-notification path. Keep the existing raw-error alert policy as a
-fallback during this transition. Live model, IAM, Eventarc retry and SMS/email
-delivery are separate checks from the local suite.
+fallback: function, sink and policy updates are not atomic, and CI stops on any
+failure. Development validation uses logs without sending SMS or email;
+notification delivery is a production-only check. Live model, IAM, Eventarc retry
+and SMS/email delivery are separate checks from the local suite.
 
 ### Local verification
 

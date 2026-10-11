@@ -2,21 +2,21 @@
 # One-time provisioning. Routine filter and policy changes have separate commands.
 set -euo pipefail
 
-if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <dev|prod> <notification_channel> [notification_channel...]"
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 <dev|prod> [notification_channel...] (required for prod)"
     exit 1
 fi
 ENVIRONMENT="$1"
 shift
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 CONFIG="$SCRIPT_DIR/error_alert_config.py"
-CHANNEL_ARGS=()
+POLICY_ARGS=(--environment "$ENVIRONMENT")
 for CHANNEL in "$@"; do
-    CHANNEL_ARGS+=(--channel "$CHANNEL")
+    POLICY_ARGS+=(--channel "$CHANNEL")
 done
 POLICY_DIR="$SCRIPT_DIR/../../../.tmp"
 mkdir -p "$POLICY_DIR"
-python3 "$CONFIG" policy --environment "$ENVIRONMENT" "${CHANNEL_ARGS[@]}" \
+python3 "$CONFIG" policy "${POLICY_ARGS[@]}" \
     > "$POLICY_DIR/error-alert-policy-$ENVIRONMENT.json"
 FILTER="$(python3 "$CONFIG" filter --environment "$ENVIRONMENT")"
 if [ "$ENVIRONMENT" = "prod" ]; then
@@ -46,5 +46,5 @@ fi
 WRITER="$(gcloud logging sinks describe error-log-alerts-sink --project="$PROJECT" --format='value(writerIdentity)')"
 gcloud pubsub topics add-iam-policy-binding error-log-alerts --project="$PROJECT" \
     --member="$WRITER" --role=roles/pubsub.publisher
-python3 "$CONFIG" apply-policy --environment "$ENVIRONMENT" "${CHANNEL_ARGS[@]}"
+python3 "$CONFIG" apply-policy "${POLICY_ARGS[@]}"
 echo "Provisioned error alerts in $PROJECT. Deploy explainErrorAlert separately."
