@@ -430,6 +430,14 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Available:** `bg-surface-muted border border-border`.
 - Placed at the trailing edge of compact event rows; `aria-label` describes fill state.
 
+### Operational status labels
+
+- **Shared treatment:** `EntityRowStatuses` renders a wrapping line of compact neutral labels (`bg-surface`, `text-foreground-secondary`, `rounded-lg`, `text-xs`). Labels are readable text inside the row link, with no additional interaction.
+- **Events:** Below location, above the fill bar. Show **Bookings paused**, **Private**, and **Payments off** only when applicable; use **Bookings off** for free events, based on resolved ticket-type pricing. Ordinary rows omit the line.
+- **Coverage:** The shared event row carries these labels into Events, dashboard Coming up, and collection event lists at every screen width.
+- **Recurring series:** Show **Private** below location, separate from the existing Active / Paused / Ended generation status and cadence.
+- **Hover previews:** Keep supplementary flags, such as approval and attached forms. Omit row-visible statuses and omit the flag separator when no supplementary flags remain.
+
 ### Dashboard (Organiser v2)
 
 - **Header:** Time-based greeting (`text-2xl sm:text-3xl`), supporting line in `foreground-secondary`, primary “Create event” CTA top-right on desktop / full-width on phone.
