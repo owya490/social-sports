@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -16,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.functions.global.handlers.Global;
 import com.functions.utils.JavaUtils;
 import com.google.auth.oauth2.GoogleCredentials;
 
@@ -27,10 +27,14 @@ public class GeminiClient implements LlmClient {
     static final int MAX_OUTPUT_TOKENS = 1024;
     private static final String LOCATION = "us-central1";
     private static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
+    private final String projectId;
+
+    public GeminiClient(String projectId) {
+        this.projectId = projectId;
+    }
 
     @Override
     public Optional<String> summarize(String prompt) {
-        String projectId = Global.getEnv("PROJECT_NAME");
         if (projectId == null || projectId.isBlank()) {
             logger.warn("Cannot call Gemini: PROJECT_NAME is not set");
             return Optional.empty();
@@ -51,7 +55,9 @@ public class GeminiClient implements LlmClient {
             generationConfig.put("temperature", 0.2);
             generationConfig.put("maxOutputTokens", MAX_OUTPUT_TOKENS);
 
-            try (CloseableHttpClient client = HttpClients.createDefault()) {
+            RequestConfig timeouts = RequestConfig.custom().setConnectTimeout(5000)
+                    .setConnectionRequestTimeout(5000).setSocketTimeout(20000).build();
+            try (CloseableHttpClient client = HttpClients.custom().setDefaultRequestConfig(timeouts).build()) {
                 HttpPost post = new HttpPost(url);
                 post.setHeader("Authorization", "Bearer " + token);
                 post.setHeader("Content-Type", "application/json");
@@ -61,15 +67,14 @@ public class GeminiClient implements LlmClient {
                     String responseBody = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
                     int status = response.getStatusLine().getStatusCode();
                     if (status < 200 || status >= 300) {
-                        logger.warn("Gemini summarize failed: status={} body={}", status,
-                                trimForLog(responseBody));
+                        logger.warn("Gemini summarize failed: status={}", status);
                         return Optional.empty();
                     }
                     return parseText(responseBody);
                 }
             }
         } catch (Exception e) {
-            logger.warn("Gemini summarize failed: {}", e.getMessage());
+            logger.warn("Gemini summarize failed: {}", e.getClass().getSimpleName());
             return Optional.empty();
         }
     }
@@ -93,10 +98,4 @@ public class GeminiClient implements LlmClient {
         return credentials.getAccessToken().getTokenValue();
     }
 
-    private static String trimForLog(String body) {
-        if (body == null) {
-            return "";
-        }
-        return body.length() <= 300 ? body : body.substring(0, 300);
-    }
 }

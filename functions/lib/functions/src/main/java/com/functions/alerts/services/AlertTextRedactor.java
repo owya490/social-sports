@@ -2,6 +2,8 @@ package com.functions.alerts.services;
 
 import java.util.regex.Pattern;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 /**
  * Light sanitizer so ERROR log lines are not copied into Gemini prompts or SMS.
  */
@@ -16,6 +18,9 @@ public final class AlertTextRedactor {
             "eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
     private static final Pattern ASSIGNMENT_SECRET = Pattern.compile(
             "(?i)\\b(api[_-]?key|secret|token|password|passwd|authorization)\\s*[:=]\\s*\\S+");
+    private static final Pattern QUOTED_SECRET = Pattern.compile(
+            "(?i)([\"'](?:api[_-]?key|secret|token|password|passwd|authorization|access_token|refresh_token)[\"']"
+                    + "\\s*:\\s*)(\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'|[^\\s,}\\]]+)");
     private static final Pattern GOOGLE_API_KEY = Pattern.compile(
             "\\bAIza[0-9A-Za-z_\\-]{20,}\\b");
 
@@ -26,12 +31,24 @@ public final class AlertTextRedactor {
         if (text == null || text.isBlank()) {
             return text == null ? "" : text;
         }
-        String redacted = EMAIL.matcher(text).replaceAll("[REDACTED_EMAIL]");
+        String redacted = QUOTED_SECRET.matcher(text).replaceAll("$1\"[REDACTED]\"");
+        redacted = EMAIL.matcher(redacted).replaceAll("[REDACTED_EMAIL]");
         redacted = STRIPE_OR_SECRET_PREFIX.matcher(redacted).replaceAll("[REDACTED_SECRET]");
         redacted = BEARER.matcher(redacted).replaceAll("$1[REDACTED_TOKEN]");
         redacted = JWT.matcher(redacted).replaceAll("[REDACTED_JWT]");
         redacted = ASSIGNMENT_SECRET.matcher(redacted).replaceAll("$1=[REDACTED]");
         redacted = GOOGLE_API_KEY.matcher(redacted).replaceAll("[REDACTED_SECRET]");
         return redacted;
+    }
+
+    public static String structuredMessage(JsonNode payload) {
+        for (JsonNode candidate : java.util.List.of(
+                payload.path("message"), payload.path("error").path("message"),
+                payload.path("error"), payload.path("exception").path("message"))) {
+            if (candidate.isTextual() && !candidate.asText().isBlank()) {
+                return candidate.asText();
+            }
+        }
+        return payload.isObject() && !payload.isEmpty() ? "Structured error without a message" : "";
     }
 }
