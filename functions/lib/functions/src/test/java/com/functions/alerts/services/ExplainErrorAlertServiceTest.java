@@ -60,7 +60,7 @@ public class ExplainErrorAlertServiceTest {
         assertEquals("Unconfirmed explanation", notification.sms());
         assertEquals(sampleLog(), notification.evidence());
         verify(store).rememberSms(notification.fingerprint(), "Unconfirmed explanation");
-        verify(store).complete(new Reservation("owner"));
+        verify(store).complete(eq(new Reservation("owner")), eq(notification.fingerprint()));
         verify(store, never()).release(any());
     }
 
@@ -97,6 +97,48 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
+    public void processLogEntryJson_failedCachedPublishDoesNotExtendIncidentWindow() {
+        Instant start = Instant.parse("2026-10-11T03:00:00Z");
+        ExpiringSmsStore failedAttempt = new ExpiringSmsStore(start);
+        ExpiringSmsStore control = new ExpiringSmsStore(start);
+        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(this::emailServiceStatusInterpretation,
+                parsed -> List.of());
+        List<ErrorAlertNotification> controlPublished = new ArrayList<>();
+        int[] attempts = { 0 };
+        ExplainErrorAlertService failing = new ExplainErrorAlertService(failedAttempt, summarizer, notification -> {
+            attempts[0]++;
+            if (attempts[0] == 2) {
+                throw new IllegalStateException("Logging unavailable");
+            }
+            published.add(notification);
+        });
+        ExplainErrorAlertService controlService = new ExplainErrorAlertService(control, summarizer,
+                controlPublished::add);
+
+        failing.processLogEntryJson(emailServiceHttpError(503));
+        controlService.processLogEntryJson(emailServiceHttpError(503));
+        assertEquals("Email service returned 503.", published.get(0).sms());
+        assertEquals("Email service returned 503.", controlPublished.get(0).sms());
+
+        failedAttempt.advance(Duration.ofDays(6));
+        try {
+            failing.processLogEntryJson(emailServiceHttpError(403));
+            fail("Cached lookup must still publish; publisher failure must reach the trigger");
+        } catch (IllegalStateException expected) {
+            assertEquals("Logging unavailable", expected.getMessage());
+        }
+        assertEquals(1, published.size());
+
+        failedAttempt.advance(Duration.ofDays(2));
+        failing.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 403.", published.get(1).sms());
+
+        control.advance(Duration.ofDays(8));
+        controlService.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 403.", controlPublished.get(1).sms());
+    }
+
+    @Test
     public void process_pagesCompleteAiSentenceEvenWhenShort() {
         service = service(published::add, prompt -> Optional.of(SmsTextTest.twoSentenceCheckoutFailure(303)));
         service.process(sampleLog());
@@ -115,7 +157,7 @@ public class ExplainErrorAlertServiceTest {
             assertEquals("Error alert delivery already in progress", expected.getMessage());
         }
         assertTrue(published.isEmpty());
-        verify(store, never()).complete(any());
+        verify(store, never()).complete(any(), any());
     }
 
     @Test
@@ -126,7 +168,7 @@ public class ExplainErrorAlertServiceTest {
         }, parsed -> List.of()), published::add);
         service.process(sampleLog());
         assertTrue(published.isEmpty());
-        verify(store, never()).complete(any());
+        verify(store, never()).complete(any(), any());
     }
 
     @Test
@@ -139,12 +181,12 @@ public class ExplainErrorAlertServiceTest {
             assertEquals("Logging unavailable", expected.getMessage());
         }
         verify(store).release(any());
-        verify(store, never()).complete(any());
+        verify(store, never()).complete(any(), any());
     }
 
     @Test
     public void process_doesNotReleaseAfterPublicationWhenCompletionFails() {
-        doThrow(new IllegalStateException("commit failed")).when(store).complete(any());
+        doThrow(new IllegalStateException("commit failed")).when(store).complete(any(), any());
         try {
             service.process(sampleLog());
             fail("Completion failure must reach the trigger");
@@ -264,7 +306,13 @@ public class ExplainErrorAlertServiceTest {
         }
 
         @Override
-        public void complete(Reservation reservation) {
+        public void complete(Reservation reservation, String fingerprint) {
+            if (fingerprint == null || fingerprint.isBlank()) {
+                return;
+            }
+            if (smsByFingerprint.containsKey(fingerprint)) {
+                savedAtByFingerprint.put(fingerprint, now);
+            }
         }
 
         @Override
@@ -279,7 +327,6 @@ public class ExplainErrorAlertServiceTest {
                     || !savedAt.isAfter(now.minus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW))) {
                 return Optional.empty();
             }
-            savedAtByFingerprint.put(fingerprint, now);
             return Optional.of(sms);
         }
 

@@ -145,6 +145,30 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     }
 
     @Test
+    public void smsFor_doesNotAdvanceActivity_completeDoes() throws Exception {
+        repository.rememberSms("lookup", "Email service returned 503.");
+        repository.rememberSms("sent", "Email service returned 503.");
+        Timestamp lookupSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("lookup").get().get()
+                .getTimestamp("smsSavedAt");
+        ErrorAlertDedupRepository daySix = new ErrorAlertDedupRepository(db,
+                Clock.fixed(NOW.plus(Duration.ofDays(6)), ZoneOffset.UTC));
+        assertEquals("Email service returned 503.", daySix.smsFor("lookup").orElseThrow());
+        assertEquals(lookupSaved, db.collection(ErrorAlertDedupRepository.COLLECTION).document("lookup").get().get()
+                .getTimestamp("smsSavedAt"));
+
+        Reservation reservation = daySix.reserve().orElseThrow();
+        daySix.complete(reservation, "sent");
+        Timestamp sentSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("sent").get().get()
+                .getTimestamp("smsSavedAt");
+        assertTrue(sentSaved.getSeconds() > lookupSaved.getSeconds());
+
+        ErrorAlertDedupRepository dayEight = new ErrorAlertDedupRepository(db,
+                Clock.fixed(NOW.plus(Duration.ofDays(8)), ZoneOffset.UTC));
+        assertTrue(dayEight.smsFor("lookup").isEmpty());
+        assertEquals("Email service returned 503.", dayEight.smsFor("sent").orElseThrow());
+    }
+
+    @Test
     public void reserve_recoversExpiredLeases() {
         Reservation first = repository.reserve().orElseThrow();
         ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,

@@ -63,7 +63,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     }
 
     @Override
-    public void complete(Reservation reservation) {
+    public void complete(Reservation reservation, String fingerprint) {
         Instant now = clock.instant();
         run(transaction -> {
             DocumentSnapshot globalState = transaction.get(global).get();
@@ -76,6 +76,14 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
                     "lastSentAt", timestamp(now), "owner", FieldValue.delete(), "inFlightAt", FieldValue.delete(),
                     "recentSends", sends);
             transaction.update(global, completed);
+            if (fingerprint != null && !fingerprint.isBlank()) {
+                DocumentReference smsDoc = fingerprintDoc(fingerprint);
+                DocumentSnapshot smsState = transaction.get(smsDoc).get();
+                String sms = smsState.exists() ? smsState.getString("sms") : null;
+                if (sms != null && !sms.isBlank()) {
+                    transaction.set(smsDoc, Map.of("smsSavedAt", timestamp(now)), SetOptions.merge());
+                }
+            }
             return null;
         });
     }
@@ -121,7 +129,6 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             if (!smsActive(state, now)) {
                 return Optional.empty();
             }
-            transaction.set(doc, Map.of("smsSavedAt", timestamp(now)), SetOptions.merge());
             return Optional.of(state.getString("sms"));
         });
     }

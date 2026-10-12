@@ -59,7 +59,7 @@ public class ExplainErrorAlertService {
             throw failure;
         }
         // Publication has happened; failed completion must not release another delivery attempt early.
-        dedupStore.complete(reservation);
+        dedupStore.complete(reservation, fingerprint);
         logger.info("Error alert published. function={} fingerprint={}", parsed.functionName(), fingerprint);
     }
 

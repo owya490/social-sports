@@ -12,14 +12,19 @@ public interface ErrorAlertDedupStore {
      */
     Optional<Reservation> reserve();
 
-    void complete(Reservation reservation);
+    void complete(Reservation reservation, String fingerprint);
+
+    default void complete(Reservation reservation) {
+        complete(reservation, "");
+    }
 
     void release(Reservation reservation);
 
     /**
      * Stable SMS for this fingerprint while the incident is still active
-     * ({@code smsSavedAt} within the 7-day autoClose window). Empty means generate
-     * and persist a new interpretation.
+     * ({@code smsSavedAt} within the 7-day autoClose window). Lookup is read-only;
+     * activity advances from {@link #complete}. Empty means generate and persist a
+     * new interpretation.
      */
     Optional<String> smsFor(String fingerprint);
 
