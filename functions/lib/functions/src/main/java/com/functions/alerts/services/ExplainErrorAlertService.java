@@ -44,10 +44,12 @@ public class ExplainErrorAlertService {
 
         Reservation reservation = claim.get();
         try {
-            String headline = SmsText.forSmsSubject(
+            String headline = SmsText.forHeadline(
                     parsed.functionName() + ": " + ErrorAlertFingerprint.normalizedFirstLine(parsed.message()));
+            String interpretation = summarizer.summarize(parsed).orElse("");
+            String sms = stableSms(fingerprint, headline, interpretation);
             summaryPublisher.publish(new ErrorAlertNotification(
-                    fingerprint, headline, parsed, summarizer.summarize(parsed).orElse("")));
+                    fingerprint, headline, parsed, interpretation, sms));
         } catch (RuntimeException failure) {
             try {
                 dedupStore.release(reservation);
@@ -57,7 +59,20 @@ public class ExplainErrorAlertService {
             throw failure;
         }
         // Publication has happened; failed completion must not release another delivery attempt early.
-        dedupStore.complete(reservation);
+        dedupStore.complete(reservation, fingerprint);
         logger.info("Error alert published. function={} fingerprint={}", parsed.functionName(), fingerprint);
+    }
+
+    private String stableSms(String fingerprint, String headline, String interpretation) {
+        Optional<String> persisted = dedupStore.smsFor(fingerprint);
+        if (persisted.isPresent()) {
+            return persisted.get();
+        }
+        if (interpretation.isBlank()) {
+            return headline;
+        }
+        String sms = SmsText.forSmsSubject(interpretation);
+        dedupStore.rememberSms(fingerprint, sms);
+        return sms;
     }
 }

@@ -4,5 +4,6 @@ public record ErrorAlertNotification(
         String fingerprint,
         String headline,
         ParsedErrorLog evidence,
-        String aiInterpretation) {
+        String aiInterpretation,
+        String sms) {
 }

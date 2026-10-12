@@ -59,26 +59,24 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
             for (int i = 0; i < 4; i++) {
                 attempts.add(pool.submit(() -> {
                     start.await();
-                    try {
-                        return repository.reserve();
-                    } catch (IllegalStateException busy) {
-                        Throwable cause = busy;
-                        while (cause.getCause() != null) {
-                            cause = cause.getCause();
-                        }
-                        assertTrue(cause.getMessage().contains("in progress"));
-                        return Optional.empty();
-                    }
+                    return repository.reserve();
                 }));
             }
             start.countDown();
             int owned = 0;
+            int inFlight = 0;
             for (Future<Optional<Reservation>> attempt : attempts) {
-                if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
-                    owned++;
+                try {
+                    if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
+                        owned++;
+                    }
+                } catch (Exception failure) {
+                    inFlight++;
+                    assertTrue(rootMessage(failure).contains("already in progress"));
                 }
             }
             assertEquals(1, owned);
+            assertEquals(3, inFlight);
             assertEquals(1, db.collection(ErrorAlertDedupRepository.COLLECTION).get().get().size());
         } finally {
             pool.shutdownNow();
@@ -116,6 +114,61 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     }
 
     @Test
+    public void reserve_throwsWhileLeaseActiveSoRedeliveryDoesNotAck() {
+        repository.reserve().orElseThrow();
+        try {
+            repository.reserve();
+            fail("In-flight lease must throw so Pub/Sub redelivers");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage().contains("already in progress"));
+        }
+    }
+
+    @Test
+    public void rememberSms_persistsFirstValueAndReusesIt() throws Exception {
+        assertTrue(repository.smsFor("fp1").isEmpty());
+        repository.rememberSms("fp1", "First SMS sentence.");
+        repository.rememberSms("fp1", "Different Gemini wording.");
+        assertEquals("First SMS sentence.", repository.smsFor("fp1").orElseThrow());
+        assertNotNull(db.collection(ErrorAlertDedupRepository.COLLECTION).document("fp1").get().get()
+                .getTimestamp("smsSavedAt"));
+    }
+
+    @Test
+    public void rememberSms_overwritesAfterIncidentWindow() {
+        repository.rememberSms("fp1", "Email service returned 503.");
+        ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,
+                Clock.fixed(NOW.plus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW).plusSeconds(1), ZoneOffset.UTC));
+        assertTrue(later.smsFor("fp1").isEmpty());
+        later.rememberSms("fp1", "Email service returned 403.");
+        assertEquals("Email service returned 403.", later.smsFor("fp1").orElseThrow());
+    }
+
+    @Test
+    public void smsFor_doesNotAdvanceActivity_completeDoes() throws Exception {
+        repository.rememberSms("lookup", "Email service returned 503.");
+        repository.rememberSms("sent", "Email service returned 503.");
+        Timestamp lookupSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("lookup").get().get()
+                .getTimestamp("smsSavedAt");
+        ErrorAlertDedupRepository daySix = new ErrorAlertDedupRepository(db,
+                Clock.fixed(NOW.plus(Duration.ofDays(6)), ZoneOffset.UTC));
+        assertEquals("Email service returned 503.", daySix.smsFor("lookup").orElseThrow());
+        assertEquals(lookupSaved, db.collection(ErrorAlertDedupRepository.COLLECTION).document("lookup").get().get()
+                .getTimestamp("smsSavedAt"));
+
+        Reservation reservation = daySix.reserve().orElseThrow();
+        daySix.complete(reservation, "sent");
+        Timestamp sentSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("sent").get().get()
+                .getTimestamp("smsSavedAt");
+        assertTrue(sentSaved.getSeconds() > lookupSaved.getSeconds());
+
+        ErrorAlertDedupRepository dayEight = new ErrorAlertDedupRepository(db,
+                Clock.fixed(NOW.plus(Duration.ofDays(8)), ZoneOffset.UTC));
+        assertTrue(dayEight.smsFor("lookup").isEmpty());
+        assertEquals("Email service returned 503.", dayEight.smsFor("sent").orElseThrow());
+    }
+
+    @Test
     public void reserve_recoversExpiredLeases() {
         Reservation first = repository.reserve().orElseThrow();
         ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,
@@ -137,5 +190,13 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
         global.set(Map.of("recentSends", sends)).get();
         repository.complete(repository.reserve().orElseThrow());
         assertEquals(1, ((List<?>) global.get().get().get("recentSends")).size());
+    }
+
+    private static String rootMessage(Throwable failure) {
+        Throwable current = failure;
+        while (current.getCause() != null && current.getCause() != current) {
+            current = current.getCause();
+        }
+        return current.getMessage() == null ? "" : current.getMessage();
     }
 }

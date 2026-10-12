@@ -14,16 +14,17 @@ scheduler change.
 Cloud Logging routes eligible function errors through the `error-log-alerts`
 Pub/Sub topic to `explainErrorAlert`. The function writes structured evidence and
 an optional AI interpretation to the dedicated `sportshub-alert-sms` log.
-Cloud Monitoring sends a deterministic factual headline and a Logs Explorer
-link to explicitly configured notification channels. The link selects the
-fingerprint's summaries from the last seven days; each summary includes a link
-to the original error. Existing Google Cloud log permissions apply.
+Cloud Monitoring extracts `jsonPayload.sms` as `documentation.subject`: a
+255 UTF-8 byte complete-sentence trim of the AI interpretation. The log also
+stores a longer `aiInterpretation` for Logs Explorer and email body content,
+plus a factual `headline`. The link selects the fingerprint's summaries from
+the last seven days; each summary includes a link to the original error.
+Existing Google Cloud log permissions apply.
 
 The existing Google Monitoring email and SMS channels remain the delivery
-mechanism. Email includes the evidence/AI link in its documentation and Quick
-Links. SMS uses the normal incident link; open incident details to reach the
-explanation. AI prose is not an extracted Monitoring label or notification
-subject. No separate email sender is needed.
+mechanism. Email includes the SMS sentences, evidence/AI link, and Quick
+Links. SMS uses the extracted 255-byte AI subject. No separate email sender
+is needed.
 
 Observed log evidence is primary. The optional AI explanation is prompted to
 summarize supported observations, identify missing evidence, and suggest a

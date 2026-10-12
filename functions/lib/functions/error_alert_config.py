@@ -57,8 +57,9 @@ def managed_policy(project):
     return {
         "displayName": POLICY_NAME,
         "documentation": {
-            "subject": label("headline"),
+            "subject": label("sms"),
             "content": (
+                label("sms") + "\n\n"
                 "Observed error: " + label("headline") + "\n\n"
                 "Observed log evidence is primary. AI interpretation is optional and unconfirmed. "
                 "Open the linked log for the evidence, explanation and original error.\n\n"
@@ -75,6 +76,7 @@ def managed_policy(project):
                 "labelExtractors": {
                     "fingerprint": "EXTRACT(jsonPayload.fingerprint)",
                     "headline": "EXTRACT(jsonPayload.headline)",
+                    "sms": "EXTRACT(jsonPayload.sms)",
                 },
             },
         }],

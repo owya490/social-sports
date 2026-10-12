@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 
 import com.functions.alerts.models.ErrorAlertNotification;
 import com.functions.alerts.models.ParsedErrorLog;
+import com.functions.alerts.services.SmsText;
 import com.google.cloud.logging.LogEntry;
 import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
@@ -37,6 +38,7 @@ public class GcpLogAlertPublisherTest {
         assertEquals("errorSummary", payload.get("kind"));
         assertEquals("fingerprint", payload.get("fingerprint"));
         assertEquals("emailService: Request rejected", payload.get("headline"));
+        assertEquals("Unconfirmed cause", payload.get("sms"));
         assertEquals("Request rejected", payload.get("observedMessage"));
         assertEquals("Unconfirmed cause", payload.get("aiInterpretation"));
         assertEquals(true, payload.get("aiInterpretationIsUnconfirmed"));
@@ -46,6 +48,33 @@ public class GcpLogAlertPublisherTest {
         assertTrue(link.contains("timestamp=\"2026-10-11T03:00:00Z\""));
         assertTrue(link.endsWith("?project=test"));
         assertEquals(Instant.parse("2026-10-11T03:00:00Z"), entry.getInstantTimestamp());
+    }
+
+    @Test
+    public void buildEntry_pagesTrimmedAiSentencesNotTheLongerInterpretationBlob() {
+        String longAi = "Checkout failed in globalAppController. This looks like a Stripe checkout timeout at "
+                + "WebhookService.process. Check the expired session next. " + "word ".repeat(80);
+        ErrorAlertNotification notification = new ErrorAlertNotification("fingerprint",
+                "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), longAi,
+                SmsText.forSmsSubject(longAi));
+        Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(notification, "test")
+                .getPayload()).getDataAsMap();
+        String sms = payload.get("sms").toString();
+        assertEquals(SmsText.forSmsSubject(longAi), sms);
+        assertEquals(longAi, payload.get("aiInterpretation"));
+        assertTrue(sms.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(longAi.length() > sms.length());
+    }
+
+    @Test
+    public void buildEntry_pagesHeadlineWhenAiInterpretationIsMissing() {
+        ErrorAlertNotification withoutAi = new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), "",
+                "emailService: Request rejected");
+        Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(withoutAi, "test")
+                .getPayload()).getDataAsMap();
+        assertEquals("emailService: Request rejected", payload.get("sms"));
     }
 
     @Test
@@ -65,6 +94,6 @@ public class GcpLogAlertPublisherTest {
         return new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
                 new ParsedErrorLog("emailService", "Request rejected", "", "",
                         Instant.parse("2026-10-11T03:00:00Z"), "", "POST", 400,
-                        "projects/test/logs/stderr", "original"), "Unconfirmed cause");
+                        "projects/test/logs/stderr", "original"), "Unconfirmed cause", "Unconfirmed cause");
     }
 }

@@ -16,14 +16,32 @@ import com.functions.alerts.models.ParsedErrorLog;
 
 public class ErrorAlertSummarizerTest {
     @Test
-    public void summarize_preservesShortSummariesAndCapsLongOnes() {
-        ErrorAlertSummarizer shortSummary = new ErrorAlertSummarizer(
-                prompt -> Optional.of("x".repeat(400)), parsed -> List.of());
-        ErrorAlertSummarizer longSummary = new ErrorAlertSummarizer(
-                prompt -> Optional.of("x".repeat(600)), parsed -> List.of());
+    public void summarize_keepsCompleteSentencesInsideTheSmsByteCap() {
+        String first = "Checkout failed in globalAppController while fulfilling the webhook purchase for this customer order just today.";
+        String second = "This looks like a Stripe checkout timeout at WebhookService.process so check the expired session "
+                + "and then check the fulfillment logs for the matching payment intent in Cloud Logging next.";
+        String overflow = first + " " + second + " Extra filler keeps going " + "word ".repeat(120);
+        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(
+                prompt -> Optional.of(overflow), parsed -> List.of());
 
-        assertEquals(Optional.of("x".repeat(400)), shortSummary.summarize(sampleLog()));
-        assertEquals(Optional.of("x".repeat(477) + "..."), longSummary.summarize(sampleLog()));
+        String body = summarizer.summarize(sampleLog()).orElseThrow();
+        assertTrue(body.length() <= SmsText.MAX_CHARS);
+        assertTrue(body.endsWith("."));
+        assertFalse(body.endsWith("..."));
+        assertTrue(body.contains(first));
+        assertFalse(body.contains("Extra filler"));
+    }
+
+    @Test
+    public void buildPrompt_requiresSteCompleteSentencesAndUntrustedLogs() {
+        String prompt = ErrorAlertSummarizer.buildPrompt(sampleLog(), List.of());
+        assertTrue(prompt.contains("ASD-STE100"));
+        assertTrue(prompt.contains("complete sentences"));
+        assertTrue(prompt.contains("255 UTF-8 bytes"));
+        assertTrue(prompt.contains("what failed"));
+        assertTrue(prompt.contains("untrusted evidence"));
+        assertTrue(prompt.contains("-----BEGIN UNTRUSTED NEARBY LOGS-----"));
+        assertFalse(prompt.contains("defense in depth"));
     }
 
     @Test

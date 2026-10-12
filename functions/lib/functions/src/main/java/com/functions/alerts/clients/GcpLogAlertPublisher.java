@@ -41,6 +41,7 @@ public class GcpLogAlertPublisher implements AlertSummaryPublisher {
         payload.put("kind", "errorSummary");
         payload.put("fingerprint", notification.fingerprint());
         payload.put("headline", notification.headline());
+        payload.put("sms", notification.sms());
         payload.put("function", evidence.functionName());
         payload.put("observedMessage", evidence.message());
         payload.put("exceptionType", evidence.exceptionType());
@@ -69,4 +70,5 @@ public class GcpLogAlertPublisher implements AlertSummaryPublisher {
         }
         return entry.build();
     }
+
 }
