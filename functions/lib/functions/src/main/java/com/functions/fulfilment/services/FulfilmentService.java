@@ -30,6 +30,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity.FulfilmentEntityHookInput;
 import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
@@ -390,9 +391,7 @@ public class FulfilmentService {
                 throw new FulfilmentEntityNotFoundException(nextEntityId);
             }
 
-            if (nextEntity instanceof PaymentFulfilmentStep paymentStep) {
-                paymentStep.start(fulfilmentSessionId, fulfilmentSession, nextEntityId);
-            } else if (nextEntity.onStartHook().isPresent()) {
+            if (nextEntity.onStartHook().isPresent()) {
                 boolean result = nextEntity.onStartHook().get()
                         .apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
                 if (!result) {
@@ -649,9 +648,9 @@ public class FulfilmentService {
                 return ((DelayedStripeFulfilmentEntity) entity).getUrl();
             case END:
                 return ((EndFulfilmentEntity) entity).getUrl();
-            case FORMS, WAITLIST, PYNG:
-                // Forms, Waitlist, and Pyng entities don't store a URL on the entity.
-                // The Pyng hosted page URL lives on the session's pyngMetadata.
+            case PYNG:
+                return ((PyngFulfilmentEntity) entity).getUrl();
+            case FORMS, WAITLIST:
                 return null;
             default:
                 logger.warn("Unknown entity type for URL retrieval: {}", entity.getType());
@@ -737,13 +736,6 @@ public class FulfilmentService {
             }
 
             String url = getEntityUrl(entity);
-            if (entity.getType() == FulfilmentEntityType.PYNG
-                    && fulfilmentSession instanceof PyngCheckoutFulfilmentSession pyngSession) {
-                PyngMetadata metadata = pyngSession.getPyngMetadata();
-                if (metadata != null) {
-                    url = metadata.getHostedPageUrl();
-                }
-            }
 
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
                     url, fulfilmentSession.getEventData().getEventId(),

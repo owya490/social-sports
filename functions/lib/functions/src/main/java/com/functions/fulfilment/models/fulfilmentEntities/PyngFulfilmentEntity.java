@@ -10,7 +10,6 @@ import com.functions.fulfilment.payment.PaymentFulfilmentStep;
 import com.functions.fulfilment.payment.PaymentStatus;
 import com.functions.fulfilment.pyng.PyngHostedCheckout;
 import com.functions.fulfilment.pyng.PyngService;
-import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 public class PyngFulfilmentEntity extends FulfilmentEntity implements PaymentFulfilmentStep {
     private static final Logger logger = LoggerFactory.getLogger(PyngFulfilmentEntity.class);
+    private String url;
 
     {
         setType(FulfilmentEntityType.PYNG);
@@ -39,13 +39,15 @@ public class PyngFulfilmentEntity extends FulfilmentEntity implements PaymentFul
         }
 
         PyngHostedCheckout checkout = PyngService.createHostedCheckout(pyngSession);
+        String hostedPageUrl = checkout.hostedPageUrl();
+        if (hostedPageUrl != null && !hostedPageUrl.isBlank()) {
+            setUrl(hostedPageUrl);
+        }
         PyngMetadata metadata = PyngMetadata.builder()
                 .checkoutSessionId(checkout.checkoutSessionId())
-                .hostedPageUrl(checkout.hostedPageUrl())
                 .status(PaymentStatus.PENDING)
                 .build();
         pyngSession.setPyngMetadata(metadata);
-        FulfilmentSessionRepository.updatePyngMetadata(fulfilmentSessionId, metadata);
         logger.info("Started Pyng checkout for fulfilment session {}", fulfilmentSessionId);
     }
 

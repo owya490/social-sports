@@ -49,7 +49,7 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
         SimpleEntry<Map<String, FulfilmentEntity>, List<String>> orderedFulfilmentEntities = FulfilmentSessionService
                 .getOrderedFulfilmentEntities(fulfilmentEntities);
 
-        return PyngCheckoutFulfilmentSession.builder()
+        PyngCheckoutFulfilmentSession session = PyngCheckoutFulfilmentSession.builder()
                 .id(fulfilmentSessionId)
                 .fulfilmentSessionStartTime(Timestamp.now())
                 .eventData(eventData)
@@ -61,6 +61,14 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
                 .pyngMetadata(null)
                 .crystallized(false)
                 .build();
+
+        for (Map.Entry<String, FulfilmentEntity> entry : session.getFulfilmentEntityMap().entrySet()) {
+            if (entry.getValue() instanceof PyngFulfilmentEntity pyngEntity) {
+                pyngEntity.start(fulfilmentSessionId, session, entry.getKey());
+                break;
+            }
+        }
+        return session;
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructPyngCheckoutFulfilmentEntities(

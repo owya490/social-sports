@@ -13,6 +13,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PyngMetadata {
     private String checkoutSessionId;
-    private String hostedPageUrl;
     private PaymentStatus status;
 }
