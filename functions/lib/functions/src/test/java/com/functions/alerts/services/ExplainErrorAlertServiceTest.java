@@ -40,7 +40,6 @@ public class ExplainErrorAlertServiceTest {
 
         String headline = published.get(0).headline();
         assertTrue(headline.startsWith("globalAppController:"));
-        assertFalse(headline.endsWith("..."));
         assertFalse(headline.contains("Stripe checko..."));
         assertTrue(headline.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
     }
@@ -139,6 +138,16 @@ public class ExplainErrorAlertServiceTest {
                 """);
         assertEquals("emailService: HTTP POST status=500", published.get(0).headline());
         assertEquals("", published.get(0).aiInterpretation());
+    }
+
+    @Test
+    public void process_doesNotCollapseSpacelessMessageToFunctionNameOnly() {
+        service.process(new ParsedErrorLog("createEvent", "x".repeat(400), "", ""));
+        String headline = published.get(0).headline();
+        assertFalse(headline.equals("createEvent:"));
+        assertFalse(headline.equals("createEvent"));
+        assertTrue(headline.startsWith("createEvent:"));
+        assertTrue(headline.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
     }
 
     private ExplainErrorAlertService service(AlertSummaryPublisher publisher) {

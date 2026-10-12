@@ -17,10 +17,17 @@ public class SmsTextTest {
     }
 
     @Test
-    public void truncate_usesSentenceBoundaryInsteadOfEllipsis() {
+    public void truncate_isPlainCutWithoutSentenceTrim() {
         String result = SmsText.truncate("Checkout failed. Stripe checkout expired later.", 20);
-        assertEquals("Checkout failed.", result);
+        assertEquals("Checkout failed. Str", result);
         assertFalse(result.endsWith("..."));
+    }
+
+    @Test
+    public void truncate_doesNotSentenceTrimNearbyStyleBlobs() {
+        String nearby = "ERROR WebhookService.process failed after retry";
+        assertEquals(nearby.substring(0, 25), SmsText.truncate(nearby, 25));
+        assertEquals("sendEmailOnCreateEvent", SmsText.truncate("sendEmailOnCreateEvent", 100));
     }
 
     @Test
@@ -31,65 +38,86 @@ public class SmsTextTest {
     @Test
     public void truncate_defaultLimitIs480() {
         String result = SmsText.truncate("word ".repeat(200).trim());
-        assertTrue(result.length() <= SmsText.MAX_CHARS);
+        assertEquals(SmsText.MAX_CHARS, result.length());
         assertFalse(result.endsWith("..."));
-        assertFalse(result.endsWith(" "));
     }
 
     @Test
-    public void forSms_capsUtf8BytesForMonitoringSubject() {
-        String body = "é".repeat(200);
+    public void forSms_capsAt480CharsNot255Bytes() {
+        String body = "word ".repeat(200).trim();
         String result = SmsText.forSms(body);
-        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(result.length() <= SmsText.MAX_CHARS);
+        assertTrue(result.length() > 255);
         assertFalse(result.endsWith("..."));
     }
 
     @Test
-    public void forSms_trimsToLastCompleteSentenceWithin255Utf8Bytes() {
-        String first = "Checkout failed in globalAppController.";
-        String second = "This looks like a Stripe checkout timeout at WebhookService.process.";
-        String third = "Check the expired session and retry the webhook fulfillment.";
-        String overflow = first + " " + second + " " + third + " Extra filler words keep going past the cap "
-                + "word ".repeat(40);
+    public void forSmsSubject_capsUtf8BytesForMonitoringSubject() {
+        String result = SmsText.forSmsSubject("é".repeat(200));
+        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(result.startsWith("é"));
+    }
+
+    @Test
+    public void forSms_keepsShortEarlySentenceWhenLaterTextFits480() {
+        String overflow = "Request failed. " + "This looks like a Stripe checkout timeout at WebhookService.process. ".repeat(8);
         String result = SmsText.forSms(overflow);
-
-        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
-        assertTrue(result.endsWith("."));
-        assertFalse(result.endsWith("..."));
-        assertTrue(result.contains(first));
-        assertFalse(result.contains("Extra filler"));
+        assertTrue(result.contains("Stripe checkout timeout"));
+        assertTrue(result.length() <= SmsText.MAX_CHARS);
     }
 
     @Test
-    public void forSms_doesNotCutMidWordLikeStripeChecko() {
+    public void forSmsSubject_skipsTinyLeadingSentence() {
+        String overflow = "Request failed. This looks like a Stripe checkout timeout at WebhookService.process "
+                + "and then more overflow words continue ".repeat(20);
+        String result = SmsText.forSmsSubject(overflow);
+        assertFalse(result.equals("Request failed."));
+        assertTrue(result.contains("Stripe checkout"));
+        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertFalse(result.endsWith("..."));
+    }
+
+    @Test
+    public void forSmsSubject_doesNotCollapseSpacelessBlobToFunctionName() {
+        String blob = "a".repeat(400);
+        String result = SmsText.forSmsSubject("createEvent: " + blob);
+        assertFalse(result.equals("createEvent:"));
+        assertFalse(result.equals("createEvent"));
+        assertTrue(result.startsWith("createEvent: "));
+        assertTrue(result.contains("aaa"));
+        assertTrue(result.endsWith("..."));
+        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+    }
+
+    @Test
+    public void forSms_doesNotCutMidWordLikeStripeCheckoWhenSentenceFitsBudget() {
         String sentence = "Checkout failed in globalAppController.";
         String cut = sentence + " Stripe checko" + "ut session expired without a later period "
                 + "overflow ".repeat(50);
         String result = SmsText.forSms(cut);
-
-        assertEquals(sentence, result);
-        assertFalse(result.contains("Stripe checko"));
+        assertTrue(result.contains("Checkout failed"));
+        assertFalse(result.contains("Stripe checko "));
+        assertFalse(result.endsWith("checko"));
         assertFalse(result.endsWith("..."));
-        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
     }
 
     @Test
-    public void forSms_trimsToLastCompleteWordWhenNoPeriod() {
-        String result = SmsText.forSms("Stripe checkout session expired without a terminal period "
-                + "overflow ".repeat(40));
-        assertFalse(result.endsWith("..."));
-        assertFalse(result.endsWith(" "));
-        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
-        assertTrue(result.startsWith("Stripe checkout"));
-        assertFalse(result.matches(".*\\S$") && result.endsWith("overfl"));
+    public void lastWordEnd_keepsWordWhenCutLandsOnItsEnd() {
+        String original = "hello world foo";
+        String prefix = original.substring(0, 11);
+        assertEquals("hello world", prefix);
+        assertEquals(11, SmsText.lastWordEnd(prefix, original));
     }
 
     @Test
-    public void forSmsSubject_matchesPrimarySmsLine() {
-        String text = "Checkout failed. This looks like a timeout at WebhookService.process. Check Stripe.";
-        assertEquals(SmsText.forSms(text), SmsText.forSmsSubject(text));
-        assertTrue(SmsText.forSmsSubject("é".repeat(200)).getBytes(StandardCharsets.UTF_8).length
-                <= SmsText.MAX_UTF8_BYTES);
+    public void forSmsSubject_doesNotTreatAbbreviationsAsSentenceEnds() {
+        String text = "Timeout e.g. Stripe checkout vs. WebhookService and i.e. session expiry "
+                + "overflow ".repeat(40);
+        String result = SmsText.forSmsSubject(text);
+        assertFalse(result.equals("Timeout e.g."));
+        assertFalse(result.equals("Timeout e.g. Stripe checkout vs."));
+        assertTrue(result.contains("Stripe checkout"));
+        assertTrue(result.contains("vs. WebhookService") || result.contains("WebhookService"));
     }
 
     @Test
@@ -98,8 +126,16 @@ public class SmsTextTest {
                 + "and then more overflow words continue ".repeat(20);
         String result = SmsText.forSms(text);
         assertFalse(result.equals("globalAppController failed during checkout at WebhookService"));
-        assertTrue(result.contains("WebhookService.process") || result.endsWith("process")
-                || result.contains("checkout"));
-        assertFalse(result.endsWith("..."));
+        assertTrue(result.contains("WebhookService.process") || result.contains("checkout"));
+    }
+
+    @Test
+    public void forSmsSubject_is255WhileForSmsIs480() {
+        String text = "Checkout failed. This looks like a timeout at WebhookService.process. Check Stripe. "
+                + "word ".repeat(80);
+        assertTrue(SmsText.forSms(text).length() > SmsText.forSmsSubject(text).length());
+        assertTrue(SmsText.forSmsSubject(text).getBytes(StandardCharsets.UTF_8).length
+                <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(SmsText.forSms(text).length() <= SmsText.MAX_CHARS);
     }
 }

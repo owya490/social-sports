@@ -37,6 +37,7 @@ public class GcpLogAlertPublisherTest {
         assertEquals("errorSummary", payload.get("kind"));
         assertEquals("fingerprint", payload.get("fingerprint"));
         assertEquals("emailService: Request rejected", payload.get("headline"));
+        assertEquals("Unconfirmed cause", payload.get("sms"));
         assertEquals("Request rejected", payload.get("observedMessage"));
         assertEquals("Unconfirmed cause", payload.get("aiInterpretation"));
         assertEquals(true, payload.get("aiInterpretationIsUnconfirmed"));
@@ -46,6 +47,15 @@ public class GcpLogAlertPublisherTest {
         assertTrue(link.contains("timestamp=\"2026-10-11T03:00:00Z\""));
         assertTrue(link.endsWith("?project=test"));
         assertEquals(Instant.parse("2026-10-11T03:00:00Z"), entry.getInstantTimestamp());
+    }
+
+    @Test
+    public void buildEntry_pagesHeadlineWhenAiInterpretationIsMissing() {
+        ErrorAlertNotification withoutAi = new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), "");
+        Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(withoutAi, "test")
+                .getPayload()).getDataAsMap();
+        assertEquals("emailService: Request rejected", payload.get("sms"));
     }
 
     @Test

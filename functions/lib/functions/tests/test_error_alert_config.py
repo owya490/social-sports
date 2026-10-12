@@ -21,9 +21,10 @@ class ErrorAlertConfigTest(unittest.TestCase):
     def test_policy_uses_stable_labels_and_links_to_ai_evidence(self):
         policy = config.policy("socialsportsprod", [self.channel])
         labels = policy["conditions"][0]["conditionMatchedLog"]["labelExtractors"]
-        self.assertEqual({"fingerprint", "headline"}, set(labels))
+        self.assertEqual({"fingerprint", "headline", "sms"}, set(labels))
         self.assertNotIn("aiInterpretation", str(labels))
-        self.assertEqual(config.label("headline"), policy["documentation"]["subject"])
+        self.assertEqual(config.label("sms"), policy["documentation"]["subject"])
+        self.assertIn(config.label("headline"), policy["documentation"]["content"])
         link = unquote(policy["documentation"]["links"][0]["url"])
         self.assertIn('jsonPayload.fingerprint="' + config.label("fingerprint") + '"', link)
         self.assertIn('logName="projects/socialsportsprod/logs/sportshub-alert-sms"', link)

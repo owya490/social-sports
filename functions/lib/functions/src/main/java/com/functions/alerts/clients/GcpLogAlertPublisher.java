@@ -41,6 +41,7 @@ public class GcpLogAlertPublisher implements AlertSummaryPublisher {
         payload.put("kind", "errorSummary");
         payload.put("fingerprint", notification.fingerprint());
         payload.put("headline", notification.headline());
+        payload.put("sms", smsBody(notification));
         payload.put("function", evidence.functionName());
         payload.put("observedMessage", evidence.message());
         payload.put("exceptionType", evidence.exceptionType());
@@ -68,5 +69,14 @@ public class GcpLogAlertPublisher implements AlertSummaryPublisher {
             entry.setTimestamp(evidence.timestamp());
         }
         return entry.build();
+    }
+
+    /** Prefer the 480-char AI body for paging; fall back to the 255-byte headline. */
+    static String smsBody(ErrorAlertNotification notification) {
+        String interpretation = notification.aiInterpretation();
+        if (interpretation != null && !interpretation.isBlank()) {
+            return interpretation;
+        }
+        return notification.headline() == null ? "" : notification.headline();
     }
 }

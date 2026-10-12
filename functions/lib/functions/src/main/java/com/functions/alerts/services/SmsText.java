@@ -1,25 +1,28 @@
 package com.functions.alerts.services;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 public final class SmsText {
     /**
-     * Optional longer body for documentation.content / log payload.
-     * The SMS subject still uses {@link #MAX_UTF8_BYTES}.
+     * Human-read paging body (AI summary / SMS text stored on the log).
+     * GCP documentation.subject is separately capped by {@link #MAX_UTF8_BYTES}.
      */
     public static final int MAX_CHARS = 480;
-    /** Cloud Monitoring documentation.subject is limited to 255 UTF-8 bytes. */
+    /** Cloud Monitoring documentation.subject / headline is limited to 255 UTF-8 bytes. */
     public static final int MAX_UTF8_BYTES = 255;
+    private static final double MIN_BOUNDARY_RATIO = 0.6;
+    private static final String[] ABBREVIATIONS = {"e.g.", "i.e.", "vs."};
 
     private SmsText() {
     }
 
-    /** Primary SMS line: complete sentences that fit the GCP subject cap. */
+    /** Paging body: complete-ish sentences that fit {@link #MAX_CHARS}. */
     public static String forSms(String text) {
-        return trimToCompleteUtf8(text, MAX_UTF8_BYTES);
+        return trimToCompleteChars(text, MAX_CHARS);
     }
 
-    /** Same complete-sentence trim as {@link #forSms} for documentation.subject. */
+    /** Complete-sentence trim for documentation.subject / headline only. */
     public static String forSmsSubject(String text) {
         return trimToCompleteUtf8(text, MAX_UTF8_BYTES);
     }
@@ -28,6 +31,7 @@ public final class SmsText {
         return truncate(text, MAX_CHARS);
     }
 
+    /** Plain cut after collapsing whitespace. No sentence or word trimming. */
     public static String truncate(String text, int maxChars) {
         if (text == null) {
             return "";
@@ -36,7 +40,7 @@ public final class SmsText {
         if (maxChars <= 0 || collapsed.length() <= maxChars) {
             return collapsed;
         }
-        return trimToCompleteChars(collapsed, maxChars);
+        return collapsed.substring(0, maxChars);
     }
 
     static String trimToCompleteUtf8(String text, int maxBytes) {
@@ -51,33 +55,55 @@ public final class SmsText {
             return collapsed;
         }
         String prefix = prefixUtf8(collapsed, maxBytes);
-        return trimToBoundary(prefix);
+        return applyBoundaries(prefix, collapsed, maxBytes, true);
     }
 
     static String collapseWhitespace(String text) {
         return text.replace('\n', ' ').replace('\r', ' ').replaceAll(" +", " ").trim();
     }
 
-    private static String trimToCompleteChars(String collapsed, int maxChars) {
+    private static String trimToCompleteChars(String text, int maxChars) {
+        if (text == null) {
+            return "";
+        }
+        String collapsed = collapseWhitespace(text);
+        if (maxChars <= 0) {
+            return "";
+        }
+        if (collapsed.length() <= maxChars) {
+            return collapsed;
+        }
         String prefix = collapsed.substring(0, maxChars);
-        return trimToBoundary(prefix);
+        return applyBoundaries(prefix, collapsed, maxChars, false);
     }
 
     /**
-     * Prefer the last complete sentence. If none, the last complete word.
-     * Never append ellipsis; never return a trailing partial word when a word
-     * boundary exists.
+     * Prefer a sentence only if it keeps most of the budget. Else a word.
+     * If a word cut would drop most of the text (e.g. "fn:" plus a spaceless
+     * blob), cut mid-word. Ellipsis only for mid-word cuts.
      */
-    static String trimToBoundary(String prefix) {
+    static String applyBoundaries(String prefix, String original, int maxUnits, boolean utf8) {
+        int minKeep = (int) Math.ceil(maxUnits * MIN_BOUNDARY_RATIO);
         int sentenceEnd = lastSentenceEnd(prefix);
-        if (sentenceEnd > 0) {
+        if (sentenceEnd > 0 && units(prefix.substring(0, sentenceEnd), utf8) >= minKeep) {
             return prefix.substring(0, sentenceEnd).trim();
         }
-        int wordEnd = lastWordEnd(prefix);
-        if (wordEnd > 0) {
+        int wordEnd = lastWordEnd(prefix, original);
+        if (wordEnd > 0 && units(prefix.substring(0, wordEnd), utf8) >= minKeep) {
             return prefix.substring(0, wordEnd).trim();
         }
-        return prefix.trim();
+        return midWord(original, maxUnits, utf8);
+    }
+
+    private static String midWord(String original, int maxUnits, boolean utf8) {
+        int ellipsisUnits = 3;
+        int keep = Math.max(0, maxUnits - ellipsisUnits);
+        String prefix = utf8 ? prefixUtf8(original, keep) : original.substring(0, Math.min(keep, original.length()));
+        return prefix + "...";
+    }
+
+    private static int units(String text, boolean utf8) {
+        return utf8 ? utf8Length(text) : text.length();
     }
 
     private static int lastSentenceEnd(String text) {
@@ -88,6 +114,9 @@ public final class SmsText {
                 continue;
             }
             if (i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1))) {
+                continue;
+            }
+            if (c == '.' && isAbbreviationPeriod(text, i)) {
                 continue;
             }
             boolean endOfText = i == text.length() - 1;
@@ -103,12 +132,39 @@ public final class SmsText {
         return last;
     }
 
-    private static int lastWordEnd(String text) {
-        int i = text.length() - 1;
-        while (i >= 0 && !Character.isWhitespace(text.charAt(i))) {
+    private static boolean isAbbreviationPeriod(String text, int periodIndex) {
+        String upTo = text.substring(0, periodIndex + 1).toLowerCase(Locale.ROOT);
+        for (String abbrev : ABBREVIATIONS) {
+            if (upTo.endsWith(abbrev)) {
+                int start = upTo.length() - abbrev.length();
+                if (start == 0 || !Character.isLetterOrDigit(upTo.charAt(start - 1))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * If the cut already lands on the end of a word (next original char is
+     * space or end), keep that word.
+     */
+    static int lastWordEnd(String prefix, String original) {
+        int end = prefix.length();
+        while (end > 0 && Character.isWhitespace(prefix.charAt(end - 1))) {
+            end--;
+        }
+        if (end == 0) {
+            return 0;
+        }
+        if (end == original.length() || Character.isWhitespace(original.charAt(end))) {
+            return end;
+        }
+        int i = end - 1;
+        while (i >= 0 && !Character.isWhitespace(prefix.charAt(i))) {
             i--;
         }
-        while (i >= 0 && Character.isWhitespace(text.charAt(i))) {
+        while (i >= 0 && Character.isWhitespace(prefix.charAt(i))) {
             i--;
         }
         return i + 1;
