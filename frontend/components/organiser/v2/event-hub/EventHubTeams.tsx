@@ -67,9 +67,6 @@ export function EventHubTeams({
   const [creating, setCreating] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [draftSize, setDraftSize] = useState("");
-  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editSize, setEditSize] = useState("");
   const [armReshuffle, setArmReshuffle] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SettingsAutosaveStatus>("idle");
@@ -207,25 +204,6 @@ export function EventHubTeams({
     setDraftName("");
     setDraftSize("");
     setCreating(false);
-  };
-
-  const editingTeam = view.teams.find((team) => team.id === editingTeamId) ?? null;
-
-  const openTeamEditor = (team: { id: string; name: string; targetSize: number | null }) => {
-    setEditingTeamId(team.id);
-    setEditName(team.name);
-    setEditSize(team.targetSize != null ? String(team.targetSize) : "");
-  };
-
-  const saveTeam = (event: FormEvent) => {
-    event.preventDefault();
-    if (!editingTeam) return;
-    const index = view.teams.findIndex((team) => team.id === editingTeam.id);
-    const name = editName.trim() || `Team ${index + 1}`;
-    const size = Number.parseInt(editSize, 10);
-    const renamed = renameTeam(view, editingTeam.id, name);
-    update(setTeamTargetSize(renamed, editingTeam.id, Number.isFinite(size) && size > 0 ? size : null));
-    setEditingTeamId(null);
   };
 
   const persists = Boolean(eventId || onPersist);
@@ -390,19 +368,40 @@ export function EventHubTeams({
                   return (
                     <section key={team.id} className="rounded-xl border border-border bg-background" aria-label={team.name}>
                       <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-                        <button
-                          type="button"
-                          onClick={() => openTeamEditor(team)}
-                          className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-foreground font-sans hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                        >
-                          {team.name || "Team"}
-                        </button>
+                        <input
+                          aria-label={`Name for ${team.name || "team"}`}
+                          value={team.name}
+                          placeholder="Team name"
+                          onChange={(event) => update(renameTeam(view, team.id, event.target.value))}
+                          onBlur={() => {
+                            if (!team.name.trim()) {
+                              update(renameTeam(view, team.id, `Team ${view.teams.indexOf(team) + 1}`));
+                            }
+                          }}
+                          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                        />
+                        <label className="sr-only" htmlFor={`size-${team.id}`}>
+                          Target size for {team.name}
+                        </label>
+                        <input
+                          id={`size-${team.id}`}
+                          inputMode="numeric"
+                          aria-label={`Target size for ${team.name}`}
+                          value={team.targetSize ?? ""}
+                          placeholder="Size"
+                          onChange={(event) => {
+                            const digits = event.target.value.replace(/[^\d]/g, "");
+                            update(setTeamTargetSize(view, team.id, digits ? Number.parseInt(digits, 10) : null));
+                          }}
+                          className="w-14 rounded-lg border border-border bg-background px-2 py-1 text-center text-xs tabular-nums text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                        />
                         <span
-                          className={`shrink-0 text-xs tabular-nums font-sans ${
+                          className={`text-xs tabular-nums font-sans ${
                             overTarget ? "font-semibold text-foreground" : "text-foreground-muted"
                           }`}
                         >
-                          {team.targetSize != null ? `${filled}/${team.targetSize}` : filled}
+                          {filled}
+                          {team.targetSize != null ? `/${team.targetSize}` : ""}
                         </span>
                         {pendingDeleteId === team.id ? (
                           <button
@@ -451,37 +450,6 @@ export function EventHubTeams({
           </div>
         </div>
       )}
-      <EventHubPanel
-        open={editingTeam != null}
-        onClose={() => setEditingTeamId(null)}
-        title={editingTeam ? editingTeam.name || "Team" : "Team"}
-        footer={
-          <EventHubPrimaryButton type="submit" form="event-hub-edit-team">
-            Save
-          </EventHubPrimaryButton>
-        }
-      >
-        <form id="event-hub-edit-team" className="space-y-4" onSubmit={saveTeam}>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-foreground-muted font-sans">Team name</span>
-            <input
-              value={editName}
-              onChange={(event) => setEditName(event.target.value)}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            />
-          </label>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-foreground-muted font-sans">Target size</span>
-            <input
-              inputMode="numeric"
-              value={editSize}
-              placeholder="Any"
-              onChange={(event) => setEditSize(event.target.value.replace(/[^\d]/g, ""))}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            />
-          </label>
-        </form>
-      </EventHubPanel>
     </EventHubStage>
   );
 }
