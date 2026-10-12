@@ -1,6 +1,7 @@
 import { EventTeam, OrderId, TeamBoard, TeamTicketSplit } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { ulid } from "ulid";
 
 export type { EventTeam, TeamBoard, TeamTicketSplit };
 
@@ -21,10 +22,7 @@ export const TEAM_CSV_HEADERS = [
 ];
 
 export function newTeamId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `team_${Math.random().toString(36).slice(2, 10)}`;
+  return ulid();
 }
 
 export function peopleFromOrders(orderTicketsMap: Map<Order, Ticket[]>): TeamPerson[] {
