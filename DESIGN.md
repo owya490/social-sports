@@ -448,6 +448,12 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Setup + announcements:** Auto-complete checklist (picture, bio, Stripe, first event) with fill-bar progress; dismissible when done. Announcement rows from `dashboardAnnouncements.ts` (SPORTSHUB → organiser feed: mono tags like Feature/Wrapped, hairline dividers, external blog links open in a new tab).
 - **Error recovery:** When metrics fetch fails, inline card replaces dashboard body: error title, connection hint, accent “Retry” button, fallback “manage events” link—no full-page error shell.
 
+### Organiser calendar
+
+- **Month grid:** Keep three compact event chips per day, followed by **+N more** when needed. Its accessible label names the date and total session count.
+- **Day popup:** An anchored Headless UI panel escapes the grid's clipping boundaries and adjusts to available viewport space, including safe-area padding. The panel owns scrolling, with a sticky date and Close header. Session links retain their colour marker and show start times and wrapping names at every width.
+- **Lifecycle:** Headless UI owns dismissal and focus handling. Changing the displayed month or loading state resets only the day grid's popovers; month controls remain mounted. Overflow triggers are disabled while loading, and a previously open popup does not reopen when loading finishes.
+
 ### Organiser catalogue pages (v2 operate)
 
 List-only Hub surfaces that share one shell: **Event collections**, **Custom links**, and **Settings** (account). **Image gallery** uses the media upload grid inside an outlined panel (see Media upload tile). **Forms** is not list-only—it uses the Docs/Forms paper gallery below. Same Honest Clubhouse tokens as the dashboard—no new palette or radius.
