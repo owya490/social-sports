@@ -17,14 +17,25 @@ public final class SmsText {
     private SmsText() {
     }
 
-    /** Paging body: complete-ish sentences that fit {@link #MAX_CHARS}. */
+    /** Paging body: complete sentences that fit {@link #MAX_CHARS}. */
     public static String forSms(String text) {
-        return trimToCompleteChars(text, MAX_CHARS);
+        return trimToCompleteChars(text, MAX_CHARS, true);
     }
 
-    /** Complete-sentence trim for documentation.subject and jsonPayload.sms. */
+    /**
+     * Complete-sentence trim for AI prose in documentation.subject / jsonPayload.sms.
+     * Any complete sentence that fits the 255-byte budget is kept.
+     */
     public static String forSmsSubject(String text) {
-        return trimToCompleteUtf8(text, MAX_UTF8_BYTES);
+        return trimToCompleteUtf8(text, MAX_UTF8_BYTES, true);
+    }
+
+    /**
+     * Factual headline trim: keep a sentence or word only when it uses most of
+     * the budget; otherwise cut a spaceless blob with an ellipsis.
+     */
+    public static String forHeadline(String text) {
+        return trimToCompleteUtf8(text, MAX_UTF8_BYTES, false);
     }
 
     public static String truncate(String text) {
@@ -43,7 +54,7 @@ public final class SmsText {
         return collapsed.substring(0, maxChars);
     }
 
-    static String trimToCompleteUtf8(String text, int maxBytes) {
+    static String trimToCompleteUtf8(String text, int maxBytes, boolean keepAnyCompleteSentence) {
         if (text == null) {
             return "";
         }
@@ -55,14 +66,14 @@ public final class SmsText {
             return collapsed;
         }
         String prefix = prefixUtf8(collapsed, maxBytes);
-        return applyBoundaries(prefix, collapsed, maxBytes, true);
+        return applyBoundaries(prefix, collapsed, maxBytes, true, keepAnyCompleteSentence);
     }
 
     static String collapseWhitespace(String text) {
         return text.replace('\n', ' ').replace('\r', ' ').replaceAll(" +", " ").trim();
     }
 
-    private static String trimToCompleteChars(String text, int maxChars) {
+    private static String trimToCompleteChars(String text, int maxChars, boolean keepAnyCompleteSentence) {
         if (text == null) {
             return "";
         }
@@ -74,19 +85,22 @@ public final class SmsText {
             return collapsed;
         }
         String prefix = collapsed.substring(0, maxChars);
-        return applyBoundaries(prefix, collapsed, maxChars, false);
+        return applyBoundaries(prefix, collapsed, maxChars, false, keepAnyCompleteSentence);
     }
 
     /**
-     * Prefer a sentence only if it keeps most of the budget. Else a word.
-     * If a word cut would drop most of the text (e.g. "fn:" plus a spaceless
-     * blob), cut mid-word. Ellipsis only for mid-word cuts.
+     * AI prose keeps any complete sentence in budget. Headlines require a
+     * sentence or word to use most of the budget; otherwise mid-word ellipsis.
      */
-    static String applyBoundaries(String prefix, String original, int maxUnits, boolean utf8) {
+    static String applyBoundaries(String prefix, String original, int maxUnits, boolean utf8,
+            boolean keepAnyCompleteSentence) {
         int minKeep = (int) Math.ceil(maxUnits * MIN_BOUNDARY_RATIO);
         int sentenceEnd = lastSentenceEnd(prefix, original);
-        if (sentenceEnd > 0 && units(prefix.substring(0, sentenceEnd), utf8) >= minKeep) {
-            return prefix.substring(0, sentenceEnd).trim();
+        if (sentenceEnd > 0) {
+            String sentence = prefix.substring(0, sentenceEnd).trim();
+            if (keepAnyCompleteSentence || units(sentence, utf8) >= minKeep) {
+                return sentence;
+            }
         }
         int wordEnd = lastWordEnd(prefix, original);
         if (wordEnd > 0 && units(prefix.substring(0, wordEnd), utf8) >= minKeep) {

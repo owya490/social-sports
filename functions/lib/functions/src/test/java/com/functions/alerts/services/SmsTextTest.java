@@ -67,20 +67,31 @@ public class SmsTextTest {
     }
 
     @Test
-    public void forSmsSubject_skipsTinyLeadingSentence() {
+    public void forSmsSubject_keepsAnyCompleteAiSentenceInBudget() {
         String overflow = "Request failed. This looks like a Stripe checkout timeout at WebhookService.process "
                 + "and then more overflow words continue ".repeat(20);
         String result = SmsText.forSmsSubject(overflow);
-        assertFalse(result.equals("Request failed."));
-        assertTrue(result.contains("Stripe checkout"));
-        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(result.endsWith("."));
         assertFalse(result.endsWith("..."));
+        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertFalse(result.contains(" and persist the"));
     }
 
     @Test
-    public void forSmsSubject_doesNotCollapseSpacelessBlobToFunctionName() {
+    public void forSmsSubject_keepsShortFirstSentenceOfTwoSentenceCheckoutFailure() {
+        String interpretation = twoSentenceCheckoutFailure(303);
+        assertEquals(303, interpretation.getBytes(StandardCharsets.UTF_8).length);
+        String result = SmsText.forSmsSubject(interpretation);
+        assertEquals("Checkout failed in globalAppController.", result);
+        assertFalse(result.contains("..."));
+        assertFalse(result.contains("and persist the"));
+        assertTrue(result.endsWith("."));
+    }
+
+    @Test
+    public void forHeadline_doesNotCollapseSpacelessBlobToFunctionName() {
         String blob = "a".repeat(400);
-        String result = SmsText.forSmsSubject("createEvent: " + blob);
+        String result = SmsText.forHeadline("createEvent: " + blob);
         assertFalse(result.equals("createEvent:"));
         assertFalse(result.equals("createEvent"));
         assertTrue(result.startsWith("createEvent: "));
@@ -144,13 +155,13 @@ public class SmsTextTest {
     }
 
     @Test
-    public void forSmsSubject_keepsASentenceOnlyWhenItUsesAtLeastSixtyPercentOfTheBudget() {
+    public void forHeadline_keepsASentenceOnlyWhenItUsesAtLeastSixtyPercentOfTheBudget() {
         int minKeep = (int) Math.ceil(SmsText.MAX_UTF8_BYTES * 0.6);
         String tooShort = "A".repeat(minKeep - 2) + ".";
         String longEnough = "B".repeat(minKeep - 1) + ".";
         String overflow = " extra overflow words continue after the period ".repeat(20);
-        String skipped = SmsText.forSmsSubject(tooShort + overflow);
-        String kept = SmsText.forSmsSubject(longEnough + overflow);
+        String skipped = SmsText.forHeadline(tooShort + overflow);
+        String kept = SmsText.forHeadline(longEnough + overflow);
         assertFalse(skipped.equals(tooShort));
         assertEquals(longEnough, kept);
         assertTrue(skipped.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
@@ -158,12 +169,35 @@ public class SmsTextTest {
     }
 
     @Test
+    public void forSmsSubject_keepsAShortCompleteSentenceUnderSixtyPercent() {
+        int minKeep = (int) Math.ceil(SmsText.MAX_UTF8_BYTES * 0.6);
+        String tooShortForHeadline = "A".repeat(minKeep - 2) + ".";
+        String overflow = " extra overflow words continue after the period ".repeat(20);
+        assertEquals(tooShortForHeadline, SmsText.forSmsSubject(tooShortForHeadline + overflow));
+    }
+
+    @Test
     public void forSmsSubject_is255WhileForSmsIs480() {
-        String text = "Checkout failed. This looks like a timeout at WebhookService.process. Check Stripe. "
-                + "word ".repeat(80);
-        assertTrue(SmsText.forSms(text).length() > SmsText.forSmsSubject(text).length());
-        assertTrue(SmsText.forSmsSubject(text).getBytes(StandardCharsets.UTF_8).length
-                <= SmsText.MAX_UTF8_BYTES);
-        assertTrue(SmsText.forSms(text).length() <= SmsText.MAX_CHARS);
+        String text = "Checkout failed in globalAppController while the webhook was still running. "
+                + "This looks like a Stripe checkout timeout at WebhookService.process. "
+                + "Check the expired session and the fulfillment logs next. "
+                + "Inspect the matching payment intent after that. ".repeat(8);
+        String subject = SmsText.forSmsSubject(text);
+        String body = SmsText.forSms(text);
+        assertTrue(body.length() > subject.length());
+        assertTrue(subject.endsWith("."));
+        assertTrue(subject.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(body.length() <= SmsText.MAX_CHARS);
+    }
+
+    static String twoSentenceCheckoutFailure(int totalBytes) {
+        String first = "Checkout failed in globalAppController. ";
+        StringBuilder second = new StringBuilder(
+                "This looks like a Stripe checkout timeout at WebhookService.process and persist the");
+        while (first.getBytes(StandardCharsets.UTF_8).length
+                + second.toString().getBytes(StandardCharsets.UTF_8).length + 1 < totalBytes) {
+            second.append('x');
+        }
+        return first + second + ".";
     }
 }

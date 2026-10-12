@@ -64,12 +64,19 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
             }
             start.countDown();
             int owned = 0;
+            int inFlight = 0;
             for (Future<Optional<Reservation>> attempt : attempts) {
-                if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
-                    owned++;
+                try {
+                    if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
+                        owned++;
+                    }
+                } catch (Exception failure) {
+                    inFlight++;
+                    assertTrue(rootMessage(failure).contains("already in progress"));
                 }
             }
             assertEquals(1, owned);
+            assertEquals(3, inFlight);
             assertEquals(1, db.collection(ErrorAlertDedupRepository.COLLECTION).get().get().size());
         } finally {
             pool.shutdownNow();
@@ -107,6 +114,25 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     }
 
     @Test
+    public void reserve_throwsWhileLeaseActiveSoRedeliveryDoesNotAck() {
+        repository.reserve().orElseThrow();
+        try {
+            repository.reserve();
+            fail("In-flight lease must throw so Pub/Sub redelivers");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage().contains("already in progress"));
+        }
+    }
+
+    @Test
+    public void rememberSms_persistsFirstValueAndReusesIt() {
+        assertTrue(repository.smsFor("fp1").isEmpty());
+        repository.rememberSms("fp1", "First SMS sentence.");
+        repository.rememberSms("fp1", "Different Gemini wording.");
+        assertEquals("First SMS sentence.", repository.smsFor("fp1").orElseThrow());
+    }
+
+    @Test
     public void reserve_recoversExpiredLeases() {
         Reservation first = repository.reserve().orElseThrow();
         ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,
@@ -128,5 +154,13 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
         global.set(Map.of("recentSends", sends)).get();
         repository.complete(repository.reserve().orElseThrow());
         assertEquals(1, ((List<?>) global.get().get().get("recentSends")).size());
+    }
+
+    private static String rootMessage(Throwable failure) {
+        Throwable current = failure;
+        while (current.getCause() != null && current.getCause() != current) {
+            current = current.getCause();
+        }
+        return current.getMessage() == null ? "" : current.getMessage();
     }
 }

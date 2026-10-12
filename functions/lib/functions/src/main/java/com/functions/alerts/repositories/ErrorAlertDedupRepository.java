@@ -52,7 +52,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
                 return Optional.empty();
             }
             if (recent(globalState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
-                return Optional.empty();
+                throw new IllegalStateException("Error alert delivery already in progress");
             }
             Map<String, Object> lease = Map.of("owner", reservation.owner(), "inFlightAt", timestamp(now));
             transaction.set(global, lease, SetOptions.merge());
@@ -100,8 +100,38 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             throw new IllegalStateException("Interrupted during error alert reservation", e);
         } catch (Exception e) {
             operation.cancel(true);
+            if (e.getCause() instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            if (e instanceof RuntimeException runtime) {
+                throw runtime;
+            }
             throw new IllegalStateException("Error alert reservation failed", e);
         }
+    }
+
+    @Override
+    public Optional<String> smsFor(String fingerprint) {
+        return run(transaction -> {
+            String sms = transaction.get(fingerprintDoc(fingerprint)).get().getString("sms");
+            return sms == null || sms.isBlank() ? Optional.empty() : Optional.of(sms);
+        });
+    }
+
+    @Override
+    public void rememberSms(String fingerprint, String sms) {
+        run(transaction -> {
+            DocumentReference doc = fingerprintDoc(fingerprint);
+            String existing = transaction.get(doc).get().getString("sms");
+            if (existing == null || existing.isBlank()) {
+                transaction.set(doc, Map.of("sms", sms), SetOptions.merge());
+            }
+            return null;
+        });
+    }
+
+    private DocumentReference fingerprintDoc(String fingerprint) {
+        return db.collection(COLLECTION).document(fingerprint);
     }
 
     private static boolean owned(DocumentSnapshot state, Reservation reservation) {

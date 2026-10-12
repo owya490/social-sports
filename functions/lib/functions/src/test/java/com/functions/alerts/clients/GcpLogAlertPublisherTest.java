@@ -56,7 +56,8 @@ public class GcpLogAlertPublisherTest {
                 + "WebhookService.process. Check the expired session next. " + "word ".repeat(80);
         ErrorAlertNotification notification = new ErrorAlertNotification("fingerprint",
                 "emailService: Request rejected",
-                new ParsedErrorLog("emailService", "Request rejected", "", ""), longAi);
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), longAi,
+                SmsText.forSmsSubject(longAi));
         Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(notification, "test")
                 .getPayload()).getDataAsMap();
         String sms = payload.get("sms").toString();
@@ -69,7 +70,8 @@ public class GcpLogAlertPublisherTest {
     @Test
     public void buildEntry_pagesHeadlineWhenAiInterpretationIsMissing() {
         ErrorAlertNotification withoutAi = new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
-                new ParsedErrorLog("emailService", "Request rejected", "", ""), "");
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), "",
+                "emailService: Request rejected");
         Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(withoutAi, "test")
                 .getPayload()).getDataAsMap();
         assertEquals("emailService: Request rejected", payload.get("sms"));
@@ -92,6 +94,6 @@ public class GcpLogAlertPublisherTest {
         return new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
                 new ParsedErrorLog("emailService", "Request rejected", "", "",
                         Instant.parse("2026-10-11T03:00:00Z"), "", "POST", 400,
-                        "projects/test/logs/stderr", "original"), "Unconfirmed cause");
+                        "projects/test/logs/stderr", "original"), "Unconfirmed cause", "Unconfirmed cause");
     }
 }

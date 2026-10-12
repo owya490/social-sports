@@ -26,6 +26,7 @@ public class ExplainErrorAlertServiceTest {
     public void setUp() {
         store = mock(ErrorAlertDedupStore.class);
         when(store.reserve()).thenReturn(Optional.of(new Reservation("owner")));
+        when(store.smsFor(any())).thenReturn(Optional.empty());
         published = new ArrayList<>();
         service = service(published::add);
     }
@@ -51,9 +52,43 @@ public class ExplainErrorAlertServiceTest {
         ErrorAlertNotification notification = published.get(0);
         assertEquals("emailService: Request rejected", notification.headline());
         assertEquals("Unconfirmed explanation", notification.aiInterpretation());
+        assertEquals("Unconfirmed explanation", notification.sms());
         assertEquals(sampleLog(), notification.evidence());
+        verify(store).rememberSms(notification.fingerprint(), "Unconfirmed explanation");
         verify(store).complete(new Reservation("owner"));
         verify(store, never()).release(any());
+    }
+
+    @Test
+    public void process_reusesPersistedSmsSoExtractorIdentityStaysStable() {
+        when(store.smsFor(any())).thenReturn(Optional.of("Persisted SMS sentence."));
+        service = service(published::add, prompt -> Optional.of("Different Gemini wording this time."));
+        service.process(sampleLog());
+        assertEquals("Persisted SMS sentence.", published.get(0).sms());
+        assertEquals("Different Gemini wording this time.", published.get(0).aiInterpretation());
+        verify(store, never()).rememberSms(any(), any());
+    }
+
+    @Test
+    public void process_pagesCompleteAiSentenceEvenWhenShort() {
+        service = service(published::add, prompt -> Optional.of(SmsTextTest.twoSentenceCheckoutFailure(303)));
+        service.process(sampleLog());
+        assertEquals("Checkout failed in globalAppController.", published.get(0).sms());
+        assertFalse(published.get(0).sms().contains("and persist the"));
+        verify(store).rememberSms(eq(published.get(0).fingerprint()), eq("Checkout failed in globalAppController."));
+    }
+
+    @Test
+    public void process_propagatesInFlightLeaseSoPubSubRedelivers() {
+        when(store.reserve()).thenThrow(new IllegalStateException("Error alert delivery already in progress"));
+        try {
+            service.process(sampleLog());
+            fail("In-flight delivery must not ack");
+        } catch (IllegalStateException expected) {
+            assertEquals("Error alert delivery already in progress", expected.getMessage());
+        }
+        assertTrue(published.isEmpty());
+        verify(store, never()).complete(any());
     }
 
     @Test
@@ -151,8 +186,13 @@ public class ExplainErrorAlertServiceTest {
     }
 
     private ExplainErrorAlertService service(AlertSummaryPublisher publisher) {
+        return service(publisher, prompt -> Optional.of("Unconfirmed explanation"));
+    }
+
+    private ExplainErrorAlertService service(AlertSummaryPublisher publisher,
+            java.util.function.Function<String, Optional<String>> llm) {
         return new ExplainErrorAlertService(store,
-                new ErrorAlertSummarizer(prompt -> Optional.of("Unconfirmed explanation"), parsed -> List.of()),
+                new ErrorAlertSummarizer(llm::apply, parsed -> List.of()),
                 publisher);
     }
 

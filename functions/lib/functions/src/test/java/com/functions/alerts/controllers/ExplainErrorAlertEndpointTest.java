@@ -2,6 +2,7 @@ package com.functions.alerts.controllers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
@@ -123,6 +124,7 @@ public class ExplainErrorAlertEndpointTest {
     private static ErrorAlertDedupStore store() {
         ErrorAlertDedupStore store = mock(ErrorAlertDedupStore.class);
         when(store.reserve()).thenReturn(Optional.of(new ErrorAlertDedupStore.Reservation("owner")));
+        when(store.smsFor(any())).thenReturn(Optional.empty());
         return store;
     }
 }
