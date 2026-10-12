@@ -12,6 +12,7 @@ type ImageFormProps = AllImageData & {
   eventImageUrls: string[];
   setThumbnailUrls: (v: string[]) => void;
   setImageUrls: (v: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
   /** Flush workbench — skip warning card frame */
   flush?: boolean;
 };
@@ -25,6 +26,7 @@ export function ImageForm({
   eventImageUrls,
   setThumbnailUrls,
   setImageUrls,
+  onUploadingChange,
   flush = false,
 }: ImageFormProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export function ImageForm({
       return;
     }
 
+    onUploadingChange?.(true);
     try {
       let fileToUpload = imageFile;
       const fileSizeInMB = imageFile.size / (1024 * 1024);
@@ -77,6 +80,8 @@ export function ImageForm({
     } catch (error) {
       console.error("Error during image compression:", error);
       setErrorMessage("Failed to compress the image. Please try again.");
+    } finally {
+      onUploadingChange?.(false);
     }
   };
 

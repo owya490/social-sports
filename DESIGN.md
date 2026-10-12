@@ -430,6 +430,14 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Available:** `bg-surface-muted border border-border`.
 - Placed at the trailing edge of compact event rows; `aria-label` describes fill state.
 
+### Operational status labels
+
+- **Shared treatment:** `EntityRowStatuses` renders a wrapping line of compact neutral labels (`bg-surface`, `text-foreground-secondary`, `rounded-lg`, `text-xs`). Labels are readable text inside the row link, with no additional interaction.
+- **Events:** Below location, above the fill bar. Show **Bookings paused**, **Private**, and **Payments off** only when applicable; use **Bookings off** for free events, based on resolved ticket-type pricing. Ordinary rows omit the line.
+- **Coverage:** The shared event row carries these labels into Events, dashboard Coming up, and collection event lists at every screen width.
+- **Recurring series:** Show **Private** below location, separate from the existing Active / Paused / Ended generation status and cadence.
+- **Hover previews:** Keep supplementary flags, such as approval and attached forms. Omit row-visible statuses and omit the flag separator when no supplementary flags remain.
+
 ### Dashboard (Organiser v2)
 
 - **Header:** Time-based greeting (`text-2xl sm:text-3xl`), supporting line in `foreground-secondary`, primary “Create event” CTA top-right on desktop / full-width on phone.
@@ -560,35 +568,42 @@ One Headless UI `Dialog` — right drawer on `md+`, bottom sheet on phone.
 - **Header:** Title bar with close (desktop: chevron-double-right; mobile: X) + optional footer strip for primary CTA. Mobile drag pill (`h-1 w-10 rounded-full bg-surface-muted`).
 - **Width:** `md:max-w-lg` default (`32rem`); `wide` → `md:max-w-xl` (`36rem`—Edit Event, Change photo, Add answers).
 - **Scrim:** `bg-black/40`.
-- **Footer CTAs:** Yellow primary only (Update event, Save photos, Save response, Add)—left-aligned in the footer strip, not a second accent elsewhere in the body.
+- **Footer CTAs:** Yellow primary only (Save details, Save photos, Save response, Add)—left-aligned in the footer strip, not a second accent elsewhere in the body.
+- **Unsaved edits:** Details and photo panels ask Keep editing / Discard changes before dismissing a changed draft. Refresh and tab close use the browser warning. Dismissal stays blocked while saving; a rejected mobile drag returns the sheet to its resting position.
 
 #### Edit Event — sectioned operate sheet (Comp A)
 
-`EventHubEditForm` inside a `wide` `EventHubPanel` titled **Edit Event**. Ghost trigger on Details remains “Edit details.” One form (`id=event-hub-edit-details`); the footer button submits via `form=` attribute. Story: adjust any Sportshub field, tap Update event once.
+`EventHubEditForm` inside a `wide` `EventHubPanel` titled **Edit Event**. Ghost trigger on Details remains “Edit details.” One form (`id=event-hub-edit-details`); the footer button submits via `form=` attribute. Edit details contains only the event details draft. The separate **Manage tickets** entry opens the existing ticket-type editor in its own panel; each ticket type has its own save, preserving live inventory updates and the recurring-template persistence path.
 
-- **Section rhythm:** Four sections stacked `space-y-8`. Each section opens with an uppercase muted label (`text-xs font-semibold uppercase tracking-wide text-foreground-muted`)—Basic Info · Time · Location · Booking. Luma section cadence; no Appearance / theme controls.
+- **Section rhythm:** Four sections stacked `space-y-8`. Each section opens with an uppercase muted label (`text-xs font-semibold uppercase tracking-wide text-foreground-muted`)—Basic Info · Time · Location · Sport & Link. Luma section cadence; no Appearance / theme controls.
 - **Basic Info:** Large title input—borderless, bottom hairline only (`border-b border-border`), `text-xl font-semibold tracking-tight`. Description label `text-xs muted`, then `EventHubDescriptionEditor` in a `rounded-xl border-border` shell (min height ~7.5rem). No sticky formatting toolbar.
 - **TipTap bubble-on-selection:** Bold / italic / bullet list / link appear only when text is selected (`BubbleMenu`, tippy ~120ms, placement top). Bubble shell: white, `rounded-lg`, `border-border`, soft dossier shadow; active mark uses `bg-surface-muted`. Resting editor shows prose only.
 - **Time:** Outlined card (`rounded-xl border-border p-3 sm:p-4`) with a vertical timeline—filled near-black dot for Start, open muted ring for End, hairline connector. Each row: date + time in a 2-column grid of icon fields. Registration deadline sits under a hairline inside the same card.
 - **Location:** Single Maps-autocomplete field with leading map-pin icon.
-- **Booking:** `grid-cols-1 sm:grid-cols-2 gap-3`—Sport (full width), Capacity + Price side-by-side, Attach form + Event link full width. Labels `text-xs font-medium text-foreground-muted`.
+- **Sport & Link:** Sport and Event link span the width. Price, capacity, and ticket forms are managed in the independent Ticket types panel. Labels `text-xs font-medium text-foreground-muted`.
 - **Icon fields:** `FieldWithIcon`—`rounded-xl border-border`, leading Heroicon `16px` muted, transparent input (`text-base` on phone / `text-sm` on `sm+`), focus-within yellow outline.
 - **Warnings:** Inline `text-sm text-danger` under the relevant section (past start, end before start, deadline after end, capacity below attendees, location errors)—not toasts.
-- **Footer:** Single yellow **Update event** with check icon; disabled while saving / inactive / blocking warning. Hidden `sr-only` submit keeps Enter-to-save.
+- **Footer:** Single yellow **Save details** with check icon; disabled when unchanged, saving, inactive, or blocked by validation. Shows Saving… during the request; failures keep the draft and show an inline error. A hidden submit keeps Enter-to-save without adding another accessible button. The opening values stay fixed until the panel closes, so live event updates do not overwrite the draft. Saves include only changed fields, preserving unrelated live updates and untouched timestamp precision.
 
 **The Quiet Header Rule.** Event hub header is title + meta + Event page + Pause. Do not put the cover, capacity bar, or status-dot cluster in header—cover belongs in Details.
 
 **The Panel Grammar Rule.** Deep work (edit details, change photo, add attendee, per-attendee form responses, edit tickets, add answers, change attached form) opens `EventHubPanel`. The Forms tab browses responses in a flush table on stage—not a response inspector panel. Registrations may expand a row for order/ticket identity and action entry points; do not invent a persistent side inspector or cover-in-header hero.
 
-**The Overview-Led Details Rule.** Details lands as a two-column overview card with Edit details / Change photo ghosts. Inline document editing and advanced expand-in-place field stacks are not the Details body.
+**The Overview-Led Details Rule.** Details lands as a two-column overview card with Edit details / Manage tickets / Change photo ghosts. Inline document editing and advanced expand-in-place field stacks are not the Details body.
 
-**The Sectioned Edit Rule.** Edit Event is four calm sections—Basic Info / Time / Location / Booking—in one submit. Not a sticky document toolbar, not a view/edit toggle card, and not Appearance themes.
+**The Sectioned Edit Rule.** Edit Event is four calm sections—Basic Info / Time / Location / Sport & Link—in one submit. Ticket types save independently in Manage tickets. Not a sticky document toolbar, not a view/edit toggle card, and not Appearance themes.
 
 **The Bubble-on-Selection Rule.** Description formatting appears only on text selection via TipTap BubbleMenu (bold / italic / list / link). Do not ship a sticky toolbar above the description editor.
 
 #### Event hub settings — flush preference stack
 
 Preference switches reuse the account Settings switch (accent on / `surface-muted` off, `28×48px`). Rows stack with `divide-y divide-border` directly on the stage—no outlined settings-panel shell, no header strip. Destructive “Delete event” is a danger text link below a hairline, not a yellow button.
+
+#### Recurring-series controls
+
+The series header contains identity and the Template badge. **Bookings on new events** lives beside **Accept payments** / **Accept bookings** in Settings → Registration, using the same toggle tile with Open / Paused state and visible help directly beneath that tile. On mobile, the booking tile spans the row so its help has room to read. An inactive series uses neutral tile styling with a lock icon and **Locked** label; a compact **Series inactive.** / **Extend schedule** row explains the lock and offers recovery without requiring hover or a click on the disabled control. It autosaves with rollback and Retry, independently of Stripe; saving a schedule refreshes series status so a restarted series becomes editable immediately. If status refresh fails, bookings stay locked with **Status unavailable.** / **Reload page** recovery that persists across tab changes; details, photo and ticket editing retain the last known active state. Settings explain that changes apply to newly created events and leave existing events unchanged.
+
+**Create future events** stays in Recurrence → Schedule. It controls automatic event creation, independently of booking availability. Schedule changes require **Save schedule**; an ended series prompts the organiser to review upcoming dates before restarting.
 
 ### Create Event — centered thumbnail + essentials
 

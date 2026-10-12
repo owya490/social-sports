@@ -6,7 +6,7 @@ import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
+import { hasEventEndPassed, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
@@ -37,6 +37,7 @@ import { EVENT_HUB_EDIT_FORM_ID, EventHubEditForm } from "./EventHubEditForm";
 import { EventHubPanel } from "./EventHubPanel";
 import { EventHubShareControl } from "./EventHubShareControl";
 import { EventHubGhostButton, EventHubPrimaryButton, EventHubStage } from "./EventHubStage";
+import { EventHubTicketTypesEditor } from "./EventHubTicketTypesEditor";
 
 type EventHubListingProps = {
   loading: boolean;
@@ -93,11 +94,15 @@ export function EventHubListing({
 }: EventHubListingProps) {
   const { user } = useUser();
   const [editOpen, setEditOpen] = useState(false);
+  const [ticketsOpen, setTicketsOpen] = useState(false);
   const [photoOpen, setPhotoOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [publicUrl, setPublicUrl] = useState("");
-  const [savingEdit, setSavingEdit] = useState(false);
+  const [editState, setEditState] = useState({ dirty: false, saving: false, canSave: false });
   const isTemplate = mode === "template";
+  const ended = !isTemplate && hasEventEndPassed(eventEndDate);
+  const canEditDetails = isActive && !ended;
+  const canManageTickets = Boolean(orderTicketsMap && setEventTicketTypes);
 
   const cover = eventImage || eventThumbnail;
   const hostName = [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "You";
@@ -279,9 +284,15 @@ export function EventHubListing({
           <div className="flex flex-wrap items-center gap-2">
             <EventHubGhostButton onClick={() => setEditOpen(true)} disabled={loading}>
               <PencilSquareIcon className="h-4 w-4" aria-hidden />
-              Edit details
+              {ended ? "View details" : "Edit details"}
             </EventHubGhostButton>
-            <EventHubGhostButton onClick={() => setPhotoOpen(true)} disabled={!isActive || loading}>
+            {canManageTickets ? (
+              <EventHubGhostButton onClick={() => setTicketsOpen(true)} disabled={loading}>
+                <TicketIcon className="h-4 w-4" aria-hidden />
+                {canEditDetails ? "Manage tickets" : "View tickets"}
+              </EventHubGhostButton>
+            ) : null}
+            <EventHubGhostButton onClick={() => setPhotoOpen(true)} disabled={!canEditDetails || loading}>
               <PhotoIcon className="h-4 w-4" aria-hidden />
               Change photo
             </EventHubGhostButton>
@@ -348,9 +359,14 @@ export function EventHubListing({
 
       <EventHubPanel
         open={editOpen}
-        onClose={() => setEditOpen(false)}
+        onClose={() => {
+          setEditOpen(false);
+          setEditState({ dirty: false, saving: false, canSave: false });
+        }}
+        hasUnsavedChanges={editState.dirty}
+        saving={editState.saving}
         title={
-          !isActive
+          !canEditDetails
             ? isTemplate
               ? "Template details"
               : "Event details"
@@ -360,22 +376,21 @@ export function EventHubListing({
         }
         wide
         footer={
-          isActive ? (
+          canEditDetails ? (
             <EventHubPrimaryButton
               type="submit"
               form={EVENT_HUB_EDIT_FORM_ID}
-              disabled={savingEdit || loading}
+              disabled={loading || !editState.canSave}
             >
               <CheckIcon className="h-4 w-4" aria-hidden />
-              {isTemplate ? "Update template" : "Update event"}
+              {editState.saving ? "Saving…" : "Save details"}
             </EventHubPrimaryButton>
-          ) : (
-            <EventHubGhostButton onClick={() => setEditOpen(false)}>Close</EventHubGhostButton>
-          )
+          ) : undefined
         }
       >
         {editOpen ? (
           <EventHubEditForm
+            key={eventId}
             eventId={eventId}
             eventName={eventName}
             eventDescription={eventDescription}
@@ -385,16 +400,41 @@ export function EventHubListing({
             eventSport={eventSport}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
-            isActive={isActive}
-            eventTicketTypes={eventTicketTypes}
-            orderTicketsMap={orderTicketsMap}
-            setEventTicketTypes={setEventTicketTypes}
-            onPersistTicketTypes={onPersistTicketTypes}
-            hideTicketTypeFormSelector={!isTemplate}
+            isActive={canEditDetails}
+            ended={ended}
             updateData={updateData}
-            onSaved={() => setEditOpen(false)}
-            onSavingChange={setSavingEdit}
+            onSaved={() => {
+              setEditOpen(false);
+              setEditState({ dirty: false, saving: false, canSave: false });
+            }}
+            onStateChange={setEditState}
           />
+        ) : null}
+      </EventHubPanel>
+
+      <EventHubPanel
+        open={ticketsOpen}
+        onClose={() => setTicketsOpen(false)}
+        title="Ticket types"
+        footer={<EventHubGhostButton onClick={() => setTicketsOpen(false)}>Close</EventHubGhostButton>}
+      >
+        {ticketsOpen && orderTicketsMap && setEventTicketTypes ? (
+          <div className="space-y-4">
+            {canEditDetails ? (
+              <p className="text-sm text-foreground-secondary font-sans">
+                Changes apply when you save a ticket type.
+              </p>
+            ) : null}
+            <EventHubTicketTypesEditor
+              eventId={eventId}
+              eventTicketTypes={eventTicketTypes}
+              orderTicketsMap={orderTicketsMap}
+              isActive={canEditDetails}
+              setEventTicketTypes={setEventTicketTypes}
+              onPersistTicketTypes={onPersistTicketTypes}
+              hideFormSelector={!isTemplate}
+            />
+          </div>
         ) : null}
       </EventHubPanel>
 
@@ -426,15 +466,24 @@ function ChangePhotoPanel({
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
 }) {
   const { user } = useUser();
-  const [loading, setLoading] = useState(true);
-  const [eventImageUrls, setEventImageUrls] = useState<string[]>([]);
-  const [eventThumbnailUrls, setEventThumbnailUrls] = useState<string[]>([]);
-  const [allImageData, setAllImageData] = useState<AllImageData>({
-    image: eventImage || undefined,
-    thumbnail: eventThumbnail || undefined,
-  });
-  const [dirty, setDirty] = useState(false);
+  const [loading, setLoading] = useState(Boolean(user.userId));
+  const [initialImages, setInitialImages] = useState({ image: eventImage || "", thumbnail: eventThumbnail || "" });
+  const [eventImageUrls, setEventImageUrls] = useState<string[]>(eventImage ? [eventImage] : []);
+  const [eventThumbnailUrls, setEventThumbnailUrls] = useState<string[]>(eventThumbnail ? [eventThumbnail] : []);
+  const [allImageData, setAllImageData] = useState<AllImageData>(initialImages);
+  const dirty = (allImageData.image ?? "") !== initialImages.image ||
+    (allImageData.thumbnail ?? "") !== initialImages.thumbnail;
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (open) return;
+    const images = { image: eventImage || "", thumbnail: eventThumbnail || "" };
+    setInitialImages(images);
+    setAllImageData(images);
+    setError("");
+  }, [open, eventImage, eventThumbnail]);
 
   useEffect(() => {
     if (!open || !user.userId) return;
@@ -447,13 +496,10 @@ function ChangePhotoPanel({
           getUsersEventImagesUrls(user.userId),
         ]);
         if (!active) return;
-        setEventThumbnailUrls(eventThumbnail ? [eventThumbnail, ...thumbs.filter((u) => u !== eventThumbnail)] : thumbs);
-        setEventImageUrls(eventImage ? [eventImage, ...images.filter((u) => u !== eventImage)] : images);
-        setAllImageData({
-          image: eventImage || undefined,
-          thumbnail: eventThumbnail || undefined,
-        });
-        setDirty(false);
+        setEventThumbnailUrls(initialImages.thumbnail ? [initialImages.thumbnail, ...thumbs.filter((u) => u !== initialImages.thumbnail)] : thumbs);
+        setEventImageUrls(initialImages.image ? [initialImages.image, ...images.filter((u) => u !== initialImages.image)] : images);
+      } catch {
+        if (active) setError("Couldn't load your photo library. Close this panel and try again.");
       } finally {
         if (active) setLoading(false);
       }
@@ -461,17 +507,20 @@ function ChangePhotoPanel({
     return () => {
       active = false;
     };
-  }, [open, user.userId, eventImage, eventThumbnail]);
+  }, [open, user.userId, initialImages]);
 
   const save = async () => {
+    if (!dirty || saving || uploading || loading) return;
     setSaving(true);
+    setError("");
     try {
-      await updateData(eventId, {
-        image: allImageData.image,
-        thumbnail: allImageData.thumbnail,
-      });
-      setDirty(false);
+      const changes: Partial<EventData> = {};
+      if ((allImageData.image ?? "") !== initialImages.image) changes.image = allImageData.image ?? "";
+      if ((allImageData.thumbnail ?? "") !== initialImages.thumbnail) changes.thumbnail = allImageData.thumbnail ?? "";
+      await updateData(eventId, changes);
       onClose();
+    } catch {
+      setError("Couldn't save your photos. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -482,30 +531,35 @@ function ChangePhotoPanel({
       open={open}
       onClose={onClose}
       title="Change photo"
+      hasUnsavedChanges={dirty}
+      saving={saving || uploading}
       wide
       footer={
-        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving || loading}>
+        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving || uploading || loading}>
           <CheckIcon className="h-4 w-4" aria-hidden />
-          Save photos
+          {uploading ? "Uploading…" : saving ? "Saving…" : "Save photos"}
         </EventHubPrimaryButton>
       }
     >
-      <ImagePickerReveal loading={loading}>
-        <ImageForm
-          user={user}
-          image={allImageData.image}
-          thumbnail={allImageData.thumbnail}
-          updateField={(fields) => {
-            setAllImageData((prev) => ({ ...prev, ...fields }));
-            setDirty(true);
-          }}
-          eventThumbnailsUrls={eventThumbnailUrls}
-          eventImageUrls={eventImageUrls}
-          setThumbnailUrls={setEventThumbnailUrls}
-          setImageUrls={setEventImageUrls}
-          flush
-        />
-      </ImagePickerReveal>
+      {error ? <p role="alert" className="mb-4 text-sm text-danger font-sans">{error}</p> : null}
+      <fieldset disabled={saving || uploading} className={`min-w-0 ${saving || uploading ? "pointer-events-none" : ""}`} aria-busy={saving || uploading}>
+        <ImagePickerReveal loading={loading}>
+          <ImageForm
+            user={user}
+            image={allImageData.image}
+            thumbnail={allImageData.thumbnail}
+            updateField={(fields) => {
+              if (!saving) setAllImageData((prev) => ({ ...prev, ...fields }));
+            }}
+            eventThumbnailsUrls={eventThumbnailUrls}
+            eventImageUrls={eventImageUrls}
+            setThumbnailUrls={setEventThumbnailUrls}
+            setImageUrls={setEventImageUrls}
+            onUploadingChange={setUploading}
+            flush
+          />
+        </ImagePickerReveal>
+      </fieldset>
     </EventHubPanel>
   );
 }

@@ -38,7 +38,7 @@ export type FulfilmentSessionBase = {
 };
 
 export type CheckoutFulfilmentSessionType = FulfilmentSessionBase & {
-  paymentProvider?: PaymentProvider;
+  paymentProvider: PaymentProvider;
 };
 
 export type WaitlistFulfilmentSessionType = FulfilmentSessionBase;
@@ -75,7 +75,7 @@ export type InitCheckoutFulfilmentSessionRequest = {
   eventId: EventId;
   numTickets: number;
   eventTicketTypeId: EventTicketTypeId;
-  paymentProvider?: PaymentProvider;
+  paymentProvider: PaymentProvider;
 };
 
 /**

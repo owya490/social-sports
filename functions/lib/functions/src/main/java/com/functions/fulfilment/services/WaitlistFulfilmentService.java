@@ -11,7 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -39,6 +41,7 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
                 throw new Exception("Failed to find event data for event ID: " + eventId);
             }
             EventData eventData = maybeEventData.get();
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
 
             if (!Boolean.TRUE.equals(eventData.getWaitlistEnabled())) {
                 logger.error("Event is not open for waitlist: {}", eventId);
@@ -80,7 +83,8 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
                     .fulfilmentEntityMap(entityMap)
                     .fulfilmentEntityIds(entityOrder)
                     .numTickets(numTickets)
-                    .eventTicketTypeId(eventTicketTypeId)
+                    .eventTicketTypeId(ticketType.getId())
+                    .price(ticketType.getPrice())
                     .build();
         } catch (Exception e) {
             logger.error("Failed to initialise waitlist fulfilment session: {}", e.getMessage());

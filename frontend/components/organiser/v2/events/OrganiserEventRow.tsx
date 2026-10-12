@@ -2,7 +2,7 @@
 
 import {
   EventHoverDescription,
-  EventHoverFlags,
+  getEventHoverFlags,
   EventHoverMetrics,
 } from "@/components/organiser/v2/events/EventHoverBody";
 import {
@@ -10,11 +10,12 @@ import {
   EntityHoverPreview,
 } from "@/components/organiser/v2/shared/EntityHoverPreview";
 import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowThumbnail";
+import { EntityRowStatuses } from "@/components/organiser/v2/shared/EntityRowStatuses";
 import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { EventData } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
-import { getEventPriceDisplay } from "@/utilities/priceUtils";
+import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
 import { CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -57,6 +58,10 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
   const isSoldOut = inventory.capacity > 0 && filled >= inventory.capacity;
   const thumbnailSrc = event.thumbnail || event.image;
   const href = welcomeAwareEventHref(pathname, event.eventId);
+  const statuses = [];
+  if (event.paused) statuses.push("Bookings paused");
+  if (event.isPrivate) statuses.push("Private");
+  if (!event.paymentsActive) statuses.push(isFreeEvent(inventory.price) ? "Bookings off" : "Payments off");
 
   return (
     <EntityHoverPreview
@@ -64,7 +69,7 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
       title={event.name}
       metrics={<EventHoverMetrics event={event} />}
       body={<EventHoverDescription event={event} />}
-      flags={<EventHoverFlags event={event} />}
+      flags={getEventHoverFlags(event)}
     >
       <Link
         href={href}
@@ -100,6 +105,7 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
             <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
             {event.location}
           </p>
+          <EntityRowStatuses labels={statuses} />
           <OrganiserEventFillBar filled={filled} capacity={inventory.capacity} />
         </div>
       </Link>
