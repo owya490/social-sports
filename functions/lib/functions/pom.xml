@@ -128,6 +128,12 @@
       <artifactId>commons-validator</artifactId>
       <version>1.9.0</version>
     </dependency>
+    <!-- Offline lat/lng to IANA zone. Australia-only events do not need a live Time Zone API. -->
+    <dependency>
+      <groupId>net.iakovlev</groupId>
+      <artifactId>timeshape</artifactId>
+      <version>2025b.26</version>
+    </dependency>
   </dependencies>
 
   <build>

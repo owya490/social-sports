@@ -15,6 +15,7 @@ from lib.auth import *
 from lib.constants import *
 from lib.constants import ACTIVE_PRIVATE, ACTIVE_PUBLIC, EVENT_METADATA, SYDNEY_TIMEZONE
 from lib.emails.constants import LOOPS_API_KEY, LOOPS_EMAIL_REMINDER_TEMPLATE_ID
+from lib.emails.event_local_time import format_event_local
 from lib.logging import Logger
 
 
@@ -123,6 +124,8 @@ def get_active_events_starting_tomorrow(
             logger.error(f"Failed to get timestamp for event {event_id}: {e}")
             continue
 
+        # The job still picks "tomorrow" on the Sydney calendar. The clock below
+        # uses the venue zone so 9:00 stays 9:00 after daylight saving.
         if event_start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() == tomorrow:
             # Guard rails: check if endDate exists
             end_date_field = event_dict.get("endDate")
@@ -133,16 +136,9 @@ def get_active_events_starting_tomorrow(
             try:
                 start_date: Timestamp = start_date_field.timestamp_pb()
                 end_date: Timestamp = end_date_field.timestamp_pb()
-                start_date_string = (
-                    start_date.ToDatetime()
-                    .astimezone(SYDNEY_TIMEZONE)
-                    .strftime("%m/%d/%Y, %H:%M")
-                )
-                end_date_string = (
-                    end_date.ToDatetime()
-                    .astimezone(SYDNEY_TIMEZONE)
-                    .strftime("%m/%d/%Y, %H:%M")
-                )
+                venue_zone = event_dict.get("timezone")
+                start_date_string = format_event_local(start_date.ToDatetime(), venue_zone)
+                end_date_string = format_event_local(end_date.ToDatetime(), venue_zone)
             except Exception as e:
                 logger.error(f"Failed to format dates for event {event_id}: {e}")
                 continue

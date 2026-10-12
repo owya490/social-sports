@@ -5,6 +5,7 @@ import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.events.utils.EventTimeZone;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
@@ -26,13 +27,12 @@ import java.util.stream.IntStream;
 
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
-    // Recurring sport events keep the organiser's wall-clock time in Sydney, including DST.
-    private static final ZoneId EVENT_TIMEZONE = ZoneId.of("Australia/Sydney");
 
     // Returns Map.Entry<RecurrenceTemplateId, EventId>
     public static Optional<Map.Entry<String, String>> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
-        // Calculate all future recurrence Dates
-        RecurrenceData recurrenceData = calculateRecurrenceDataForCreate(newRecurrenceData, newEventData.getStartDate());
+        // Calculate all future recurrence Dates in the venue zone.
+        ZoneId zone = EventTimeZone.stamp(newEventData);
+        RecurrenceData recurrenceData = calculateRecurrenceDataForCreate(newRecurrenceData, newEventData, zone);
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
                 .eventData(newEventData)
                 .recurrenceData(recurrenceData)
@@ -70,8 +70,9 @@ public class RecurringEventsService {
             newRecurrenceData = currentRecurrenceTemplate.getRecurrenceData().extractNewRecurrenceData();
         }
 
-        // Calculate all future recurrence Dates
-        RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false);
+        // Calculate all future recurrence Dates in the venue zone.
+        ZoneId zone = EventTimeZone.stamp(newEventData);
+        RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false, zone);
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
                 .eventData(newEventData)
                 .recurrenceData(recurrenceData)
@@ -103,12 +104,12 @@ public class RecurringEventsService {
         }
     }
 
-    private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, Timestamp startDate) {
-        return calculateRecurrenceData(newRecurrenceData, startDate, Map.of(), true);
+    private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, NewEventData eventData, ZoneId zone) {
+        return calculateRecurrenceData(newRecurrenceData, eventData.getStartDate(), Map.of(), true, zone);
     }
 
-    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate, Map<String, String> pastRecurrences, boolean isCreate) {
-        List<Timestamp> allRecurrences = calculateAllRecurrenceDates(startDate, newRecurrenceData.getFrequency(), newRecurrenceData.getRecurrenceAmount(), isCreate);
+    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate, Map<String, String> pastRecurrences, boolean isCreate, ZoneId zone) {
+        List<Timestamp> allRecurrences = calculateAllRecurrenceDates(startDate, newRecurrenceData.getFrequency(), newRecurrenceData.getRecurrenceAmount(), isCreate, zone);
         return RecurrenceData.builderFromNewRecurrenceData(newRecurrenceData)
                 .allRecurrences(allRecurrences)
                 .pastRecurrences(pastRecurrences)
@@ -116,8 +117,9 @@ public class RecurringEventsService {
     }
 
     @VisibleForTesting
-    public static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount, boolean isCreate) {
-        logger.info("Calculating all recurrence dates from {} with a frequency of {} for {} times", startDate, frequency, recurrenceAmount);
+    public static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount, boolean isCreate, ZoneId zone) {
+        ZoneId eventZone = zone == null ? EventTimeZone.FALLBACK : zone;
+        logger.info("Calculating all recurrence dates from {} with a frequency of {} for {} times in {}", startDate, frequency, recurrenceAmount, eventZone);
         int starting = isCreate ? 0 : 1;
         switch (frequency) {
             case WEEKLY:
@@ -125,28 +127,28 @@ public class RecurringEventsService {
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
                 return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
                     logger.info("recurrenceNumber {}", recurrenceNumber);
-                    return occurrenceAfterDays(startDate, (long) recurrenceNumber * frequency.getValue());
+                    return occurrenceAfterDays(startDate, (long) recurrenceNumber * frequency.getValue(), eventZone);
                 }).collect(Collectors.toList());
             case MONTHLY:
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
                 return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber ->
-                        occurrenceAfterMonths(startDate, recurrenceNumber)
+                        occurrenceAfterMonths(startDate, recurrenceNumber, eventZone)
                 ).collect(Collectors.toList());
             default:
                 return List.of();
         }
     }
 
-    private static Timestamp occurrenceAfterDays(Timestamp startDate, long days) {
-        return toTimestamp(zonedStart(startDate).plusDays(days));
+    private static Timestamp occurrenceAfterDays(Timestamp startDate, long days, ZoneId zone) {
+        return toTimestamp(zonedStart(startDate, zone).plusDays(days));
     }
 
-    private static Timestamp occurrenceAfterMonths(Timestamp startDate, long months) {
-        return toTimestamp(zonedStart(startDate).plusMonths(months));
+    private static Timestamp occurrenceAfterMonths(Timestamp startDate, long months, ZoneId zone) {
+        return toTimestamp(zonedStart(startDate, zone).plusMonths(months));
     }
 
-    private static ZonedDateTime zonedStart(Timestamp startDate) {
-        return Instant.ofEpochSecond(startDate.getSeconds(), startDate.getNanos()).atZone(EVENT_TIMEZONE);
+    private static ZonedDateTime zonedStart(Timestamp startDate, ZoneId zone) {
+        return Instant.ofEpochSecond(startDate.getSeconds(), startDate.getNanos()).atZone(zone);
     }
 
     private static Timestamp toTimestamp(ZonedDateTime zonedDateTime) {

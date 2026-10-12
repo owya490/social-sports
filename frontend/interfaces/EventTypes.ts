@@ -30,6 +30,8 @@ interface AbstractEventData {
     lat: number;
     lng: number;
   };
+  /** IANA zone of the venue. Absent on events saved before location timezones. */
+  timezone?: string;
   // Prefer eventTicketTypes (see resolveEventInventory); top-level kept for legacy events without types.
   capacity: number;
   vacancy: number;

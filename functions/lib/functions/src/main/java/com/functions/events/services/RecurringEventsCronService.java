@@ -20,6 +20,7 @@ import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
 import com.functions.events.utils.EventIdGenerator;
+import com.functions.events.utils.EventTimeZone;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
@@ -37,6 +38,7 @@ public class RecurringEventsCronService {
     }
 
     public static List<String> createEventsFromRecurrenceTemplates(LocalDate today, String targetRecurrenceTemplateId, boolean createEventWorkflow) throws Exception {
+        EventTimeZone.warm();
         logger.info("Creating events from recurrence templates. today: {}, targetRecurrenceTemplateId: {}, targetRecurrenceTemplate: {}, createEventWorkflow: {}", today, targetRecurrenceTemplateId, createEventWorkflow);
         Set<String> activeRecurrenceTemplateIds;
         if (targetRecurrenceTemplateId == null) {
@@ -200,6 +202,8 @@ public class RecurringEventsCronService {
         }
 
         for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
+            // Keys and the due-day check stay on the Sydney calendar so existing
+            // pastRecurrences entries still match. Start, end, and deadline use the venue zone.
             String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
                     recurrenceTimestamp, SYDNEY_TIMEZONE);
             LocalDate eventCreationDate = recurrenceTimestamp.toSqlTimestamp().toInstant()
@@ -213,18 +217,20 @@ public class RecurringEventsCronService {
         return null;
     }
 
-    private static NewEventData createEventDataForRecurrence(NewEventData eventData,
+    static NewEventData createEventDataForRecurrence(NewEventData eventData,
             Timestamp recurrenceTimestamp) {
         NewEventData eventDataCopy = JavaUtils.deepCopy(eventData, NewEventData.class);
-        long eventLengthMillis = eventDataCopy.getEndDate().toSqlTimestamp().getTime()
-                - eventDataCopy.getStartDate().toSqlTimestamp().getTime();
-        long eventDeadlineDeltaMillis = eventDataCopy.getRegistrationDeadline().toSqlTimestamp().getTime()
-                - eventDataCopy.getStartDate().toSqlTimestamp().getTime();
+        ZoneId zone = EventTimeZone.stamp(eventDataCopy);
+        Timestamp templateStart = eventData.getStartDate();
+        if (templateStart != null && eventData.getEndDate() != null) {
+            eventDataCopy.setEndDate(EventTimeZone.applyLocalRelationship(
+                    templateStart, eventData.getEndDate(), recurrenceTimestamp, zone));
+        }
+        if (templateStart != null && eventData.getRegistrationDeadline() != null) {
+            eventDataCopy.setRegistrationDeadline(EventTimeZone.applyLocalRelationship(
+                    templateStart, eventData.getRegistrationDeadline(), recurrenceTimestamp, zone));
+        }
         eventDataCopy.setStartDate(recurrenceTimestamp);
-        eventDataCopy.setEndDate(Timestamp.ofTimeMicroseconds(
-                (recurrenceTimestamp.toSqlTimestamp().getTime() + eventLengthMillis) * 1000));
-        eventDataCopy.setRegistrationDeadline(Timestamp.ofTimeMicroseconds(
-                (recurrenceTimestamp.toSqlTimestamp().getTime() + eventDeadlineDeltaMillis) * 1000));
         return eventDataCopy;
     }
 

@@ -171,6 +171,7 @@ function getEventsDataFromLocalStorage(): EventData[] {
         lat: event.locationLatLng.lat,
         lng: event.locationLatLng.lng,
       },
+      timezone: event.timezone,
       isPrivate: event.isPrivate,
       paymentsActive: event.paymentsActive,
       stripeFeeToCustomer: event.stripeFeeToCustomer,

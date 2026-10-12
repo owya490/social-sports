@@ -26,6 +26,13 @@ public abstract class AbstractEventData {
 	private Timestamp endDate;
 	private String location;
 	private LocationLatLng locationLatLng;
+	/**
+	 * IANA zone of the venue, for example Australia/Sydney.
+	 * Absent on documents saved before venue timezones. Recurrence reads coordinates
+	 * or falls back to Australia/Sydney and does not rewrite those documents.
+	 */
+	@Nullable
+	private String timezone;
 	private Integer capacity;
 	private Integer vacancy;
 	/**

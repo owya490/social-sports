@@ -16,6 +16,7 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.models.responses.CreateEventResponse;
 import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventIdGenerator;
+import com.functions.events.utils.EventTimeZone;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.global.models.AuthContext;
@@ -50,6 +51,7 @@ public class CreateEventHandler implements Handler<NewEventData, CreateEventResp
 
         EventAuthorizationService.requireMatchingUser(authContext.requireUid(), request.getOrganiserId(),
                 "You are not allowed to create events for another organiser");
+        EventTimeZone.stamp(request);
 
         try {
             Firestore db = FirebaseService.getFirestore();
