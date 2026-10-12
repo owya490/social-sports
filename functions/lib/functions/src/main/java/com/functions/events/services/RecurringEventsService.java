@@ -13,8 +13,10 @@ import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +26,8 @@ import java.util.stream.IntStream;
 
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
+    // Recurring sport events keep the organiser's wall-clock time in Sydney, including DST.
+    private static final ZoneId EVENT_TIMEZONE = ZoneId.of("Australia/Sydney");
 
     // Returns Map.Entry<RecurrenceTemplateId, EventId>
     public static Optional<Map.Entry<String, String>> createRecurrenceTemplate(NewEventData newEventData, NewRecurrenceData newRecurrenceData) {
@@ -121,19 +125,31 @@ public class RecurringEventsService {
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
                 return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
                     logger.info("recurrenceNumber {}", recurrenceNumber);
-                    LocalDateTime recurrenceDateTime = TimeUtils.convertTimestampToLocalDateTime(startDate)
-                            .plusDays((long) recurrenceNumber * frequency.getValue());
-                    return TimeUtils.convertLocalDateTimeToTimestamp(recurrenceDateTime);
+                    return occurrenceAfterDays(startDate, (long) recurrenceNumber * frequency.getValue());
                 }).collect(Collectors.toList());
             case MONTHLY:
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
-                return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
-                    LocalDateTime recurrenceDateTime = TimeUtils.convertTimestampToLocalDateTime(startDate)
-                            .plusMonths(recurrenceNumber);
-                    return TimeUtils.convertLocalDateTimeToTimestamp(recurrenceDateTime);
-                }).collect(Collectors.toList());
+                return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber ->
+                        occurrenceAfterMonths(startDate, recurrenceNumber)
+                ).collect(Collectors.toList());
             default:
                 return List.of();
         }
+    }
+
+    private static Timestamp occurrenceAfterDays(Timestamp startDate, long days) {
+        return toTimestamp(zonedStart(startDate).plusDays(days));
+    }
+
+    private static Timestamp occurrenceAfterMonths(Timestamp startDate, long months) {
+        return toTimestamp(zonedStart(startDate).plusMonths(months));
+    }
+
+    private static ZonedDateTime zonedStart(Timestamp startDate) {
+        return Instant.ofEpochSecond(startDate.getSeconds(), startDate.getNanos()).atZone(EVENT_TIMEZONE);
+    }
+
+    private static Timestamp toTimestamp(ZonedDateTime zonedDateTime) {
+        return TimeUtils.convertZonedDateTimeToTimestamp(zonedDateTime);
     }
 }
