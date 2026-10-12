@@ -1,14 +1,15 @@
 package com.functions.events.utils;
 
-import java.util.UUID;
+import com.github.f4b6a3.ulid.UlidCreator;
 
 public final class EventIdGenerator {
-    private static final String EVENT_ID_PREFIX = "event_";
+    /** Must match the frontend `newEventId` helper: `evt_` plus a 26-character ULID. */
+    private static final String EVENT_ID_PREFIX = "evt_";
 
     private EventIdGenerator() {
     }
 
     public static String newEventId() {
-        return EVENT_ID_PREFIX + UUID.randomUUID();
+        return EVENT_ID_PREFIX + UlidCreator.getMonotonicUlid();
     }
 }

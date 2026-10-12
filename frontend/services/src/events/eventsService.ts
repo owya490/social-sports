@@ -45,6 +45,7 @@ import {
   tokenizeText,
 } from "./eventsUtils/commonEventsUtils";
 import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtils/createEventsUtils";
+import { newEventId } from "./eventsUtils/eventIdGenerator";
 import {
   applyGeneralAdmissionInventoryFields,
   buildGeneralAdmissionInventoryUpdates,
@@ -76,23 +77,24 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     const isActive = data.isActive ? EventStatus.Active : EventStatus.Inactive;
     const isPrivate = data.isPrivate ? EventPrivacy.Private : EventPrivacy.Public;
 
-    const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate));
+    const eventId = newEventId();
+    const docRef = doc(collection(db, CollectionPaths.Events, isActive, isPrivate), eventId);
 
     await runTransaction(db, async (transaction) => {
       transaction.set(docRef, eventDataWithTokens);
-      const eventMetadataRef = doc(db, CollectionPaths.EventsMetadata, docRef.id);
+      const eventMetadataRef = doc(db, CollectionPaths.EventsMetadata, eventId);
       transaction.set(eventMetadataRef, extractEventsMetadataFields(data));
-      eventServiceLogger.info(`createEventMetadata succedded for ${docRef.id}`);
+      eventServiceLogger.info(`createEventMetadata succedded for ${eventId}`);
 
       const privateUserRef = doc(db, "Users", "Active", "Private", data.organiserId);
       transaction.update(privateUserRef, {
-        organiserEvents: arrayUnion(docRef.id),
+        organiserEvents: arrayUnion(eventId),
       });
 
       if (!eventDataWithTokens.isPrivate) {
         const publicUserRef = doc(db, "Users", "Active", "Public", data.organiserId);
         transaction.update(publicUserRef, {
-          publicUpcomingOrganiserEvents: arrayUnion(docRef.id),
+          publicUpcomingOrganiserEvents: arrayUnion(eventId),
         });
       }
     });
@@ -101,8 +103,8 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     bustEventsLocalStorageCache();
     bustUserLocalStorageCache();
 
-    eventServiceLogger.info(`createEvent succeeded for ${docRef.id}`);
-    return docRef.id as EventId;
+    eventServiceLogger.info(`createEvent succeeded for ${eventId}`);
+    return eventId;
   } catch (error) {
     eventServiceLogger.error(`createEvent ${error}`);
     throw error;
