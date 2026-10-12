@@ -23,6 +23,8 @@ import com.google.cloud.firestore.Transaction;
 public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     public static final Duration DEDUP_WINDOW = Duration.ofMinutes(10);
     public static final Duration IN_FLIGHT_WINDOW = Duration.ofMinutes(3);
+    /** Matches Cloud Monitoring autoClose (604800s) so EXTRACT(sms) stays stable for one incident. */
+    public static final Duration SMS_INCIDENT_WINDOW = Duration.ofDays(7);
     static final int DAILY_LIMIT = 20;
     static final String COLLECTION = "ErrorAlertDedup";
     static final String GLOBAL_SEND_DOCUMENT = "_global";
@@ -112,26 +114,42 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
 
     @Override
     public Optional<String> smsFor(String fingerprint) {
+        Instant now = clock.instant();
         return run(transaction -> {
-            String sms = transaction.get(fingerprintDoc(fingerprint)).get().getString("sms");
-            return sms == null || sms.isBlank() ? Optional.empty() : Optional.of(sms);
+            DocumentReference doc = fingerprintDoc(fingerprint);
+            DocumentSnapshot state = transaction.get(doc).get();
+            if (!smsActive(state, now)) {
+                return Optional.empty();
+            }
+            transaction.set(doc, Map.of("smsSavedAt", timestamp(now)), SetOptions.merge());
+            return Optional.of(state.getString("sms"));
         });
     }
 
     @Override
     public void rememberSms(String fingerprint, String sms) {
+        Instant now = clock.instant();
         run(transaction -> {
             DocumentReference doc = fingerprintDoc(fingerprint);
-            String existing = transaction.get(doc).get().getString("sms");
-            if (existing == null || existing.isBlank()) {
-                transaction.set(doc, Map.of("sms", sms), SetOptions.merge());
+            DocumentSnapshot state = transaction.get(doc).get();
+            if (smsActive(state, now)) {
+                return null;
             }
+            transaction.set(doc, Map.of("sms", sms, "smsSavedAt", timestamp(now)), SetOptions.merge());
             return null;
         });
     }
 
     private DocumentReference fingerprintDoc(String fingerprint) {
         return db.collection(COLLECTION).document(fingerprint);
+    }
+
+    private static boolean smsActive(DocumentSnapshot state, Instant now) {
+        if (!state.exists()) {
+            return false;
+        }
+        String sms = state.getString("sms");
+        return sms != null && !sms.isBlank() && recent(state, "smsSavedAt", now, SMS_INCIDENT_WINDOW);
     }
 
     private static boolean owned(DocumentSnapshot state, Reservation reservation) {

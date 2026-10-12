@@ -16,12 +16,17 @@ public interface ErrorAlertDedupStore {
 
     void release(Reservation reservation);
 
-    /** Stable SMS already published for this fingerprint, if any. */
+    /**
+     * Stable SMS for this fingerprint while the incident is still active
+     * ({@code smsSavedAt} within the 7-day autoClose window). Empty means generate
+     * and persist a new interpretation.
+     */
     Optional<String> smsFor(String fingerprint);
 
     /**
-     * Persist trimmed SMS on first successful Gemini for this fingerprint.
-     * Later calls keep the stored value so EXTRACT(sms) identity stays stable.
+     * Persist trimmed SMS for this fingerprint. Reuses the stored value while the
+     * incident window is open so EXTRACT(sms) identity stays stable. After expiry,
+     * overwrites with the new Gemini wording.
      */
     void rememberSms(String fingerprint, String sms);
 }

@@ -4,8 +4,12 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.Before;
@@ -16,6 +20,7 @@ import com.functions.alerts.clients.ErrorAlertDedupStore;
 import com.functions.alerts.clients.ErrorAlertDedupStore.Reservation;
 import com.functions.alerts.models.ErrorAlertNotification;
 import com.functions.alerts.models.ParsedErrorLog;
+import com.functions.alerts.repositories.ErrorAlertDedupRepository;
 
 public class ExplainErrorAlertServiceTest {
     private ErrorAlertDedupStore store;
@@ -67,6 +72,28 @@ public class ExplainErrorAlertServiceTest {
         assertEquals("Persisted SMS sentence.", published.get(0).sms());
         assertEquals("Different Gemini wording this time.", published.get(0).aiInterpretation());
         verify(store, never()).rememberSms(any(), any());
+    }
+
+    @Test
+    public void processLogEntryJson_reusesSmsInsideIncidentWindowThenRefreshesAfterExpiry() {
+        ExpiringSmsStore expiring = new ExpiringSmsStore(Instant.parse("2026-10-11T03:00:00Z"));
+        service = new ExplainErrorAlertService(expiring,
+                new ErrorAlertSummarizer(this::emailServiceStatusInterpretation, parsed -> List.of()),
+                published::add);
+
+        service.processLogEntryJson(emailServiceHttpError(503));
+        assertEquals("Email service returned 503.", published.get(0).sms());
+
+        expiring.advance(Duration.ofDays(1));
+        service.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 503.", published.get(1).sms());
+        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+
+        expiring.advance(Duration.ofDays(30));
+        service.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 403.", published.get(2).sms());
+        assertEquals(published.get(0).fingerprint(), published.get(2).fingerprint());
+        assertNotEquals(published.get(0).sms(), published.get(2).sms());
     }
 
     @Test
@@ -198,5 +225,71 @@ public class ExplainErrorAlertServiceTest {
 
     private static ParsedErrorLog sampleLog() {
         return new ParsedErrorLog("emailService", "Request rejected", "", "");
+    }
+
+    private Optional<String> emailServiceStatusInterpretation(String prompt) {
+        if (prompt.contains("HTTP status: 503")) {
+            return Optional.of("Email service returned 503.");
+        }
+        if (prompt.contains("HTTP status: 403")) {
+            return Optional.of("Email service returned 403.");
+        }
+        return Optional.of("Unconfirmed explanation");
+    }
+
+    private static String emailServiceHttpError(int status) {
+        return """
+                {"severity":"ERROR","textPayload":"Request rejected",
+                 "httpRequest":{"requestMethod":"POST","status":%d},
+                 "resource":{"labels":{"service_name":"emailService"}}}
+                """.formatted(status);
+    }
+
+    private static final class ExpiringSmsStore implements ErrorAlertDedupStore {
+        private Instant now;
+        private final Map<String, String> smsByFingerprint = new HashMap<>();
+        private final Map<String, Instant> savedAtByFingerprint = new HashMap<>();
+
+        ExpiringSmsStore(Instant now) {
+            this.now = now;
+        }
+
+        void advance(Duration duration) {
+            now = now.plus(duration);
+        }
+
+        @Override
+        public Optional<Reservation> reserve() {
+            return Optional.of(new Reservation("owner"));
+        }
+
+        @Override
+        public void complete(Reservation reservation) {
+        }
+
+        @Override
+        public void release(Reservation reservation) {
+        }
+
+        @Override
+        public Optional<String> smsFor(String fingerprint) {
+            String sms = smsByFingerprint.get(fingerprint);
+            Instant savedAt = savedAtByFingerprint.get(fingerprint);
+            if (sms == null || savedAt == null
+                    || !savedAt.isAfter(now.minus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW))) {
+                return Optional.empty();
+            }
+            savedAtByFingerprint.put(fingerprint, now);
+            return Optional.of(sms);
+        }
+
+        @Override
+        public void rememberSms(String fingerprint, String sms) {
+            if (smsFor(fingerprint).isPresent()) {
+                return;
+            }
+            smsByFingerprint.put(fingerprint, sms);
+            savedAtByFingerprint.put(fingerprint, now);
+        }
     }
 }

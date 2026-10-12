@@ -125,11 +125,23 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     }
 
     @Test
-    public void rememberSms_persistsFirstValueAndReusesIt() {
+    public void rememberSms_persistsFirstValueAndReusesIt() throws Exception {
         assertTrue(repository.smsFor("fp1").isEmpty());
         repository.rememberSms("fp1", "First SMS sentence.");
         repository.rememberSms("fp1", "Different Gemini wording.");
         assertEquals("First SMS sentence.", repository.smsFor("fp1").orElseThrow());
+        assertNotNull(db.collection(ErrorAlertDedupRepository.COLLECTION).document("fp1").get().get()
+                .getTimestamp("smsSavedAt"));
+    }
+
+    @Test
+    public void rememberSms_overwritesAfterIncidentWindow() {
+        repository.rememberSms("fp1", "Email service returned 503.");
+        ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,
+                Clock.fixed(NOW.plus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW).plusSeconds(1), ZoneOffset.UTC));
+        assertTrue(later.smsFor("fp1").isEmpty());
+        later.rememberSms("fp1", "Email service returned 403.");
+        assertEquals("Email service returned 403.", later.smsFor("fp1").orElseThrow());
     }
 
     @Test
