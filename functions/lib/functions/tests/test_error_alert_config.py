@@ -24,6 +24,7 @@ class ErrorAlertConfigTest(unittest.TestCase):
         self.assertEqual({"fingerprint", "headline", "sms"}, set(labels))
         self.assertNotIn("aiInterpretation", str(labels))
         self.assertEqual(config.label("sms"), policy["documentation"]["subject"])
+        self.assertTrue(policy["documentation"]["content"].startswith(config.label("sms")))
         self.assertIn(config.label("headline"), policy["documentation"]["content"])
         link = unquote(policy["documentation"]["links"][0]["url"])
         self.assertIn('jsonPayload.fingerprint="' + config.label("fingerprint") + '"', link)

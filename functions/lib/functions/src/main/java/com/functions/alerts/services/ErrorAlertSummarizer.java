@@ -55,7 +55,7 @@ public class ErrorAlertSummarizer {
                 one idea per sentence, active voice. Do not use slang or jargon when a simple word works.
                 Stay personable. You can say "this looks like" or "check". Do not sound robotic or military.
                 Write only complete sentences. Never end with a fragment or ellipsis.
-                Fit a few short sentences in 480 characters. No markdown. No quotes. Do not pad to a minimum length.
+                Write 2 or 3 complete sentences that fit in 255 UTF-8 bytes. No markdown. No quotes. Do not pad to a minimum length.
                 Prioritize: what failed, where, and one next check. Do not try to fill every log field.
                 Include an exception type or class.method only if known in the evidence.
                 You may paraphrase a likely cause from nearby logs when the logs support it; otherwise say it is unknown.

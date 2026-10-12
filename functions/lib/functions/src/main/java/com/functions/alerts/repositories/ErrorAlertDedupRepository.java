@@ -52,7 +52,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
                 return Optional.empty();
             }
             if (recent(globalState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
-                throw new IllegalStateException("Another error alert delivery is in progress");
+                return Optional.empty();
             }
             Map<String, Object> lease = Map.of("owner", reservation.owner(), "inFlightAt", timestamp(now));
             transaction.set(global, lease, SetOptions.merge());

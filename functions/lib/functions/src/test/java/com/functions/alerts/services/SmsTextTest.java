@@ -125,8 +125,36 @@ public class SmsTextTest {
         String text = "globalAppController failed during checkout at WebhookService.process "
                 + "and then more overflow words continue ".repeat(20);
         String result = SmsText.forSms(text);
+        assertTrue(result.contains("WebhookService.process"));
         assertFalse(result.equals("globalAppController failed during checkout at WebhookService"));
-        assertTrue(result.contains("WebhookService.process") || result.contains("checkout"));
+        assertFalse(result.endsWith("WebhookService."));
+    }
+
+    @Test
+    public void forSmsSubject_doesNotTreatClassMethodDotsAsSentenceEndsWhenCutLandsOnThePeriod() {
+        String marker = "WebhookService.";
+        String pad = "word ".repeat((SmsText.MAX_UTF8_BYTES - marker.length()) / 5)
+                + "x".repeat((SmsText.MAX_UTF8_BYTES - marker.length()) % 5);
+        String falseSentence = pad + "WebhookService.";
+        assertEquals(SmsText.MAX_UTF8_BYTES, falseSentence.length());
+        String result = SmsText.forSmsSubject(falseSentence + "process overflow continues after the class name");
+        assertFalse(result.equals(falseSentence.trim()));
+        assertFalse(result.endsWith("WebhookService."));
+        assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+    }
+
+    @Test
+    public void forSmsSubject_keepsASentenceOnlyWhenItUsesAtLeastSixtyPercentOfTheBudget() {
+        int minKeep = (int) Math.ceil(SmsText.MAX_UTF8_BYTES * 0.6);
+        String tooShort = "A".repeat(minKeep - 2) + ".";
+        String longEnough = "B".repeat(minKeep - 1) + ".";
+        String overflow = " extra overflow words continue after the period ".repeat(20);
+        String skipped = SmsText.forSmsSubject(tooShort + overflow);
+        String kept = SmsText.forSmsSubject(longEnough + overflow);
+        assertFalse(skipped.equals(tooShort));
+        assertEquals(longEnough, kept);
+        assertTrue(skipped.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(kept.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
     }
 
     @Test

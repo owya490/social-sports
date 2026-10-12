@@ -59,6 +59,7 @@ def managed_policy(project):
         "documentation": {
             "subject": label("sms"),
             "content": (
+                label("sms") + "\n\n"
                 "Observed error: " + label("headline") + "\n\n"
                 "Observed log evidence is primary. AI interpretation is optional and unconfirmed. "
                 "Open the linked log for the evidence, explanation and original error.\n\n"

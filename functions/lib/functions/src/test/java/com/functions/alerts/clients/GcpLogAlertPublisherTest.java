@@ -15,6 +15,7 @@ import org.mockito.ArgumentCaptor;
 
 import com.functions.alerts.models.ErrorAlertNotification;
 import com.functions.alerts.models.ParsedErrorLog;
+import com.functions.alerts.services.SmsText;
 import com.google.cloud.logging.LogEntry;
 import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
@@ -47,6 +48,22 @@ public class GcpLogAlertPublisherTest {
         assertTrue(link.contains("timestamp=\"2026-10-11T03:00:00Z\""));
         assertTrue(link.endsWith("?project=test"));
         assertEquals(Instant.parse("2026-10-11T03:00:00Z"), entry.getInstantTimestamp());
+    }
+
+    @Test
+    public void buildEntry_pagesTrimmedAiSentencesNotTheLongerInterpretationBlob() {
+        String longAi = "Checkout failed in globalAppController. This looks like a Stripe checkout timeout at "
+                + "WebhookService.process. Check the expired session next. " + "word ".repeat(80);
+        ErrorAlertNotification notification = new ErrorAlertNotification("fingerprint",
+                "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), longAi);
+        Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(notification, "test")
+                .getPayload()).getDataAsMap();
+        String sms = payload.get("sms").toString();
+        assertEquals(SmsText.forSmsSubject(longAi), sms);
+        assertEquals(longAi, payload.get("aiInterpretation"));
+        assertTrue(sms.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(longAi.length() > sms.length());
     }
 
     @Test

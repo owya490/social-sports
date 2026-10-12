@@ -5,11 +5,11 @@ import java.util.Locale;
 
 public final class SmsText {
     /**
-     * Human-read paging body (AI summary / SMS text stored on the log).
-     * GCP documentation.subject is separately capped by {@link #MAX_UTF8_BYTES}.
+     * Longer AI interpretation stored on the log for Logs Explorer / email.
+     * Live SMS uses {@link #forSmsSubject} at {@link #MAX_UTF8_BYTES}.
      */
     public static final int MAX_CHARS = 480;
-    /** Cloud Monitoring documentation.subject / headline is limited to 255 UTF-8 bytes. */
+    /** Cloud Monitoring documentation.subject / jsonPayload.sms is limited to 255 UTF-8 bytes. */
     public static final int MAX_UTF8_BYTES = 255;
     private static final double MIN_BOUNDARY_RATIO = 0.6;
     private static final String[] ABBREVIATIONS = {"e.g.", "i.e.", "vs."};
@@ -22,7 +22,7 @@ public final class SmsText {
         return trimToCompleteChars(text, MAX_CHARS);
     }
 
-    /** Complete-sentence trim for documentation.subject / headline only. */
+    /** Complete-sentence trim for documentation.subject and jsonPayload.sms. */
     public static String forSmsSubject(String text) {
         return trimToCompleteUtf8(text, MAX_UTF8_BYTES);
     }
@@ -84,7 +84,7 @@ public final class SmsText {
      */
     static String applyBoundaries(String prefix, String original, int maxUnits, boolean utf8) {
         int minKeep = (int) Math.ceil(maxUnits * MIN_BOUNDARY_RATIO);
-        int sentenceEnd = lastSentenceEnd(prefix);
+        int sentenceEnd = lastSentenceEnd(prefix, original);
         if (sentenceEnd > 0 && units(prefix.substring(0, sentenceEnd), utf8) >= minKeep) {
             return prefix.substring(0, sentenceEnd).trim();
         }
@@ -106,26 +106,31 @@ public final class SmsText {
         return utf8 ? utf8Length(text) : text.length();
     }
 
-    private static int lastSentenceEnd(String text) {
+    /**
+     * Sentence boundaries use the next character on {@code original}, not the
+     * trimmed prefix. A cut on {@code WebhookService.} is not a sentence end
+     * when the original continues with {@code process}.
+     */
+    private static int lastSentenceEnd(String prefix, String original) {
         int last = -1;
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
+        for (int i = 0; i < prefix.length(); i++) {
+            char c = prefix.charAt(i);
             if (c != '.' && c != '!' && c != '?') {
                 continue;
             }
-            if (i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1))) {
+            if (i == 0 || !Character.isLetterOrDigit(prefix.charAt(i - 1))) {
                 continue;
             }
-            if (c == '.' && isAbbreviationPeriod(text, i)) {
+            if (c == '.' && isAbbreviationPeriod(prefix, i)) {
                 continue;
             }
-            boolean endOfText = i == text.length() - 1;
-            boolean followedBySpace = i + 1 < text.length() && Character.isWhitespace(text.charAt(i + 1));
-            boolean nextIsLetter = i + 1 < text.length() && Character.isLetter(text.charAt(i + 1));
+            boolean endOfOriginal = i == original.length() - 1;
+            boolean followedBySpace = i + 1 < original.length() && Character.isWhitespace(original.charAt(i + 1));
+            boolean nextIsLetter = i + 1 < original.length() && Character.isLetter(original.charAt(i + 1));
             if (nextIsLetter) {
                 continue;
             }
-            if (endOfText || followedBySpace) {
+            if (endOfOriginal || followedBySpace) {
                 last = i + 1;
             }
         }

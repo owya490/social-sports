@@ -59,16 +59,7 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
             for (int i = 0; i < 4; i++) {
                 attempts.add(pool.submit(() -> {
                     start.await();
-                    try {
-                        return repository.reserve();
-                    } catch (IllegalStateException busy) {
-                        Throwable cause = busy;
-                        while (cause.getCause() != null) {
-                            cause = cause.getCause();
-                        }
-                        assertTrue(cause.getMessage().contains("in progress"));
-                        return Optional.empty();
-                    }
+                    return repository.reserve();
                 }));
             }
             start.countDown();

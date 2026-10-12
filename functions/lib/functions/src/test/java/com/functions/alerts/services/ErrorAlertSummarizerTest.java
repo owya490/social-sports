@@ -37,7 +37,7 @@ public class ErrorAlertSummarizerTest {
         String prompt = ErrorAlertSummarizer.buildPrompt(sampleLog(), List.of());
         assertTrue(prompt.contains("ASD-STE100"));
         assertTrue(prompt.contains("complete sentences"));
-        assertTrue(prompt.contains("480 characters"));
+        assertTrue(prompt.contains("255 UTF-8 bytes"));
         assertTrue(prompt.contains("what failed"));
         assertTrue(prompt.contains("untrusted evidence"));
         assertTrue(prompt.contains("-----BEGIN UNTRUSTED NEARBY LOGS-----"));
