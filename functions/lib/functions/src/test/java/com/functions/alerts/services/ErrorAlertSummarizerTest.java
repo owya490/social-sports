@@ -16,14 +16,37 @@ import com.functions.alerts.models.ParsedErrorLog;
 
 public class ErrorAlertSummarizerTest {
     @Test
-    public void summarize_preservesShortSummariesAndCapsLongOnes() {
-        ErrorAlertSummarizer shortSummary = new ErrorAlertSummarizer(
-                prompt -> Optional.of("x".repeat(400)), parsed -> List.of());
-        ErrorAlertSummarizer longSummary = new ErrorAlertSummarizer(
-                prompt -> Optional.of("x".repeat(600)), parsed -> List.of());
+    public void summarize_keepsCompleteSentencesInsideTheSmsByteCap() {
+        String first = "Checkout failed in globalAppController.";
+        String second = "This looks like a Stripe timeout at WebhookService.process.";
+        String overflow = first + " " + second + " Extra filler keeps going " + "word ".repeat(40);
+        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(
+                prompt -> Optional.of(overflow), parsed -> List.of());
 
-        assertEquals(Optional.of("x".repeat(400)), shortSummary.summarize(sampleLog()));
-        assertEquals(Optional.of("x".repeat(477) + "..."), longSummary.summarize(sampleLog()));
+        String body = summarizer.summarize(sampleLog()).orElseThrow();
+        assertTrue(body.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(body.endsWith("."));
+        assertFalse(body.endsWith("..."));
+        assertTrue(body.contains(first));
+        assertFalse(body.contains("Extra filler"));
+    }
+
+    @Test
+    public void buildPrompt_requiresSteCompleteSentencesAndUntrustedLogs() {
+        String prompt = ErrorAlertSummarizer.buildPrompt(sampleLog(), List.of());
+        assertTrue(prompt.contains("ASD-STE100"));
+        assertTrue(prompt.contains("Simplified Technical English"));
+        assertTrue(prompt.contains("complete sentences"));
+        assertTrue(prompt.contains("Never end with a fragment or ellipsis"));
+        assertTrue(prompt.contains("255 UTF-8 bytes"));
+        assertTrue(prompt.contains("this looks like"));
+        assertTrue(prompt.contains("untrusted evidence"));
+        assertTrue(prompt.contains("-----BEGIN UNTRUSTED NEARBY LOGS-----"));
+        assertTrue(prompt.contains("-----END UNTRUSTED NEARBY LOGS-----"));
+        assertTrue(prompt.contains("-----BEGIN UNTRUSTED ERROR LOG-----"));
+        assertTrue(prompt.contains("function name and what failed"));
+        assertTrue(prompt.contains("class.method"));
+        assertTrue(prompt.contains("likely cause"));
     }
 
     @Test

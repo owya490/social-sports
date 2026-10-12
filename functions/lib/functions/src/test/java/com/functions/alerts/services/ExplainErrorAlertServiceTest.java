@@ -31,6 +31,21 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
+    public void process_trimsLongHeadlineToCompleteWordsWithoutEllipsis() {
+        service.process(new ParsedErrorLog("globalAppController",
+                "Stripe checkout session expired while fulfilling the webhook and then more words overflow "
+                        + "the monitoring subject cap ".repeat(20),
+                "RuntimeException",
+                "WebhookService.process"));
+
+        String headline = published.get(0).headline();
+        assertTrue(headline.startsWith("globalAppController:"));
+        assertFalse(headline.endsWith("..."));
+        assertFalse(headline.contains("Stripe checko..."));
+        assertTrue(headline.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+    }
+
+    @Test
     public void process_publishesFactsSeparatelyFromAiAndCompletesReservation() {
         service.process(sampleLog());
 
