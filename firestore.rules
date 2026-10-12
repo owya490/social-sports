@@ -35,6 +35,20 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
 
+    // Team layouts for an event. Kept off EventsMetadata so ticket webhooks can replace that document
+    // without deleting the board. Ownership follows the event's metadata organiserId.
+    match /EventTeams/{eventId} {
+      allow read: if request.auth != null
+        && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId;
+      allow create, update: if request.auth != null
+        && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId
+        && request.resource.data.keys().hasOnly(['teams', 'assignments'])
+        && request.resource.data.teams is list
+        && request.resource.data.assignments is map;
+      allow delete: if request.auth != null
+        && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId;
+    }
+
     // Only events organisers can read and write to their Events metadata fields. Allow write if EventsMetadata doesn't exist initially.
     match /EventsMetadata/{eventId} {
     	// GET, UPDATE, DELETE

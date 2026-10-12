@@ -51,6 +51,7 @@ import {
   type RegistrationUpdateIssue,
 } from "./registrationLiveUpdates";
 import { EventHubPanel } from "./EventHubPanel";
+import { EventHubTeams } from "./EventHubTeams";
 import {
   EventHubEmpty,
   EventHubFilters,
@@ -60,7 +61,8 @@ import {
   EventHubStage,
 } from "./EventHubStage";
 
-type TabType = "approved" | "pending" | "declined";
+type TabType = "approved" | "pending" | "declined" | "teams";
+const EMPTY_ORDER_MAP = new Map<Order, Ticket[]>();
 type DeepPanel = "formResponses" | "editTickets" | null;
 
 function countTicketsInOrderMap(
@@ -688,7 +690,9 @@ export function EventHubAttendees({
       ? filteredApprovedMap
       : activeTab === "pending"
         ? filteredPendingMap
-        : filteredDeclinedMap;
+        : activeTab === "declined"
+          ? filteredDeclinedMap
+          : EMPTY_ORDER_MAP;
 
   const orders = useMemo(() => {
     return Array.from(activeMap.keys()).sort((a, b) => a.fullName.localeCompare(b.fullName));
@@ -814,9 +818,11 @@ export function EventHubAttendees({
           { id: "approved", label: "Approved", count: approvedTicketCount },
           { id: "pending", label: "Pending", count: pendingTicketCount },
           { id: "declined", label: "Declined", count: declinedTicketCount },
+          { id: "teams", label: "Teams" },
         ]}
         action={
-          <div className="flex items-center gap-2">
+          activeTab === "teams" ? undefined : (
+            <div className="flex items-center gap-2">
             {showListTypeFilter ? (
               <label className="relative inline-flex items-center">
                 <span className="sr-only">Filter by ticket type</span>
@@ -846,12 +852,22 @@ export function EventHubAttendees({
               <PlusIcon className="h-4 w-4" aria-hidden />
               Add attendee
             </EventHubPrimaryButton>
-          </div>
+            </div>
+          )
         }
       />
 
       <div className="pt-1">
-        {loading ? (
+        {activeTab === "teams" ? (
+          <div className="pt-3">
+            <EventHubTeams
+              key={eventId}
+              eventId={eventId}
+              eventName={eventData.name}
+              orderTicketsMap={orderTicketsMap}
+            />
+          </div>
+        ) : loading ? (
           <div className="space-y-0 divide-y divide-border">
             {[0, 1, 2].map((i) => (
               <div key={i} className="py-3">
