@@ -131,14 +131,15 @@ export type EventTeam = {
   id: string;
   name: string;
   targetSize: number | null;
+  ticketIds: TicketId[];
 };
-
-/** How many of one order's tickets sit on each team. */
-export type TeamTicketSplit = Record<string, number>;
 
 export type TeamBoard = {
   teams: EventTeam[];
-  assignments: Record<string, TeamTicketSplit>;
+  /**
+   * EventTeams rules require this key. Membership is ticketIds on each team, so this stays empty.
+   */
+  assignments: Record<string, never>;
 };
 
 export interface EventMetadata {
