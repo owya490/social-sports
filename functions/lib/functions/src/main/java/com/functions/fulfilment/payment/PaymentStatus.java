@@ -3,8 +3,7 @@ package com.functions.fulfilment.payment;
 public enum PaymentStatus {
     PENDING,
     SUCCEEDED,
-    EXPIRED,
-    CANCELLED;
+    EXPIRED;
 
     public boolean isTerminal() {
         return this != PENDING;

@@ -36,7 +36,6 @@ import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentFulfilmentStep;
-import com.functions.fulfilment.payment.PaymentStatus;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -738,19 +737,17 @@ public class FulfilmentService {
             }
 
             String url = getEntityUrl(entity);
-            PaymentStatus paymentStatus = null;
             if (entity.getType() == FulfilmentEntityType.PYNG
                     && fulfilmentSession instanceof PyngCheckoutFulfilmentSession pyngSession) {
                 PyngMetadata metadata = pyngSession.getPyngMetadata();
                 if (metadata != null) {
                     url = metadata.getHostedPageUrl();
-                    paymentStatus = metadata.getStatus();
                 }
             }
 
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
                     url, fulfilmentSession.getEventData().getEventId(),
-                    formId, formResponseId, paymentStatus));
+                    formId, formResponseId));
         } catch (Exception e) {
             logger.error(
                     "Failed to get fulfilment entity info for session ID: {} and entity ID: {}",

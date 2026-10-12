@@ -24,6 +24,7 @@ import com.google.cloud.firestore.annotation.DocumentId;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -56,6 +57,11 @@ public abstract class FulfilmentSession {
      * List of FulfilmentEntityIds specifying their order in the fulfilment session workflow.
      */
     private List<String> fulfilmentEntityIds;
+    /**
+     * Starts false. Becomes true when the session is frozen and sent to the fulfilment queue in the end step.
+     */
+    @Builder.Default
+    private Boolean isFulfilmentSessionCrystalised = false;
 
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
@@ -135,6 +141,8 @@ public abstract class FulfilmentSession {
 
         Integer numTickets = getInteger(snapshot, "numTickets");
         Integer price = getInteger(snapshot, "price");
+        boolean isFulfilmentSessionCrystalised = Boolean.TRUE.equals(
+                snapshot.getBoolean("isFulfilmentSessionCrystalised"));
 
         // Create the appropriate session type
         switch (sessionType) {
@@ -149,6 +157,7 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .price(price)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case BOOKING_APPROVAL:
                 return BookingApprovalFulfilmentSession.builder()
@@ -161,6 +170,7 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .price(price)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case WAITLIST:
                 return WaitlistFulfilmentSession.builder()
@@ -172,6 +182,7 @@ public abstract class FulfilmentSession {
                         .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .price(price)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case PYNG_CHECKOUT:
                 PyngMetadata pyngMetadata = null;
@@ -190,6 +201,7 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .pyngMetadata(pyngMetadata)
                         .crystallized(snapshot.getBoolean("crystallized"))
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             default:
                 throw new IllegalArgumentException(

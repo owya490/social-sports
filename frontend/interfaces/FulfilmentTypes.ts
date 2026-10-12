@@ -21,13 +21,6 @@ export enum PaymentProvider {
   PYNG = "PYNG",
 }
 
-export enum PaymentStatus {
-  PENDING = "PENDING",
-  SUCCEEDED = "SUCCEEDED",
-  EXPIRED = "EXPIRED",
-  CANCELLED = "CANCELLED",
-}
-
 /**
  * Base type for fulfilment session data shared across all session types.
  */
@@ -148,10 +141,6 @@ export type GetFulfilmentEntityInfoResponse = {
   eventId: EventId | null;
   formId: FormId | null;
   formResponseId: FormResponseId | null;
-  /**
-   * Present for the Pyng payment step. Empty for other entity types.
-   */
-  paymentStatus: PaymentStatus | null;
 };
 
 /**
