@@ -22,7 +22,7 @@ export const TEAM_CSV_HEADERS = [
 ];
 
 export function newTeamId(): string {
-  return ulid();
+  return `tem_${ulid()}`;
 }
 
 export function peopleFromOrders(orderTicketsMap: Map<Order, Ticket[]>): TeamPerson[] {
