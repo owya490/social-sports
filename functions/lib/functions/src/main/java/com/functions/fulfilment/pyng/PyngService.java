@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.services.EventTicketTypeService;
+import com.functions.events.utils.EventsUtils;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
@@ -22,6 +23,8 @@ import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.fulfilment.services.FulfilmentService;
+import com.functions.users.models.PrivateUserData;
+import com.functions.users.services.Users;
 import com.functions.utils.JavaUtils;
 
 /**
@@ -40,6 +43,7 @@ public final class PyngService {
     static volatile PyngCheckoutClient client = PyngCheckoutClient.http();
     static volatile Continuation continuation;
     static volatile StatusRecorder statusRecorder;
+    static volatile SiteIdSource siteIds;
 
     @FunctionalInterface
     interface Continuation {
@@ -51,6 +55,11 @@ public final class PyngService {
         void save(String fulfilmentSessionId, PyngMetadata metadata) throws Exception;
     }
 
+    @FunctionalInterface
+    interface SiteIdSource {
+        String siteId(PyngCheckoutFulfilmentSession session) throws Exception;
+    }
+
     private PyngService() {
     }
 
@@ -59,6 +68,7 @@ public final class PyngService {
             throw new IllegalArgumentException("Pyng checkout session is required");
         }
         String orderId = orderId(session);
+        String siteId = resolveSiteId(session);
         // Same id on retry returns the original session when the body matches.
         // A different body for this id is rejected by Pyng with 409.
         String requestId = orderId;
@@ -68,7 +78,8 @@ public final class PyngService {
                     orderId,
                     checkoutAmountCents(session),
                     returnUrl(session),
-                    metadata(session)));
+                    metadata(session),
+                    siteId));
         } catch (IOException e) {
             throw new IllegalStateException("Failed to create Pyng checkout session for order " + orderId, e);
         }
@@ -79,8 +90,11 @@ public final class PyngService {
                 || metadata.getCheckoutSessionId().isBlank()) {
             throw new IllegalArgumentException("Pyng checkout session id is required to poll status");
         }
+        if (metadata.getSiteId() == null || metadata.getSiteId().isBlank()) {
+            throw new IllegalArgumentException("Pyng site id is required to poll status");
+        }
         try {
-            return client.getStatus(metadata.getCheckoutSessionId());
+            return client.getStatus(metadata.getSiteId(), metadata.getCheckoutSessionId());
         } catch (IOException e) {
             throw new IllegalStateException(
                     "Failed to read Pyng checkout session " + metadata.getCheckoutSessionId(), e);
@@ -97,6 +111,10 @@ public final class PyngService {
         PyngMetadata metadata = session.getPyngMetadata();
         if (metadata == null || metadata.getStatus() == null) {
             return;
+        }
+        if (metadata.getSiteId() == null || metadata.getSiteId().isBlank()) {
+            metadata.setSiteId(resolveSiteId(session));
+            session.setPyngMetadata(metadata);
         }
         if (!metadata.getStatus().isTerminal()) {
             PaymentStatus observed = pollCheckout(metadata);
@@ -139,7 +157,7 @@ public final class PyngService {
      * Inputs may still be URL-encoded.
      */
     public static boolean verifyReturnSignature(String checkoutSessionId, String transactionStatus, String signature) {
-        String secret = PyngConfig.returnRedirectSecret();
+        String secret = PyngConfig.signingSecret();
         if (secret == null) {
             return true;
         }
@@ -218,6 +236,30 @@ public final class PyngService {
         }
         logger.info("Pyng checkout finished for fulfilment session {} with status {}", fulfilmentSessionId, status);
         return true;
+    }
+
+    private static String resolveSiteId(PyngCheckoutFulfilmentSession session) {
+        try {
+            SiteIdSource source = siteIds;
+            String siteId = source == null ? siteIdFromOrganiser(session) : source.siteId(session);
+            if (siteId == null || siteId.isBlank()) {
+                throw new IllegalStateException("Pyng site id is missing");
+            }
+            return siteId.trim();
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load Pyng site id", e);
+        }
+    }
+
+    private static String siteIdFromOrganiser(PyngCheckoutFulfilmentSession session) throws Exception {
+        String organiserId = EventsUtils.extractOrganiserIdForEvent(session.getEventData());
+        PrivateUserData organiser = Users.getPrivateUserDataById(organiserId);
+        if (organiser == null || organiser.getPyngSiteId() == null || organiser.getPyngSiteId().isBlank()) {
+            throw new IllegalStateException("Organiser " + organiserId + " has no Pyng site id");
+        }
+        return organiser.getPyngSiteId();
     }
 
     private static String orderId(PyngCheckoutFulfilmentSession session) {

@@ -41,6 +41,7 @@ public class UsersUtils {
 		privateUserData.setActiveBookings(data.getActiveBookings());
 		privateUserData.setStripeAccount(privateUserData.getStripeAccount());
 		privateUserData.setStripeAccountActive(privateUserData.getStripeAccountActive());
+		privateUserData.setPyngSiteId(data.getPyngSiteId());
 		privateUserData.setOrganiserEvents(privateUserData.getOrganiserEvents());
 		privateUserData.setRecurrenceTemplates(data.getRecurrenceTemplates());
 		privateUserData.setSendOrganiserTicketEmails(data.getSendOrganiserTicketEmails());

@@ -33,13 +33,24 @@ final class PyngCheckoutClient {
             .build();
 
     private final Transport transport;
+    private final TokenSource tokens;
 
     PyngCheckoutClient(Transport transport) {
+        this(transport, () -> "test-token");
+    }
+
+    PyngCheckoutClient(Transport transport, TokenSource tokens) {
         this.transport = transport;
+        this.tokens = tokens;
     }
 
     static PyngCheckoutClient http() {
-        return new PyngCheckoutClient(PyngCheckoutClient::send);
+        return new PyngCheckoutClient(PyngCheckoutClient::send, PyngAccessToken::bearer);
+    }
+
+    @FunctionalInterface
+    interface TokenSource {
+        String bearer() throws IOException;
     }
 
     record CreateCheckoutSession(
@@ -47,7 +58,8 @@ final class PyngCheckoutClient {
             String orderId,
             int amountCents,
             String returnUrl,
-            Map<String, String> metadata) {
+            Map<String, String> metadata,
+            String siteId) {
     }
 
     record Exchange(String method, URI uri, Map<String, String> headers, String body) {
@@ -62,7 +74,7 @@ final class PyngCheckoutClient {
     }
 
     PyngHostedCheckout createSession(CreateCheckoutSession command) throws IOException {
-        URI uri = URI.create(PyngConfig.apiBaseUrl() + "/checkout/" + encode(PyngConfig.siteId()) + "/session");
+        URI uri = URI.create(PyngConfig.apiBaseUrl() + "/checkout/" + encode(command.siteId()) + "/session");
         ObjectNode body = JavaUtils.objectMapper.createObjectNode();
         body.put("orderId", command.orderId());
         body.put("amount", command.amountCents());
@@ -89,14 +101,14 @@ final class PyngCheckoutClient {
             throw new IllegalStateException(
                     "Pyng create checkout session response is missing checkoutSessionId or launchUrl");
         }
-        logger.info("Created Pyng checkout session {} for order {} traceId {}",
-                checkoutSessionId, command.orderId(), text(root, "traceId"));
-        return new PyngHostedCheckout(checkoutSessionId, launchUrl);
+        logger.info("Created Pyng checkout session {} for order {} site {} traceId {}",
+                checkoutSessionId, command.orderId(), command.siteId(), text(root, "traceId"));
+        return new PyngHostedCheckout(checkoutSessionId, launchUrl, command.siteId());
     }
 
-    PaymentStatus getStatus(String checkoutSessionId) throws IOException {
+    PaymentStatus getStatus(String siteId, String checkoutSessionId) throws IOException {
         URI uri = URI.create(PyngConfig.apiBaseUrl()
-                + "/checkout/" + encode(PyngConfig.siteId())
+                + "/checkout/" + encode(siteId)
                 + "/session/" + encode(checkoutSessionId));
         RawResponse response = transport.exchange(new Exchange("GET", uri, headers(null), null));
         if (response.statusCode() != 200) {
@@ -112,18 +124,18 @@ final class PyngCheckoutClient {
         return status;
     }
 
-    private static Map<String, String> headers(String requestId) {
+    private Map<String, String> headers(String requestId) throws IOException {
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json");
         headers.put("Accept", "application/json");
-        headers.put("Authorization", "Bearer " + PyngConfig.accessToken());
+        headers.put("Authorization", "Bearer " + tokens.bearer());
         if (requestId != null) {
             headers.put("X-Pyng-Request-Id", requestId);
         }
         return headers;
     }
 
-    private static RawResponse send(Exchange request) throws IOException {
+    static RawResponse send(Exchange request) throws IOException {
         HttpRequest.Builder builder = HttpRequest.newBuilder(request.uri()).timeout(REQUEST_TIMEOUT);
         request.headers().forEach(builder::header);
         if ("GET".equals(request.method())) {

@@ -5,6 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,22 +36,29 @@ public class PyngServiceTest {
     @Before
     public void setUp() {
         ENV.clear();
-        ENV.put(PyngConfig.ACCESS_TOKEN, "test-token");
-        ENV.put(PyngConfig.SITE_ID, "site-1");
+        ENV.put(PyngConfig.DEV_USERNAME, "partner-user");
+        ENV.put(PyngConfig.DEV_PASSWORD, "partner-pass");
+        ENV.put(PyngConfig.DEV_SCOPE, "checkout");
         ENV.put(PyngConfig.API_BASE_URL, "https://sample.pyng.com.au");
         ENV.put(PyngConfig.RETURN_BASE_URL, "https://www.sportshub.net.au");
         PyngConfig.env = ENV::get;
+        PyngConfig.productionOverride = false;
         PyngService.client = PyngCheckoutClient.http();
         PyngService.continuation = null;
         PyngService.statusRecorder = null;
+        PyngService.siteIds = session -> "site-1";
+        PyngAccessToken.clear();
     }
 
     @After
     public void tearDown() {
         PyngConfig.env = Global::getEnv;
+        PyngConfig.productionOverride = null;
         PyngService.client = PyngCheckoutClient.http();
         PyngService.continuation = null;
         PyngService.statusRecorder = null;
+        PyngService.siteIds = null;
+        PyngAccessToken.clear();
     }
 
     @Test
@@ -66,6 +75,7 @@ public class PyngServiceTest {
 
         assertEquals("cs-1", checkout.checkoutSessionId());
         assertEquals("https://sample.pyng.com.au/launch/opaque", checkout.hostedPageUrl());
+        assertEquals("site-1", checkout.siteId());
         PyngCheckoutClient.Exchange request = captured.get();
         assertEquals("POST", request.method());
         assertEquals("https://sample.pyng.com.au/checkout/site-1/session", request.uri().toString());
@@ -82,6 +92,22 @@ public class PyngServiceTest {
         assertEquals(SESSION_ID, body.get("metadata").get("fulfilmentSessionId").asText());
         assertEquals("event-1", body.get("metadata").get("eventId").asText());
         assertEquals("ticket-1", body.get("metadata").get("eventTicketTypeId").asText());
+    }
+
+    @Test
+    public void createHostedCheckoutRequiresOrganiserSiteId() {
+        PyngService.siteIds = session -> null;
+        PyngService.client = new PyngCheckoutClient(request -> {
+            fail("Pyng must not be called without a site id");
+            return null;
+        });
+
+        try {
+            PyngService.createHostedCheckout(session(null));
+            fail("Expected IllegalStateException");
+        } catch (IllegalStateException e) {
+            assertTrue(e.getMessage().contains("site id"));
+        }
     }
 
     @Test
@@ -228,7 +254,7 @@ public class PyngServiceTest {
 
     @Test
     public void verifyReturnSignatureMatchesPyngWorkedExample() {
-        ENV.put(PyngConfig.RETURN_REDIRECT_SECRET, "return-redirect-secret-sample");
+        ENV.put(PyngConfig.DEV_SIGNING_SECRET, "return-redirect-secret-sample");
 
         assertTrue(PyngService.verifyReturnSignature(SESSION_ID, "Settled", RETURN_SIGNATURE));
         assertFalse(PyngService.verifyReturnSignature(SESSION_ID, "Declined", RETURN_SIGNATURE));
@@ -239,6 +265,46 @@ public class PyngServiceTest {
     public void verifyReturnSignatureIgnoresSignatureWhenSecretIsUnset() {
         assertTrue(PyngService.verifyReturnSignature(SESSION_ID, "Settled", null));
         assertTrue(PyngService.verifyReturnSignature(SESSION_ID, "Settled", "not-a-signature"));
+    }
+
+    @Test
+    public void accessTokenUsesClientCredentialsAndIsCached() throws Exception {
+        AtomicInteger calls = new AtomicInteger();
+        AtomicReference<PyngCheckoutClient.Exchange> captured = new AtomicReference<>();
+        PyngCheckoutClient.Transport transport = request -> {
+            calls.incrementAndGet();
+            captured.set(request);
+            return new PyngCheckoutClient.RawResponse(200, """
+                    {"access_token":"tok","token_type":"Bearer","expires_in":3600,"scope":"checkout"}
+                    """);
+        };
+
+        assertEquals("tok", PyngAccessToken.bearer(transport));
+        assertEquals("tok", PyngAccessToken.bearer(transport));
+        assertEquals(1, calls.get());
+
+        PyngCheckoutClient.Exchange request = captured.get();
+        assertEquals("POST", request.method());
+        assertEquals("https://sample.pyng.com.au/checkout/oauth2/token", request.uri().toString());
+        assertEquals("application/x-www-form-urlencoded", request.headers().get("Content-Type"));
+        assertEquals("Basic " + Base64.getEncoder().encodeToString(
+                "partner-user:partner-pass".getBytes(StandardCharsets.UTF_8)),
+                request.headers().get("Authorization"));
+        assertEquals("grant_type=client_credentials&scope=checkout", request.body());
+        assertFalse(request.headers().containsKey("X-Pyng-Request-Id"));
+    }
+
+    @Test
+    public void accessTokenDoesNotExposeCredentialsOnFailure() {
+        try {
+            PyngAccessToken.bearer(request -> new PyngCheckoutClient.RawResponse(401, """
+                    {"error":"invalid_client","error_description":"Client authentication failed"}
+                    """));
+            fail("Expected IllegalStateException");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("401"));
+            assertFalse(e.getMessage().contains("partner-pass"));
+        }
     }
 
     @Test
@@ -274,6 +340,7 @@ public class PyngServiceTest {
         PyngMetadata metadata = status == null ? null : PyngMetadata.builder()
                 .checkoutSessionId("cs-1")
                 .hostedPageUrl("https://sample.pyng.com.au/launch/opaque")
+                .siteId("site-1")
                 .status(status)
                 .build();
 

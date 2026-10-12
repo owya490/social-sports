@@ -42,6 +42,7 @@ public class PyngFulfilmentEntity extends FulfilmentEntity implements PaymentFul
         PyngMetadata metadata = PyngMetadata.builder()
                 .checkoutSessionId(checkout.checkoutSessionId())
                 .hostedPageUrl(checkout.hostedPageUrl())
+                .siteId(checkout.siteId())
                 .status(PaymentStatus.PENDING)
                 .build();
         pyngSession.setPyngMetadata(metadata);

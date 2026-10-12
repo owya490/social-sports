@@ -9,30 +9,50 @@ import com.functions.utils.environment.EnvironmentUtils;
 
 /**
  * Runtime settings for the Pay with Pyng Checkout Session API.
- * Values are read when a checkout is created or polled, so a deploy that has
- * not been given Pyng credentials keeps serving Stripe.
+ * Username, password, and signing secret are per environment. Site ids are
+ * not configured here; each organiser stores one on their private user record.
  */
 final class PyngConfig {
-    static final String ACCESS_TOKEN = "PYNG_ACCESS_TOKEN";
-    static final String SITE_ID = "PYNG_SITE_ID";
     static final String API_BASE_URL = "PYNG_API_BASE_URL";
     static final String RETURN_BASE_URL = "PYNG_RETURN_BASE_URL";
-    static final String RETURN_REDIRECT_SECRET = "PYNG_RETURN_REDIRECT_SECRET";
+
+    static final String DEV_USERNAME = "PYNG_DEV_USERNAME";
+    static final String DEV_PASSWORD = "PYNG_DEV_PASSWORD";
+    static final String DEV_SIGNING_SECRET = "PYNG_DEV_SIGNING_SECRET";
+    static final String DEV_SCOPE = "PYNG_DEV_SCOPE";
+
+    static final String PROD_USERNAME = "PYNG_PROD_USERNAME";
+    static final String PROD_PASSWORD = "PYNG_PROD_PASSWORD";
+    static final String PROD_SIGNING_SECRET = "PYNG_PROD_SIGNING_SECRET";
+    static final String PROD_SCOPE = "PYNG_PROD_SCOPE";
 
     static final String SANDBOX_API_BASE_URL = "https://sample.pyng.com.au";
     static final String PRODUCTION_API_BASE_URL = "https://app.pyng.com.au";
 
     static volatile Function<String, String> env = Global::getEnv;
+    static volatile Boolean productionOverride;
 
     private PyngConfig() {
     }
 
-    static String accessToken() {
-        return require(ACCESS_TOKEN);
+    static String username() {
+        return require(production() ? PROD_USERNAME : DEV_USERNAME);
     }
 
-    static String siteId() {
-        return require(SITE_ID);
+    static String password() {
+        return require(production() ? PROD_PASSWORD : DEV_PASSWORD);
+    }
+
+    /**
+     * OAuth scope from Pyng onboarding. The token endpoint rejects a request
+     * that omits it.
+     */
+    static String scope() {
+        return require(production() ? PROD_SCOPE : DEV_SCOPE);
+    }
+
+    static String signingSecret() {
+        return optional(production() ? PROD_SIGNING_SECRET : DEV_SIGNING_SECRET);
     }
 
     static String apiBaseUrl() {
@@ -40,12 +60,8 @@ final class PyngConfig {
         if (override != null) {
             return stripTrailingSlash(override);
         }
-        try {
-            if (EnvironmentUtils.getEnvironment() == Environment.PRODUCTION) {
-                return PRODUCTION_API_BASE_URL;
-            }
-        } catch (RuntimeException ignored) {
-            // An unresolved project name must not send checkout traffic to production.
+        if (production()) {
+            return PRODUCTION_API_BASE_URL;
         }
         return SANDBOX_API_BASE_URL;
     }
@@ -59,12 +75,15 @@ final class PyngConfig {
                 .orElse(UrlUtils.SPORTSHUB_URL));
     }
 
-    /**
-     * Empty until Pyng provisions a return-redirect signing secret. Distinct
-     * from any webhook secret.
-     */
-    static String returnRedirectSecret() {
-        return optional(RETURN_REDIRECT_SECRET);
+    static boolean production() {
+        if (productionOverride != null) {
+            return productionOverride;
+        }
+        try {
+            return EnvironmentUtils.getEnvironment() == Environment.PRODUCTION;
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private static String require(String key) {
