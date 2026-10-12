@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -25,48 +26,45 @@ final class PyngAccessToken {
     private static final Logger logger = LoggerFactory.getLogger(PyngAccessToken.class);
     private static final long EXPIRY_SKEW_SECONDS = 60;
 
-    private static volatile String cachedToken;
-    private static volatile long expiresAtMs;
+    private static final Map<String, CachedToken> cache = new HashMap<>();
 
     private PyngAccessToken() {
     }
 
-    static String bearer() throws IOException {
-        return bearer(PyngCheckoutClient::send);
+    static String bearer(String scope) throws IOException {
+        return bearer(PyngCheckoutClient::send, scope);
     }
 
-    static String bearer(Transport transport) throws IOException {
-        long now = System.currentTimeMillis();
-        String current = cachedToken;
-        if (current != null && now < expiresAtMs) {
-            return current;
+    static String bearer(Transport transport, String scope) throws IOException {
+        if (scope == null || scope.isBlank()) {
+            throw new IllegalArgumentException("Pyng access token scope is required");
         }
         synchronized (PyngAccessToken.class) {
-            now = System.currentTimeMillis();
-            if (cachedToken != null && now < expiresAtMs) {
-                return cachedToken;
+            long now = System.currentTimeMillis();
+            CachedToken cached = cache.get(scope);
+            if (cached != null && now < cached.expiresAtMs()) {
+                return cached.accessToken();
             }
-            Issued issued = request(transport);
-            cachedToken = issued.accessToken();
+            Issued issued = request(transport, scope);
             long ttlSeconds = Math.max(1, issued.expiresInSeconds() - EXPIRY_SKEW_SECONDS);
-            expiresAtMs = now + ttlSeconds * 1000L;
-            logger.info("Fetched Pyng access token expiring in {} seconds", issued.expiresInSeconds());
-            return cachedToken;
+            cache.put(scope, new CachedToken(issued.accessToken(), now + ttlSeconds * 1000L));
+            logger.info("Fetched Pyng access token for scope {} expiring in {} seconds",
+                    scope, issued.expiresInSeconds());
+            return issued.accessToken();
         }
     }
 
     static void clear() {
         synchronized (PyngAccessToken.class) {
-            cachedToken = null;
-            expiresAtMs = 0;
+            cache.clear();
         }
     }
 
-    private static Issued request(Transport transport) throws IOException {
+    private static Issued request(Transport transport, String scope) throws IOException {
         String credentials = PyngConfig.username() + ":" + PyngConfig.password();
         String basic = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
         String body = "grant_type=client_credentials&scope="
-                + URLEncoder.encode(PyngConfig.scope(), StandardCharsets.UTF_8);
+                + URLEncoder.encode(scope, StandardCharsets.UTF_8);
 
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/x-www-form-urlencoded");
@@ -111,5 +109,8 @@ final class PyngAccessToken {
     }
 
     private record Issued(String accessToken, long expiresInSeconds) {
+    }
+
+    private record CachedToken(String accessToken, long expiresAtMs) {
     }
 }

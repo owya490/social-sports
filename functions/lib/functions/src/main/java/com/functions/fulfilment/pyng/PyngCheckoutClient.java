@@ -36,7 +36,7 @@ final class PyngCheckoutClient {
     private final TokenSource tokens;
 
     PyngCheckoutClient(Transport transport) {
-        this(transport, () -> "test-token");
+        this(transport, scope -> "test-token");
     }
 
     PyngCheckoutClient(Transport transport, TokenSource tokens) {
@@ -50,7 +50,7 @@ final class PyngCheckoutClient {
 
     @FunctionalInterface
     interface TokenSource {
-        String bearer() throws IOException;
+        String bearer(String scope) throws IOException;
     }
 
     record CreateCheckoutSession(
@@ -87,7 +87,7 @@ final class PyngCheckoutClient {
         RawResponse response = transport.exchange(new Exchange(
                 "POST",
                 uri,
-                headers(command.requestId()),
+                headers(command.requestId(), PyngConfig.SESSION_WRITE_SCOPE),
                 JavaUtils.objectMapper.writeValueAsString(body)));
         if (response.statusCode() != 201) {
             throw apiError("create checkout session", response.statusCode(), response.body());
@@ -110,7 +110,8 @@ final class PyngCheckoutClient {
         URI uri = URI.create(PyngConfig.apiBaseUrl()
                 + "/checkout/" + encode(siteId)
                 + "/session/" + encode(checkoutSessionId));
-        RawResponse response = transport.exchange(new Exchange("GET", uri, headers(null), null));
+        RawResponse response = transport.exchange(new Exchange(
+                "GET", uri, headers(null, PyngConfig.SESSION_READ_SCOPE), null));
         if (response.statusCode() != 200) {
             throw apiError("get checkout session status", response.statusCode(), response.body());
         }
@@ -124,11 +125,11 @@ final class PyngCheckoutClient {
         return status;
     }
 
-    private Map<String, String> headers(String requestId) throws IOException {
+    private Map<String, String> headers(String requestId, String scope) throws IOException {
         Map<String, String> headers = new LinkedHashMap<>();
         headers.put("Content-Type", "application/json");
         headers.put("Accept", "application/json");
-        headers.put("Authorization", "Bearer " + tokens.bearer());
+        headers.put("Authorization", "Bearer " + tokens.bearer(scope));
         if (requestId != null) {
             headers.put("X-Pyng-Request-Id", requestId);
         }

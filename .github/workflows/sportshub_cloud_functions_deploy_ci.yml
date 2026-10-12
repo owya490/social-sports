@@ -67,11 +67,9 @@ jobs:
           echo "PYNG_DEV_USERNAME=\"${{ secrets.PYNG_DEV_USERNAME }}\"" >> .env
           echo "PYNG_DEV_PASSWORD=\"${{ secrets.PYNG_DEV_PASSWORD }}\"" >> .env
           echo "PYNG_DEV_SIGNING_SECRET=\"${{ secrets.PYNG_DEV_SIGNING_SECRET }}\"" >> .env
-          echo "PYNG_DEV_SCOPE=\"${{ secrets.PYNG_DEV_SCOPE }}\"" >> .env
           echo "PYNG_PROD_USERNAME=\"${{ secrets.PYNG_PROD_USERNAME }}\"" >> .env
           echo "PYNG_PROD_PASSWORD=\"${{ secrets.PYNG_PROD_PASSWORD }}\"" >> .env
           echo "PYNG_PROD_SIGNING_SECRET=\"${{ secrets.PYNG_PROD_SIGNING_SECRET }}\"" >> .env
-          echo "PYNG_PROD_SCOPE=\"${{ secrets.PYNG_PROD_SCOPE }}\"" >> .env
 
       # Deploy Java Cloud Run functions in parallel
       # All functions deploy simultaneously using & to run commands in the background in a non-blocking way

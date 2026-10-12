@@ -38,7 +38,6 @@ public class PyngServiceTest {
         ENV.clear();
         ENV.put(PyngConfig.DEV_USERNAME, "partner-user");
         ENV.put(PyngConfig.DEV_PASSWORD, "partner-pass");
-        ENV.put(PyngConfig.DEV_SCOPE, "checkout");
         ENV.put(PyngConfig.API_BASE_URL, "https://sample.pyng.com.au");
         ENV.put(PyngConfig.RETURN_BASE_URL, "https://www.sportshub.net.au");
         PyngConfig.env = ENV::get;
@@ -275,23 +274,28 @@ public class PyngServiceTest {
             calls.incrementAndGet();
             captured.set(request);
             return new PyngCheckoutClient.RawResponse(200, """
-                    {"access_token":"tok","token_type":"Bearer","expires_in":3600,"scope":"checkout"}
+                    {"access_token":"tok","token_type":"Bearer","expires_in":3600,"scope":"urn:pyng:checkout:session:write"}
                     """);
         };
 
-        assertEquals("tok", PyngAccessToken.bearer(transport));
-        assertEquals("tok", PyngAccessToken.bearer(transport));
+        assertEquals("tok", PyngAccessToken.bearer(transport, PyngConfig.SESSION_WRITE_SCOPE));
+        PyngCheckoutClient.Exchange write = captured.get();
+        assertEquals("tok", PyngAccessToken.bearer(transport, PyngConfig.SESSION_WRITE_SCOPE));
         assertEquals(1, calls.get());
+        assertEquals("tok", PyngAccessToken.bearer(transport, PyngConfig.SESSION_READ_SCOPE));
+        assertEquals(2, calls.get());
 
-        PyngCheckoutClient.Exchange request = captured.get();
-        assertEquals("POST", request.method());
-        assertEquals("https://sample.pyng.com.au/checkout/oauth2/token", request.uri().toString());
-        assertEquals("application/x-www-form-urlencoded", request.headers().get("Content-Type"));
+        assertEquals("POST", write.method());
+        assertEquals("https://sample.pyng.com.au/checkout/oauth2/token", write.uri().toString());
+        assertEquals("application/x-www-form-urlencoded", write.headers().get("Content-Type"));
         assertEquals("Basic " + Base64.getEncoder().encodeToString(
                 "partner-user:partner-pass".getBytes(StandardCharsets.UTF_8)),
-                request.headers().get("Authorization"));
-        assertEquals("grant_type=client_credentials&scope=checkout", request.body());
-        assertFalse(request.headers().containsKey("X-Pyng-Request-Id"));
+                write.headers().get("Authorization"));
+        assertEquals("grant_type=client_credentials&scope="
+                + "urn%3Apyng%3Acheckout%3Asession%3Awrite", write.body());
+        assertEquals("grant_type=client_credentials&scope="
+                + "urn%3Apyng%3Acheckout%3Asession%3Aread", captured.get().body());
+        assertFalse(write.headers().containsKey("X-Pyng-Request-Id"));
     }
 
     @Test
@@ -299,7 +303,7 @@ public class PyngServiceTest {
         try {
             PyngAccessToken.bearer(request -> new PyngCheckoutClient.RawResponse(401, """
                     {"error":"invalid_client","error_description":"Client authentication failed"}
-                    """));
+                    """), PyngConfig.SESSION_WRITE_SCOPE);
             fail("Expected IllegalStateException");
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("401"));

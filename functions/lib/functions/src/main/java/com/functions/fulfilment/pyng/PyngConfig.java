@@ -19,12 +19,13 @@ final class PyngConfig {
     static final String DEV_USERNAME = "PYNG_DEV_USERNAME";
     static final String DEV_PASSWORD = "PYNG_DEV_PASSWORD";
     static final String DEV_SIGNING_SECRET = "PYNG_DEV_SIGNING_SECRET";
-    static final String DEV_SCOPE = "PYNG_DEV_SCOPE";
 
     static final String PROD_USERNAME = "PYNG_PROD_USERNAME";
     static final String PROD_PASSWORD = "PYNG_PROD_PASSWORD";
     static final String PROD_SIGNING_SECRET = "PYNG_PROD_SIGNING_SECRET";
-    static final String PROD_SCOPE = "PYNG_PROD_SCOPE";
+
+    static final String SESSION_WRITE_SCOPE = "urn:pyng:checkout:session:write";
+    static final String SESSION_READ_SCOPE = "urn:pyng:checkout:session:read";
 
     static final String SANDBOX_API_BASE_URL = "https://sample.pyng.com.au";
     static final String PRODUCTION_API_BASE_URL = "https://app.pyng.com.au";
@@ -41,14 +42,6 @@ final class PyngConfig {
 
     static String password() {
         return require(production() ? PROD_PASSWORD : DEV_PASSWORD);
-    }
-
-    /**
-     * OAuth scope from Pyng onboarding. The token endpoint rejects a request
-     * that omits it.
-     */
-    static String scope() {
-        return require(production() ? PROD_SCOPE : DEV_SCOPE);
     }
 
     static String signingSecret() {
