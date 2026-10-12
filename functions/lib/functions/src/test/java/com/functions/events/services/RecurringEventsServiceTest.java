@@ -6,6 +6,7 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.utils.EventTimeZone;
 import com.functions.utils.JavaUtils;
+import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
@@ -209,6 +210,10 @@ public class RecurringEventsServiceTest {
         Assert.assertEquals("Australia/Adelaide", EventTimeZone.stamp(eventWithCoordinates(-34.9285, 138.6007)).getId());
         Assert.assertEquals("Australia/Sydney", EventTimeZone.stamp(eventWithCoordinates(-33.8688, 151.2093)).getId());
         Assert.assertEquals("Australia/Broken_Hill", EventTimeZone.stamp(eventWithCoordinates(-31.9539, 141.4539)).getId());
+        Assert.assertEquals("Australia/Perth", EventTimeZone.stamp(eventWithCoordinates(-31.9505, 115.8605)).getId());
+        Assert.assertEquals("Australia/Melbourne", EventTimeZone.stamp(eventWithCoordinates(-37.8136, 144.9631)).getId());
+        Assert.assertEquals("Australia/Hobart", EventTimeZone.stamp(eventWithCoordinates(-42.8821, 147.3272)).getId());
+        Assert.assertEquals("Australia/Darwin", EventTimeZone.stamp(eventWithCoordinates(-12.4634, 130.8456)).getId());
 
         NewEventData movedPin = eventWithCoordinates(-27.4698, 153.0251);
         movedPin.setTimezone("Australia/Sydney");
@@ -226,11 +231,15 @@ public class RecurringEventsServiceTest {
 
     private static NewEventData eventWithCoordinates(double lat, double lng) {
         NewEventData event = new NewEventData();
+        event.setLocationLatLng(coordinates(lat, lng));
+        return event;
+    }
+
+    private static AbstractEventData.LocationLatLng coordinates(double lat, double lng) {
         AbstractEventData.LocationLatLng latLng = new AbstractEventData.LocationLatLng();
         latLng.setLat(lat);
         latLng.setLng(lng);
-        event.setLocationLatLng(latLng);
-        return event;
+        return latLng;
     }
 
     private static ZonedDateTime inZone(Timestamp timestamp, ZoneId zone) {
@@ -290,6 +299,133 @@ public class RecurringEventsServiceTest {
         org.junit.Assert.assertTrue(
                 RecurringEventsCronService.shouldMoveTemplateToInactiveAfterNoCreation(
                         recurrenceData, LocalDate.of(2026, 8, 24), false));
+    }
+
+    @Test
+    public void brisbaneSummerNineAmEmailsAsNineNotSydneyTen() {
+        ZoneId brisbane = ZoneId.of("Australia/Brisbane");
+        Timestamp start = timestamp(ZonedDateTime.of(2026, 10, 5, 9, 0, 0, 0, brisbane));
+
+        Assert.assertEquals("10/05/2026, 09:00", TimeUtils.formatTimestampForEmail(start, brisbane));
+        Assert.assertEquals("10/05/2026, 10:00", TimeUtils.formatTimestampForEmail(start));
+        Assert.assertTrue(TimeUtils.getTimestampStringFromTimezone(start, brisbane).startsWith("2026-10-05 09:00:00"));
+    }
+
+    @Test
+    public void notYetCreatedPostDstOccurrenceStaysNineAmInTheVenueZone() {
+        ZoneId sydney = ZoneId.of("Australia/Sydney");
+        ZonedDateTime start = ZonedDateTime.of(2026, 9, 28, 9, 0, 0, 0, sydney);
+        NewEventData event = eventWithClock(sydney, start, start.plusHours(1), start.minusHours(1));
+        String createdKey = TimeUtils.getTimestampStringFromTimezone(timestamp(start), sydney);
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(0)
+                .frequency(RecurrenceData.Frequency.WEEKLY)
+                .recurrenceAmount(1)
+                .allRecurrences(List.of(timestamp(ZonedDateTime.of(2026, 10, 5, 10, 0, 0, 0, sydney))))
+                .build();
+
+        Timestamp selected = RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(createdKey, "already-created"), LocalDate.of(2026, 10, 5), true, event);
+
+        ZonedDateTime selectedLocal = inZone(selected, sydney);
+        Assert.assertEquals(LocalDateTime.of(2026, 10, 5, 9, 0), selectedLocal.toLocalDateTime());
+        Assert.assertEquals(ZoneOffset.ofHours(11), selectedLocal.getOffset());
+    }
+
+    @Test
+    public void oldUtcSteppedKeyDoesNotCreateASecondEvent() {
+        ZoneId sydney = ZoneId.of("Australia/Sydney");
+        ZonedDateTime start = ZonedDateTime.of(2026, 9, 28, 9, 0, 0, 0, sydney);
+        ZonedDateTime badNext = ZonedDateTime.of(2026, 10, 5, 10, 0, 0, 0, sydney);
+        NewEventData event = eventWithClock(sydney, start, start.plusHours(1), start.minusHours(1));
+        Map<String, String> past = Map.of(
+                TimeUtils.getTimestampStringFromTimezone(timestamp(start), sydney), "first-event",
+                TimeUtils.getTimestampStringFromTimezone(timestamp(badNext), sydney), "already-created");
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(1)
+                .frequency(RecurrenceData.Frequency.WEEKLY)
+                .recurrenceAmount(1)
+                .allRecurrences(List.of(timestamp(badNext)))
+                .build();
+
+        Timestamp selected = RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, past, LocalDate.of(2026, 10, 4), true, event);
+
+        Assert.assertNull(selected);
+    }
+
+    @Test
+    public void perthNineAmBecomesBookableOnTheVenueSunday() {
+        ZoneId perth = ZoneId.of("Australia/Perth");
+        ZonedDateTime start = ZonedDateTime.of(2026, 10, 5, 9, 0, 0, 0, perth);
+        NewEventData event = new NewEventData();
+        event.setTimezone(perth.getId());
+        event.setStartDate(timestamp(start));
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(1)
+                .frequency(RecurrenceData.Frequency.WEEKLY)
+                .recurrenceAmount(0)
+                .allRecurrences(List.of())
+                .build();
+
+        Assert.assertNull(RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(), LocalDate.of(2026, 10, 4), false, event));
+        Assert.assertEquals(timestamp(start), RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(), LocalDate.of(2026, 10, 5), false, event));
+    }
+
+    @Test
+    public void brisbaneNineAmBecomesBookableOnTheVenueSunday() {
+        ZoneId brisbane = ZoneId.of("Australia/Brisbane");
+        ZonedDateTime start = ZonedDateTime.of(2026, 10, 5, 9, 0, 0, 0, brisbane);
+        NewEventData event = new NewEventData();
+        event.setTimezone(brisbane.getId());
+        event.setStartDate(timestamp(start));
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(1)
+                .frequency(RecurrenceData.Frequency.WEEKLY)
+                .recurrenceAmount(0)
+                .allRecurrences(List.of())
+                .build();
+
+        // Saturday midnight Sydney is still Saturday in Brisbane, so the Monday session is not due.
+        Assert.assertNull(RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(), LocalDate.of(2026, 10, 3), false, event));
+        // Sunday midnight Sydney is still AEST, the same offset as Brisbane, so this is the venue Sunday.
+        Assert.assertEquals(timestamp(start), RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, Map.of(), LocalDate.of(2026, 10, 4), false, event));
+    }
+
+    @Test
+    public void movedPinKeepsWallClockWhenTheInstantWasNotRetyped() {
+        ZoneId sydney = ZoneId.of("Australia/Sydney");
+        ZoneId brisbane = ZoneId.of("Australia/Brisbane");
+        ZonedDateTime start = ZonedDateTime.of(2026, 10, 5, 9, 0, 0, 0, sydney);
+        ZonedDateTime end = start.plusHours(2);
+        ZonedDateTime deadline = ZonedDateTime.of(2026, 10, 4, 9, 0, 0, 0, sydney);
+        NewEventData previous = eventWithClock(sydney, start, end, deadline);
+        previous.setLocationLatLng(coordinates(-33.8688, 151.2093));
+        NewEventData incoming = eventWithClock(sydney, start, end, deadline);
+        incoming.setLocationLatLng(coordinates(-27.4698, 153.0251));
+
+        EventTimeZone.retainWallClockIfPinMoved(previous, incoming);
+
+        Assert.assertEquals(LocalDateTime.of(2026, 10, 5, 9, 0), inZone(incoming.getStartDate(), brisbane).toLocalDateTime());
+        Assert.assertEquals(LocalDateTime.of(2026, 10, 5, 11, 0), inZone(incoming.getEndDate(), brisbane).toLocalDateTime());
+        Assert.assertEquals(LocalDateTime.of(2026, 10, 4, 9, 0), inZone(incoming.getRegistrationDeadline(), brisbane).toLocalDateTime());
+
+        NewEventData retyped = eventWithClock(brisbane,
+                ZonedDateTime.of(2026, 10, 5, 9, 0, 0, 0, brisbane),
+                ZonedDateTime.of(2026, 10, 5, 11, 0, 0, 0, brisbane),
+                ZonedDateTime.of(2026, 10, 4, 9, 0, 0, 0, brisbane));
+        retyped.setLocationLatLng(coordinates(-27.4698, 153.0251));
+        Timestamp retypedStart = retyped.getStartDate();
+        EventTimeZone.retainWallClockIfPinMoved(previous, retyped);
+        Assert.assertEquals(retypedStart, retyped.getStartDate());
     }
 
     @Test

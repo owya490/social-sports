@@ -2,6 +2,7 @@ import {
   addCalendarDaysToYmd,
   dateAndTimeInLocalToDate,
   dateAndTimeInLocalToTimestamp,
+  dateAndTimeInZoneToDate,
   dateYmdInLocalToDate,
   formatDateInLocalYmd,
   getLocalTomorrowYmd,
@@ -56,5 +57,29 @@ describe("datetimeUtils local calendar helpers", () => {
     const date = ts.toDate();
     expect(date.getHours()).toBe(10);
     expect(date.getDate()).toBe(14);
+  });
+
+  it("keeps the same instant when the venue zone is the browser zone", () => {
+    const browserZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    expect(dateAndTimeInZoneToDate("2026-08-14", "10:00", browserZone).getTime()).toBe(
+      dateAndTimeInLocalToDate("2026-08-14", "10:00").getTime()
+    );
+  });
+
+  it("treats a typed 09:00 as the venue wall clock", () => {
+    // Winter: Brisbane and Sydney are both UTC+10, so the instant does not move.
+    expect(dateAndTimeInZoneToDate("2026-08-14", "09:00", "Australia/Brisbane").toISOString()).toBe(
+      dateAndTimeInZoneToDate("2026-08-14", "09:00", "Australia/Sydney").toISOString()
+    );
+    expect(dateAndTimeInZoneToDate("2026-08-14", "09:00", "Australia/Brisbane").toISOString()).toBe(
+      "2026-08-13T23:00:00.000Z"
+    );
+    // Summer: Brisbane stays UTC+10 while Sydney is UTC+11.
+    expect(dateAndTimeInZoneToDate("2026-10-05", "09:00", "Australia/Brisbane").toISOString()).toBe(
+      "2026-10-04T23:00:00.000Z"
+    );
+    expect(dateAndTimeInZoneToDate("2026-10-05", "09:00", "Australia/Sydney").toISOString()).toBe(
+      "2026-10-04T22:00:00.000Z"
+    );
   });
 });

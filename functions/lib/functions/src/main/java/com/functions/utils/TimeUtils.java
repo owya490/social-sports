@@ -158,8 +158,19 @@ public class TimeUtils {
      * @return The formatted date string
      */
     public static String formatTimestampForEmail(Timestamp timestamp) {
+        return formatTimestampForEmail(timestamp, SYDNEY_TIMEZONE);
+    }
+
+    /**
+     * Formats a timestamp for email display in the venue zone.
+     * Format stays {@code MM/dd/yyyy, HH:mm}.
+     */
+    public static String formatTimestampForEmail(Timestamp timestamp, ZoneId zoneId) {
+        if (timestamp == null) {
+            return "";
+        }
+        ZoneId zone = zoneId == null ? SYDNEY_TIMEZONE : zoneId;
         Instant instant = timestamp.toSqlTimestamp().toInstant();
-        ZonedDateTime sydneyTime = instant.atZone(SYDNEY_TIMEZONE);
-        return sydneyTime.format(EMAIL_DATE_FORMATTER);
+        return instant.atZone(zone).format(EMAIL_DATE_FORMATTER);
     }
 }

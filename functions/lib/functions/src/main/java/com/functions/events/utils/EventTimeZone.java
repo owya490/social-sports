@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -57,15 +58,72 @@ public final class EventTimeZone {
         if (event == null) {
             return FALLBACK;
         }
-        ZoneId fromCoordinates = lookup(event.getLocationLatLng());
+        return resolve(event.getTimezone(), event.getLocationLatLng());
+    }
+
+    public static ZoneId resolve(String timezone, AbstractEventData.LocationLatLng latLng) {
+        ZoneId fromCoordinates = lookup(latLng);
         if (fromCoordinates != null) {
             return fromCoordinates;
         }
-        ZoneId fromField = parseIana(event.getTimezone());
+        ZoneId fromField = parseIana(timezone);
         if (fromField != null) {
             return fromField;
         }
         return FALLBACK;
+    }
+
+    public static ZoneId resolve(String timezone, Double lat, Double lng) {
+        AbstractEventData.LocationLatLng latLng = null;
+        if (lat != null && lng != null) {
+            latLng = new AbstractEventData.LocationLatLng();
+            latLng.setLat(lat);
+            latLng.setLng(lng);
+        }
+        return resolve(timezone, latLng);
+    }
+
+    /** Firestore map `{lat, lng}` plus an optional stored IANA id. */
+    public static ZoneId resolveSnapshot(String timezone, Object locationLatLng) {
+        Double lat = null;
+        Double lng = null;
+        if (locationLatLng instanceof Map<?, ?> map) {
+            lat = toDouble(map.get("lat"));
+            lng = toDouble(map.get("lng"));
+        }
+        return resolve(timezone, lat, lng);
+    }
+
+    /**
+     * When a save moves the pin but leaves the stored instants alone, keep the
+     * previous zone's wall clock in the new zone. A client that already sent new
+     * instants is left as-is.
+     */
+    public static void retainWallClockIfPinMoved(AbstractEventData previous, AbstractEventData incoming) {
+        if (previous == null || incoming == null) {
+            return;
+        }
+        if (!sameInstant(previous.getStartDate(), incoming.getStartDate())
+                || !sameInstant(previous.getEndDate(), incoming.getEndDate())
+                || !sameInstant(previous.getRegistrationDeadline(), incoming.getRegistrationDeadline())) {
+            return;
+        }
+        ZoneId from = resolve(previous);
+        ZoneId to = resolve(incoming);
+        if (from.equals(to)) {
+            return;
+        }
+        incoming.setStartDate(shiftWallClock(incoming.getStartDate(), from, to));
+        incoming.setEndDate(shiftWallClock(incoming.getEndDate(), from, to));
+        incoming.setRegistrationDeadline(shiftWallClock(incoming.getRegistrationDeadline(), from, to));
+    }
+
+    static Timestamp shiftWallClock(Timestamp timestamp, ZoneId from, ZoneId to) {
+        if (timestamp == null || from == null || to == null) {
+            return timestamp;
+        }
+        LocalDateTime local = toZoned(timestamp, from).toLocalDateTime();
+        return TimeUtils.convertZonedDateTimeToTimestamp(local.atZone(to));
     }
 
     /**
@@ -137,6 +195,20 @@ public final class EventTimeZone {
             return false;
         }
         return true;
+    }
+
+    private static boolean sameInstant(Timestamp left, Timestamp right) {
+        if (left == null || right == null) {
+            return left == right;
+        }
+        return left.getSeconds() == right.getSeconds() && left.getNanos() == right.getNanos();
+    }
+
+    private static Double toDouble(Object value) {
+        if (value instanceof Number number) {
+            return number.doubleValue();
+        }
+        return null;
     }
 
     private static ZonedDateTime toZoned(Timestamp timestamp, ZoneId zone) {

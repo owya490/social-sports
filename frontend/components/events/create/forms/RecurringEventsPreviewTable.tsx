@@ -4,9 +4,28 @@ const TABLE_HEAD = ["#", "Recurrence Date"];
 
 interface RecurringEventsPreviewTableProps {
   recurrenceDates: Timestamp[];
+  timeZone?: string;
 }
 
-export const RecurringEventsPreviewTable = ({ recurrenceDates }: RecurringEventsPreviewTableProps) => {
+function previewDateLabel(date: Timestamp, timeZone?: string): string {
+  if (!timeZone) {
+    return date.toDate().toDateString();
+  }
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).formatToParts(date.toDate());
+  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  return `${weekday} ${month} ${day} ${year}`;
+}
+
+export const RecurringEventsPreviewTable = ({ recurrenceDates, timeZone }: RecurringEventsPreviewTableProps) => {
   return (
     <div className="w-full overflow-hidden overflow-y-auto max-h-96 rounded-2xl border border-border bg-background">
       <table className="w-full min-w-max table-auto text-left">
@@ -30,7 +49,7 @@ export const RecurringEventsPreviewTable = ({ recurrenceDates }: RecurringEvents
                   <span className="text-sm text-foreground-secondary font-sans tabular-nums">{index + 1}</span>
                 </td>
                 <td className={classes}>
-                  <span className="text-sm text-foreground font-sans">{date.toDate().toDateString()}</span>
+                  <span className="text-sm text-foreground font-sans">{previewDateLabel(date, timeZone)}</span>
                 </td>
               </tr>
             );

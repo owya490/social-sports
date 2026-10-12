@@ -3,7 +3,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 
 import requests
 from firebase_admin import firestore
@@ -15,7 +15,7 @@ from lib.auth import *
 from lib.constants import *
 from lib.constants import ACTIVE_PRIVATE, ACTIVE_PUBLIC, EVENT_METADATA, SYDNEY_TIMEZONE
 from lib.emails.constants import LOOPS_API_KEY, LOOPS_EMAIL_REMINDER_TEMPLATE_ID
-from lib.emails.event_local_time import format_event_local
+from lib.emails.event_local_time import format_event_dict_local, starts_on_venue_tomorrow
 from lib.logging import Logger
 
 
@@ -99,7 +99,7 @@ def get_purchasers(logger: Logger, event_id: str) -> list[Purchaser]:
 
 
 def get_active_events_starting_tomorrow(
-    logger: Logger, tomorrow: date, collection: str
+    logger: Logger, job_now: datetime, collection: str
 ) -> list[EventReminderVariables]:
 
     all_events_starting_tomorrow: list[EventReminderVariables] = []
@@ -124,9 +124,9 @@ def get_active_events_starting_tomorrow(
             logger.error(f"Failed to get timestamp for event {event_id}: {e}")
             continue
 
-        # The job still picks "tomorrow" on the Sydney calendar. The clock below
-        # uses the venue zone so 9:00 stays 9:00 after daylight saving.
-        if event_start_date.ToDatetime().astimezone(SYDNEY_TIMEZONE).date() == tomorrow:
+        # The job still runs at Sydney noon. Whether this start is "tomorrow"
+        # is the venue's calendar, so a 09:00 in Perth or Brisbane is not skipped.
+        if starts_on_venue_tomorrow(event_start_date.ToDatetime(), event_dict, job_now):
             # Guard rails: check if endDate exists
             end_date_field = event_dict.get("endDate")
             if not end_date_field:
@@ -136,9 +136,8 @@ def get_active_events_starting_tomorrow(
             try:
                 start_date: Timestamp = start_date_field.timestamp_pb()
                 end_date: Timestamp = end_date_field.timestamp_pb()
-                venue_zone = event_dict.get("timezone")
-                start_date_string = format_event_local(start_date.ToDatetime(), venue_zone)
-                end_date_string = format_event_local(end_date.ToDatetime(), venue_zone)
+                start_date_string = format_event_dict_local(start_date.ToDatetime(), event_dict)
+                end_date_string = format_event_dict_local(end_date.ToDatetime(), event_dict)
             except Exception as e:
                 logger.error(f"Failed to format dates for event {event_id}: {e}")
                 continue
@@ -232,15 +231,15 @@ def email_reminder(event: scheduler_fn.ScheduledEvent) -> None:
     logger = Logger(f"email_reminder_logger_{uid}")
     logger.add_tag("uuid", uid)
 
-    tomorrow = (datetime.now(SYDNEY_TIMEZONE) + timedelta(days=1)).date()
+    job_now = datetime.now(SYDNEY_TIMEZONE)
 
     logger.info(
         "Sending reminder emails for events for date "
-        + tomorrow.strftime("%d/%m/%Y, %H:%M:%S")
+        + (job_now + timedelta(days=1)).strftime("%d/%m/%Y, %H:%M:%S")
     )
     all_events_starting_tomorrow = get_active_events_starting_tomorrow(
-        logger, tomorrow, ACTIVE_PUBLIC
-    ) + get_active_events_starting_tomorrow(logger, tomorrow, ACTIVE_PRIVATE)
+        logger, job_now, ACTIVE_PUBLIC
+    ) + get_active_events_starting_tomorrow(logger, job_now, ACTIVE_PRIVATE)
 
     logger.info(
         f"Events starting tomorrow: {[event.eventId for event in all_events_starting_tomorrow]}"

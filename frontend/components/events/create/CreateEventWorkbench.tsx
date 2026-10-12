@@ -21,7 +21,8 @@ import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
-import { addCalendarDaysToYmd, dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
+import { addCalendarDaysToYmd, dateAndTimeInZoneToDate } from "@/services/src/datetimeUtils";
+import { resolveVenueTimeZoneId } from "@/services/src/venueTimeZone";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
@@ -383,8 +384,9 @@ export function CreateEventWorkbench({
 
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = dateAndTimeInLocalToDate(data.startDate, data.startTime);
-    const selectedEndDateTime = dateAndTimeInLocalToDate(data.endDate, data.endTime);
+    const venueZone = resolveVenueTimeZoneId(undefined, data.lat, data.lng);
+    const selectedStartDateTime = dateAndTimeInZoneToDate(data.startDate, data.startTime, venueZone);
+    const selectedEndDateTime = dateAndTimeInZoneToDate(data.endDate, data.endTime, venueZone);
 
     let hasDateError = false;
 
@@ -421,6 +423,8 @@ export function CreateEventWorkbench({
     data.startTime,
     data.endDate,
     data.endTime,
+    data.lat,
+    data.lng,
     data.name,
     data.capacity,
     customAmount,
@@ -1016,6 +1020,9 @@ export function CreateEventWorkbench({
         open={recurrenceOpen}
         onClose={() => setRecurrenceOpen(false)}
         startDate={data.startDate}
+        startTime={data.startTime}
+        lat={data.lat}
+        lng={data.lng}
         value={data.newRecurrenceData}
         onSave={handleRecurrenceSave}
         onCancelEnable={onRecurrenceCancelEnable}

@@ -81,6 +81,8 @@ export function BasicInformation({
   location,
   startDate,
   endDate,
+  lat,
+  lng,
   registrationEndDate,
   startTime,
   endTime,
@@ -659,6 +661,9 @@ export function BasicInformation({
               <div>
                 <RecurringEventsForm
                   startDate={startDate}
+                  startTime={startTime}
+                  lat={lat}
+                  lng={lng}
                   newRecurrenceData={newRecurrenceData}
                   setRecurrenceData={(data: NewRecurrenceFormData) => {
                     updateField({ newRecurrenceData: data });

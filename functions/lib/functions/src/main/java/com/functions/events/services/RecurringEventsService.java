@@ -70,6 +70,8 @@ public class RecurringEventsService {
             newRecurrenceData = currentRecurrenceTemplate.getRecurrenceData().extractNewRecurrenceData();
         }
 
+        // A moved pin keeps the previous wall clock when the instants were not retyped.
+        EventTimeZone.retainWallClockIfPinMoved(currentRecurrenceTemplate.getEventData(), newEventData);
         // Calculate all future recurrence Dates in the venue zone.
         ZoneId zone = EventTimeZone.stamp(newEventData);
         RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false, zone);

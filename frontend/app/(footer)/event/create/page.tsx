@@ -21,9 +21,9 @@ import {
 } from "@/services/src/images/imageService";
 import { sendEmailOnCreateEventV2 } from "@/services/src/loops/loopsService";
 import { createRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { dateAndTimeInLocalToTimestamp } from "@/services/src/datetimeUtils";
+import { dateAndTimeInZoneToTimestamp } from "@/services/src/datetimeUtils";
+import { resolveVenueTimeZoneId } from "@/services/src/venueTimeZone";
 import { withInactiveStripePaymentDefaults } from "@/services/src/stripe/stripeUtils";
-import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -152,6 +152,8 @@ export default function CreateEvent() {
     thumbnailUrl: string
   ): NewEventData {
     const paymentFields = withInactiveStripePaymentDefaults(formData, user.stripeAccountActive);
+    const venueZone = resolveVenueTimeZoneId(undefined, formData.lat, formData.lng);
+    const atVenue = (date: string, time: string) => dateAndTimeInZoneToTimestamp(date, time, venueZone);
     return {
       location: formData.location,
       name: formData.name,
@@ -165,18 +167,15 @@ export default function CreateEvent() {
       attendeesMetadata: {},
       accessCount: 0,
       organiserId: user.userId,
-      registrationDeadline: convertDateAndTimeStringToTimestamp(
-        formData.registrationEndDate,
-        formData.registrationEndTime
-      ),
+      registrationDeadline: atVenue(formData.registrationEndDate, formData.registrationEndTime),
       locationLatLng: {
         lat: formData.lat,
         lng: formData.lng,
       },
       sport: formData.sport,
       paymentsActive: paymentFields.paymentsActive,
-      startDate: convertDateAndTimeStringToTimestamp(formData.startDate, formData.startTime),
-      endDate: convertDateAndTimeStringToTimestamp(formData.endDate, formData.endTime),
+      startDate: atVenue(formData.startDate, formData.startTime),
+      endDate: atVenue(formData.endDate, formData.endTime),
       stripeFeeToCustomer: paymentFields.stripeFeeToCustomer,
       promotionalCodesEnabled: paymentFields.promotionalCodesEnabled,
       paused: formData.paused,
@@ -192,10 +191,6 @@ export default function CreateEvent() {
       ),
       ...buildNewEventInventory(formData.price, formData.capacity),
     };
-  }
-
-  function convertDateAndTimeStringToTimestamp(date: string, time: string): Timestamp {
-    return dateAndTimeInLocalToTimestamp(date, time);
   }
 
   const handleAlertClose = () => {

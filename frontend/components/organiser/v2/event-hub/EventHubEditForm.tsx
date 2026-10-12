@@ -19,15 +19,16 @@ import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import {
   addCalendarDaysToYmd,
-  dateAndTimeInLocalToDate,
-  dateAndTimeInLocalToTimestamp,
+  dateAndTimeInZoneToDate,
+  dateAndTimeInZoneToTimestamp,
   formatDateToString,
   formatStringToDate,
   formatTimeTo12Hour,
   formatTimeTo24Hour,
-  timestampToDateString,
-  timestampToTimeOfDay,
+  timestampToDateStringInZone,
+  timestampToTimeOfDayInZone,
 } from "@/services/src/datetimeUtils";
+import { hasUsableCoordinates, resolveVenueTimeZoneId } from "@/services/src/venueTimeZone";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { CalendarDaysIcon, ClockIcon, LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
@@ -52,6 +53,9 @@ type EventHubEditFormProps = {
   eventSport: string;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
+  venueLat?: number | null;
+  venueLng?: number | null;
+  venueTimezone?: string | null;
   isActive: boolean;
   eventTicketTypes?: EventTicketTypesMap;
   orderTicketsMap?: Map<Order, Ticket[]>;
@@ -73,6 +77,9 @@ export function EventHubEditForm({
   eventSport,
   eventRegistrationDeadline,
   eventEventLink,
+  venueLat,
+  venueLng,
+  venueTimezone,
   isActive,
   eventTicketTypes,
   orderTicketsMap,
@@ -86,19 +93,24 @@ export function EventHubEditForm({
   const [name, setName] = useState(eventName);
   const [description, setDescription] = useState(eventDescription);
 
-  const [startDate, setStartDate] = useState(timestampToDateString(eventStartDate));
-  const [startTime, setStartTime] = useState(timestampToTimeOfDay(eventStartDate));
-  const [endDate, setEndDate] = useState(timestampToDateString(eventEndDate));
-  const [endTime, setEndTime] = useState(timestampToTimeOfDay(eventEndDate));
+  const savedVenueZone = resolveVenueTimeZoneId(venueTimezone, venueLat, venueLng);
+  const [startDate, setStartDate] = useState(timestampToDateStringInZone(eventStartDate, savedVenueZone));
+  const [startTime, setStartTime] = useState(timestampToTimeOfDayInZone(eventStartDate, savedVenueZone));
+  const [endDate, setEndDate] = useState(timestampToDateStringInZone(eventEndDate, savedVenueZone));
+  const [endTime, setEndTime] = useState(timestampToTimeOfDayInZone(eventEndDate, savedVenueZone));
   const [registrationDeadlineDate, setRegistrationDeadlineDate] = useState(
-    timestampToDateString(eventRegistrationDeadline)
+    timestampToDateStringInZone(eventRegistrationDeadline, savedVenueZone)
   );
   const [registrationDeadlineTime, setRegistrationDeadlineTime] = useState(
-    timestampToTimeOfDay(eventRegistrationDeadline)
+    timestampToTimeOfDayInZone(eventRegistrationDeadline, savedVenueZone)
   );
 
   const [location, setLocation] = useState(eventLocation);
-  const [locationLatLng, setLocationLatLng] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLatLng, setLocationLatLng] = useState<{ lat: number; lng: number } | null>(
+    hasUsableCoordinates(venueLat, venueLng) && venueLat != null && venueLng != null
+      ? { lat: venueLat, lng: venueLng }
+      : null
+  );
   const [selectionMade, setSelectionMade] = useState(true);
   const [locationError, setLocationError] = useState("");
 
@@ -120,16 +132,22 @@ export function EventHubEditForm({
   const prevStartDateRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const nextStartDate = timestampToDateString(eventStartDate);
+    const zone = resolveVenueTimeZoneId(venueTimezone, venueLat, venueLng);
+    const nextStartDate = timestampToDateStringInZone(eventStartDate, zone);
     setName(eventName);
     setDescription(eventDescription);
     setStartDate(nextStartDate);
-    setStartTime(timestampToTimeOfDay(eventStartDate));
-    setEndDate(timestampToDateString(eventEndDate));
-    setEndTime(timestampToTimeOfDay(eventEndDate));
-    setRegistrationDeadlineDate(timestampToDateString(eventRegistrationDeadline));
-    setRegistrationDeadlineTime(timestampToTimeOfDay(eventRegistrationDeadline));
+    setStartTime(timestampToTimeOfDayInZone(eventStartDate, zone));
+    setEndDate(timestampToDateStringInZone(eventEndDate, zone));
+    setEndTime(timestampToTimeOfDayInZone(eventEndDate, zone));
+    setRegistrationDeadlineDate(timestampToDateStringInZone(eventRegistrationDeadline, zone));
+    setRegistrationDeadlineTime(timestampToTimeOfDayInZone(eventRegistrationDeadline, zone));
     setLocation(eventLocation);
+    setLocationLatLng(
+      hasUsableCoordinates(venueLat, venueLng) && venueLat != null && venueLng != null
+        ? { lat: venueLat, lng: venueLng }
+        : null
+    );
     setSelectionMade(true);
     setLocationError("");
     setSport(eventSport);
@@ -145,6 +163,9 @@ export function EventHubEditForm({
     eventLocation,
     eventSport,
     eventEventLink,
+    venueLat,
+    venueLng,
+    venueTimezone,
   ]);
 
   useEffect(() => {
@@ -190,14 +211,21 @@ export function EventHubEditForm({
 
   useEffect(() => {
     const currentDateTime = new Date();
-    const selectedStartDateTime = dateAndTimeInLocalToDate(
+    const warningZone = resolveVenueTimeZoneId(venueTimezone, locationLatLng?.lat ?? venueLat, locationLatLng?.lng ?? venueLng);
+    const selectedStartDateTime = dateAndTimeInZoneToDate(
       formatStringToDate(startDate),
-      formatTimeTo24Hour(startTime)
+      formatTimeTo24Hour(startTime),
+      warningZone
     );
-    const selectedEndDateTime = dateAndTimeInLocalToDate(formatStringToDate(endDate), formatTimeTo24Hour(endTime));
-    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
+    const selectedEndDateTime = dateAndTimeInZoneToDate(
+      formatStringToDate(endDate),
+      formatTimeTo24Hour(endTime),
+      warningZone
+    );
+    const selectedRegistrationDeadline = dateAndTimeInZoneToDate(
       formatStringToDate(registrationDeadlineDate),
-      formatTimeTo24Hour(registrationDeadlineTime)
+      formatTimeTo24Hour(registrationDeadlineTime),
+      warningZone
     );
 
     setDateWarning(currentDateTime > selectedEndDateTime ? "Event end date and time is in the past!" : null);
@@ -205,7 +233,7 @@ export function EventHubEditForm({
     setRegistrationDeadlineWarning(
       selectedRegistrationDeadline > selectedEndDateTime ? "Registration deadline is after event end!" : null
     );
-  }, [startDate, startTime, endDate, endTime, registrationDeadlineDate, registrationDeadlineTime]);
+  }, [startDate, startTime, endDate, endTime, registrationDeadlineDate, registrationDeadlineTime, venueLat, venueLng, venueTimezone, locationLatLng]);
 
   useEffect(() => {
     onSavingChange?.(saving);
@@ -252,20 +280,21 @@ export function EventHubEditForm({
       }
 
       const nextName = name.trim();
+      const venueZone = resolveVenueTimeZoneId(venueTimezone, latLng.lat, latLng.lng);
+      const atVenue = (dateLabel: string, timeLabel: string) =>
+        dateAndTimeInZoneToTimestamp(formatStringToDate(dateLabel), formatTimeTo24Hour(timeLabel), venueZone);
 
       await updateData(eventId, {
         name: nextName,
         nameTokens: nextName.toLowerCase().split(" "),
         description,
-        startDate: dateAndTimeInLocalToTimestamp(formatStringToDate(startDate), formatTimeTo24Hour(startTime)),
-        endDate: dateAndTimeInLocalToTimestamp(formatStringToDate(endDate), formatTimeTo24Hour(endTime)),
-        registrationDeadline: dateAndTimeInLocalToTimestamp(
-          formatStringToDate(registrationDeadlineDate),
-          formatTimeTo24Hour(registrationDeadlineTime)
-        ),
+        startDate: atVenue(startDate, startTime),
+        endDate: atVenue(endDate, endTime),
+        registrationDeadline: atVenue(registrationDeadlineDate, registrationDeadlineTime),
         location,
         locationTokens: location.toLowerCase().split(" "),
         locationLatLng: { lat: latLng.lat, lng: latLng.lng },
+        timezone: venueZone,
         sport,
         eventLink,
       });

@@ -1,4 +1,39 @@
 import { Timestamp } from "firebase/firestore";
+import { isIanaZone } from "./venueTimeZone";
+
+export function timestampToTimeOfDayInZone(timestamp: Timestamp, timeZone?: string | null) {
+  if (!isIanaZone(timeZone)) {
+    return timestampToTimeOfDay(timestamp);
+  }
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(timestamp.toDate());
+  const hour = parts.find((part) => part.type === "hour")?.value ?? "12";
+  const minute = parts.find((part) => part.type === "minute")?.value ?? "00";
+  const dayPeriod = (parts.find((part) => part.type === "dayPeriod")?.value ?? "AM").toUpperCase();
+  return `${hour}:${minute} ${dayPeriod}`;
+}
+
+export function timestampToDateStringInZone(timestamp: Timestamp, timeZone?: string | null): string {
+  if (!isIanaZone(timeZone)) {
+    return timestampToDateString(timestamp);
+  }
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    weekday: "short",
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  }).formatToParts(timestamp.toDate());
+  const weekday = parts.find((part) => part.type === "weekday")?.value ?? "";
+  const month = parts.find((part) => part.type === "month")?.value ?? "";
+  const day = parts.find((part) => part.type === "day")?.value ?? "";
+  const year = parts.find((part) => part.type === "year")?.value ?? "";
+  return `${weekday} ${month} ${day} ${year}`;
+}
 
 export function timestampToTimeOfDay(timestamp: Timestamp) {
   // Format the Date object to display the time of day
@@ -198,6 +233,53 @@ export function dateAndTimeInLocalToDate(dateYmd: string, timeHm: string): Date 
 
 export function dateAndTimeInLocalToTimestamp(dateYmd: string, timeHm: string): Timestamp {
   return Timestamp.fromDate(dateAndTimeInLocalToDate(dateYmd, timeHm));
+}
+
+/**
+ * Interprets `YYYY-MM-DD` + `HH:mm` as wall time in `timeZone`.
+ * The same IANA zone as the browser keeps the local Date constructor so the instant is unchanged.
+ */
+export function dateAndTimeInZoneToDate(dateYmd: string, timeHm: string, timeZone?: string | null): Date {
+  if (!isIanaZone(timeZone) || timeZone === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+    return dateAndTimeInLocalToDate(dateYmd, timeHm);
+  }
+  const [year, month, day] = dateYmd.split("-").map(Number);
+  const [hours, minutes] = timeHm.split(":").map(Number);
+  const utcGuess = new Date(Date.UTC(year, month - 1, day, hours || 0, minutes || 0, 0, 0));
+  const adjusted = new Date(utcGuess.getTime() - timeZoneOffsetMs(utcGuess, timeZone));
+  return new Date(utcGuess.getTime() - timeZoneOffsetMs(adjusted, timeZone));
+}
+
+export function dateAndTimeInZoneToTimestamp(dateYmd: string, timeHm: string, timeZone?: string | null): Timestamp {
+  return Timestamp.fromDate(dateAndTimeInZoneToDate(dateYmd, timeHm, timeZone));
+}
+
+function timeZoneOffsetMs(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).formatToParts(date);
+  const value: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      value[part.type] = part.value;
+    }
+  }
+  const asUtc = Date.UTC(
+    Number(value.year),
+    Number(value.month) - 1,
+    Number(value.day),
+    Number(value.hour) % 24,
+    Number(value.minute),
+    Number(value.second)
+  );
+  return asUtc - date.getTime();
 }
 
 /** Local midnight for a `YYYY-MM-DD` calendar date (not UTC). */

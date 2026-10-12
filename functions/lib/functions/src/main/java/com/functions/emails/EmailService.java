@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.events.utils.EventTimeZone;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
 import com.functions.utils.TimeUtils;
@@ -78,11 +79,18 @@ public class EmailService {
     public static boolean sendWaitlistEmailNotification(String eventName, String name, Timestamp eventStartDate,
             Timestamp eventEndDate,
             String location, String email) {
+        return sendWaitlistEmailNotification(eventName, name, eventStartDate, eventEndDate, location, email,
+                null, null, null);
+    }
+
+    public static boolean sendWaitlistEmailNotification(String eventName, String name, Timestamp eventStartDate,
+            Timestamp eventEndDate, String location, String email, String timezone, Double lat, Double lng) {
+        ZoneId venueZone = EventTimeZone.resolve(timezone, lat, lng);
         Map<String, String> variables = Map.of(
                 "name", name,
                 "eventName", eventName,
-                "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, ZoneId.of("Australia/Sydney")),
-                "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, ZoneId.of("Australia/Sydney")),
+                "startDate", TimeUtils.getTimestampStringFromTimezone(eventStartDate, venueZone),
+                "endDate", TimeUtils.getTimestampStringFromTimezone(eventEndDate, venueZone),
                 "location", location);
         logger.info("Sending waitlist email notification to {} for event {}", email, eventName);
         return EmailClient.sendEmailWithLoopsWithRetries(EmailTemplateType.WAITLIST_NOTIFICATION, email, variables);
@@ -182,6 +190,7 @@ public class EmailService {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
         Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
+        ZoneId venueZone = venueZone(event);
 
         String eventTicketTypeId = resolveEventTicketTypeIdFromOrder(db, order);
         double priceInCents = extractPriceByTicketTypeId(event, eventTicketTypeId);
@@ -196,8 +205,8 @@ public class EmailService {
                 quantity,
                 priceInCents,
                 TimeUtils.formatTimestampForEmail(purchasedTimestamp),
-                TimeUtils.formatTimestampForEmail(startTimestamp),
-                TimeUtils.formatTimestampForEmail(endTimestamp),
+                TimeUtils.formatTimestampForEmail(startTimestamp, venueZone),
+                TimeUtils.formatTimestampForEmail(endTimestamp, venueZone),
                 event.getString("location"));
     }
 
@@ -211,6 +220,7 @@ public class EmailService {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
         Timestamp purchasedTimestamp = getTimestampField(order, "datePurchased");
+        ZoneId venueZone = venueZone(event);
 
         String eventTicketTypeId = resolveEventTicketTypeIdFromOrder(db, order);
         double priceInCents = extractPriceByTicketTypeId(event, eventTicketTypeId);
@@ -226,8 +236,8 @@ public class EmailService {
                 "datePurchased", TimeUtils.formatTimestampForEmail(purchasedTimestamp),
                 "quantity", quantity,
                 "price", centsToPurchaseEmailPrice(priceInCents),
-                "startDate", TimeUtils.formatTimestampForEmail(startTimestamp),
-                "endDate", TimeUtils.formatTimestampForEmail(endTimestamp),
+                "startDate", TimeUtils.formatTimestampForEmail(startTimestamp, venueZone),
+                "endDate", TimeUtils.formatTimestampForEmail(endTimestamp, venueZone),
                 "location", defaultString(event.getString("location")));
     }
 
@@ -245,6 +255,13 @@ public class EmailService {
                 "eventName", defaultString(event.getString("name")),
                 "orderId", defaultString(orderId),
                 "ticketCount", ticketCount);
+    }
+
+    private static ZoneId venueZone(DocumentSnapshot event) {
+        if (event == null || !event.exists()) {
+            return EventTimeZone.FALLBACK;
+        }
+        return EventTimeZone.resolveSnapshot(event.getString("timezone"), event.get("locationLatLng"));
     }
 
     private static Timestamp getTimestampField(DocumentSnapshot snapshot, String fieldName) {

@@ -50,6 +50,7 @@ import {
   buildGeneralAdmissionInventoryUpdates,
   resolveGeneralAdmissionInventory,
 } from "./eventsUtils/eventTicketTypesUtils";
+import { resolveVenueTimeZoneId } from "../venueTimeZone";
 import {
   bustEventsLocalStorageCache,
   findEventDoc,
@@ -70,6 +71,7 @@ export async function createEvent(data: NewEventData): Promise<EventId> {
     // Simplified object spreading with tokenized values
     const eventDataWithTokens = {
       ...data,
+      timezone: resolveVenueTimeZoneId(data.timezone, data.locationLatLng?.lat, data.locationLatLng?.lng),
       nameTokens: tokenizeText(data.name),
       locationTokens: tokenizeText(data.location),
     };
@@ -258,12 +260,16 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
     }
 
     const eventDoc = eventDocSnapshot.data() as EventDataWithoutOrganiser;
+    const lat = updatedData.locationLatLng?.lat ?? eventDoc.locationLatLng?.lat;
+    const lng = updatedData.locationLatLng?.lng ?? eventDoc.locationLatLng?.lng;
+    const timezone = resolveVenueTimeZoneId(updatedData.timezone ?? eventDoc.timezone, lat, lng);
     const { price, capacity, vacancy, eventTicketTypes, ...restUpdatedData } = updatedData;
+    const restWithZone = { ...restUpdatedData, timezone };
 
     // Full ticket-type map writes own nested inventory; do not also patch GA nested fields.
     if (eventTicketTypes !== undefined) {
       await updateDoc(eventDocRef, {
-        ...restUpdatedData,
+        ...restWithZone,
         eventTicketTypes,
         ...(price !== undefined ? { price } : {}),
         ...(capacity !== undefined ? { capacity } : {}),
@@ -275,7 +281,7 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
         capacity,
         vacancy,
       });
-      await updateDoc(eventDocRef, { ...restUpdatedData, ...inventoryUpdates });
+      await updateDoc(eventDocRef, { ...restWithZone, ...inventoryUpdates });
     }
 
     eventServiceLogger.info(`Event with Id '${eventId}' updated successfully.`);

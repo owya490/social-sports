@@ -21,6 +21,7 @@ type RecurringHubRecurrenceProps = {
   loading: boolean;
   updating: boolean;
   startDate: Timestamp;
+  timeZone?: string;
   newRecurrenceData: NewRecurrenceFormData;
   originalRecurrenceData: NewRecurrenceFormData | null;
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
@@ -116,12 +117,13 @@ function hasRecurrenceChanges(
   return false;
 }
 
-function formatRecurrenceDate(date: Timestamp) {
+function formatRecurrenceDate(date: Timestamp, timeZone?: string) {
   return date.toDate().toLocaleDateString(undefined, {
     weekday: "short",
     day: "numeric",
     month: "short",
     year: "numeric",
+    ...(timeZone ? { timeZone } : {}),
   });
 }
 
@@ -129,6 +131,7 @@ export function RecurringHubRecurrence({
   loading,
   updating,
   startDate,
+  timeZone,
   newRecurrenceData,
   originalRecurrenceData,
   setNewRecurrenceData,
@@ -143,8 +146,8 @@ export function RecurringHubRecurrence({
   const recurrenceEnabled = newRecurrenceData.recurrenceEnabled;
 
   useEffect(() => {
-    setRecurrenceDates(calculateRecurrenceDates(newRecurrenceData, startDate));
-  }, [startDate, newRecurrenceData.frequency, newRecurrenceData.recurrenceAmount]);
+    setRecurrenceDates(calculateRecurrenceDates(newRecurrenceData, startDate, timeZone));
+  }, [startDate, timeZone, newRecurrenceData.frequency, newRecurrenceData.recurrenceAmount]);
 
   useEffect(() => {
     if (newRecurrenceData.createDaysBefore > maxCreateDays) {
@@ -291,7 +294,7 @@ export function RecurringHubRecurrence({
                         {index + 1}
                       </span>
                       <span className="min-w-0 text-sm text-foreground font-sans">
-                        {formatRecurrenceDate(date)}
+                        {formatRecurrenceDate(date, timeZone)}
                       </span>
                     </li>
                   ))}

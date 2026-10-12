@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.emails.EmailService;
+import com.functions.events.utils.EventTimeZone;
 import com.functions.utils.TimeUtils;
 import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
@@ -1348,6 +1349,7 @@ public class WebhookService {
         if (ts == null) {
             return "";
         }
-        return TimeUtils.formatTimestampForEmail(ts);
+        return TimeUtils.formatTimestampForEmail(ts,
+                EventTimeZone.resolveSnapshot(eventSnapshot.getString("timezone"), eventSnapshot.get("locationLatLng")));
     }
 }

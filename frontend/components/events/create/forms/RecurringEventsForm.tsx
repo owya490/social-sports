@@ -1,7 +1,8 @@
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
-import { dateYmdInLocalToDate } from "@/services/src/datetimeUtils";
+import { dateAndTimeInZoneToTimestamp } from "@/services/src/datetimeUtils";
 import { RecurringEventsFrequencyMetadata } from "@/services/src/recurringEvents/recurringEventsConstants";
 import { calculateRecurrenceDates } from "@/services/src/recurringEvents/recurringEventsService";
+import { resolveVenueTimeZoneId } from "@/services/src/venueTimeZone";
 import { Radio, Switch } from "@mantine/core";
 import { Option, Select } from "@material-tailwind/react";
 import { Timestamp } from "firebase/firestore";
@@ -13,6 +14,9 @@ export const MAX_RECURRENCE_AMOUNT = 99;
 
 interface RecurringEventsFormProps {
   startDate: string;
+  startTime?: string;
+  lat?: number;
+  lng?: number;
   newRecurrenceData: NewRecurrenceFormData;
   setRecurrenceData: (data: NewRecurrenceFormData) => void;
   /** When true, skip the enable switch — parent owns enabling (e.g. create modal). */
@@ -21,17 +25,21 @@ interface RecurringEventsFormProps {
 
 export const RecurringEventsForm = ({
   startDate,
+  startTime,
+  lat,
+  lng,
   newRecurrenceData,
   setRecurrenceData,
   hideEnableSwitch = false,
 }: RecurringEventsFormProps) => {
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
+  const venueZone = resolveVenueTimeZoneId(undefined, lat, lng);
 
   useEffect(() => {
-    const timestamp = Timestamp.fromDate(dateYmdInLocalToDate(startDate));
-    const futureRecurrences: Timestamp[] = calculateRecurrenceDates(newRecurrenceData, timestamp);
+    const timestamp = dateAndTimeInZoneToTimestamp(startDate, startTime || "00:00", venueZone);
+    const futureRecurrences: Timestamp[] = calculateRecurrenceDates(newRecurrenceData, timestamp, venueZone);
     setRecurrenceDates(futureRecurrences);
-  }, [startDate, newRecurrenceData.frequency, newRecurrenceData.recurrenceAmount]);
+  }, [startDate, startTime, venueZone, newRecurrenceData.frequency, newRecurrenceData.recurrenceAmount]);
 
   useEffect(() => {
     const maxCreateDaysBefore =
@@ -251,7 +259,7 @@ export const RecurringEventsForm = ({
         <div>
           {showConfig && (
             <div className="flex items-center h-full">
-              <RecurringEventsPreviewTable recurrenceDates={recurrenceDates} />
+              <RecurringEventsPreviewTable recurrenceDates={recurrenceDates} timeZone={venueZone} />
             </div>
           )}
         </div>

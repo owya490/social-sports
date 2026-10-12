@@ -9,6 +9,9 @@ type CreateEventRecurrenceModalProps = {
   open: boolean;
   onClose: () => void;
   startDate: string;
+  startTime?: string;
+  lat?: number;
+  lng?: number;
   value: NewRecurrenceFormData;
   onSave: (data: NewRecurrenceFormData) => void;
   onCancelEnable: () => void;
@@ -16,13 +19,16 @@ type CreateEventRecurrenceModalProps = {
 
 type BodyProps = {
   startDate: string;
+  startTime?: string;
+  lat?: number;
+  lng?: number;
   initial: NewRecurrenceFormData;
   onSave: (data: NewRecurrenceFormData) => void;
   onClose: () => void;
   onCancelEnable: () => void;
 };
 
-function RecurrencePanelBody({ startDate, initial, onSave, onClose, onCancelEnable }: BodyProps) {
+function RecurrencePanelBody({ startDate, startTime, lat, lng, initial, onSave, onClose, onCancelEnable }: BodyProps) {
   const [draft, setDraft] = useState<NewRecurrenceFormData>(initial);
 
   const handleClose = () => {
@@ -42,6 +48,9 @@ function RecurrencePanelBody({ startDate, initial, onSave, onClose, onCancelEnab
       </p>
       <RecurringEventsForm
         startDate={startDate}
+        startTime={startTime}
+        lat={lat}
+        lng={lng}
         newRecurrenceData={draft}
         setRecurrenceData={setDraft}
         hideEnableSwitch
@@ -74,6 +83,9 @@ export function CreateEventRecurrenceModal({
   open,
   onClose,
   startDate,
+  startTime,
+  lat,
+  lng,
   value,
   onSave,
   onCancelEnable,
@@ -88,6 +100,9 @@ export function CreateEventRecurrenceModal({
       {open ? (
         <RecurrencePanelBody
           startDate={startDate}
+          startTime={startTime}
+          lat={lat}
+          lng={lng}
           initial={{ ...value, recurrenceEnabled: true }}
           onSave={onSave}
           onClose={onClose}

@@ -307,6 +307,9 @@ export function OrganiserEventHubView() {
             eventPrice={eventPrice}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
+            venueLat={eventData.locationLatLng?.lat}
+            venueLng={eventData.locationLatLng?.lng}
+            venueTimezone={eventData.timezone}
             eventImage={eventImage}
             eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
@@ -335,6 +338,18 @@ export function OrganiserEventHubView() {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
               if (data.eventLink !== undefined) setEventEventLink(data.eventLink ?? "");
+              if (data.locationLatLng !== undefined || data.timezone !== undefined || data.startDate !== undefined) {
+                setEventData((prev) => ({
+                  ...prev,
+                  ...(data.locationLatLng !== undefined ? { locationLatLng: data.locationLatLng } : {}),
+                  ...(data.timezone !== undefined ? { timezone: data.timezone } : {}),
+                  ...(data.startDate !== undefined ? { startDate: data.startDate } : {}),
+                  ...(data.endDate !== undefined ? { endDate: data.endDate } : {}),
+                  ...(data.registrationDeadline !== undefined
+                    ? { registrationDeadline: data.registrationDeadline }
+                    : {}),
+                }));
+              }
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);

@@ -1,8 +1,11 @@
 package com.functions.events.services;
 
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -93,12 +96,13 @@ public class RecurringEventsCronService {
                     Map<String, String> pastRecurrences = recurrenceData.getPastRecurrences() == null
                             ? new HashMap<>()
                             : new HashMap<>(recurrenceData.getPastRecurrences());
+                    NewEventData templateEvent = recurrenceTemplate.getEventData();
                     Timestamp recurrenceTimestamp = findNextRecurrenceToCreate(
-                            recurrenceData, pastRecurrences, today, createEventWorkflow);
+                            recurrenceData, pastRecurrences, today, createEventWorkflow, templateEvent);
                     if (recurrenceTimestamp == null) {
                         return new RecurrenceTransactionResult(null,
                                 shouldMoveTemplateToInactiveAfterNoCreation(
-                                        recurrenceData, today, createEventWorkflow));
+                                        recurrenceData, today, createEventWorkflow, templateEvent));
                     }
 
                     String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
@@ -129,9 +133,9 @@ public class RecurringEventsCronService {
                     List<ReservedSlot> reservedSlots = recurrenceData.getReservedSlots();
                     return new RecurrenceTransactionResult(new CreatedRecurringEvent(newEventId,
                             reservedSlots == null ? List.of() : new ArrayList<>(reservedSlots)),
-                            finalCreationDateHasPassed(recurrenceData, today)
+                            finalCreationDateHasPassed(recurrenceData, today, templateEvent)
                                     && findNextRecurrenceToCreate(recurrenceData, pastRecurrences,
-                                            today, false) == null);
+                                            today, false, templateEvent) == null);
             });
 
             if (transactionResult.createdEvent() == null) {
@@ -197,24 +201,92 @@ public class RecurringEventsCronService {
 
     static Timestamp findNextRecurrenceToCreate(RecurrenceData recurrenceData,
             Map<String, String> pastRecurrences, LocalDate today, boolean createEventWorkflow) {
-        if (!recurrenceData.getRecurrenceEnabled()) {
+        return findNextRecurrenceToCreate(recurrenceData, pastRecurrences, today, createEventWorkflow, null);
+    }
+
+    /**
+     * Picks the next occurrence that is not already created. Future dates are
+     * recomputed from the template start in the venue zone, because a UTC-stepped
+     * stored instant cannot be repaired by reading it back. An existing
+     * pastRecurrences key for that venue-local day, including the old Sydney key
+     * of a UTC-stepped instant, still counts as created. New keys stay in the
+     * Sydney {@code yyyy-MM-dd HH:mm:ss O} format.
+     */
+    static Timestamp findNextRecurrenceToCreate(RecurrenceData recurrenceData,
+            Map<String, String> pastRecurrences, LocalDate today, boolean createEventWorkflow,
+            NewEventData eventData) {
+        if (!Boolean.TRUE.equals(recurrenceData.getRecurrenceEnabled())) {
             return null;
         }
 
-        for (Timestamp recurrenceTimestamp : recurrenceData.getAllRecurrences()) {
-            // Keys and the due-day check stay on the Sydney calendar so existing
-            // pastRecurrences entries still match. Start, end, and deadline use the venue zone.
-            String recurrenceTimestampString = TimeUtils.getTimestampStringFromTimezone(
-                    recurrenceTimestamp, SYDNEY_TIMEZONE);
+        ZoneId zone = eventData == null ? SYDNEY_TIMEZONE : EventTimeZone.resolve(eventData);
+        LocalDate venueToday = venueDateAtSydneyMidnight(today, zone);
+        int createDaysBefore = recurrenceData.getCreateDaysBefore() == null
+                ? 0
+                : recurrenceData.getCreateDaysBefore();
+        for (Timestamp recurrenceTimestamp : occurrencesToSchedule(recurrenceData, eventData)) {
+            if (occurrenceAlreadyCreated(recurrenceTimestamp, pastRecurrences, zone)) {
+                continue;
+            }
             LocalDate eventCreationDate = recurrenceTimestamp.toSqlTimestamp().toInstant()
-                    .atZone(SYDNEY_TIMEZONE).toLocalDate()
-                    .minusDays(recurrenceData.getCreateDaysBefore());
-            if (!pastRecurrences.containsKey(recurrenceTimestampString)
-                    && (createEventWorkflow || today.equals(eventCreationDate))) {
+                    .atZone(zone).toLocalDate()
+                    .minusDays(createDaysBefore);
+            if (createEventWorkflow || venueToday.equals(eventCreationDate)) {
                 return recurrenceTimestamp;
             }
         }
         return null;
+    }
+
+    static List<Timestamp> occurrencesToSchedule(RecurrenceData recurrenceData, NewEventData eventData) {
+        if (eventData != null && eventData.getStartDate() != null
+                && recurrenceData.getFrequency() != null
+                && recurrenceData.getRecurrenceAmount() != null) {
+            return RecurringEventsService.calculateAllRecurrenceDates(
+                    eventData.getStartDate(),
+                    recurrenceData.getFrequency(),
+                    recurrenceData.getRecurrenceAmount(),
+                    true,
+                    EventTimeZone.resolve(eventData));
+        }
+        List<Timestamp> stored = recurrenceData.getAllRecurrences();
+        return stored == null ? List.of() : stored;
+    }
+
+    /**
+     * True when this venue-local calendar day already has an event. Exact Sydney
+     * keys still match, and so does the key written for the pre-fix UTC-stepped instant.
+     */
+    static boolean occurrenceAlreadyCreated(Timestamp occurrence, Map<String, String> pastRecurrences, ZoneId zone) {
+        if (pastRecurrences == null || pastRecurrences.isEmpty() || occurrence == null) {
+            return false;
+        }
+        String exactKey = TimeUtils.getTimestampStringFromTimezone(occurrence, SYDNEY_TIMEZONE);
+        if (pastRecurrences.containsKey(exactKey)) {
+            return true;
+        }
+        ZoneId eventZone = zone == null ? SYDNEY_TIMEZONE : zone;
+        LocalDate venueDay = occurrence.toSqlTimestamp().toInstant().atZone(eventZone).toLocalDate();
+        DateTimeFormatter parser = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss O");
+        for (String pastKey : pastRecurrences.keySet()) {
+            if (pastKey == null || pastKey.isBlank()) {
+                continue;
+            }
+            try {
+                ZonedDateTime parsed = ZonedDateTime.parse(pastKey, parser);
+                if (parsed.toInstant().atZone(eventZone).toLocalDate().equals(venueDay)) {
+                    return true;
+                }
+            } catch (DateTimeException ignored) {
+                // Keys this formatter cannot read still match through the exact string above.
+            }
+        }
+        return false;
+    }
+
+    static LocalDate venueDateAtSydneyMidnight(LocalDate sydneyToday, ZoneId zone) {
+        ZoneId eventZone = zone == null ? SYDNEY_TIMEZONE : zone;
+        return sydneyToday.atStartOfDay(SYDNEY_TIMEZONE).withZoneSameInstant(eventZone).toLocalDate();
     }
 
     static NewEventData createEventDataForRecurrence(NewEventData eventData,
@@ -235,21 +307,32 @@ public class RecurringEventsCronService {
     }
 
     private static boolean finalCreationDateHasPassed(RecurrenceData recurrenceData,
-            LocalDate today) {
-        Timestamp latestTimestamp = recurrenceData.getAllRecurrences().stream()
+            LocalDate today, NewEventData eventData) {
+        List<Timestamp> occurrences = occurrencesToSchedule(recurrenceData, eventData);
+        Timestamp latestTimestamp = occurrences.stream()
                 .max(Timestamp::compareTo)
                 .orElseThrow();
+        ZoneId zone = eventData == null ? SYDNEY_TIMEZONE : EventTimeZone.resolve(eventData);
+        int createDaysBefore = recurrenceData.getCreateDaysBefore() == null
+                ? 0
+                : recurrenceData.getCreateDaysBefore();
         LocalDate finalEventCreationDate = latestTimestamp.toSqlTimestamp().toInstant()
-                .atZone(SYDNEY_TIMEZONE).toLocalDate()
-                .minusDays(recurrenceData.getCreateDaysBefore());
-        return !today.isBefore(finalEventCreationDate);
+                .atZone(zone).toLocalDate()
+                .minusDays(createDaysBefore);
+        return !venueDateAtSydneyMidnight(today, zone).isBefore(finalEventCreationDate);
     }
 
     static boolean shouldMoveTemplateToInactiveAfterNoCreation(RecurrenceData recurrenceData,
             LocalDate today, boolean createEventWorkflow) {
+        return shouldMoveTemplateToInactiveAfterNoCreation(recurrenceData, today, createEventWorkflow, null);
+    }
+
+    static boolean shouldMoveTemplateToInactiveAfterNoCreation(RecurrenceData recurrenceData,
+            LocalDate today, boolean createEventWorkflow, NewEventData eventData) {
+        List<Timestamp> occurrences = occurrencesToSchedule(recurrenceData, eventData);
         return (createEventWorkflow && Boolean.TRUE.equals(recurrenceData.getRecurrenceEnabled()))
-                || recurrenceData.getAllRecurrences().isEmpty()
-                || finalCreationDateHasPassed(recurrenceData, today);
+                || occurrences.isEmpty()
+                || finalCreationDateHasPassed(recurrenceData, today, eventData);
     }
 
     private record CreatedRecurringEvent(String eventId, List<ReservedSlot> reservedSlots) {

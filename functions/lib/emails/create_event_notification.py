@@ -6,8 +6,9 @@ from google.protobuf.timestamp_pb2 import Timestamp
 
 import requests
 from firebase_functions import https_fn, options
-from lib.constants import SYDNEY_TIMEZONE, db
+from lib.constants import db
 from lib.emails.constants import LOOPS_API_KEY, LOOPS_CREATE_EVENT_EMAIL_TEMPLATE_ID
+from lib.emails.event_local_time import format_event_dict_local
 from lib.logging import Logger
 from lib.utils.priceUtils import centsToDollars
 from lib.emails.commons import (
@@ -35,20 +36,12 @@ def send_create_event_email_with_loops(
             "name": organiser_name,
             "eventName": event_data.get("name"),
             "startDate": (
-                event_data.get("startDate")
-                .timestamp_pb()
-                .ToDatetime()
-                .astimezone(SYDNEY_TIMEZONE)
-                .strftime("%m/%d/%Y, %H:%M")
+                format_event_dict_local(event_data.get("startDate").timestamp_pb().ToDatetime(), event_data)
                 if event_data.get("startDate")
                 else ""
             ),
             "endDate": (
-                event_data.get("endDate")
-                .timestamp_pb()
-                .ToDatetime()
-                .astimezone(SYDNEY_TIMEZONE)
-                .strftime("%m/%d/%Y, %H:%M")
+                format_event_dict_local(event_data.get("endDate").timestamp_pb().ToDatetime(), event_data)
                 if event_data.get("endDate")
                 else ""
             ),

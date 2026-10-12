@@ -4,11 +4,13 @@ import { Frequency, NewRecurrenceFormData, RecurrenceTemplateId } from "@/interf
 import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 import { executeGlobalAppControllerFunction } from "../src/functions/functionsUtils";
 import {
+  calculateRecurrenceDates,
   createRecurrenceTemplate,
   updateRecurrenceTemplate,
   updateRecurrenceTemplateEventData,
   updateRecurrenceTemplateRecurrenceData,
 } from "../src/recurringEvents/recurringEventsService";
+import { dateAndTimeInZoneToTimestamp } from "../src/datetimeUtils";
 import { findRecurrenceTemplateDoc } from "../src/recurringEvents/recurringEventsUtils";
 
 jest.mock("../src/functions/functionsUtils", () => ({
@@ -91,6 +93,21 @@ describe("recurringEventsService GAC calls", () => {
     await expect(
       updateRecurrenceTemplateEventData("template-1" as RecurrenceTemplateId, { paused: true })
     ).rejects.toThrow("Forbidden");
+  });
+
+  it("steps a create-form preview across Sydney daylight saving in the venue zone", () => {
+    const start = dateAndTimeInZoneToTimestamp("2026-09-28", "09:00", "Australia/Sydney");
+    const [next] = calculateRecurrenceDates(
+      {
+        frequency: Frequency.WEEKLY,
+        recurrenceAmount: 1,
+        createDaysBefore: 1,
+        recurrenceEnabled: true,
+      },
+      start,
+      "Australia/Sydney"
+    );
+    expect(next.toDate().toISOString()).toBe("2026-10-04T22:00:00.000Z");
   });
 
   it("propagates authenticated GAC failures from recurrence-data updates", async () => {

@@ -53,6 +53,9 @@ type EventHubListingProps = {
   eventPrice: number;
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
+  venueLat?: number | null;
+  venueLng?: number | null;
+  venueTimezone?: string | null;
   eventImage: string;
   eventThumbnail: string;
   isActive: boolean;
@@ -80,6 +83,9 @@ export function EventHubListing({
   eventPrice,
   eventRegistrationDeadline,
   eventEventLink,
+  venueLat,
+  venueLng,
+  venueTimezone,
   eventImage,
   eventThumbnail,
   isActive,
@@ -385,6 +391,9 @@ export function EventHubListing({
             eventSport={eventSport}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
+            venueLat={venueLat}
+            venueLng={venueLng}
+            venueTimezone={venueTimezone}
             isActive={isActive}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={orderTicketsMap}

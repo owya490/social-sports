@@ -9,6 +9,8 @@ import {
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { Timestamp } from "firebase/firestore";
+import { addCalendarDaysToYmd, dateAndTimeInZoneToDate } from "../datetimeUtils";
+import { isIanaZone } from "../venueTimeZone";
 import { getPrivateUserById } from "../users/usersService";
 import {
   applyGeneralAdmissionInventoryFields,
@@ -160,32 +162,73 @@ export async function updateRecurrenceTemplateRecurrenceData(
   });
 }
 
-export function calculateRecurrenceDates(newRecurrenceFormData: NewRecurrenceFormData, startDate: Timestamp) {
+export function calculateRecurrenceDates(
+  newRecurrenceFormData: NewRecurrenceFormData,
+  startDate: Timestamp,
+  timeZone?: string | null
+) {
+  const inVenueZone = isIanaZone(timeZone);
+  const advance = (days: number, months: number) => {
+    if (!inVenueZone) {
+      const recurrenceDate = startDate.toDate();
+      if (months !== 0) {
+        recurrenceDate.setMonth(recurrenceDate.getMonth() + months);
+      }
+      if (days !== 0) {
+        recurrenceDate.setDate(recurrenceDate.getDate() + days);
+      }
+      return Timestamp.fromDate(recurrenceDate);
+    }
+    return Timestamp.fromDate(addCalendarInZone(startDate.toDate(), timeZone, days, months));
+  };
   switch (newRecurrenceFormData.frequency) {
     case Frequency.WEEKLY:
-      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) => {
-        recurrence += 1;
-        const recurrenceDate = startDate.toDate();
-        recurrenceDate.setDate(recurrenceDate.getDate() + 7 * recurrence);
-        return Timestamp.fromDate(recurrenceDate);
-      });
+      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) =>
+        advance(7 * (recurrence + 1), 0)
+      );
     case Frequency.FORTNIGHTLY:
-      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) => {
-        recurrence += 1;
-        const recurrenceDate = startDate.toDate();
-        recurrenceDate.setDate(recurrenceDate.getDate() + 14 * recurrence);
-        return Timestamp.fromDate(recurrenceDate);
-      });
+      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) =>
+        advance(14 * (recurrence + 1), 0)
+      );
     case Frequency.MONTHLY:
-      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) => {
-        recurrence += 1;
-        const recurrenceDate = startDate.toDate();
-        recurrenceDate.setMonth(recurrenceDate.getMonth() + 1 * recurrence);
-        return Timestamp.fromDate(recurrenceDate);
-      });
+      return [...Array(newRecurrenceFormData.recurrenceAmount).keys()].map((recurrence) =>
+        advance(0, recurrence + 1)
+      );
     default:
       return [];
   }
+}
+
+function addCalendarInZone(instant: Date, timeZone: string, days: number, months: number): Date {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(instant);
+  const value: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== "literal") {
+      value[part.type] = part.value;
+    }
+  }
+  let year = Number(value.year);
+  let month = Number(value.month);
+  let day = Number(value.day);
+  if (months !== 0) {
+    const shifted = new Date(Date.UTC(year, month - 1 + months, day));
+    year = shifted.getUTCFullYear();
+    month = shifted.getUTCMonth() + 1;
+    day = shifted.getUTCDate();
+  }
+  const ymd = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const shiftedYmd = days === 0 ? ymd : addCalendarDaysToYmd(ymd, days);
+  const hour = String(Number(value.hour) % 24).padStart(2, "0");
+  const minute = value.minute ?? "00";
+  return dateAndTimeInZoneToDate(shiftedYmd, `${hour}:${minute}`, timeZone);
 }
 
 export function calculateRecurrenceEnded(recurrenceTemplate: RecurrenceTemplate) {

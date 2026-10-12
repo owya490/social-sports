@@ -44,6 +44,7 @@ import {
   updateRecurrenceTemplateRecurrenceData,
 } from "@/services/src/recurringEvents/recurringEventsService";
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
+import { resolveVenueTimeZoneId } from "@/services/src/venueTimeZone";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -88,6 +89,9 @@ export default function OrganiserRecurringHubV2Page() {
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
+  const [eventLat, setEventLat] = useState<number | null>(null);
+  const [eventLng, setEventLng] = useState<number | null>(null);
+  const [eventTimezone, setEventTimezone] = useState<string | null>(null);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
   const [pastEvents, setPastEvents] = useState<Record<string, EventId>>({});
@@ -135,6 +139,9 @@ export default function OrganiserRecurringHubV2Page() {
         setEventBookingApprovalEnabled(eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(eventData.showAttendeesOnEventPage);
         setEventIsPrivate(eventData.isPrivate);
+        setEventLat(eventData.locationLatLng?.lat ?? null);
+        setEventLng(eventData.locationLatLng?.lng ?? null);
+        setEventTimezone(eventData.timezone ?? null);
         setEventTicketTypes(eventData.eventTicketTypes);
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
@@ -256,6 +263,9 @@ export default function OrganiserRecurringHubV2Page() {
             eventPrice={eventPrice}
             eventRegistrationDeadline={eventRegistrationDeadline}
             eventEventLink={eventEventLink}
+            venueLat={eventLat}
+            venueLng={eventLng}
+            venueTimezone={eventTimezone}
             eventImage={eventImage}
             eventThumbnail={eventThumbnail}
             isActive={eventIsActive}
@@ -294,6 +304,11 @@ export default function OrganiserRecurringHubV2Page() {
                 setEventRegistrationDeadline(data.registrationDeadline);
               }
               if (data.eventLink !== undefined) setEventEventLink(data.eventLink ?? "");
+              if (data.locationLatLng !== undefined) {
+                setEventLat(data.locationLatLng.lat);
+                setEventLng(data.locationLatLng.lng);
+              }
+              if (data.timezone !== undefined) setEventTimezone(data.timezone ?? null);
               if (data.image !== undefined) setEventImage(data.image);
               if (data.thumbnail !== undefined) setEventThumbnail(data.thumbnail);
               if (data.isPrivate !== undefined) setEventIsPrivate(data.isPrivate);
@@ -318,6 +333,7 @@ export default function OrganiserRecurringHubV2Page() {
             originalRecurrenceData={originalRecurrenceData}
             setNewRecurrenceData={setNewRecurrenceData}
             startDate={eventStartDate}
+            timeZone={resolveVenueTimeZoneId(eventTimezone, eventLat, eventLng)}
             submitNewRecurrenceData={submitNewRecurrenceData}
             isRecurrenceEnded={recurrenceEnded}
             capacity={eventCapacity}
