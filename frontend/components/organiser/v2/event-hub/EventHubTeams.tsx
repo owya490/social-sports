@@ -5,9 +5,9 @@ import { EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { saveEventTeamBoard, subscribeToEventTeamBoard } from "@/services/src/events/eventTeams/eventTeamsService";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { ChevronRightIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EventHubPanel } from "./EventHubPanel";
 import {
   EventHubEmpty,
   EventHubGhostButton,
@@ -22,6 +22,7 @@ import {
   TEAM_CSV_HEADERS,
   addTeam,
   autoFillTeams,
+  boardMatchesOrders,
   buildTeamCsvRows,
   newTeamId,
   peopleFromOrders,
@@ -66,11 +67,16 @@ export function EventHubTeams({
   const [creating, setCreating] = useState(false);
   const [draftName, setDraftName] = useState("");
   const [draftSize, setDraftSize] = useState("");
+  const [editingTeamId, setEditingTeamId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editSize, setEditSize] = useState("");
   const [armReshuffle, setArmReshuffle] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState<SettingsAutosaveStatus>("idle");
   const [hasPendingEdit, setHasPendingEdit] = useState(false);
   const [appliedInitialBoard, setAppliedInitialBoard] = useState<TeamBoard | null>(eventId ? null : initialBoard);
+  const [syncedAssignmentKey, setSyncedAssignmentKey] = useState<string | null>(null);
+  const [pendingSync, setPendingSync] = useState<TeamBoard | null>(null);
   if (eventId !== trackedEventId) {
     setTrackedEventId(eventId);
     setRemoteBoard(null);
@@ -88,6 +94,20 @@ export function EventHubTeams({
   const persistChainRef = useRef(Promise.resolve());
   const failedBoardRef = useRef<TeamBoard | null>(null);
   const mountedRef = useRef(true);
+  const persistedSyncRef = useRef<TeamBoard | null>(null);
+  if (sourceBoard && (eventId || onPersist) && !hasPendingEdit && !boardMatchesOrders(sourceBoard, people)) {
+    const next = visibleBoard(sourceBoard, people);
+    const key = JSON.stringify(next.assignments);
+    if (syncedAssignmentKey !== key) {
+      setSyncedAssignmentKey(key);
+      setPendingSync(next);
+      setBoard(next);
+      setHasPendingEdit(true);
+    }
+  } else if (sourceBoard && boardMatchesOrders(sourceBoard, people) && (syncedAssignmentKey !== null || pendingSync !== null)) {
+    setSyncedAssignmentKey(null);
+    setPendingSync(null);
+  }
 
   useEffect(() => {
     onPersistRef.current = eventId ? (next) => saveEventTeamBoard(eventId, next) : onPersist;
@@ -112,10 +132,10 @@ export function EventHubTeams({
   const enqueuePersist = useCallback((next: TeamBoard) => {
     const persist = onPersistRef.current;
     if (!persist) return;
-    if (mountedRef.current) setSaveStatus("saving");
     persistChainRef.current = persistChainRef.current
       .catch(() => undefined)
       .then(async () => {
+        if (mountedRef.current) setSaveStatus("saving");
         try {
           await persist(next);
           if (!mountedRef.current || boardRef.current !== next) return;
@@ -146,6 +166,12 @@ export function EventHubTeams({
   }, [enqueuePersist]);
 
   const view = useMemo(() => (board ? visibleBoard(board, people) : EMPTY_TEAM_BOARD), [board, people]);
+
+  useEffect(() => {
+    if (!pendingSync || pendingSync !== board || persistedSyncRef.current === pendingSync) return;
+    persistedSyncRef.current = pendingSync;
+    enqueuePersist(pendingSync);
+  }, [board, enqueuePersist, pendingSync]);
   const unassigned = people.flatMap((person) => {
     const count = unassignedSeats(person, view.assignments[person.orderId]);
     return count > 0 ? [{ person, count }] : [];
@@ -181,6 +207,25 @@ export function EventHubTeams({
     setDraftName("");
     setDraftSize("");
     setCreating(false);
+  };
+
+  const editingTeam = view.teams.find((team) => team.id === editingTeamId) ?? null;
+
+  const openTeamEditor = (team: { id: string; name: string; targetSize: number | null }) => {
+    setEditingTeamId(team.id);
+    setEditName(team.name);
+    setEditSize(team.targetSize != null ? String(team.targetSize) : "");
+  };
+
+  const saveTeam = (event: FormEvent) => {
+    event.preventDefault();
+    if (!editingTeam) return;
+    const index = view.teams.findIndex((team) => team.id === editingTeam.id);
+    const name = editName.trim() || `Team ${index + 1}`;
+    const size = Number.parseInt(editSize, 10);
+    const renamed = renameTeam(view, editingTeam.id, name);
+    update(setTeamTargetSize(renamed, editingTeam.id, Number.isFinite(size) && size > 0 ? size : null));
+    setEditingTeamId(null);
   };
 
   const persists = Boolean(eventId || onPersist);
@@ -345,40 +390,19 @@ export function EventHubTeams({
                   return (
                     <section key={team.id} className="rounded-xl border border-border bg-background" aria-label={team.name}>
                       <header className="flex items-center gap-2 border-b border-border px-3 py-2.5">
-                        <input
-                          aria-label={`Name for ${team.name || "team"}`}
-                          value={team.name}
-                          placeholder="Team name"
-                          onChange={(event) => update(renameTeam(view, team.id, event.target.value))}
-                          onBlur={() => {
-                            if (!team.name.trim()) {
-                              update(renameTeam(view, team.id, `Team ${view.teams.indexOf(team) + 1}`));
-                            }
-                          }}
-                          className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                        />
-                        <label className="sr-only" htmlFor={`size-${team.id}`}>
-                          Target size for {team.name}
-                        </label>
-                        <input
-                          id={`size-${team.id}`}
-                          inputMode="numeric"
-                          aria-label={`Target size for ${team.name}`}
-                          value={team.targetSize ?? ""}
-                          placeholder="Size"
-                          onChange={(event) => {
-                            const digits = event.target.value.replace(/[^\d]/g, "");
-                            update(setTeamTargetSize(view, team.id, digits ? Number.parseInt(digits, 10) : null));
-                          }}
-                          className="w-14 rounded-lg border border-border bg-background px-2 py-1 text-center text-xs tabular-nums text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                        />
+                        <button
+                          type="button"
+                          onClick={() => openTeamEditor(team)}
+                          className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-foreground font-sans hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                        >
+                          {team.name || "Team"}
+                        </button>
                         <span
-                          className={`text-xs tabular-nums font-sans ${
+                          className={`shrink-0 text-xs tabular-nums font-sans ${
                             overTarget ? "font-semibold text-foreground" : "text-foreground-muted"
                           }`}
                         >
-                          {filled}
-                          {team.targetSize != null ? `/${team.targetSize}` : ""}
+                          {team.targetSize != null ? `${filled}/${team.targetSize}` : filled}
                         </span>
                         {pendingDeleteId === team.id ? (
                           <button
@@ -427,6 +451,37 @@ export function EventHubTeams({
           </div>
         </div>
       )}
+      <EventHubPanel
+        open={editingTeam != null}
+        onClose={() => setEditingTeamId(null)}
+        title={editingTeam ? editingTeam.name || "Team" : "Team"}
+        footer={
+          <EventHubPrimaryButton type="submit" form="event-hub-edit-team">
+            Save
+          </EventHubPrimaryButton>
+        }
+      >
+        <form id="event-hub-edit-team" className="space-y-4" onSubmit={saveTeam}>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-foreground-muted font-sans">Team name</span>
+            <input
+              value={editName}
+              onChange={(event) => setEditName(event.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-foreground-muted font-sans">Target size</span>
+            <input
+              inputMode="numeric"
+              value={editSize}
+              placeholder="Any"
+              onChange={(event) => setEditSize(event.target.value.replace(/[^\d]/g, ""))}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            />
+          </label>
+        </form>
+      </EventHubPanel>
     </EventHubStage>
   );
 }
@@ -458,6 +513,7 @@ function PersonRow({
         ? `${seats} ${seats === 1 ? "ticket" : "tickets"}`
         : `${count} of ${seats} unassigned`
       : `${count} of ${seats}`;
+  const formId = `move-${person.orderId}-${teamId || "unassigned"}`;
 
   const openMove = () => {
     setAmount(String(count));
@@ -485,54 +541,57 @@ function PersonRow({
         </p>
       </div>
       {destinations.length > 0 ? (
-        <EventHubGhostButton onClick={openMove}>Move</EventHubGhostButton>
+        <button
+          type="button"
+          aria-label={`Move ${person.fullName}`}
+          onClick={openMove}
+          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-foreground-muted hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <ChevronRightIcon className="h-4 w-4" aria-hidden />
+        </button>
       ) : null}
-      <Dialog open={open} onClose={() => setOpen(false)} className="relative z-[110]">
-        <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-sm rounded-2xl border border-border bg-background p-5 shadow-[0_8px_28px_rgba(10,10,10,0.12)]">
-            <DialogTitle className="text-base font-semibold text-foreground font-sans tracking-tight">
-              Move {person.fullName}
-            </DialogTitle>
-            <p className="mt-1.5 text-sm text-foreground-muted font-sans">
-              {count} {count === 1 ? "person" : "people"} can move from here.
-            </p>
-            <form onSubmit={submitMove} className="mt-4 space-y-3">
-              <label className="block text-xs font-medium text-foreground-secondary font-sans">
-                How many people?
-                <input
-                  autoFocus
-                  required
-                  inputMode="numeric"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
-                  className={`${fieldClass} mt-1 w-full`}
-                />
-              </label>
-              <label className="block text-xs font-medium text-foreground-secondary font-sans">
-                Which team?
-                <select
-                  required
-                  value={destination}
-                  onChange={(event) => setDestination(event.target.value)}
-                  className={`${fieldClass} mt-1 w-full`}
-                >
-                  <option value="">Choose a team</option>
-                  {destinations.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="flex justify-end gap-2 pt-1">
-                <EventHubGhostButton onClick={() => setOpen(false)}>Cancel</EventHubGhostButton>
-                <EventHubPrimaryButton type="submit">Move</EventHubPrimaryButton>
-              </div>
-            </form>
-          </DialogPanel>
-        </div>
-      </Dialog>
+      <EventHubPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        title={`Move ${person.fullName}`}
+        footer={
+          <EventHubPrimaryButton type="submit" form={formId}>
+            Move
+          </EventHubPrimaryButton>
+        }
+      >
+        <form id={formId} className="space-y-4" onSubmit={submitMove}>
+          <p className="text-sm text-foreground-muted font-sans">
+            {count} {count === 1 ? "person" : "people"} can move from here.
+          </p>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-foreground-muted font-sans">How many people?</span>
+            <input
+              required
+              inputMode="numeric"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-xs font-medium text-foreground-muted font-sans">Which team?</span>
+            <select
+              required
+              value={destination}
+              onChange={(event) => setDestination(event.target.value)}
+              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <option value="">Choose a team</option>
+              {destinations.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </form>
+      </EventHubPanel>
     </li>
   );
 }

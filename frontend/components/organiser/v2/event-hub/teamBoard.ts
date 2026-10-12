@@ -84,7 +84,31 @@ function normalizeSplit(raw: unknown, seatTotal: number, teamIds: Set<string>): 
   return split;
 }
 
-/** Drop assignments for orders that are no longer approved, and for deleted teams. */
+function sameAssignments(
+  left: Record<string, TeamTicketSplit>,
+  right: Record<string, TeamTicketSplit>
+): boolean {
+  const leftIds = Object.keys(left);
+  if (leftIds.length !== Object.keys(right).length) return false;
+  return leftIds.every((orderId) => {
+    const leftSplit = left[orderId];
+    const rightSplit = right[orderId];
+    if (!rightSplit) return false;
+    const teamIds = Object.keys(leftSplit);
+    if (teamIds.length !== Object.keys(rightSplit).length) return false;
+    return teamIds.every((teamId) => leftSplit[teamId] === rightSplit[teamId]);
+  });
+}
+
+/**
+ * Stored seats still match approved orders.
+ * A refund from 5 tickets to 4 fails this check until that extra seat is dropped.
+ */
+export function boardMatchesOrders(board: TeamBoard, people: TeamPerson[]): boolean {
+  return sameAssignments(board.assignments, visibleBoard(board, people).assignments);
+}
+
+/** Drop orders that are no longer approved, seats on deleted teams, and seats past the current ticket count. */
 export function visibleBoard(board: TeamBoard, people: TeamPerson[]): TeamBoard {
   const peopleById = new Map(people.map((person) => [person.orderId, person]));
   const teamIds = new Set(board.teams.map((team) => team.id));
