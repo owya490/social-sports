@@ -26,10 +26,11 @@ import { UserNotFoundError } from "../users/userErrors";
 import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { mapSocialAuthError, userDataFromSocialProfile } from "./socialAuthUtils";
+import { getAuthPageHref, getSafeReturnTo } from "./authNavigation";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
-export async function handleEmailAndPasswordSignUp(data: NewUserData) {
+export async function handleEmailAndPasswordSignUp(data: NewUserData, returnTo?: string | null) {
   let userCredential; // Declare userCredential outside the try block to access it in the catch block
 
   try {
@@ -48,7 +49,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
       userId: userCredential.user.uid,
     });
     // Send email verification
-    await sendEmailVerification(userCredential.user, actionCodeSettings);
+    await sendEmailVerification(userCredential.user, getEmailActionSettings(returnTo));
     authServiceLogger.info("Email Verification sent", {
       email: data.contactInformation.email,
       userId: userCredential.user.uid,
@@ -73,7 +74,11 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   }
 }
 
-export async function handleEmailAndPasswordSignIn(email: string, password: string): Promise<UserId | null> {
+export async function handleEmailAndPasswordSignIn(
+  email: string,
+  password: string,
+  returnTo?: string | null
+): Promise<UserId | null> {
   let userCredential: UserCredential | undefined = undefined;
 
   try {
@@ -84,7 +89,7 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
     if (!userCredential.user.emailVerified) {
       authServiceLogger.info("Email is not verified. Sending verification email.", { userId: userCredential.user.uid });
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      await sendEmailVerification(userCredential.user, getEmailActionSettings(returnTo));
       throw new Error("Email is not verified. We have sent another Verification Email");
     } else {
       authServiceLogger.info("Email is verified. Proceeding with login.", { userId: userCredential.user.uid });
@@ -313,10 +318,22 @@ const actionCodeSettings = {
   url: "https://www.sportshub.net.au/login",
 };
 
-export async function resetUserPassword(email: string): Promise<void> {
+function getEmailActionSettings(returnTo?: string | null) {
+  const destination = getSafeReturnTo(returnTo);
+  return destination
+    ? { url: `https://www.sportshub.net.au${getAuthPageHref("/login", destination)}` }
+    : actionCodeSettings;
+}
+
+export async function resetUserPassword(email: string, returnTo?: string | null): Promise<void> {
   try {
     // Send password reset email
-    await sendPasswordResetEmail(auth, email);
+    const destination = getSafeReturnTo(returnTo);
+    if (destination) {
+      await sendPasswordResetEmail(auth, email, getEmailActionSettings(destination));
+    } else {
+      await sendPasswordResetEmail(auth, email);
+    }
     // Password reset email sent successfully
     authServiceLogger.info("Password reset email sent");
   } catch (error) {

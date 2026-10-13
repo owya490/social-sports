@@ -32,10 +32,7 @@ export default function OrganiserOnboardingPage() {
 
   useEffect(() => {
     if (userLoading) return;
-    if (!user.userId) {
-      router.replace("/login");
-      return;
-    }
+    if (!user.userId) return;
     if (!hasProvisionedFirestoreProfile(user)) return;
     if (user.onboardingPersona === "attendee") {
       router.replace("/onboarding/attendee");
