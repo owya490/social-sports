@@ -47,9 +47,13 @@ export interface PrivateUserData {
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
   privateEventCollections: EventCollectionId[];
+}
+
+/** Product-onboarding funnel state. Stored at `Users/Active/Onboarding/{userId}`, not on Private. */
+export interface OnboardingUserData {
   /** Host vs participant choice from onboarding (unset until chosen). */
   onboardingPersona?: OnboardingPersona | null;
-  /** Product onboarding finished (attendee welcome done, or organiser created first event). */
+  /** Product onboarding finished (attendee welcome done, or organiser finished setup). */
   onboardingCompletedAt?: Timestamp | null;
   /** Explicit Stripe Connect completion timestamp for onboarding/nudges (set when payments setup is verified). */
   stripeConnectSetupCompletedAt?: Timestamp | null;
@@ -59,11 +63,11 @@ export interface PrivateUserData {
   onboardingSkippedAt?: Timestamp | null;
 }
 
-export interface NewUserData extends PublicUserData, PrivateUserData {
+export interface NewUserData extends PublicUserData, PrivateUserData, OnboardingUserData {
   password: string;
 }
 
-export interface UserData extends PublicUserData, PrivateUserData {
+export interface UserData extends PublicUserData, PrivateUserData, OnboardingUserData {
   userId: UserId;
 }
 
@@ -132,3 +136,4 @@ export interface UsernameMap {
 
 export const PUBLIC_USER_PATH = "Users/Active/Public";
 export const PRIVATE_USER_PATH = "Users/Active/Private";
+export const ONBOARDING_USER_PATH = "Users/Active/Onboarding";
