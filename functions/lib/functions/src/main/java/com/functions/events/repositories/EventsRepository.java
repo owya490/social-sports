@@ -1,7 +1,6 @@
 package com.functions.events.repositories;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
@@ -153,8 +152,7 @@ public class EventsRepository {
             for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
                 EventData eventData = document.toObject(EventData.class);
                 if (eventData == null) {
-                    logger.warn("Failed to map document to EventData, skipping document with ID: {}", document.getId());
-                    continue;
+                    throw new IllegalStateException("Failed to map active public event: " + document.getId());
                 }
                 eventData.setEventId(document.getId());
                 events.add(eventData);
@@ -165,10 +163,10 @@ public class EventsRepository {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             logger.error("Interrupted while fetching events for organiser: {}", organiserId, e);
-            return Collections.emptyList();
+            throw new IllegalStateException("Interrupted while fetching events for organiser: " + organiserId, e);
         } catch (ExecutionException e) {
             logger.error("Failed to fetch events for organiser: {}", organiserId, e);
-            return Collections.emptyList();
+            throw new IllegalStateException("Failed to fetch events for organiser: " + organiserId, e);
         }
     }
 

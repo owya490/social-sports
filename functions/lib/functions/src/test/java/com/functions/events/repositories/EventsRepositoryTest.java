@@ -3,12 +3,15 @@ package com.functions.events.repositories;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
@@ -25,6 +28,9 @@ import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
+import com.google.cloud.firestore.Query;
+import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.Transaction;
 
 public class EventsRepositoryTest {
@@ -35,23 +41,39 @@ public class EventsRepositoryTest {
     private DocumentReference eventRef;
     private DocumentReference privateEventRef;
     private DocumentSnapshot privateSnapshot;
+    private CollectionReference publicEvents;
+    private Query organiserQuery;
+    private ApiFuture<QuerySnapshot> organiserFuture;
+    private QuerySnapshot organiserSnapshot;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         db = mock(Firestore.class);
-        CollectionReference publicEvents = mock(CollectionReference.class);
+        publicEvents = mock(CollectionReference.class);
         CollectionReference privateEvents = mock(CollectionReference.class);
+        CollectionReference events = mock(CollectionReference.class);
+        DocumentReference activeEvents = mock(DocumentReference.class);
         eventRef = mock(DocumentReference.class);
         privateEventRef = mock(DocumentReference.class);
         future = mock(ApiFuture.class);
         snapshot = mock(DocumentSnapshot.class);
         privateSnapshot = mock(DocumentSnapshot.class);
+        organiserQuery = mock(Query.class);
+        organiserFuture = mock(ApiFuture.class);
+        organiserSnapshot = mock(QuerySnapshot.class);
 
         firebaseService = org.mockito.Mockito.mockStatic(FirebaseService.class);
         firebaseService.when(FirebaseService::getFirestore).thenReturn(db);
         when(db.collection("Events/Active/Public")).thenReturn(publicEvents);
         when(db.collection("Events/Active/Private")).thenReturn(privateEvents);
+        when(db.collection("Events")).thenReturn(events);
+        when(events.document("Active")).thenReturn(activeEvents);
+        when(activeEvents.collection("Public")).thenReturn(publicEvents);
+        when(publicEvents.whereEqualTo("organiserId", "organiser-1")).thenReturn(organiserQuery);
+        when(organiserQuery.get()).thenReturn(organiserFuture);
+        when(organiserFuture.get()).thenReturn(organiserSnapshot);
+        when(organiserSnapshot.getDocuments()).thenReturn(List.of());
         when(publicEvents.document("event-1")).thenReturn(eventRef);
         when(privateEvents.document("event-1")).thenReturn(privateEventRef);
         when(eventRef.get()).thenReturn(future);
@@ -82,10 +104,12 @@ public class EventsRepositoryTest {
         ExecutionException readFailure = new ExecutionException(new RuntimeException("unavailable"));
         when(transaction.get(eventRef)).thenReturn(future);
         when(future.get()).thenThrow(readFailure);
+        when(organiserFuture.get()).thenThrow(readFailure);
 
         for (Runnable read : new Runnable[] {
                 () -> EventsRepository.getActivePublicEventById("event-1"),
-                () -> EventsRepository.getActiveEventById("event-1", false, transaction)
+                () -> EventsRepository.getActiveEventById("event-1", false, transaction),
+                () -> EventsRepository.getActivePublicEventsByOrganiser("organiser-1")
         }) {
             try {
                 read.run();
@@ -93,6 +117,67 @@ public class EventsRepositoryTest {
             } catch (IllegalStateException expected) {
                 assertSame(readFailure, expected.getCause());
             }
+        }
+    }
+
+    @Test
+    public void organiserQuerySelectsOnlyActivePublicEventsAndAssignsDocumentIds() {
+        QueryDocumentSnapshot firstDocument = mock(QueryDocumentSnapshot.class);
+        QueryDocumentSnapshot secondDocument = mock(QueryDocumentSnapshot.class);
+        EventData firstEvent = new EventData();
+        firstEvent.setEventId("stale-id");
+        EventData secondEvent = new EventData();
+        when(firstDocument.getId()).thenReturn("event-1");
+        when(secondDocument.getId()).thenReturn("event-2");
+        when(firstDocument.toObject(EventData.class)).thenReturn(firstEvent);
+        when(secondDocument.toObject(EventData.class)).thenReturn(secondEvent);
+        when(organiserSnapshot.getDocuments()).thenReturn(List.of(firstDocument, secondDocument));
+
+        assertEquals(List.of(firstEvent, secondEvent), EventsRepository.getActivePublicEventsByOrganiser("organiser-1"));
+        assertEquals("event-1", firstEvent.getEventId());
+        assertEquals("event-2", secondEvent.getEventId());
+        verify(db).collection("Events");
+        verify(publicEvents).whereEqualTo("organiserId", "organiser-1");
+        verify(organiserQuery).get();
+        verifyNoMoreInteractions(db, publicEvents, organiserQuery);
+    }
+
+    @Test
+    public void organiserQueryReturnsEmptyForSuccessfulEmptyResult() {
+        assertEquals(List.of(), EventsRepository.getActivePublicEventsByOrganiser("organiser-1"));
+    }
+
+    @Test
+    public void organiserQueryRestoresInterruptAndPropagatesFailure() throws Exception {
+        InterruptedException interruption = new InterruptedException("interrupted");
+        when(organiserFuture.get()).thenThrow(interruption);
+
+        try {
+            EventsRepository.getActivePublicEventsByOrganiser("organiser-1");
+            fail("Expected interruption to propagate");
+        } catch (IllegalStateException expected) {
+            assertSame(interruption, expected.getCause());
+            assertTrue(Thread.currentThread().isInterrupted());
+        } finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    public void organiserQueryRejectsUnmappableDocumentsInsteadOfReturningPartialResults() {
+        QueryDocumentSnapshot validDocument = mock(QueryDocumentSnapshot.class);
+        QueryDocumentSnapshot invalidDocument = mock(QueryDocumentSnapshot.class);
+        when(validDocument.getId()).thenReturn("event-1");
+        when(validDocument.toObject(EventData.class)).thenReturn(new EventData());
+        when(invalidDocument.getId()).thenReturn("invalid-event");
+        when(invalidDocument.toObject(EventData.class)).thenReturn(null);
+        when(organiserSnapshot.getDocuments()).thenReturn(List.of(validDocument, invalidDocument));
+
+        try {
+            EventsRepository.getActivePublicEventsByOrganiser("organiser-1");
+            fail("Expected document mapping failure to propagate");
+        } catch (IllegalStateException expected) {
+            assertTrue(expected.getMessage().contains("invalid-event"));
         }
     }
 

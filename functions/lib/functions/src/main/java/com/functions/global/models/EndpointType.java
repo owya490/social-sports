@@ -8,11 +8,13 @@ import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
+import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
 import com.functions.events.models.responses.GetEventByIdResponse;
+import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.events.models.responses.CreateEventResponse;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
@@ -85,6 +87,7 @@ public enum EndpointType {
     // PUBLIC because Syrio is an external partner that cannot hold a Firebase ID
     // token. TODO: give Syrio its own API-key auth scheme as a follow-up.
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class, AuthLevel.PUBLIC),
+    GET_PARTNER_EVENTS(GetPartnerEventsRequest.class, GetPartnerEventsResponse.class, AuthLevel.PUBLIC),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class, AuthLevel.PUBLIC),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class, AuthLevel.AUTHENTICATED),
     GET_TICKET(GetTicketRequest.class, Ticket.class, AuthLevel.AUTHENTICATED),
