@@ -20,12 +20,20 @@ GRAFANA_URL = (
     "https://compassdigitalgroup.grafana.net/d/"
     "dfa75f92-b104-48e6-ba78-cf4fc950ae9a/grafana-cloud-billing-usage"
 )
-VERCEL_MEASURES = (
+LEGACY_VERCEL_MEASURES = (
     ("fast_data_transfer", "Fast data transfer", "GB"),
     ("fast_origin_transfer", "Fast origin transfer", "GB"),
     ("edge_requests", "Edge requests", "count"),
     ("edge_cpu", "Edge request CPU", "seconds"),
     ("isr_reads", "ISR reads", "count"),
+)
+VERCEL_MEASURES = (
+    ("api_requests", "API requests (hits + misses)", "count"),
+    ("api_incoming_bandwidth", "API incoming bandwidth", "GB"),
+    ("api_outgoing_bandwidth", "API outgoing bandwidth", "GB"),
+    ("api_function_invocations", "API function invocations (all outcomes)", "count"),
+    ("api_function_unsuccessful", "API function errors + timeouts + throttles", "count"),
+    ("api_function_execution", "API function execution", "GB-hours"),
 )
 
 
@@ -38,6 +46,7 @@ class MetricSpec:
 
 
 CATALOG = {}
+LEGACY_CATALOG = {}
 for prefix, label, scope, url in (
     ("vercel_team", "Vercel CDG", "compass-digitals-projects:all-projects", TEAM_URL),
     (
@@ -45,11 +54,14 @@ for prefix, label, scope, url in (
         "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx", PROJECT_URL,
     ),
 ):
-    for name, title, unit in VERCEL_MEASURES:
-        CATALOG[f"{prefix}.{name}"] = MetricSpec(f"{label} - {title}", unit, scope, url)
+    for catalog, measures in ((CATALOG, VERCEL_MEASURES), (LEGACY_CATALOG, LEGACY_VERCEL_MEASURES)):
+        for name, title, unit in measures:
+            catalog[f"{prefix}.{name}"] = MetricSpec(f"{label} - {title}", unit, scope, url)
 CATALOG["grafana.frontend_sessions"] = MetricSpec(
     "Grafana frontend sessions", "count", "compassdigitalgroup:all-frontend-apps", GRAFANA_URL,
 )
+LEGACY_CATALOG["grafana.frontend_sessions"] = CATALOG["grafana.frontend_sessions"]
+CATALOGS = {1: LEGACY_CATALOG, 2: CATALOG}
 
 
 @dataclass(frozen=True)
@@ -70,6 +82,7 @@ class Snapshot:
     end: datetime
     captured_at: datetime
     metrics: dict[str, Metric]
+    schema_version: int = 2
 
     @property
     def week(self):
@@ -77,7 +90,7 @@ class Snapshot:
 
     def json_data(self):
         return {
-            "schema_version": 1,
+            "schema_version": self.schema_version,
             "period": {"start": iso(self.start), "end": iso(self.end), "timezone": "UTC"},
             "captured_at": iso(self.captured_at),
             "metrics": {key: asdict(metric) for key, metric in self.metrics.items()},
@@ -88,22 +101,27 @@ def iso(value):
     return value.isoformat().replace("+00:00", "Z")
 
 
-def bounds(week):
+def latest_completed_week(now):
+    return now.date() - timedelta(days=now.weekday() + 7)
+
+
+def bounds(week, now):
     if week.weekday() != 0:
         raise ValueError("The reporting week must start on a Monday.")
     start = datetime.combine(week, time(), UTC)
-    return start, start + timedelta(days=7)
-
-
-def template(week, now):
-    start, end = bounds(week)
+    end = start + timedelta(days=7)
     if end > now:
         raise ValueError("Only completed UTC weeks can be recorded.")
+    return start, end
+
+
+def template(week, now, schema_version=2):
+    start, end = bounds(week, now)
     return Snapshot(start, end, now, {
         key: Metric(None, "missing", spec.scope, spec.unit, "unverified",
                     spec.source_url, "unavailable", "Not collected.")
-        for key, spec in CATALOG.items()
-    })
+        for key, spec in CATALOGS[schema_version].items()
+    }, schema_version)
 
 
 def require_fields(value, fields, label):
@@ -122,17 +140,17 @@ def utc_timestamp(value):
 
 def parse_snapshot(data, now):
     require_fields(data, ("schema_version", "period", "captured_at", "metrics"), "Snapshot")
-    if type(data["schema_version"]) is not int or data["schema_version"] != 1:
+    if type(data["schema_version"]) is not int or data["schema_version"] not in CATALOGS:
         raise ValueError("Unsupported snapshot schema_version.")
     period = data["period"]
     require_fields(period, ("start", "end", "timezone"), "Period")
     start, end = utc_timestamp(period["start"]), utc_timestamp(period["end"])
-    if period["timezone"] != "UTC" or (start, end) != bounds(start.date()):
+    if period["timezone"] != "UTC" or (start, end) != bounds(start.date(), now):
         raise ValueError("Period must be a complete Monday-to-Monday UTC week.")
     captured = utc_timestamp(data["captured_at"])
     if not end <= captured <= now:
         raise ValueError("captured_at must be after the week ends and not in the future.")
-    require_fields(data["metrics"], CATALOG, "Metrics")
+    require_fields(data["metrics"], CATALOGS[data["schema_version"]], "Metrics")
     metrics = {}
     for key, raw in data["metrics"].items():
         require_fields(raw, Metric.__dataclass_fields__, key)
@@ -142,7 +160,7 @@ def parse_snapshot(data, now):
         metric = Metric(**raw)
         if metric.status not in {"complete", "partial", "stale", "missing"}:
             raise ValueError(f"{key}: invalid status.")
-        if metric.method not in {"api", "cli", "browser", "unavailable"}:
+        if metric.method not in {"api", "mcp", "cli", "browser", "unavailable"}:
             raise ValueError(f"{key}: invalid retrieval method.")
         if metric.value is not None:
             if type(metric.value) not in {int, float} or not math.isfinite(metric.value) or metric.value < 0:
@@ -162,7 +180,7 @@ def parse_snapshot(data, now):
                 or url.username or url.password or url.query or url.fragment):
             raise ValueError(f"{key}: use a credential-free HTTPS source permalink without query/fragment.")
         metrics[key] = metric
-    return Snapshot(start, end, captured, metrics)
+    return Snapshot(start, end, captured, metrics, data["schema_version"])
 
 
 def load_snapshot(path, now):
@@ -201,6 +219,19 @@ def comparable(current, previous):
             == (previous.scope, previous.unit, previous.definition))
 
 
+def same_measurements(current, previous):
+    if ((current.schema_version, current.start, current.end)
+            != (previous.schema_version, previous.start, previous.end)
+            or current.metrics.keys() != previous.metrics.keys()):
+        return False
+    for key, metric in current.metrics.items():
+        old = previous.metrics[key]
+        if ((metric.value, metric.status, metric.scope, metric.unit, metric.definition)
+                != (old.value, old.status, old.scope, old.unit, old.definition)):
+            return False
+    return True
+
+
 def number(value):
     return f"{value:,.6g}"
 
@@ -218,6 +249,7 @@ def cell(text):
 
 
 def render_report(snapshot, history, weeks, now):
+    catalog = CATALOGS[snapshot.schema_version]
     window = history_window(history, snapshot, weeks, now)
     previous_week = snapshot.week - timedelta(weeks=1)
     previous = window[previous_week]
@@ -227,15 +259,22 @@ def render_report(snapshot, history, weeks, now):
         f"Period: {iso(snapshot.start)} inclusive to {iso(snapshot.end)} exclusive.",
         f"Captured: {iso(snapshot.captured_at)}. Reporting timezone: UTC.", "",
         "## Coverage", "",
-        f"{complete}/{len(CATALOG)} measurements complete. Missing, partial and stale data are not zero.",
+        f"{complete}/{len(catalog)} measurements complete. Missing, partial and stale data are not zero.",
+    ]
+    if snapshot.schema_version == 2:
+        lines += [
+            "Vercel uses undocumented API counters, not verified equivalents of CDN/Fast Transfer/ISR metrics.",
+            "Vercel team totals already include SPORTSHUB; do not add them together.",
+        ]
+    lines += [
         f"Previous calendar week: {previous_week}. Trend window: {weeks} calendar weeks including this week.", "",
         "## Weekly changes", "",
         "| Measurement | This week | Previous week | Change | Status |",
         "| --- | --- | --- | --- | --- |",
     ]
-    for key, spec in CATALOG.items():
+    for key, spec in catalog.items():
         current = snapshot.metrics[key]
-        baseline = previous.metrics[key] if previous else None
+        baseline = previous.metrics.get(key) if previous else None
         value = f"{number(current.value)} {current.unit}" if current.value is not None else "N/A"
         old_value = f"{number(baseline.value)} {baseline.unit}" if comparable(current, baseline) else "N/A"
         lines.append("| " + " | ".join(map(cell, (
@@ -247,9 +286,9 @@ def render_report(snapshot, history, weeks, now):
         "| Measurement | Comparable values, oldest to newest | Window change |",
         "| --- | --- | --- |",
     ]
-    for key, spec in CATALOG.items():
+    for key, spec in catalog.items():
         current = snapshot.metrics[key]
-        series = [entry.metrics[key] if entry else None for entry in window.values()]
+        series = [entry.metrics.get(key) if entry else None for entry in window.values()]
         matched = [comparable(current, entry) for entry in series]
         values = " -> ".join(number(entry.value) if valid else "N/A" for entry, valid in zip(series, matched))
         trend = change(current, series[0]) if all(matched) else f"N/A ({sum(matched)}/{weeks} comparable weeks)"
@@ -260,7 +299,7 @@ def render_report(snapshot, history, weeks, now):
         "Tables use up to six significant digits; snapshots preserve source precision.", "",
         "## Sources and collection notes", "",
     ]
-    for key, spec in CATALOG.items():
+    for key, spec in catalog.items():
         metric = snapshot.metrics[key]
         lines.append(f"- {cell(spec.label)}: {metric.source_url} ({metric.method}); "
                      f"scope: {cell(metric.scope)}; definition: {cell(metric.definition)}; {cell(metric.notes)}")
@@ -271,7 +310,7 @@ def render_report(snapshot, history, weeks, now):
 def save_report(snapshot, history, weeks, now):
     destination = history / str(snapshot.week)
     if destination.exists():
-        if load_week(destination, now) == snapshot:
+        if same_measurements(snapshot, load_week(destination, now)):
             return destination
         raise ValueError(f"{destination}: existing history differs or is incomplete; review a correction explicitly.")
     report = render_report(snapshot, history, weeks, now)
@@ -311,8 +350,7 @@ def main():
     now = datetime.now(UTC)
     try:
         if args.command == "init":
-            monday = now.date() - timedelta(days=now.weekday() + 7)
-            print(json.dumps(template(args.week or monday, now).json_data(), indent=2))
+            print(json.dumps(template(args.week or latest_completed_week(now), now).json_data(), indent=2))
         elif args.command == "check":
             print(f"Validated {check_history(args.history, now)} weekly snapshots.")
         else:

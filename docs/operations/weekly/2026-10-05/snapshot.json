@@ -1,0 +1,141 @@
+{
+  "schema_version": 2,
+  "period": {
+    "start": "2026-10-05T00:00:00Z",
+    "end": "2026-10-12T00:00:00Z",
+    "timezone": "UTC"
+  },
+  "captured_at": "2026-10-12T11:35:09.499375Z",
+  "metrics": {
+    "vercel_team.api_requests": {
+      "value": 134970,
+      "status": "complete",
+      "scope": "compass-digitals-projects:all-projects",
+      "unit": "count",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(request_hit_count, request_miss_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:08.284000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_team.api_incoming_bandwidth": {
+      "value": 0.195506072,
+      "status": "complete",
+      "scope": "compass-digitals-projects:all-projects",
+      "unit": "GB",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(bandwidth_incoming_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:08.284000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_team.api_outgoing_bandwidth": {
+      "value": 2.853955976,
+      "status": "complete",
+      "scope": "compass-digitals-projects:all-projects",
+      "unit": "GB",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(bandwidth_outgoing_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:08.284000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_team.api_function_invocations": {
+      "value": 26967,
+      "status": "complete",
+      "scope": "compass-digitals-projects:all-projects",
+      "unit": "count",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:08.284000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_team.api_function_unsuccessful": {
+      "value": 105,
+      "status": "complete",
+      "scope": "compass-digitals-projects:all-projects",
+      "unit": "count",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:08.284000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_team.api_function_execution": {
+      "value": 1.14406144,
+      "status": "complete",
+      "scope": "compass-digitals-projects:all-projects",
+      "unit": "GB-hours",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:08.284000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_project.api_requests": {
+      "value": 133474,
+      "status": "complete",
+      "scope": "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx",
+      "unit": "count",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(request_hit_count, request_miss_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:09.416000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_project.api_incoming_bandwidth": {
+      "value": 0.193859807,
+      "status": "complete",
+      "scope": "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx",
+      "unit": "GB",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(bandwidth_incoming_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:09.416000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_project.api_outgoing_bandwidth": {
+      "value": 1.36228524,
+      "status": "complete",
+      "scope": "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx",
+      "unit": "GB",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(bandwidth_outgoing_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:09.416000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_project.api_function_invocations": {
+      "value": 26967,
+      "status": "complete",
+      "scope": "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx",
+      "unit": "count",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:09.416000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_project.api_function_unsuccessful": {
+      "value": 105,
+      "status": "complete",
+      "scope": "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx",
+      "unit": "count",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:09.416000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "vercel_project.api_function_execution": {
+      "value": 1.14406144,
+      "status": "complete",
+      "scope": "compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx",
+      "unit": "GB-hours",
+      "definition": "vercel-usage-v2-counters-v1",
+      "source_url": "https://api.vercel.com/v2/usage",
+      "method": "api",
+      "notes": "Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:35:09.416000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+    },
+    "grafana.frontend_sessions": {
+      "value": 2546.1501233451218,
+      "status": "complete",
+      "scope": "compassdigitalgroup:org_id=1030328:all-frontend-apps:[[\"832165\", \"[Preview] Sports Hub\"], [\"832165\", \"[Production] Sports Hub\"]]",
+      "unit": "count",
+      "definition": "weekly-daily-buckets-v1",
+      "source_url": "https://compassdigitalgroup.grafana.net/d/dfa75f92-b104-48e6-ba78-cf4fc950ae9a/grafana-cloud-billing-usage",
+      "method": "api",
+      "notes": "Verified daily panel 95 via dashboard API; seven UTC bucket-start evaluations per app. Fractional session estimate preserved; next Monday and unlabeled fallback excluded."
+    }
+  }
+}

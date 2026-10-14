@@ -1,78 +1,92 @@
-# Vercel retrieval
+# Vercel API counter retrieval
 
-## Accounts and measurements
+## Source and scope
 
-- Team: `compass-digitals-projects`.
-- Project: `social-sports`, project ID `prj_M871BOaWTRTkX8FKcUvusXpWAqXx`.
-- Team dashboard: <https://vercel.com/compass-digitals-projects/~/usage>.
-- Project dashboard: <https://vercel.com/compass-digitals-projects/social-sports/usage>.
+- Team: `compass-digitals-projects`, ID `team_7wMqFyd9Hz1I882l0vkev0Dz`.
+- Project: `social-sports`, ID `prj_M871BOaWTRTkX8FKcUvusXpWAqXx`.
+- Source: `GET https://api.vercel.com/v2/usage`, bearer token authentication.
 
-Collect Fast Data Transfer (decimal GB), Fast Origin Transfer (decimal GB),
-Edge Requests (count), Edge Request CPU Duration (seconds), and ISR Reads
-(count), separately for the team and project. Do not add legacy "Bandwidth" as
-another measurement of Fast Data Transfer.
+This **undocumented dashboard/legacy API** was live-tested on this Hobby team
+on 2026-10-12 using its existing token, without a plan upgrade or browser cookies.
+It is absent from the public [OpenAPI specification](https://vercel.com/openapi.json)
+and can change without a public API compatibility guarantee. Validate responses
+on every run; a schema, granularity or coverage change requires investigation.
+Do not install a browser extension or extract cookies to use it.
 
-The originally supplied team URL contains a project filter and old fixed dates.
-Start from the clean URL above: confirm **all projects** for the team and only
-`social-sports` for the project. Set both to the same explicit UTC interval.
-Do not trust `range=last-7-days` when fixed timestamps are also present.
+The route was discovered through source research in
+[vercel-usage-badge](https://github.com/zealot-network/vercel-usage-badge/blob/master/background.js).
+That project's browser authentication and normalization are not dependencies.
+The helper implements the separately verified bearer-token requests below.
 
-## Official API or CLI
+Use `type=requests`, the team ID, and inclusive `from` / exclusive `to` with
+**millisecond ISO UTC timestamps**. For example:
 
-Verified against official documentation on 2026-10-11:
-
-- [FOCUS billing charges API](https://vercel.com/docs/rest-api/billing/list-focus-billing-charges)
-  exposes `GET https://api.vercel.com/v1/billing/charges` with `slug`, `from`
-  (inclusive UTC ISO timestamp) and `to` (exclusive UTC ISO timestamp).
-  It returns JSONL charge records with consumption units and project tags.
-- [Official usage CLI](https://vercel.com/docs/cli/usage) accepts `--since`,
-  `--until`, `--breakdown daily` and `--format json`. Inspect the installed
-  command's help first. Date-only CLI arguments use Pacific boundaries; pass
-  complete UTC ISO timestamps. Older `--from`/`--to` flags are deprecated.
-
-Use existing authenticated tooling; do not print tokens, install a CLI or
-create credentials just to attempt collection. For a CLI already available:
-
-```bash
-rtk proxy vercel usage --scope compass-digitals-projects --since 2026-09-28T00:00:00Z --until 2026-10-05T00:00:00Z --format json > .tmp/vercel-usage.json
+```text
+from=2026-10-05T00:00:00.000Z
+to=2026-10-12T00:00:00.000Z
 ```
 
-For the API, construct the query with the requested week's exact timestamps
-and team slug. Use an existing secret supplied through the tool's supported
-authentication mechanism. Keep the response in `.tmp/`, not in history.
+This account rejects timestamps without `.000`, date-only strings and epoch
+milliseconds on this route. Fetch twice: omit `projectId` for all team projects;
+add the exact project ID for SPORTSHUB. Do not add an environment filter.
+The helper pins these parameters and records each request in its evidence.
 
-Before mapping billing records to dashboard measurements:
+The project-filtered response still includes team-wide `breakdown` percentages.
+**Ignore `breakdown` and `previous`**. Use the scalar counters in each separately
+filtered response. Rounded project percentages cannot reconstruct project totals.
+Live verification reconciled the team counters against the sum of its three
+separate project responses. Team totals already include SPORTSHUB.
 
-- Confirm the account actually exposes free/included consumption, not just paid
-  charges. Empty charge results do not prove zero usage on a Hobby account.
-- Inspect actual `ServiceName`, `SkuId`, `ConsumedQuantity`, `ConsumedUnit`,
-  charge category and project tag keys. Do not hardcode guessed SKU/tag names.
-- Use consumption quantities, not pricing quantities, USD or legacy MIUs.
-  Do not add monetary adjustments/credits to resource counts.
-- Restrict project data by the verified project ID tag; include unallocated
-  consumption in team totals where appropriate. A CLI team summary without
-  project tags cannot supply project totals.
-- Verify each record's charge interval is wholly inside the requested week.
-  Use daily consumption once per bucket; do not prorate cross-boundary charges
-  or sum both totals and their component rows.
-- Reconcile the first API/CLI mapping against the dashboard for the same
-  scope and week. If metric coverage or units differ, use the browser for that
-  measurement and disclose the limitation.
+## Accepted report measurements
 
-## Authenticated browser fallback
+Use definition `vercel-usage-v2-counters-v1`. Each row below is reported for
+both team and project, with IDs prefixed `vercel_team.` / `vercel_project.`.
+Sum the listed fields over seven daily rows; divide bytes once after summing.
 
-Open the two dashboards, select explicit dates and confirm scope and timezone.
-For a UI whose end is inclusive, select Sunday 23:59:59.999 UTC; the saved
-interval still ends at the following Monday 00:00 UTC exclusively. Verify the
-rendered dates rather than assuming query parameters were honored. Prefer
-table/detail exports over rounded cards when available. Never read hidden
-application state or extract browser authentication tokens.
+| Metric ID suffix | API fields / calculation | Unit |
+| --- | --- | --- |
+| `api_requests` | `request_hit_count` + `request_miss_count` | count |
+| `api_incoming_bandwidth` | `bandwidth_incoming_bytes` / 1,000,000,000 | decimal GB |
+| `api_outgoing_bandwidth` | `bandwidth_outgoing_bytes` / 1,000,000,000 | decimal GB |
+| `api_function_invocations` | Sum `function_invocation_{successful,error,timeout,throttle}_count` | count |
+| `api_function_unsuccessful` | Sum `function_invocation_{error,timeout,throttle}_count` | count |
+| `api_function_execution` | Sum `function_execution_{successful,error,timeout}_gb_hours` | GB-hours |
 
-Normalize decimal MB / 1,000 to GB, bytes / 1,000,000,000 to GB, and K counts
-times 1,000. Confirm the displayed units before conversion; GiB and GB differ.
-If a card is rounded, retain that precision and mention it in `notes`.
+These labels describe the returned fields and explicit sums. They are **not
+verified equivalents** of the original Fast Data Transfer, Fast Origin
+Transfer, CDN Requests, CDN Request CPU Duration or ISR Reads. In particular,
+incoming bandwidth is not renamed Fast Origin Transfer, and GB-hours is not
+CPU seconds. This is an intentional new measurement set accepted by the user.
+Never fill old metric IDs with these values or compare them to old dashboard
+values. Schema 1 remains readable; new snapshots use schema 2.
 
-Use definition `weekly-consumption-v1` only for reconciled measurements with
-the same meaning. If a source/query/filter change alters meaning, change
-`definition` and retain the old snapshots. Retrieval method alone need not
-break comparison when the measurements have been reconciled.
+`normalize_usage.py` requires `granularity: "day"`, exactly the seven UTC
+midnight `date` values inside the requested week, and `lastUpdate` covering the
+completed week. Required counters must be finite and nonnegative; counts must
+be integral. Missing fields, duplicate/outside buckets, empty data and coarser
+granularity fail instead of becoming zero. `lastUpdate` is the API's reported
+freshness, not a guarantee that billing data will never be revised.
+
+Save the API permalink without query parameters as `source_url`. The snapshot
+period and scope record the request context; raw request/response evidence stays
+in `.tmp/`. Preserve precision rather than copying rounded dashboard cards.
+
+## Why the billing API / CLI / MCP are not substitutes
+
+The documented [FOCUS charges endpoint](https://vercel.com/docs/rest-api/billing/list-focus-billing-charges)
+returned `404 costs_not_found` on this team for several completed periods,
+including with correct millisecond timestamps and team ID. Vercel's own
+[test fixtures](https://github.com/vercel-labs/agent-skills/blob/main/packages/vercel-optimize-tests/test/fixtures/real-cli-output/README.md#key-shape-findings)
+associate that response with teams without the Costs feature enabled. This
+does not establish a plan upgrade requirement or a self-service switch.
+
+The official usage CLI and MCP billing tool use that charges source; they do
+not expose these `/v2/usage` counters or fix missing Costs access. Relevant
+[infrastructure metrics CLI](https://vercel.com/docs/cli/metrics) queries require
+Pro/Enterprise with Observability Plus. Do not buy access, substitute USD/MIUs,
+or repeatedly retry the billing endpoint as part of this report.
+
+If the undocumented route stops working, pause and explain the specific gap.
+Use another structured source only after verifying matching definitions, or
+ask the operator to choose revised metrics or a dashboard fallback. Do not
+silently revert to the original metric set.
