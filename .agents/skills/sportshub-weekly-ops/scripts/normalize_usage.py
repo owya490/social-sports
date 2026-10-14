@@ -82,13 +82,15 @@ def vercel_metrics(data, snapshot, captured):
             key = f"vercel_{scope}.{name}"
             values = [row[field] for row in rows.values() for field in group]
             value = math.fsum(values) if snapshot.metrics[key].unit == "GB-hours" else sum(values)
+            conversion = ""
             if snapshot.metrics[key].unit == "GB":
                 value /= 1_000_000_000
+                conversion = "Bytes / 1,000,000,000 for decimal GB; "
             snapshot.metrics[key] = replace(
                 snapshot.metrics[key], value=value, status="complete", method="api",
                 definition="vercel-usage-v2-counters-v1", source_url=fetcher.VERCEL_BASE,
                 notes=(f"Seven UTC daily buckets; sum({', '.join(group)}). "
-                       f"Bytes / 1,000,000,000 for decimal GB; source lastUpdate {ops.iso(updated)}. "
+                       f"{conversion}source lastUpdate {ops.iso(updated)}. "
                        "Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."),
             )
 

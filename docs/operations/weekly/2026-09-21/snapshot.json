@@ -15,7 +15,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(request_hit_count, request_miss_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(request_hit_count, request_miss_count). source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_team.api_incoming_bandwidth": {
       "value": 0.226727052,
@@ -45,7 +45,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_team.api_function_unsuccessful": {
       "value": 41,
@@ -55,7 +55,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_team.api_function_execution": {
       "value": 1.149653048888889,
@@ -65,7 +65,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). source lastUpdate 2026-10-12T11:40:03.456000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_project.api_requests": {
       "value": 149459,
@@ -75,7 +75,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(request_hit_count, request_miss_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(request_hit_count, request_miss_count). source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_project.api_incoming_bandwidth": {
       "value": 0.224636253,
@@ -105,7 +105,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_project.api_function_unsuccessful": {
       "value": 41,
@@ -115,7 +115,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "vercel_project.api_function_execution": {
       "value": 1.149653048888889,
@@ -125,7 +125,7 @@
       "definition": "vercel-usage-v2-counters-v1",
       "source_url": "https://api.vercel.com/v2/usage",
       "method": "api",
-      "notes": "Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
+      "notes": "Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). source lastUpdate 2026-10-12T11:40:04.331000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics."
     },
     "grafana.frontend_sessions": {
       "value": null,

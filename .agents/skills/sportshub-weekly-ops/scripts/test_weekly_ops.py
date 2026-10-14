@@ -409,6 +409,10 @@ class WeeklyOpsTest(unittest.TestCase):
         self.assertEqual(result.metrics["vercel_project.api_function_invocations"].value, 28)
         self.assertEqual(result.metrics["vercel_project.api_function_unsuccessful"].value, 21)
         self.assertEqual(result.metrics["vercel_project.api_function_execution"].value, 21)
+        for key, metric in result.metrics.items():
+            if key.startswith("vercel_"):
+                with self.subTest(metric=key):
+                    self.assertEqual("Bytes / 1,000,000,000" in metric.notes, metric.unit == "GB")
         sessions = result.metrics["grafana.frontend_sessions"]
         self.assertEqual(sessions.value, 91.25)
         self.assertIn('[["1", "preview"], ["1", "production"]]', sessions.scope)
