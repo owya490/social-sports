@@ -11,6 +11,8 @@ the snapshot and report uncommitted for review.
 For a specific week, supply its Monday date. Ask for a 12-week trend when
 useful. Reporting weeks run Monday 00:00 UTC to the following Monday 00:00 UTC
 exclusively, so daily billing buckets remain comparable across Sydney DST.
+Run collection from Tuesday 00:00 UTC onward. Grafana requires a 24-hour delay
+after the week ends as a local safeguard, not a vendor settlement guarantee.
 
 The final report uses mostly ASD-STE100 style with SPORTSHUB terminology.
 It targets 300-400 words for Vercel and Grafana, with important changes,

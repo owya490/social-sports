@@ -20,6 +20,12 @@ Australia/Sydney is the team's reading timezone, not the aggregation boundary.
 State the exact UTC interval in every report. Do not substitute rolling seven
 days or a partial current week.
 
+Collect Grafana at least 24 hours after the UTC week ends: Tuesday 00:00 UTC
+or later for a Monday-Sunday week. This operator-approved delay is a local
+safeguard, not a Grafana settlement guarantee. Apply it to API/MCP collection
+and normalization; early cached evidence is not made valid by waiting to
+normalize it. Existing history retains its original capture metadata.
+
 Compare the immediately preceding calendar week and the latest four calendar
 weeks including the reporting week. On request, use a longer window such as
 12 weeks. Missing weeks remain gaps. Read merged history from the current

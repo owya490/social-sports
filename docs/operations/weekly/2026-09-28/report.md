@@ -1,78 +1,46 @@
 # SPORTSHUB weekly operations - 2026-09-28
 
 Period: 2026-09-28T00:00:00Z inclusive to 2026-10-05T00:00:00Z exclusive.
-Captured: 2026-10-12T11:38:41.392354Z. Reporting timezone: UTC.
 
-## Assessment
+**Coverage:** 12 of 13 measurements are complete. Grafana preview buckets are missing for September 29-October 4. The whole Grafana total remains missing, with operator approval.
 
-- **Partial coverage:** Vercel counters are complete. Grafana's preview app lacks daily values for September 29 through October 4; the whole Grafana total is missing, with operator approval. Session comparisons are unavailable.
-- SPORTSHUB API requests increased from 149,459 to 154,167 (+3.2%). API outgoing bandwidth decreased from 1.74843 to 1.52891 GB (-12.6%).
-- The combined function error, timeout and throttle counter increased from 41 to 46, alongside an invocation increase from 27,975 to 31,897. Check logs to distinguish source errors from any user-facing impact.
-- Three weeks are available in the backfill batch. Request counts have fluctuated, so the data does not yet establish a sustained traffic trend.
+## Priority: function failures increased again
 
-## Coverage
+SPORTSHUB API function errors + timeouts + throttles increased from 41 to 46 (+5; +12.2%). Function invocations increased by 3,922 (+14.0%).
 
-12/13 measurements complete. Missing, partial and stale data are not zero.
-Vercel uses undocumented API counters, not verified equivalents of CDN/Fast Transfer/ISR metrics.
-Vercel team totals already include SPORTSHUB; do not add them together.
-Previous calendar week: 2026-09-21. Trend window: 4 calendar weeks including this week.
+The three available weekly failure counts are **22 -> 41 -> 46**. The combined counter increased in both comparisons. It does not identify affected functions, causes or user impact.
 
-## Weekly changes
+## Key metrics
 
-| Measurement | This week | Previous week | Change | Status |
-| --- | --- | --- | --- | --- |
-| Vercel CDG - API requests (hits + misses) | 156,010 count | 151,512 count | +4,498 count (+3.0%) | complete |
-| Vercel CDG - API incoming bandwidth | 0.231697 GB | 0.226727 GB | +0.00496978 GB (+2.2%) | complete |
-| Vercel CDG - API outgoing bandwidth | 3.02204 GB | 3.4325 GB | -0.41046 GB (-12.0%) | complete |
-| Vercel CDG - API function invocations (all outcomes) | 31,897 count | 27,975 count | +3,922 count (+14.0%) | complete |
-| Vercel CDG - API function errors + timeouts + throttles | 46 count | 41 count | +5 count (+12.2%) | complete |
-| Vercel CDG - API function execution | 1.21801 GB-hours | 1.14965 GB-hours | +0.0683543 GB-hours (+5.9%) | complete |
-| Vercel SPORTSHUB - API requests (hits + misses) | 154,167 count | 149,459 count | +4,708 count (+3.2%) | complete |
-| Vercel SPORTSHUB - API incoming bandwidth | 0.229684 GB | 0.224636 GB | +0.00504749 GB (+2.2%) | complete |
-| Vercel SPORTSHUB - API outgoing bandwidth | 1.52891 GB | 1.74843 GB | -0.21952 GB (-12.6%) | complete |
-| Vercel SPORTSHUB - API function invocations (all outcomes) | 31,897 count | 27,975 count | +3,922 count (+14.0%) | complete |
-| Vercel SPORTSHUB - API function errors + timeouts + throttles | 46 count | 41 count | +5 count (+12.2%) | complete |
-| Vercel SPORTSHUB - API function execution | 1.21801 GB-hours | 1.14965 GB-hours | +0.0683543 GB-hours (+5.9%) | complete |
-| Grafana frontend sessions | N/A | N/A | N/A | missing |
+| Measurement | This week | Previous week | Change |
+| --- | --- | --- | --- |
+| SPORTSHUB API requests | 154,167 | 149,459 | +3.2% |
+| SPORTSHUB API function invocations | 31,897 | 27,975 | +14.0% |
+| SPORTSHUB API function execution | 1.218 GB-hours | 1.150 GB-hours | +5.9% |
+| SPORTSHUB API outgoing bandwidth | 1.529 GB | 1.748 GB | -12.6% |
+| Team API outgoing bandwidth | 3.022 GB | 3.433 GB | -12.0% |
 
-## 4-week history
+## Available history
 
-Week order: 2026-09-07 -> 2026-09-14 -> 2026-09-21 -> 2026-09-28.
+Three of the four calendar weeks have comparable Vercel snapshots. A complete four-week comparison is unavailable.
 
-| Measurement | Comparable values, oldest to newest | Window change |
-| --- | --- | --- |
-| Vercel CDG - API requests (hits + misses) | N/A -> 153,486 -> 151,512 -> 156,010 | N/A (3/4 comparable weeks) |
-| Vercel CDG - API incoming bandwidth | N/A -> 0.231257 -> 0.226727 -> 0.231697 | N/A (3/4 comparable weeks) |
-| Vercel CDG - API outgoing bandwidth | N/A -> 3.70287 -> 3.4325 -> 3.02204 | N/A (3/4 comparable weeks) |
-| Vercel CDG - API function invocations (all outcomes) | N/A -> 28,830 -> 27,975 -> 31,897 | N/A (3/4 comparable weeks) |
-| Vercel CDG - API function errors + timeouts + throttles | N/A -> 22 -> 41 -> 46 | N/A (3/4 comparable weeks) |
-| Vercel CDG - API function execution | N/A -> 1.07045 -> 1.14965 -> 1.21801 | N/A (3/4 comparable weeks) |
-| Vercel SPORTSHUB - API requests (hits + misses) | N/A -> 151,934 -> 149,459 -> 154,167 | N/A (3/4 comparable weeks) |
-| Vercel SPORTSHUB - API incoming bandwidth | N/A -> 0.229531 -> 0.224636 -> 0.229684 | N/A (3/4 comparable weeks) |
-| Vercel SPORTSHUB - API outgoing bandwidth | N/A -> 1.64038 -> 1.74843 -> 1.52891 | N/A (3/4 comparable weeks) |
-| Vercel SPORTSHUB - API function invocations (all outcomes) | N/A -> 28,830 -> 27,975 -> 31,897 | N/A (3/4 comparable weeks) |
-| Vercel SPORTSHUB - API function errors + timeouts + throttles | N/A -> 22 -> 41 -> 46 | N/A (3/4 comparable weeks) |
-| Vercel SPORTSHUB - API function execution | N/A -> 1.07045 -> 1.14965 -> 1.21801 | N/A (3/4 comparable weeks) |
-| Grafana frontend sessions | N/A -> N/A -> N/A -> N/A | N/A (0/4 comparable weeks) |
+Team outgoing bandwidth decreased in both weekly comparisons: 3.703 -> 3.433 -> 3.022 GB. The total decrease was 0.681 GB (-18.4%). Team totals include SPORTSHUB.
 
-N/A comparisons indicate absent/incomplete data or a scope, unit or definition change.
-Window change compares first and last weeks only; it does not establish a sustained trend.
-Tables use up to six significant digits; snapshots preserve source precision.
+SPORTSHUB requests decreased in the second week, then increased this week. Its outgoing bandwidth moved in the opposite direction. These three weeks do not show a steady change in SPORTSHUB activity.
 
-## Sources and collection notes
+Function execution increased less than invocation count this week. These totals cannot identify which functions account for that difference.
 
-- Vercel CDG - API requests (hits + misses): https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:all-projects; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(request_hit_count, request_miss_count). source lastUpdate 2026-10-12T11:38:40.444000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel CDG - API incoming bandwidth: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:all-projects; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(bandwidth_incoming_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:38:40.444000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel CDG - API outgoing bandwidth: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:all-projects; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(bandwidth_outgoing_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:38:40.444000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel CDG - API function invocations (all outcomes): https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:all-projects; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:38:40.444000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel CDG - API function errors + timeouts + throttles: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:all-projects; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:38:40.444000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel CDG - API function execution: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:all-projects; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). source lastUpdate 2026-10-12T11:38:40.444000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel SPORTSHUB - API requests (hits + misses): https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(request_hit_count, request_miss_count). source lastUpdate 2026-10-12T11:38:41.310000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel SPORTSHUB - API incoming bandwidth: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(bandwidth_incoming_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:38:41.310000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel SPORTSHUB - API outgoing bandwidth: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(bandwidth_outgoing_bytes). Bytes / 1,000,000,000 for decimal GB; source lastUpdate 2026-10-12T11:38:41.310000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel SPORTSHUB - API function invocations (all outcomes): https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(function_invocation_successful_count, function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:38:41.310000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel SPORTSHUB - API function errors + timeouts + throttles: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(function_invocation_error_count, function_invocation_timeout_count, function_invocation_throttle_count). source lastUpdate 2026-10-12T11:38:41.310000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Vercel SPORTSHUB - API function execution: https://api.vercel.com/v2/usage (api); scope: compass-digitals-projects:prj_M871BOaWTRTkX8FKcUvusXpWAqXx; definition: vercel-usage-v2-counters-v1; Seven UTC daily buckets; sum(function_execution_successful_gb_hours, function_execution_error_gb_hours, function_execution_timeout_gb_hours). source lastUpdate 2026-10-12T11:38:41.310000Z. Undocumented usage API counters; not reconciled equivalents of CDN/Fast Transfer/ISR billing metrics.
-- Grafana frontend sessions: https://compassdigitalgroup.grafana.net/d/dfa75f92-b104-48e6-ba78-cf4fc950ae9a/grafana-cloud-billing-usage (api); scope: compassdigitalgroup:all-frontend-apps; definition: unverified; Operator approved missing Grafana coverage. Grafana [Preview] Sports Hub: missing/null daily buckets: 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-03, 2026-10-04. The fallback zero series does not fill these gaps.
+## Grafana and source limits
+
+Grafana includes preview and production apps. All three available weeks lack complete preview coverage, so no valid session comparison is available. Missing data is not zero.
+
+Vercel uses undocumented API counters, not verified equivalents of the original CDN, Fast Transfer or ISR dashboard metrics.
+
+## Next actions
+
+1. Review function error logs and deployments for September 28-October 4. Check the repeated increase and whether user requests failed.
+2. Determine why Grafana preview buckets are absent before filling the gaps.
+
+[Full measurements and source details](snapshot.json) | [Previous week](../2026-09-21/snapshot.json)
 
 Generated with AI assistance.

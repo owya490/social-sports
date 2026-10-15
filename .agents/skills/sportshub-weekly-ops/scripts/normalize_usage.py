@@ -26,7 +26,9 @@ VERCEL_FIELDS = {
 
 
 class CoverageError(ValueError):
-    pass
+    def __init__(self, message, scope=None):
+        super().__init__(message)
+        self.scope = scope
 
 
 def numeric(value, label, integer=False):
@@ -144,17 +146,21 @@ def grafana_metric(data, snapshot):
         raise ValueError("Grafana executed query/step differs from the verified daily panel.")
     if not series:
         raise CoverageError("Grafana returned no labeled app series; zero usage is unverified.")
+    scope = "compassdigitalgroup:org_id=1030328:all-frontend-apps:" + json.dumps(sorted(series))
+    gaps = []
     for identity, rows in series.items():
         missing = ", ".join(str(datetime.fromtimestamp(day / 1000, ops.UTC).date())
                             for day in sorted(expected) if rows.get(day) is None)
         if missing:
-            raise CoverageError(f"Grafana {identity[1]}: missing/null daily buckets: {missing}. "
-                                "The fallback zero series does not fill these gaps.")
+            gaps.append(f"{identity[1]} (id={identity[0]}): {missing}")
+    if gaps:
+        raise CoverageError("Grafana missing/null daily buckets: " + "; ".join(gaps)
+                            + ". The fallback zero series does not fill these gaps.", scope=scope)
     metric = snapshot.metrics["grafana.frontend_sessions"]
     return replace(
         metric, value=math.fsum(rows[day] for rows in series.values() for day in sorted(expected)),
         status="complete", method="api",
-        scope="compassdigitalgroup:org_id=1030328:all-frontend-apps:" + json.dumps(sorted(series)),
+        scope=scope,
         definition="weekly-daily-buckets-v1",
         notes=("Verified daily panel 95 via dashboard API; seven UTC bucket-start evaluations per app. "
                "Fractional session estimate preserved; next Monday and unlabeled fallback excluded."),
@@ -165,6 +171,7 @@ def normalize(vercel, grafana, week, now, allow_missing_grafana=False):
     snapshot = ops.template(week, now)
     vercel_data, vercel_capture = evidence(vercel, "vercel", week, now)
     grafana_data, grafana_capture = evidence(grafana, "grafana", week, now)
+    fetcher.require_grafana_delay(week, grafana_capture)
     vercel_metrics(vercel_data, snapshot, vercel_capture)
     try:
         snapshot.metrics["grafana.frontend_sessions"] = grafana_metric(grafana_data, snapshot)
@@ -173,6 +180,8 @@ def normalize(vercel, grafana, week, now, allow_missing_grafana=False):
             raise
         snapshot.metrics["grafana.frontend_sessions"] = replace(
             snapshot.metrics["grafana.frontend_sessions"],
+            scope=error.scope or snapshot.metrics["grafana.frontend_sessions"].scope,
+            definition="weekly-daily-buckets-v1" if error.scope else "unverified",
             notes="Operator approved missing Grafana coverage. " + str(error), method="api",
         )
     snapshot = replace(snapshot, captured_at=max(vercel_capture, grafana_capture))

@@ -232,8 +232,10 @@ def same_measurements(current, previous):
     return True
 
 
-def number(value):
-    return f"{value:,.6g}"
+def number(value, unit=None, signed=False):
+    if unit == "count" and value == int(value):
+        return format(int(value), "+," if signed else ",")
+    return format(value, "+,.6g" if signed else ",.6g")
 
 
 def change(current, previous):
@@ -241,7 +243,7 @@ def change(current, previous):
         return "N/A"
     delta = current.value - previous.value
     percent = f"{delta / previous.value * 100:+.1f}%" if previous.value else "N/A: zero baseline"
-    return f"{delta:+,.6g} {current.unit} ({percent})"
+    return f"{number(delta, current.unit, signed=True)} {current.unit} ({percent})"
 
 
 def cell(text):
@@ -275,8 +277,8 @@ def render_report(snapshot, history, weeks, now):
     for key, spec in catalog.items():
         current = snapshot.metrics[key]
         baseline = previous.metrics.get(key) if previous else None
-        value = f"{number(current.value)} {current.unit}" if current.value is not None else "N/A"
-        old_value = f"{number(baseline.value)} {baseline.unit}" if comparable(current, baseline) else "N/A"
+        value = f"{number(current.value, current.unit)} {current.unit}" if current.value is not None else "N/A"
+        old_value = f"{number(baseline.value, baseline.unit)} {baseline.unit}" if comparable(current, baseline) else "N/A"
         lines.append("| " + " | ".join(map(cell, (
             spec.label, value, old_value, change(current, baseline), current.status,
         ))) + " |")
@@ -290,13 +292,13 @@ def render_report(snapshot, history, weeks, now):
         current = snapshot.metrics[key]
         series = [entry.metrics.get(key) if entry else None for entry in window.values()]
         matched = [comparable(current, entry) for entry in series]
-        values = " -> ".join(number(entry.value) if valid else "N/A" for entry, valid in zip(series, matched))
+        values = " -> ".join(number(entry.value, entry.unit) if valid else "N/A" for entry, valid in zip(series, matched))
         trend = change(current, series[0]) if all(matched) else f"N/A ({sum(matched)}/{weeks} comparable weeks)"
         lines.append(f"| {cell(spec.label)} | {values} | {cell(trend)} |")
     lines += [
         "", "N/A comparisons indicate absent/incomplete data or a scope, unit or definition change.",
         "Window change compares first and last weeks only; it does not establish a sustained trend.",
-        "Tables use up to six significant digits; snapshots preserve source precision.", "",
+        "Integer counts use separators; other values use up to six significant digits. Snapshots preserve source precision.", "",
         "## Sources and collection notes", "",
     ]
     for key, spec in catalog.items():

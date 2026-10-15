@@ -23,7 +23,10 @@ despite a seven-day dashboard range; it is not a weekly total.
 Use the structured API/MCP response, or Inspect/Data/CSV for requested browser
 reconciliation or fallback, to obtain the daily buckets. Verify
 whether timestamps denote bucket starts or ends before selecting seven full
-UTC days. Check that the newest bucket has settled. Sum the seven non-overlapping
+UTC days. Collect no earlier than 24 hours after the week ends (Tuesday 00:00
+UTC). This operator-approved local safeguard allows time for the latest bucket
+to settle; it is not a vendor guarantee that values cannot change later.
+Sum the seven non-overlapping
 daily totals, not the panel mean/max, an ingestion rate, a running monthly
 counter, or repeated samples of a rolling 24-hour total. Null/missing buckets
 are incomplete coverage, not zero. A day with an explicitly reported zero is
@@ -81,9 +84,18 @@ before executing the pinned query. A changed panel definition stops collection.
 `normalize_usage.py` checks the executed query/step, daily frame schema, exact
 app labels and complete seven-day coverage, then sums only the labeled app
 series. It records the sorted `(id, appName)` set in `scope`; an app-set change
-therefore breaks comparison. A missing app cannot be discovered from a fallback
+therefore breaks comparison. An approved missing result retains that returned
+app set and lists every affected app/day gap in its notes. A missing app cannot
+be discovered from a fallback
 zero series alone; the report covers the labeled apps returned by the panel.
 Update the pinned request deliberately if the supported source changes.
+
+The fetch helper rejects an early Grafana collection before contacting the API.
+Normalization checks Grafana evidence's own capture time, rather than the later
+normalization time or the Vercel capture time. `--allow-missing-grafana` does
+not bypass this delay. Recollect early evidence after the eligible timestamp;
+do not edit its capture time. Older saved history predates this safeguard and
+retains its capture metadata; every fresh collection and recheck must apply it.
 
 1. Inspect the actual daily panel through MCP/dashboard metadata, or a supported
    Query Inspector export for initial reconciliation. Capture datasource UID, expression,

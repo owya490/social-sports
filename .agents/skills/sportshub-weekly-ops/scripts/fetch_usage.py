@@ -2,7 +2,7 @@
 """Plan or fetch weekly vendor responses without creating report history."""
 
 import argparse
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import json
 import os
 from pathlib import Path
@@ -20,6 +20,7 @@ VERCEL_BASE = "https://api.vercel.com/v2/usage"
 TEAM_ID = "team_7wMqFyd9Hz1I882l0vkev0Dz"
 PROJECT_ID = "prj_M871BOaWTRTkX8FKcUvusXpWAqXx"
 TOKEN_ENV = {"vercel": "VERCEL_TOKEN", "grafana": "GRAFANA_SERVICE_ACCOUNT_TOKEN"}
+GRAFANA_COLLECTION_DELAY = timedelta(hours=24)
 GRAFANA_EXPR = (
     'sum(sum_over_time((grafanacloud_frontend_observability_instance_sessions_per_second'
     '{org_id="1030328"} offset -1d * 60)[1d:1m])) by (id, appName) or vector(0)'
@@ -29,6 +30,14 @@ GRAFANA_EXPR = (
 class NoRedirect(HTTPRedirectHandler):
     def redirect_request(self, request, response, code, message, headers, new_url):
         return None
+
+
+def require_grafana_delay(week, captured):
+    _, end = ops.bounds(week, captured)
+    ready = end + GRAFANA_COLLECTION_DELAY
+    if captured < ready:
+        raise ValueError(f"Grafana collection requires a 24-hour delay; collect on or after {ops.iso(ready)}. "
+                         "This is a local safeguard, not a Grafana settlement guarantee.")
 
 
 def request_plan(week, now):
@@ -145,6 +154,8 @@ def fetch(vendor, plan, output, token_file=None):
         raise ValueError("Raw responses must be saved below this repository's .tmp/ directory.")
     if output.exists():
         raise ValueError("Output already exists; choose a new file to preserve collection evidence.")
+    if vendor == "grafana":
+        require_grafana_delay(date.fromisoformat(plan["week"]), datetime.now(ops.UTC))
     headers = {"Authorization": "Bearer " + read_token(plan["token_env"], token_file)}
     if vendor == "grafana":
         headers.update({"Content-Type": "application/json", "X-Grafana-Org-Id": "1"})

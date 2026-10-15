@@ -130,12 +130,12 @@
     "grafana.frontend_sessions": {
       "value": null,
       "status": "missing",
-      "scope": "compassdigitalgroup:all-frontend-apps",
+      "scope": "compassdigitalgroup:org_id=1030328:all-frontend-apps:[[\"832165\", \"[Preview] Sports Hub\"], [\"832165\", \"[Production] Sports Hub\"]]",
       "unit": "count",
-      "definition": "unverified",
+      "definition": "weekly-daily-buckets-v1",
       "source_url": "https://compassdigitalgroup.grafana.net/d/dfa75f92-b104-48e6-ba78-cf4fc950ae9a/grafana-cloud-billing-usage",
       "method": "api",
-      "notes": "Operator approved missing Grafana coverage. Grafana [Preview] Sports Hub: missing/null daily buckets: 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-03, 2026-10-04. The fallback zero series does not fill these gaps."
+      "notes": "Operator approved missing Grafana coverage. Grafana missing/null daily buckets: [Preview] Sports Hub (id=832165): 2026-09-29, 2026-09-30, 2026-10-01, 2026-10-02, 2026-10-03, 2026-10-04. The fallback zero series does not fill these gaps."
     }
   }
 }

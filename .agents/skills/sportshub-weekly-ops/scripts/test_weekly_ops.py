@@ -126,6 +126,11 @@ class WeeklyOpsTest(unittest.TestCase):
         self.assertEqual(ops.change(current, baseline), "+5 GB (N/A: zero baseline)")
         self.assertEqual(ops.change(baseline, current), "-5 GB (-100.0%)")
         self.assertEqual(ops.change(baseline, baseline), "+0 GB (N/A: zero baseline)")
+        count = replace(current, value=2_345_678, unit="count")
+        prior_count = replace(count, value=1_111_111)
+        self.assertEqual(ops.change(count, prior_count), "+1,234,567 count (+111.1%)")
+        self.assertEqual(ops.number(count.value, count.unit), "2,345,678")
+        self.assertEqual(ops.number(91.25, "count"), "91.25")
 
     def test_changed_contract_or_incomplete_status_prevents_comparison(self):
         current = snapshot().metrics[KEY]
@@ -154,7 +159,11 @@ class WeeklyOpsTest(unittest.TestCase):
         for offset, value in ((3, 10), (2, 12), (1, 15)):
             ops.save_report(snapshot(WEEK - timedelta(weeks=offset), value), self.history, 4, NOW)
         current = snapshot(value=20)
+        count_key = "vercel_project.api_requests"
+        current.metrics[count_key] = replace(current.metrics[KEY], value=1_234_567, unit="count")
         result = ops.render_report(current, self.history, 4, NOW)
+        self.assertIn("API requests (hits + misses) | 1,234,567 count", result)
+        self.assertIn("N/A -> N/A -> N/A -> 1,234,567", result)
         self.assertIn("20 GB | 15 GB | +5 GB (+33.3%)", result)
         self.assertIn("10 -> 12 -> 15 -> 20 | +10 GB (+100.0%)", result)
         longer = ops.render_report(current, self.history, 12, NOW)
@@ -341,6 +350,14 @@ class WeeklyOpsTest(unittest.TestCase):
             opener.assert_not_called()
         self.assertFalse(output.exists())
         token_file = Path(self.temporary.name) / "token"
+        grafana = fetcher.request_plan(WEEK, NOW)["grafana"]
+        _, end = ops.bounds(WEEK, NOW)
+        with patch("fetch_usage.datetime") as clock, patch("fetch_usage.build_opener") as opener:
+            clock.now.return_value = end + timedelta(hours=24) - timedelta(microseconds=1)
+            with self.assertRaisesRegex(ValueError, "24-hour delay"):
+                fetcher.fetch("grafana", grafana, output)
+            opener.assert_not_called()
+        self.assertFalse(output.exists())
         token_file.write_text("example-token\n")
         with patch.dict(os.environ, {"VERCEL_TOKEN_FILE": str(token_file)}, clear=True):
             self.assertEqual(fetcher.read_token("VERCEL_TOKEN"), "example-token")
@@ -418,6 +435,17 @@ class WeeklyOpsTest(unittest.TestCase):
         self.assertIn('[["1", "preview"], ["1", "production"]]', sessions.scope)
 
     def test_normalization_rejects_wrong_provenance_before_producing_metrics(self):
+        _, end = ops.bounds(WEEK, NOW)
+        for captured in (end, end + timedelta(hours=24) - timedelta(microseconds=1)):
+            data = self.api_evidence()
+            data["grafana"]["captured_at"] = ops.iso(captured)
+            for allow_missing in (False, True):
+                with self.subTest(captured=captured, allow_missing=allow_missing), \
+                        self.assertRaisesRegex(ValueError, "24-hour delay"):
+                    self.normalize_evidence(data, allow_missing_grafana=allow_missing)
+        data = self.api_evidence()
+        data["grafana"]["captured_at"] = ops.iso(end + timedelta(hours=24))
+        self.assertEqual(self.normalize_evidence(data).metrics["grafana.frontend_sessions"].status, "complete")
         for field, value in (("week", "2026-09-21"), ("vendor", "grafana"),
                              ("captured_at", "2026-10-01T00:00:00Z")):
             data = self.api_evidence()
@@ -458,6 +486,7 @@ class WeeklyOpsTest(unittest.TestCase):
     def test_grafana_missing_days_need_explicit_partial_choice_and_are_not_compared(self):
         data = self.api_evidence()
         data["grafana"]["responses"]["query"]["data"]["results"]["A"]["frames"][1]["data"]["values"][1][1] = None
+        data["grafana"]["responses"]["query"]["data"]["results"]["A"]["frames"][2]["data"]["values"][1][2] = None
         with self.assertRaisesRegex(normalizer.CoverageError, "preview.*2026-09-29"):
             self.normalize_evidence(data)
         result = self.normalize_evidence(data, allow_missing_grafana=True)
@@ -465,6 +494,10 @@ class WeeklyOpsTest(unittest.TestCase):
         self.assertIsNone(metric.value)
         self.assertEqual(metric.status, "missing")
         complete = self.normalize_evidence(self.api_evidence()).metrics["grafana.frontend_sessions"]
+        self.assertEqual(metric.scope, complete.scope)
+        self.assertEqual(metric.definition, complete.definition)
+        self.assertIn("preview (id=1): 2026-09-29", metric.notes)
+        self.assertIn("production (id=1): 2026-09-30", metric.notes)
         self.assertFalse(ops.comparable(complete, metric))
         changed = self.api_evidence()
         changed["grafana"]["responses"]["panel"]["data"]["dashboard"]["panels"][0]["panels"][0]["targets"][0]["expr"] = "vector(0)"
