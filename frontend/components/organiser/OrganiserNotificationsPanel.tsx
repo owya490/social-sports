@@ -19,11 +19,11 @@ const logger = new Logger("organiserNotificationsLogger");
 /** Temporary preview. Delete this constant, then use `items ?? []` for notifications again. */
 const SAMPLE_NOTIFICATIONS: BookingApprovalNotification[] = [
   {
-    orderId: "sample-alex" as OrderId,
-    eventId: "sample-sunday" as EventId,
-    eventName: "Sunday hit",
-    purchaserName: "Alex Chen",
-    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 60 * 26,
+    orderId: "sample-jordan" as OrderId,
+    eventId: "sample-friday" as EventId,
+    eventName: "Friday social",
+    purchaserName: "Jordan Blake",
+    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 8,
   },
   {
     orderId: "sample-casey" as OrderId,
@@ -33,11 +33,11 @@ const SAMPLE_NOTIFICATIONS: BookingApprovalNotification[] = [
     purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 40,
   },
   {
-    orderId: "sample-jordan" as OrderId,
-    eventId: "sample-friday" as EventId,
-    eventName: "Friday social",
-    purchaserName: "Jordan Blake",
-    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 8,
+    orderId: "sample-alex" as OrderId,
+    eventId: "sample-sunday" as EventId,
+    eventName: "Sunday hit",
+    purchaserName: "Alex Chen",
+    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 60 * 26,
   },
 ];
 
@@ -104,7 +104,7 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
                 <Link
                   href={`/organiser/v2/event/${item.eventId}`}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <EventHubInitials name={item.purchaserName} />
                   <div className="min-w-0 flex-1">
@@ -119,7 +119,7 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
                   </div>
                   <time
                     dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
-                    className="shrink-0 font-sans text-xs text-foreground-muted"
+                    className="shrink-0 pt-0.5 font-sans text-xs text-foreground-muted"
                   >
                     {formatPurchasedDate(item.purchasedAtSeconds)}
                   </time>

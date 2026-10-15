@@ -50,7 +50,7 @@ function orderWith(orderId: OrderId, status: OrderAndTicketStatus, seconds: numb
 }
 
 describe("buildBookingApprovalNotifications", () => {
-  it("lists each pending booking once, oldest first", () => {
+  it("lists each pending booking once, newest first", () => {
     const friday = eventWith("friday" as EventId, "Friday social");
     const sunday = eventWith("sunday" as EventId, "Sunday hit");
 
@@ -73,18 +73,18 @@ describe("buildBookingApprovalNotifications", () => {
 
     expect(notifications).toEqual([
       {
-        orderId: "pending-a",
-        eventId: sunday.eventId,
-        eventName: "Sunday hit",
-        purchaserName: "Alex",
-        purchasedAtSeconds: 100,
-      },
-      {
         orderId: "pending-b",
         eventId: friday.eventId,
         eventName: "Friday social",
         purchaserName: "Casey",
         purchasedAtSeconds: 300,
+      },
+      {
+        orderId: "pending-a",
+        eventId: sunday.eventId,
+        eventName: "Sunday hit",
+        purchaserName: "Alex",
+        purchasedAtSeconds: 100,
       },
     ]);
   });

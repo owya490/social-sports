@@ -44,7 +44,7 @@ export function buildBookingApprovalNotifications(
         purchasedAtSeconds: order.datePurchased.seconds,
       };
     })
-    .sort((a, b) => a.purchasedAtSeconds - b.purchasedAtSeconds);
+    .sort((a, b) => b.purchasedAtSeconds - a.purchasedAtSeconds);
 }
 
 export async function fetchBookingApprovalNotifications(userId: UserId): Promise<BookingApprovalNotification[]> {
