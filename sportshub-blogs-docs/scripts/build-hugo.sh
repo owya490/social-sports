@@ -3,14 +3,15 @@
 # Exit on any error
 set -e
 
-PARTNER_ONLY=false
-if [ "$#" -gt 0 ]; then
-    if [ "$#" -ne 1 ] || [ "$1" != "--partner-only" ]; then
-        echo "Usage: $0 [--partner-only]" >&2
-        exit 2
-    fi
-    PARTNER_ONLY=true
+if [ "$#" -gt 1 ]; then
+    echo "Usage: $0 [--partner-only|--docs-only]" >&2
+    exit 2
 fi
+BUILD_SCOPE="${1:-all}"
+case "$BUILD_SCOPE" in
+    all|--partner-only|--docs-only) ;;
+    *) echo "Usage: $0 [--partner-only|--docs-only]" >&2; exit 2 ;;
+esac
 
 echo "🚀 Starting Hugo build and integration process..."
 
@@ -78,10 +79,19 @@ fi
 
 echo "📋 Copying Hugo static files to Vercel public directory..."
 
-if [ "$PARTNER_ONLY" = true ]; then
-    mkdir -p "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events"
-    cp "$HUGO_PUBLIC_DIR/docs/integrations/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/"
-    cp "$HUGO_PUBLIC_DIR/docs/integrations/partner-events/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events/"
+if [ "$BUILD_SCOPE" != all ]; then
+    if [ "$BUILD_SCOPE" = "--docs-only" ]; then
+        while IFS= read -r -d '' file; do
+            relative="${file#"$HUGO_PUBLIC_DIR/"}"
+            destination="$VERCEL_PUBLIC_DIR/$relative"
+            mkdir -p "$(dirname "$destination")"
+            cp "$file" "$destination"
+        done < <(find "$HUGO_PUBLIC_DIR/docs" -type f -name '*.html' -print0)
+    else
+        mkdir -p "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events"
+        cp "$HUGO_PUBLIC_DIR/docs/integrations/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/"
+        cp "$HUGO_PUBLIC_DIR/docs/integrations/partner-events/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events/"
+    fi
     for dir in "css" "js" "downloads"; do
         cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"
     done
@@ -89,7 +99,7 @@ if [ "$PARTNER_ONLY" = true ]; then
     for file in "$HUGO_PUBLIC_DIR"/en.search*.js; do
         cp "$file" "$VERCEL_PUBLIC_DIR/"
     done
-    echo "✅ Partner integration pages, downloads, and assets copied."
+    echo "✅ Selected Docs pages, downloads, and assets copied."
     exit 0
 fi
 
