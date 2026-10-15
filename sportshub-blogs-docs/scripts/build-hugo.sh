@@ -3,6 +3,15 @@
 # Exit on any error
 set -e
 
+PARTNER_ONLY=false
+if [ "$#" -gt 0 ]; then
+    if [ "$#" -ne 1 ] || [ "$1" != "--partner-only" ]; then
+        echo "Usage: $0 [--partner-only]" >&2
+        exit 2
+    fi
+    PARTNER_ONLY=true
+fi
+
 echo "🚀 Starting Hugo build and integration process..."
 
 # Get the script directory and navigate to project root
@@ -68,6 +77,21 @@ if [ ! -d "$VERCEL_PUBLIC_DIR" ]; then
 fi
 
 echo "📋 Copying Hugo static files to Vercel public directory..."
+
+if [ "$PARTNER_ONLY" = true ]; then
+    mkdir -p "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events"
+    cp "$HUGO_PUBLIC_DIR/docs/integrations/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/"
+    cp "$HUGO_PUBLIC_DIR/docs/integrations/partner-events/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events/"
+    for dir in "css" "js" "downloads"; do
+        cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"
+    done
+    cp "$HUGO_PUBLIC_DIR/en.search-data.json" "$VERCEL_PUBLIC_DIR/"
+    for file in "$HUGO_PUBLIC_DIR"/en.search*.js; do
+        cp "$file" "$VERCEL_PUBLIC_DIR/"
+    done
+    echo "✅ Partner integration pages, downloads, and assets copied."
+    exit 0
+fi
 
 # Copy directories: blogs, css, js, tags
 for dir in "blogs" "docs" "css" "js" "tags" "downloads"; do
