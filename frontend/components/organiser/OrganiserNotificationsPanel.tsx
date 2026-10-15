@@ -1,5 +1,6 @@
 "use client";
 
+import { EventHubInitials } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { EventId, OrderId } from "@/interfaces/EventTypes";
 import { useUser } from "@/components/utility/UserContext";
@@ -8,7 +9,7 @@ import {
   BookingApprovalNotification,
   fetchBookingApprovalNotifications,
 } from "@/services/src/organiser/bookingApprovalNotifications";
-import { BellIcon } from "@heroicons/react/24/outline";
+import { BellIcon, TicketIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -47,13 +48,12 @@ type OrganiserNotificationsContextValue = {
 
 const OrganiserNotificationsContext = createContext<OrganiserNotificationsContextValue | null>(null);
 
-function formatPurchasedAt(seconds: number): string {
-  const date = new Date(seconds * 1000);
-  const sameDay = new Date().toDateString() === date.toDateString();
-  if (sameDay) {
-    return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
-  }
-  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+function formatPurchasedDate(seconds: number): string {
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(seconds * 1000));
 }
 
 export function OrganiserNotificationsProvider({ children }: { children: ReactNode }) {
@@ -98,28 +98,31 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
             <p className="mt-0.5 font-sans text-sm text-foreground-muted">All quiet on the pitch.</p>
           </div>
         ) : (
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-1">
             {notifications.map((item) => (
               <li key={item.orderId}>
                 <Link
                   href={`/organiser/v2/event/${item.eventId}`}
                   onClick={() => setOpen(false)}
-                  className="block rounded-xl border border-border bg-background px-3.5 py-3 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 truncate font-sans text-sm font-medium text-foreground">
-                      {item.purchaserName}
+                  <EventHubInitials name={item.purchaserName} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-sans text-sm leading-snug">
+                      <span className="font-semibold text-foreground">{item.purchaserName}</span>
+                      <span className="text-foreground-muted"> is waiting for approval</span>
+                    </p>
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1 font-sans text-sm text-foreground-secondary">
+                      <TicketIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="truncate">{item.eventName}</span>
                     </p>
                     <time
                       dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
-                      className="shrink-0 font-sans text-xs text-foreground-muted"
+                      className="mt-0.5 block font-sans text-xs text-foreground-muted"
                     >
-                      {formatPurchasedAt(item.purchasedAtSeconds)}
+                      {formatPurchasedDate(item.purchasedAtSeconds)}
                     </time>
                   </div>
-                  <p className="mt-0.5 font-sans text-sm text-foreground-muted">
-                    Waiting for approval · {item.eventName}
-                  </p>
                 </Link>
               </li>
             ))}
