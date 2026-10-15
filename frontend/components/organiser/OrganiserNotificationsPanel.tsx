@@ -98,32 +98,32 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
             <p className="mt-0.5 font-sans text-sm text-foreground-muted">All quiet on the pitch.</p>
           </div>
         ) : (
-          <ol className="ms-3 flex flex-col border-l border-border">
+          <ul className="flex flex-col gap-2">
             {notifications.map((item) => (
-              <li key={item.orderId} className="relative pb-6 pl-6 last:pb-0">
-                <span
-                  aria-hidden
-                  className="absolute top-1 -left-1.5 h-3 w-3 rounded-full border-2 border-border bg-background"
-                />
-                <time
-                  dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
-                  className="mb-1 block font-sans text-xs font-medium text-foreground-muted"
-                >
-                  {formatPurchasedAt(item.purchasedAtSeconds)}
-                </time>
+              <li key={item.orderId}>
                 <Link
                   href={`/organiser/v2/event/${item.eventId}`}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className="block rounded-xl border border-border bg-background px-3.5 py-3 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
-                  <p className="font-sans text-sm font-medium text-foreground">{item.purchaserName}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="min-w-0 truncate font-sans text-sm font-medium text-foreground">
+                      {item.purchaserName}
+                    </p>
+                    <time
+                      dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
+                      className="shrink-0 font-sans text-xs text-foreground-muted"
+                    >
+                      {formatPurchasedAt(item.purchasedAtSeconds)}
+                    </time>
+                  </div>
                   <p className="mt-0.5 font-sans text-sm text-foreground-muted">
                     Waiting for approval · {item.eventName}
                   </p>
                 </Link>
               </li>
             ))}
-          </ol>
+          </ul>
         )}
       </EventHubPanel>
     </OrganiserNotificationsContext.Provider>
