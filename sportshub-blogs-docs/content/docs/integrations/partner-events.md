@@ -13,6 +13,8 @@ canonicalURL: https://www.sportshub.net.au/docs/integrations/partner-events/
 
 Your website displays events and lets customers select a ticket type and quantity. SPORTSHUB handles the booking after you open its hosted flow.
 
+{{< partner-skill-download >}}
+
 | Step | Operation | Result |
 | --- | --- | --- |
 | 1. Load events | `GET_PARTNER_EVENTS` | Public event and ticket information for your calendar. |

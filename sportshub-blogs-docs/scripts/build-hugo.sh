@@ -41,6 +41,8 @@ echo "🔨 Deleting public directory..."
 rm -rf "$HUGO_DIR/public"
 
 # Build Hugo static files
+python3 "$PROJECT_ROOT/scripts/package-integration-skill.py" \
+    --output "$HUGO_DIR/static/downloads/sportshub-events-integration.zip"
 echo "🔨 Building Hugo static files..."
 hugo --minify
 
@@ -68,7 +70,7 @@ fi
 echo "📋 Copying Hugo static files to Vercel public directory..."
 
 # Copy directories: blogs, css, js, tags
-for dir in "blogs" "docs" "css" "js" "tags"; do
+for dir in "blogs" "docs" "css" "js" "tags" "downloads"; do
     if [ -d "$HUGO_PUBLIC_DIR/$dir" ]; then
         echo "📁 Copying $dir directory..."
         cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"
