@@ -51,13 +51,6 @@ export type ActivityFeedItem = {
   type: OrderAndTicketType;
 };
 
-/** One event with bookings still waiting for the organiser to accept or decline. */
-export type PendingBookingApproval = {
-  eventId: EventId;
-  eventName: string;
-  pendingOrderCount: number;
-};
-
 export type OrganiserDashboardMetrics = {
   netSales30dCents: number;
   ticketsSold30d: number;
@@ -70,8 +63,6 @@ export type OrganiserDashboardMetrics = {
   /** Top events by ticket sales $ in the last 30 days (for the donut). */
   salesByEvent30d: TopSalesEventSlice[];
   recentActivity: ActivityFeedItem[];
-  /** Events in the dashboard window that still have pending booking approvals. */
-  pendingApprovals: PendingBookingApproval[];
   events: EventData[];
   hasAnyEvents: boolean;
 };
@@ -191,38 +182,6 @@ function buildMonthTicketBuckets(tickets: Ticket[], events: EventData[]): DailyT
     return day;
   });
   return buildDailyBucketsForDays(days, tickets, events);
-}
-
-/**
- * Groups pending tickets into one row per event. Several tickets on the same
- * order count as a single booking waiting for approval.
- */
-export function buildPendingBookingApprovals(
-  tickets: Ticket[],
-  events: EventData[],
-): PendingBookingApproval[] {
-  const eventById = new Map(events.map((event) => [event.eventId, event]));
-  const ordersByEvent = new Map<EventId, Set<OrderId>>();
-
-  tickets.forEach((ticket) => {
-    if (ticket.status !== OrderAndTicketStatus.PENDING) {
-      return;
-    }
-    const orderIds = ordersByEvent.get(ticket.eventId) ?? new Set<OrderId>();
-    orderIds.add(ticket.orderId);
-    ordersByEvent.set(ticket.eventId, orderIds);
-  });
-
-  return [...ordersByEvent.entries()]
-    .map(([eventId, orderIds]) => ({
-      eventId,
-      eventName: eventById.get(eventId)?.name ?? "Event",
-      pendingOrderCount: orderIds.size,
-    }))
-    .sort(
-      (a, b) =>
-        b.pendingOrderCount - a.pendingOrderCount || a.eventName.localeCompare(b.eventName)
-    );
 }
 
 function buildRecentActivity(
@@ -388,7 +347,6 @@ async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserD
     monthTickets: buildMonthTicketBuckets(approvedTickets, events),
     salesByEvent30d: buildSalesByEvent30d(approvedTickets, events),
     recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
-    pendingApprovals: buildPendingBookingApprovals(tickets, events),
     events,
     hasAnyEvents,
   };

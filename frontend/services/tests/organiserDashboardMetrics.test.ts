@@ -3,10 +3,7 @@ import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/Or
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { DASHBOARD_LOOKBACK_SECONDS } from "@/services/src/organiser/organiserConstants";
-import {
-  buildPendingBookingApprovals,
-  fetchOrganiserDashboardMetrics,
-} from "@/services/src/organiser/organiserDashboardMetricsService";
+import { fetchOrganiserDashboardMetrics } from "@/services/src/organiser/organiserDashboardMetricsService";
 import { getOrganiserEventsStartingOnOrAfter, tryGetOrganiserEventsFromCache } from "@/services/src/organiser/organiserEventsService";
 import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
 import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
@@ -121,13 +118,7 @@ describe("fetchOrganiserDashboardMetrics", () => {
       ticketWith({
         ticketId: "t2" as TicketId,
         eventId: recentEvent.eventId,
-        orderId: "o-pending" as OrderId,
-        status: OrderAndTicketStatus.PENDING,
-      }),
-      ticketWith({
-        ticketId: "t3" as TicketId,
-        eventId: recentEvent.eventId,
-        orderId: "o-pending" as OrderId,
+        orderId: "o1" as OrderId,
         status: OrderAndTicketStatus.PENDING,
       }),
     ]);
@@ -149,13 +140,6 @@ describe("fetchOrganiserDashboardMetrics", () => {
     expect(metrics.netSales30dCents).toBe(2500);
     expect(metrics.hasAnyEvents).toBe(true);
     expect(metrics.events).toEqual([recentEvent]);
-    expect(metrics.pendingApprovals).toEqual([
-      {
-        eventId: recentEvent.eventId,
-        eventName: "Recent smash",
-        pendingOrderCount: 1,
-      },
-    ]);
   });
 
   it("uses cached organiser events but still only queries tickets for the 30-day event window", async () => {
@@ -197,67 +181,5 @@ describe("fetchOrganiserDashboardMetrics", () => {
     expect(metrics.ticketsSold30d).toBe(0);
     expect(metrics.hasAnyEvents).toBe(true);
     expect(metrics.events).toEqual([]);
-    expect(metrics.pendingApprovals).toEqual([]);
-  });
-});
-
-describe("buildPendingBookingApprovals", () => {
-  it("lists each event once and ignores approved or declined tickets", () => {
-    const friday = eventWith({
-      eventId: "friday" as EventId,
-      name: "Friday social",
-      startDate: Timestamp.now(),
-    });
-    const sunday = eventWith({
-      eventId: "sunday" as EventId,
-      name: "Sunday hit",
-      startDate: Timestamp.now(),
-    });
-
-    const approvals = buildPendingBookingApprovals(
-      [
-        ticketWith({
-          ticketId: "approved" as TicketId,
-          eventId: friday.eventId,
-          orderId: "approved-order" as OrderId,
-        }),
-        ticketWith({
-          ticketId: "declined" as TicketId,
-          eventId: friday.eventId,
-          orderId: "declined-order" as OrderId,
-          status: OrderAndTicketStatus.REJECTED,
-        }),
-        ticketWith({
-          ticketId: "pending-a" as TicketId,
-          eventId: sunday.eventId,
-          orderId: "pending-a" as OrderId,
-          status: OrderAndTicketStatus.PENDING,
-        }),
-        ticketWith({
-          ticketId: "pending-b1" as TicketId,
-          eventId: friday.eventId,
-          orderId: "pending-b" as OrderId,
-          status: OrderAndTicketStatus.PENDING,
-        }),
-        ticketWith({
-          ticketId: "pending-b2" as TicketId,
-          eventId: friday.eventId,
-          orderId: "pending-b" as OrderId,
-          status: OrderAndTicketStatus.PENDING,
-        }),
-        ticketWith({
-          ticketId: "pending-c" as TicketId,
-          eventId: friday.eventId,
-          orderId: "pending-c" as OrderId,
-          status: OrderAndTicketStatus.PENDING,
-        }),
-      ],
-      [friday, sunday]
-    );
-
-    expect(approvals).toEqual([
-      { eventId: friday.eventId, eventName: "Friday social", pendingOrderCount: 2 },
-      { eventId: sunday.eventId, eventName: "Sunday hit", pendingOrderCount: 1 },
-    ]);
   });
 });

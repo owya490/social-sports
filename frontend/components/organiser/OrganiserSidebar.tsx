@@ -1,7 +1,6 @@
 "use client";
 
 import { OrganiserCommandSearch } from "@/components/organiser/OrganiserCommandSearch";
-import { OrganiserNotificationsPanel } from "@/components/organiser/OrganiserNotificationsPanel";
 import {
   isEventsNavGroupPath,
   ORGANISER_MAIN_NAV,
@@ -21,7 +20,6 @@ import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstant
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
-  BellIcon,
   ChevronDownIcon,
   ChevronUpDownIcon,
   Cog6ToothIcon,
@@ -190,11 +188,9 @@ function SidebarSearch({ collapsed, onOpen }: { collapsed?: boolean; onOpen: () 
 function UserAccountMenu({
   onNavigate,
   collapsed = false,
-  onOpenNotifications,
 }: {
   onNavigate?: () => void;
   collapsed?: boolean;
-  onOpenNotifications: () => void;
 }) {
   const { user, userLoading, setUser } = useUser();
   const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
@@ -255,20 +251,6 @@ function UserAccountMenu({
           <div className="my-1 border-t border-border" role="separator" aria-hidden />
           <MenuItem>
             {({ focus }) => (
-              <button
-                type="button"
-                onClick={onOpenNotifications}
-                className={`${
-                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
-                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
-              >
-                <BellIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
-                Notifications
-              </button>
-            )}
-          </MenuItem>
-          <MenuItem>
-            {({ focus }) => (
               <Link
                 href="/"
                 onClick={onNavigate}
@@ -308,7 +290,6 @@ function SidebarContent({
   onToggleCollapse,
   showCollapseToggle = false,
   onOpenSearch,
-  onOpenNotifications,
 }: {
   pathname: string;
   onNavigate?: () => void;
@@ -316,7 +297,6 @@ function SidebarContent({
   onToggleCollapse?: () => void;
   showCollapseToggle?: boolean;
   onOpenSearch: () => void;
-  onOpenNotifications: () => void;
 }) {
   return (
     <div className={`flex h-full flex-col py-3 transition-[padding] duration-200 ${collapsed ? "px-1.5" : "px-2.5"}`}>
@@ -409,11 +389,7 @@ function SidebarContent({
           )}
         </div>
         <div className={`mt-1 border-t border-border pt-2 ${collapsed ? "mx-1.5" : "mx-0.5"}`}>
-          <UserAccountMenu
-            onNavigate={onNavigate}
-            collapsed={collapsed}
-            onOpenNotifications={onOpenNotifications}
-          />
+          <UserAccountMenu onNavigate={onNavigate} collapsed={collapsed} />
         </div>
       </div>
     </div>
@@ -429,15 +405,9 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
   /** Keep mounted through the close animation, then remove so Safari stops sampling the white drawer. */
   const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
   const [mobileDrawerShown, setMobileDrawerShown] = useState(false);
-
-  const openNotifications = useCallback(() => {
-    onMobileOpenChange(false);
-    setNotificationsOpen(true);
-  }, [onMobileOpenChange]);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -532,7 +502,6 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
               pathname={pathname}
               onNavigate={() => onMobileOpenChange(false)}
               onOpenSearch={() => setSearchOpen(true)}
-              onOpenNotifications={openNotifications}
             />
           </div>
         </aside>
@@ -550,12 +519,10 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
           onToggleCollapse={toggleCollapsed}
           showCollapseToggle
           onOpenSearch={() => setSearchOpen(true)}
-          onOpenNotifications={openNotifications}
         />
       </aside>
 
       <OrganiserCommandSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <OrganiserNotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </>
   );
 }

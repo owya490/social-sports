@@ -1,7 +1,5 @@
 "use client";
 
-import { PendingBookingApprovalsNotice } from "@/components/organiser/PendingBookingApprovals";
-import { EventId } from "@/interfaces/EventTypes";
 import { ActivityFeedSection } from "@/components/organiser/v2/dashboard/ActivityFeedSection";
 import { DashboardHeader } from "@/components/organiser/v2/dashboard/DashboardHeader";
 import { DashboardKpiGrid } from "@/components/organiser/v2/dashboard/DashboardKpiGrid";
@@ -16,18 +14,11 @@ import {
   fetchOrganiserDashboardMetrics,
   tryGetCachedOrganiserDashboardMetrics,
   OrganiserDashboardMetrics,
-  PendingBookingApproval,
 } from "@/services/src/organiser/organiserDashboardMetricsService";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 const logger = new Logger("organiserDashboardV2Logger");
-
-/** Temporary preview so the card can be checked. Delete this constant and pass displayMetrics.pendingApprovals. */
-const MOCK_PENDING_APPROVALS: PendingBookingApproval[] = [
-  { eventId: "preview-friday" as EventId, eventName: "Friday social", pendingOrderCount: 2 },
-  { eventId: "preview-sunday" as EventId, eventName: "Sunday hit", pendingOrderCount: 1 },
-];
 
 const emptyMetrics: OrganiserDashboardMetrics = {
   netSales30dCents: 0,
@@ -38,7 +29,6 @@ const emptyMetrics: OrganiserDashboardMetrics = {
   monthTickets: [],
   salesByEvent30d: [],
   recentActivity: [],
-  pendingApprovals: [],
   events: [],
   hasAnyEvents: false,
 };
@@ -122,7 +112,6 @@ export function OrganiserDashboardView() {
         </div>
       ) : (
         <div className="space-y-5 sm:space-y-6">
-          <PendingBookingApprovalsNotice approvals={MOCK_PENDING_APPROVALS} />
           <DashboardKpiGrid metrics={displayMetrics} loading={loading} />
 
           <div className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-3 lg:gap-4 items-start">
