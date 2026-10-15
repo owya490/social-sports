@@ -12,6 +12,7 @@ on:
     branches:
       - master
     paths-ignore:
+      - '.github/workflows/weekly_ops.yml'
       - '.agents/skills/sportshub-weekly-ops/**'
       - 'docs/operations/README.md'
       - 'docs/operations/weekly/**'

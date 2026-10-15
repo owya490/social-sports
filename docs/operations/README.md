@@ -49,8 +49,8 @@ a baseline. Only aggregate data belongs in this directory; raw exports stay in `
 credentials stay outside Git.
 
 The functions deployment workflow excludes changes confined to this guide,
-the weekly report directory and the skill. Application changes still trigger
-the existing deployment workflow. App CI remains unchanged.
+the weekly report directory, the skill and its validation workflow. Application
+changes still trigger the existing deployment workflow. App CI remains unchanged.
 
 Local verification:
 

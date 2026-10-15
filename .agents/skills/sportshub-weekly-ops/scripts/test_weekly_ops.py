@@ -131,6 +131,10 @@ class WeeklyOpsTest(unittest.TestCase):
         self.assertEqual(ops.change(count, prior_count), "+1,234,567 count (+111.1%)")
         self.assertEqual(ops.number(count.value, count.unit), "2,345,678")
         self.assertEqual(ops.number(91.25, "count"), "91.25")
+        self.assertEqual(ops.number(1_234_567.25, "count"), "1,234,567.25")
+        self.assertEqual(ops.number(0.0000001, "count"), "0.0000001")
+        self.assertEqual(ops.change(replace(count, value=2_345_678.25), prior_count),
+                         "+1,234,567.25 count (+111.1%)")
 
     def test_changed_contract_or_incomplete_status_prevents_comparison(self):
         current = snapshot().metrics[KEY]
@@ -161,9 +165,12 @@ class WeeklyOpsTest(unittest.TestCase):
         current = snapshot(value=20)
         count_key = "vercel_project.api_requests"
         current.metrics[count_key] = replace(current.metrics[KEY], value=1_234_567, unit="count")
+        current.metrics["grafana.frontend_sessions"] = replace(current.metrics[count_key], value=1_234_567.25)
         result = ops.render_report(current, self.history, 4, NOW)
         self.assertIn("API requests (hits + misses) | 1,234,567 count", result)
         self.assertIn("N/A -> N/A -> N/A -> 1,234,567", result)
+        self.assertIn("Grafana frontend sessions | 1,234,567.25 count", result)
+        self.assertIn("N/A -> N/A -> N/A -> 1,234,567.25", result)
         self.assertIn("20 GB | 15 GB | +5 GB (+33.3%)", result)
         self.assertIn("10 -> 12 -> 15 -> 20 | +10 GB (+100.0%)", result)
         longer = ops.render_report(current, self.history, 12, NOW)

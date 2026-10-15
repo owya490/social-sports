@@ -4,6 +4,7 @@
 import argparse
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, time, timedelta, timezone
+from decimal import Decimal
 import json
 import math
 from pathlib import Path
@@ -235,6 +236,8 @@ def same_measurements(current, previous):
 def number(value, unit=None, signed=False):
     if unit == "count" and value == int(value):
         return format(int(value), "+," if signed else ",")
+    if unit == "count":
+        return format(Decimal(str(value)), "+,f" if signed else ",f")
     return format(value, "+,.6g" if signed else ",.6g")
 
 
@@ -298,7 +301,7 @@ def render_report(snapshot, history, weeks, now):
     lines += [
         "", "N/A comparisons indicate absent/incomplete data or a scope, unit or definition change.",
         "Window change compares first and last weeks only; it does not establish a sustained trend.",
-        "Integer counts use separators; other values use up to six significant digits. Snapshots preserve source precision.", "",
+        "Counts use separators and retain fractional estimates; other units use up to six significant digits. Snapshots preserve source precision.", "",
         "## Sources and collection notes", "",
     ]
     for key, spec in catalog.items():
