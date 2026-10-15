@@ -104,7 +104,7 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
                 <Link
                   href={`/organiser/v2/event/${item.eventId}`}
                   onClick={() => setOpen(false)}
-                  className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                  className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   <EventHubInitials name={item.purchaserName} />
                   <div className="min-w-0 flex-1">
@@ -116,13 +116,13 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
                       <TicketIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
                       <span className="truncate">{item.eventName}</span>
                     </p>
-                    <time
-                      dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
-                      className="mt-0.5 block font-sans text-xs text-foreground-muted"
-                    >
-                      {formatPurchasedDate(item.purchasedAtSeconds)}
-                    </time>
                   </div>
+                  <time
+                    dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
+                    className="shrink-0 font-sans text-xs text-foreground-muted"
+                  >
+                    {formatPurchasedDate(item.purchasedAtSeconds)}
+                  </time>
                 </Link>
               </li>
             ))}
