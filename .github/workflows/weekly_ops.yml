@@ -1,0 +1,29 @@
+name: Weekly operations validation
+
+on:
+  push:
+    paths:
+      - '.agents/skills/sportshub-weekly-ops/**'
+      - 'docs/operations/**'
+      - '.github/workflows/weekly_ops.yml'
+  pull_request:
+    paths:
+      - '.agents/skills/sportshub-weekly-ops/**'
+      - 'docs/operations/**'
+      - '.github/workflows/weekly_ops.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Test weekly comparisons and history
+        run: python3 -m unittest discover -s .agents/skills/sportshub-weekly-ops/scripts -p 'test_*.py'
+      - name: Validate saved history
+        run: python3 .agents/skills/sportshub-weekly-ops/scripts/weekly_ops.py check
