@@ -23,6 +23,7 @@ import org.mockito.MockedStatic;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
@@ -97,7 +98,7 @@ public class FulfilmentServiceTest {
             sessions.when(() -> FulfilmentSessionRepository.createFulfilmentSession(anyString(), any()))
                     .thenReturn("session-1");
 
-            assertEquals("session-1", FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1"));
+            assertEquals("session-1", FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.STRIPE));
         }
         sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
                 anyString(), isA(WaitlistFulfilmentSession.class)), times(2));
@@ -110,7 +111,7 @@ public class FulfilmentServiceTest {
         events.when(() -> EventsRepository.getActiveEventById("event-1")).thenThrow(failure);
 
         try {
-            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1");
+            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.STRIPE);
             fail("Expected database failure");
         } catch (IllegalStateException expected) {
             assertSame(failure, expected);
@@ -121,7 +122,7 @@ public class FulfilmentServiceTest {
 
     private void assertUnavailable() throws Exception {
         try {
-            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1");
+            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.STRIPE);
             fail("Expected unavailable event rejection");
         } catch (CheckoutDateTimeException expected) {
             sessions.verifyNoInteractions();

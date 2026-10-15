@@ -58,6 +58,7 @@ export enum FulfilmentEntityType {
   FORMS = "FORMS",
   END = "END",
   WAITLIST = "WAITLIST",
+  PYNG = "PYNG",
 }
 
 /**
