@@ -25,7 +25,11 @@ def main():
         parser.error("--output must be a .zip file")
 
     skill = SKILL.read_bytes()
-    reference = REFERENCE.read_bytes()
+    reference = re.sub(
+        r"(?m)^{{< partner-skill-download >}}\r?\n(?:\r?\n)?",
+        "",
+        REFERENCE.read_text(encoding="utf-8"),
+    ).encode("utf-8")
     header = reference.decode("utf-8").split("---", 2)[1]
     metadata = {}
     for field in ("contractVersion", "lastmod", "canonicalURL"):
