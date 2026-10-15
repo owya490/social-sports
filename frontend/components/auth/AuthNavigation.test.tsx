@@ -7,13 +7,11 @@ import ResetPassword from "@/app/(footer)/resetPassword/page";
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 import { User } from "firebase/auth";
 import {
-  getTempUserData,
   handleEmailAndPasswordSignIn,
   handleEmailAndPasswordSignUp,
   handleGoogleSignIn,
   resetUserPassword,
 } from "@/services/src/auth/authService";
-import { getFullUserById } from "@/services/src/users/usersService";
 import SocialAuthButtons from "./SocialAuthButtons";
 
 const mockRouter = { replace: jest.fn(), push: jest.fn() };
@@ -36,7 +34,6 @@ jest.mock("@/components/utility/UserContext", () => ({
 }));
 jest.mock("@/services/src/firebase", () => ({ auth: { get currentUser() { return mockAuth.currentUser; } } }));
 jest.mock("@/services/src/auth/authService", () => ({
-  getTempUserData: jest.fn(),
   handleEmailAndPasswordSignIn: jest.fn(),
   handleEmailAndPasswordSignUp: jest.fn(),
   handleGoogleSignIn: jest.fn(),
@@ -44,7 +41,6 @@ jest.mock("@/services/src/auth/authService", () => ({
   handleFacebookSignIn: jest.fn(),
   resetUserPassword: jest.fn(),
 }));
-jest.mock("@/services/src/users/usersService", () => ({ getFullUserById: jest.fn() }));
 jest.mock("@/observability/logger", () => ({ Logger: jest.fn(() => ({ error: jest.fn() })) }));
 jest.mock("@/utilities/sleepUtil", () => ({ sleep: jest.fn().mockResolvedValue(undefined) }));
 jest.mock("@/components/auth/AuthSplitLayout", () => ({
@@ -79,6 +75,10 @@ function signedIn(id = userId) {
   mockUser = { ...profile, userId: id };
 }
 
+function authenticated(id = userId) {
+  mockAuth.currentUser = { uid: id, emailVerified: true } as User;
+}
+
 function submitEmail(container: HTMLElement) {
   fireEvent.change(screen.getByLabelText("Email address"), { target: { value: "host@example.com" } });
   fireEvent.change(screen.getByLabelText("Password"), { target: { value: "password123" } });
@@ -91,32 +91,34 @@ beforeEach(() => {
   mockUserLoading = false;
   mockUser = EmptyUserData as UserData;
   window.history.replaceState({}, "", loginHref);
-  jest.mocked(getTempUserData).mockResolvedValue(null);
-  jest.mocked(getFullUserById).mockResolvedValue(profile);
   jest.mocked(handleEmailAndPasswordSignUp).mockResolvedValue(undefined);
   jest.mocked(resetUserPassword).mockResolvedValue(undefined);
 });
 
 describe("auth page destinations", () => {
-  it("returns email sign-in to the full destination only after profile loading", async () => {
+  it("returns email sign-in to the full destination only after context profile loading", async () => {
     const signIn = deferred<UserId>();
-    const user = deferred<UserData>();
     jest.mocked(handleEmailAndPasswordSignIn).mockReturnValue(signIn.promise);
-    jest.mocked(getFullUserById).mockReturnValue(user.promise);
-    const { container } = render(<Login />);
+    const page = render(<Login />);
     expect(screen.getByText("Forgot password?").getAttribute("href")).toBe(`/resetPassword?returnTo=${encodeURIComponent(destination)}`);
     expect(screen.getByText("Register here").getAttribute("href")).toBe(`/register?returnTo=${encodeURIComponent(destination)}`);
 
-    submitEmail(container);
+    submitEmail(page.container);
     expect(handleEmailAndPasswordSignIn).toHaveBeenCalledWith("host@example.com", "password123", destination);
-    await act(async () => { signedIn(); signIn.resolve(userId); await signIn.promise; });
+    await act(async () => { authenticated(); mockUserLoading = true; signIn.resolve(userId); await signIn.promise; });
     expect(mockRouter.replace).not.toHaveBeenCalled();
     expect((screen.getByRole("button", { name: "Continue with Google" }) as HTMLButtonElement).disabled).toBe(true);
 
-    await act(async () => { user.resolve(profile); await user.promise; });
-    expect(mockSetUser).toHaveBeenCalledWith(profile);
+    await act(async () => {
+      mockUser = profile;
+      mockUserLoading = false;
+      page.rerender(<Login />);
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith(destination));
     expect(mockRouter.replace).toHaveBeenCalledWith(destination);
     expect(mockRouter.push).not.toHaveBeenCalled();
+    expect(mockSetUser).not.toHaveBeenCalled();
   });
 
   it.each([["login", Login], ["register", Register]] as const)("completes Google sign-in from %s at the requested destination", async (path, Page) => {
@@ -126,8 +128,8 @@ describe("auth page destinations", () => {
     render(<Page />);
     fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
     await act(async () => { signedIn(); signIn.resolve(userId); await signIn.promise; });
-    expect(mockSetUser).toHaveBeenCalledWith(profile);
     expect(mockRouter.replace).toHaveBeenCalledWith(destination);
+    expect(mockSetUser).not.toHaveBeenCalled();
   });
 
   it("keeps registration and reset recovery links and service calls scoped to the destination", async () => {
@@ -165,91 +167,93 @@ describe("auth page destinations", () => {
 });
 
 describe("auth navigation races", () => {
-  it.each([false, true])("only automatically returns active users without a staged signup (staged: %s)", async (staged) => {
+  it("automatically returns a user after the context profile is ready", async () => {
     signedIn();
-    const signup = deferred<UserData | null>();
-    jest.mocked(getTempUserData).mockReturnValue(signup.promise);
     render(<Login />);
-    await act(async () => { signup.resolve(staged ? profile : null); await signup.promise; });
-    if (staged) expect(mockRouter.replace).not.toHaveBeenCalled();
-    else expect(mockRouter.replace).toHaveBeenCalledWith(destination);
+    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith(destination));
   });
 
   it("waits for context readiness before automatic entry, retaining its homepage fallback", async () => {
-    signedIn();
+    authenticated();
     mockUserLoading = true;
     window.history.replaceState({}, "", "/login");
     const page = render(<Login />);
-    expect(getTempUserData).not.toHaveBeenCalled();
+    expect(mockRouter.replace).not.toHaveBeenCalled();
+    mockUser = profile;
     mockUserLoading = false;
     page.rerender(<Login />);
     await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith("/"));
   });
 
-  it.each(["email failure", "Google cancellation"])("does not let a delayed automatic check override %s", async (attempt) => {
-    signedIn();
-    const staged = deferred<UserData | null>();
-    jest.mocked(getTempUserData).mockReturnValue(staged.promise);
+  it.each(["email failure", "Google cancellation"])("does not automatically navigate after %s", async (attempt) => {
+    authenticated();
+    mockUserLoading = true;
     jest.mocked(handleEmailAndPasswordSignIn).mockRejectedValue(new Error("Email is not verified"));
     jest.mocked(handleGoogleSignIn).mockResolvedValue(null);
-    const { container } = render(<Login />);
-    await waitFor(() => expect(getTempUserData).toHaveBeenCalledWith(userId));
+    const page = render(<Login />);
 
     if (attempt === "email failure") {
-      submitEmail(container);
+      submitEmail(page.container);
       await screen.findByText("Email is not verified");
     } else {
       fireEvent.click(screen.getByRole("button", { name: "Continue with Google" }));
       await waitFor(() => expect((screen.getByRole("button", { name: "Continue with Google" }) as HTMLButtonElement).disabled).toBe(false));
     }
-    await act(async () => { staged.resolve(null); await staged.promise; });
+    mockUser = profile;
+    mockUserLoading = false;
+    page.rerender(<Login />);
     expect(mockRouter.replace).not.toHaveBeenCalled();
     expect(screen.getByText("Register here").getAttribute("href")).toBe(`/register?returnTo=${encodeURIComponent(destination)}`);
   });
 
-  it.each(["URL", "account", "unmount"])("ignores an automatic result after %s changes", async (change) => {
-    signedIn();
-    const staged = deferred<UserData | null>();
-    jest.mocked(getTempUserData).mockReturnValue(staged.promise);
-    const page = render(<Login />);
-    await waitFor(() => expect(getTempUserData).toHaveBeenCalled());
-    if (change === "URL") window.history.replaceState({}, "", "/login?returnTo=%2Fprofile");
-    if (change === "account") mockAuth.currentUser = { uid: "other", emailVerified: true } as User;
-    if (change === "unmount") page.unmount();
-    await act(async () => { staged.resolve(null); await staged.promise; });
-    expect(mockRouter.replace).not.toHaveBeenCalled();
-    expect(mockSetUser).not.toHaveBeenCalled();
-  });
-
-  it.each(["URL", "account", "unmount"])("ignores a completed profile request after %s changes", async (change) => {
-    const user = deferred<UserData>();
-    jest.mocked(handleEmailAndPasswordSignIn).mockImplementation(() => { signedIn(); return Promise.resolve(userId); });
-    jest.mocked(getFullUserById).mockReturnValue(user.promise);
+  it.each(["URL", "account", "unmount"])("ignores completed sign-in after %s changes", async (change) => {
+    mockUserLoading = true;
+    jest.mocked(handleEmailAndPasswordSignIn).mockImplementation(() => { authenticated(); return Promise.resolve(userId); });
     const page = render(<Login />);
     submitEmail(page.container);
-    await waitFor(() => expect(getFullUserById).toHaveBeenCalledWith(userId));
-    if (change === "URL") window.history.replaceState({}, "", "/login?returnTo=%2Fprofile");
-    if (change === "account") mockAuth.currentUser = { uid: "other", emailVerified: true } as User;
-    if (change === "unmount") page.unmount();
-    await act(async () => { user.resolve(profile); await user.promise; });
+    await waitFor(() => expect((page.container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true));
+    await act(async () => {
+      if (change === "URL") {
+        window.history.replaceState({}, "", "/login?returnTo=%2Fprofile");
+        page.rerender(<Login />);
+      }
+      if (change === "account") {
+        mockAuth.currentUser = { uid: "other", emailVerified: true } as User;
+        page.rerender(<Login />);
+      }
+      if (change === "unmount") page.unmount();
+      if (change !== "unmount") {
+        mockUser = profile;
+        mockUserLoading = false;
+        page.rerender(<Login />);
+      }
+      await Promise.resolve();
+    });
     expect(mockRouter.replace).not.toHaveBeenCalled();
-    expect(mockSetUser).not.toHaveBeenCalled();
   });
 
   it("does not revive an old sign-in when the destination changes away and back", async () => {
-    const user = deferred<UserData>();
-    jest.mocked(handleEmailAndPasswordSignIn).mockImplementation(() => { signedIn(); return Promise.resolve(userId); });
-    jest.mocked(getFullUserById).mockReturnValue(user.promise);
+    mockUserLoading = true;
+    jest.mocked(handleEmailAndPasswordSignIn).mockImplementation(() => { authenticated(); return Promise.resolve(userId); });
     const page = render(<Login />);
     submitEmail(page.container);
-    await waitFor(() => expect(getFullUserById).toHaveBeenCalledWith(userId));
-    window.history.replaceState({}, "", "/login?returnTo=%2Fprofile");
-    page.rerender(<Login />);
-    window.history.replaceState({}, "", loginHref);
-    page.rerender(<Login />);
-
-    await act(async () => { user.resolve(profile); await user.promise; });
-    expect(mockSetUser).not.toHaveBeenCalled();
+    await waitFor(() => expect((page.container.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(true));
+    await act(async () => {
+      window.history.replaceState({}, "", "/login?returnTo=%2Fprofile");
+      page.rerender(<Login />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      window.history.replaceState({}, "", loginHref);
+      page.rerender(<Login />);
+      await Promise.resolve();
+    });
+    await act(async () => {
+      mockUser = profile;
+      mockUserLoading = false;
+      page.rerender(<Login />);
+      await Promise.resolve();
+    });
     expect(mockRouter.replace).not.toHaveBeenCalled();
   });
 });

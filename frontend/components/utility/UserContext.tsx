@@ -59,21 +59,24 @@ export default function UserContext({ children }: { children: any }) {
         const { uid } = userAuth;
         try {
           let userData: UserData;
-          try {
-            userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-          } catch {
-            if (!isCurrent()) return;
-            if (isSocialAuthUser(userAuth)) {
+          if (isSocialAuthUser(userAuth)) {
+            try {
+              userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+            } catch {
+              if (!isCurrent()) return;
               await ensureActiveUserFromAuth();
-            } else {
-              await migrateTempUserToActiveUser(uid as UserId);
+              if (!isCurrent()) return;
+              userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
             }
+          } else {
+            await migrateTempUserToActiveUser(uid as UserId);
             if (!isCurrent()) return;
             userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
           }
           if (isCurrent()) setUser(userData);
         } catch {
           if (isCurrent()) {
+            setUser(EmptyUserData as UserData);
             router.push("/error");
           }
         } finally {
