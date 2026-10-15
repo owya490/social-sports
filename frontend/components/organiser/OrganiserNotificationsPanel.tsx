@@ -1,6 +1,7 @@
 "use client";
 
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
+import { EventId, OrderId } from "@/interfaces/EventTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
 import {
@@ -13,6 +14,31 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import Skeleton from "react-loading-skeleton";
 
 const logger = new Logger("organiserNotificationsLogger");
+
+/** Temporary preview. Delete this constant, then use `items ?? []` for notifications again. */
+const SAMPLE_NOTIFICATIONS: BookingApprovalNotification[] = [
+  {
+    orderId: "sample-alex" as OrderId,
+    eventId: "sample-sunday" as EventId,
+    eventName: "Sunday hit",
+    purchaserName: "Alex Chen",
+    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 60 * 26,
+  },
+  {
+    orderId: "sample-casey" as OrderId,
+    eventId: "sample-friday" as EventId,
+    eventName: "Friday social",
+    purchaserName: "Casey Nguyen",
+    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 40,
+  },
+  {
+    orderId: "sample-jordan" as OrderId,
+    eventId: "sample-friday" as EventId,
+    eventName: "Friday social",
+    purchaserName: "Jordan Blake",
+    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 8,
+  },
+];
 
 type OrganiserNotificationsContextValue = {
   openNotifications: () => void;
@@ -55,8 +81,8 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
     };
   }, [user.userId]);
 
-  const loading = user.userId !== "" && items === null;
-  const notifications = items ?? [];
+  const loading = SAMPLE_NOTIFICATIONS.length === 0 && user.userId !== "" && items === null;
+  const notifications = SAMPLE_NOTIFICATIONS.length > 0 ? SAMPLE_NOTIFICATIONS : (items ?? []);
 
   return (
     <OrganiserNotificationsContext.Provider
@@ -67,7 +93,10 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
         {loading ? (
           <Skeleton height={44} className="rounded-lg" />
         ) : notifications.length === 0 ? (
-          <p className="font-sans text-sm text-foreground-muted">No bookings waiting for approval.</p>
+          <div>
+            <p className="font-sans text-sm font-medium text-foreground">No notifications</p>
+            <p className="mt-0.5 font-sans text-sm text-foreground-muted">All quiet on the pitch.</p>
+          </div>
         ) : (
           <ol className="ms-3 flex flex-col border-l border-border">
             {notifications.map((item) => (
