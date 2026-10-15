@@ -2,7 +2,6 @@
 
 import { EventHubInitials } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
-import { EventId, OrderId } from "@/interfaces/EventTypes";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
 import {
@@ -15,31 +14,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import Skeleton from "react-loading-skeleton";
 
 const logger = new Logger("organiserNotificationsLogger");
-
-/** Temporary preview. Delete this constant, then use `items ?? []` for notifications again. */
-const SAMPLE_NOTIFICATIONS: BookingApprovalNotification[] = [
-  {
-    orderId: "sample-jordan" as OrderId,
-    eventId: "sample-friday" as EventId,
-    eventName: "Friday social",
-    purchaserName: "Jordan Blake",
-    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 8,
-  },
-  {
-    orderId: "sample-casey" as OrderId,
-    eventId: "sample-friday" as EventId,
-    eventName: "Friday social",
-    purchaserName: "Casey Nguyen",
-    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 40,
-  },
-  {
-    orderId: "sample-alex" as OrderId,
-    eventId: "sample-sunday" as EventId,
-    eventName: "Sunday hit",
-    purchaserName: "Alex Chen",
-    purchasedAtSeconds: Math.floor(Date.now() / 1000) - 60 * 60 * 26,
-  },
-];
 
 type OrganiserNotificationsContextValue = {
   openNotifications: () => void;
@@ -81,8 +55,8 @@ export function OrganiserNotificationsProvider({ children }: { children: ReactNo
     };
   }, [user.userId]);
 
-  const loading = SAMPLE_NOTIFICATIONS.length === 0 && user.userId !== "" && items === null;
-  const notifications = SAMPLE_NOTIFICATIONS.length > 0 ? SAMPLE_NOTIFICATIONS : (items ?? []);
+  const loading = user.userId !== "" && items === null;
+  const notifications = items ?? [];
 
   return (
     <OrganiserNotificationsContext.Provider
