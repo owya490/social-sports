@@ -5,10 +5,16 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
+import org.junit.Assert;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
@@ -39,6 +45,36 @@ public class RecurringEventsServiceTest {
         System.out.println(a);
 
         System.out.println(eventData.getStartDate());
+    }
+
+    @Test
+    public void weeklySeriesKeepsSydneyNineAmAcrossDaylightSaving() {
+        ZoneId sydney = ZoneId.of("Australia/Sydney");
+        // Monday 28 Sep 2026 09:00 AEST (UTC+10). DST starts Sunday 4 Oct 2026,
+        // so the next weekly occurrence is Monday 5 Oct 2026 in AEDT (UTC+11).
+        ZonedDateTime start = ZonedDateTime.of(2026, 9, 28, 9, 0, 0, 0, sydney);
+
+        List<Timestamp> recurrences = RecurringEventsService.calculateAllRecurrenceDates(
+                timestamp(start), RecurrenceData.Frequency.WEEKLY, 1, true);
+
+        ZonedDateTime beforeTransition = inSydney(recurrences.get(0));
+        ZonedDateTime afterTransition = inSydney(recurrences.get(1));
+
+        Assert.assertEquals(LocalDateTime.of(2026, 9, 28, 9, 0), beforeTransition.toLocalDateTime());
+        Assert.assertEquals(ZoneOffset.ofHours(10), beforeTransition.getOffset());
+        Assert.assertEquals(LocalDateTime.of(2026, 10, 5, 9, 0), afterTransition.toLocalDateTime());
+        Assert.assertEquals(ZoneOffset.ofHours(11), afterTransition.getOffset());
+        Assert.assertEquals(Duration.ofHours(7 * 24 - 1),
+                Duration.between(beforeTransition.toInstant(), afterTransition.toInstant()));
+    }
+
+    private static Timestamp timestamp(ZonedDateTime zonedDateTime) {
+        return Timestamp.ofTimeSecondsAndNanos(zonedDateTime.toEpochSecond(), zonedDateTime.getNano());
+    }
+
+    private static ZonedDateTime inSydney(Timestamp timestamp) {
+        return Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanos())
+                .atZone(ZoneId.of("Australia/Sydney"));
     }
 
     @Test
