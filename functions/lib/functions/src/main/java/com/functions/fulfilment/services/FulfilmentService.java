@@ -36,7 +36,6 @@ import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
-import com.functions.fulfilment.payment.PaymentFulfilmentStep;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -126,17 +125,6 @@ public class FulfilmentService {
             logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
                     fulfilmentSessionId, e);
             return false;
-        }
-    }
-
-    private static void requireTerminalPyngPayment(FulfilmentSession session) {
-        if (!(session instanceof PyngCheckoutFulfilmentSession pyngSession)) {
-            throw new FulfilmentProgressionBlockedException(
-                    "Payment step is not on a PYNG_CHECKOUT fulfilment session");
-        }
-        PyngMetadata metadata = pyngSession.getPyngMetadata();
-        if (metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal()) {
-            throw new FulfilmentProgressionBlockedException("Pyng checkout is still pending");
         }
     }
 
@@ -546,9 +534,7 @@ public class FulfilmentService {
                 throw new FulfilmentEntityNotFoundException(currentEntityId);
             }
 
-            if (currentEntity instanceof PaymentFulfilmentStep) {
-                requireTerminalPyngPayment(fulfilmentSession);
-            } else if (currentEntity.onEndHook().isPresent()) {
+            if (currentEntity.onEndHook().isPresent()) {
                 boolean result = currentEntity.onEndHook().get()
                         .apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
                 if (!result) {
