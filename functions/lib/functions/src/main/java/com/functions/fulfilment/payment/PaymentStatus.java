@@ -1,10 +1,10 @@
 package com.functions.fulfilment.payment;
 
 public enum PaymentStatus {
-    PENDING,
-    SUCCEEDED,
-    EXPIRED,
-    CANCELLED;
+    PENDING,    // Still awaiting payment.
+    SUCCEEDED,  // Payment collected.
+    EXPIRED,    // Checkout timed out unpaid.
+    CANCELLED;  // Payment refused.
 
     public boolean isTerminal() {
         return this != PENDING;
