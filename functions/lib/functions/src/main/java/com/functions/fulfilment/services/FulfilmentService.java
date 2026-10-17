@@ -107,8 +107,7 @@ public class FulfilmentService {
     }
 
     /**
-     * A Pyng checkout stays until polling has recorded a terminal status and END
-     * has handed the session to the reconciliation queue.
+     * A Pyng checkout stays until polling has recorded a terminal payment status.
      */
     private static boolean shouldRetainPyngCheckout(String fulfilmentSessionId) {
         try {
@@ -118,34 +117,12 @@ public class FulfilmentService {
                 return false;
             }
             PyngMetadata metadata = pyngSession.getPyngMetadata();
-            boolean terminal = metadata != null && metadata.getStatus() != null && metadata.getStatus().isTerminal();
-            boolean crystallized = Boolean.TRUE.equals(pyngSession.getCrystallized());
-            return !(terminal && crystallized);
+            return metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal();
         } catch (Exception e) {
             logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
                     fulfilmentSessionId, e);
             return false;
         }
-    }
-
-    /**
-     * Called by the payment module once a hosted checkout has finished, so the
-     * session can continue through END.
-     */
-    public static void resumeAfterPayment(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
-            throws Exception {
-        crystallizePyngCheckout(fulfilmentSessionId, session);
-    }
-
-    private static void crystallizePyngCheckout(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
-            throws Exception {
-        if (Boolean.TRUE.equals(session.getCrystallized())) {
-            return;
-        }
-        session.setId(fulfilmentSessionId);
-        FulfilmentSessionCrystallizationQueue.enqueue(session);
-        FulfilmentSessionRepository.updateCrystallized(fulfilmentSessionId, true);
-        session.setCrystallized(true);
     }
 
     /**

@@ -59,7 +59,6 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
                 .eventTicketTypeId(ticketType.getId())
                 .eventTicketTypeName(ticketType.getName())
                 .pyngMetadata(null)
-                .crystallized(false)
                 .build();
 
         for (Map.Entry<String, FulfilmentEntity> entry : session.getFulfilmentEntityMap().entrySet()) {

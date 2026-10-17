@@ -3,7 +3,9 @@ package com.functions.fulfilment.repositories;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
+import com.functions.fulfilment.payment.PaymentStatus;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
@@ -129,16 +131,6 @@ public class FulfilmentSessionRepository {
         }
     }
 
-    public static void updateCrystallized(String sessionId, boolean crystallized) throws Exception {
-        try {
-            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
-            sessionDocRef.update("crystallized", crystallized).get();
-        } catch (Exception e) {
-            logger.error("Failed to update crystallized for sessionId: {}", sessionId, e);
-            throw new Exception("Failed to update crystallized for sessionId: " + sessionId, e);
-        }
-    }
-
     /**
      * Deletes a fulfilment session (convenience method without transaction)
      */
@@ -147,14 +139,14 @@ public class FulfilmentSessionRepository {
     }
 
     /**
-     * Sessions still waiting for payment completion to crystallize them.
-     * Pending Pyng checkouts are stored with {@code crystallized == false}.
+     * PYNG_CHECKOUT sessions whose hosted checkout is still PENDING.
      */
-    public static List<String> listUncrystallizedSessionIds() throws Exception {
+    public static List<String> listPendingPyngCheckoutSessionIds() throws Exception {
         try {
             Firestore db = FirebaseService.getFirestore();
             Query query = db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
-                    .whereEqualTo("crystallized", false);
+                    .whereEqualTo("type", FulfilmentSessionType.PYNG_CHECKOUT.name())
+                    .whereEqualTo("pyngMetadata.status", PaymentStatus.PENDING.name());
             QuerySnapshot snapshots = query.get().get();
             List<String> ids = new ArrayList<>();
             for (QueryDocumentSnapshot doc : snapshots.getDocuments()) {
@@ -162,8 +154,8 @@ public class FulfilmentSessionRepository {
             }
             return ids;
         } catch (Exception e) {
-            logger.error("Failed to list uncrystallized fulfilment sessions", e);
-            throw new Exception("Failed to list uncrystallized fulfilment sessions", e);
+            logger.error("Failed to list pending Pyng checkout fulfilment sessions", e);
+            throw new Exception("Failed to list pending Pyng checkout fulfilment sessions", e);
         }
     }
 

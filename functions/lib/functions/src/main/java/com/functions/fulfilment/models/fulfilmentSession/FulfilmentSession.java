@@ -200,7 +200,6 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .pyngMetadata(pyngMetadata)
-                        .crystallized(snapshot.getBoolean("crystallized"))
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             default:
