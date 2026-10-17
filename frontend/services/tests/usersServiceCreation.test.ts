@@ -28,7 +28,12 @@ beforeEach(() => {
       }),
       set: (path: string, data: Record<string, unknown>) => { writes.push({ path, data }); },
       update: (path: string, data: Record<string, unknown>) => { writes.push({ path, data, merge: true }); },
-      delete: (path: string) => { writes.push({ path, data: null }); },
+      delete: (path: string) => {
+        if (path.startsWith("Usernames/") && !documents.has(path)) {
+          throw new Error("Rules deny deleting an absent username mapping");
+        }
+        writes.push({ path, data: null });
+      },
     } as unknown as Transaction;
     const result = await update(transaction);
     for (const { path, data, merge } of writes) {
@@ -79,4 +84,19 @@ it("preserves another user's name and atomically renames and removes its own map
   expect(documents.has(`Users/Active/Public/${userId}`)).toBe(false);
   expect(documents.has(`Users/Active/Private/${userId}`)).toBe(false);
   expect(documents.get("Usernames/alice")).toEqual({ userId: "other-user" });
+});
+
+it("renames a legacy profile without a mapping", async () => {
+  documents.set(`Users/Active/Public/${userId}`, { username: "legacy", bio: "Preserve me" });
+  await expect(updateUsername(userId, "newname")).resolves.toBe(true);
+  expect(documents.get(`Users/Active/Public/${userId}`)).toMatchObject({ username: "newname", bio: "Preserve me" });
+  expect(documents.get("Usernames/newname")).toEqual({ userId });
+});
+
+it("refuses to rename a profile whose old mapping belongs to another account", async () => {
+  documents.set(`Users/Active/Public/${userId}`, { username: "legacy" });
+  documents.set("Usernames/legacy", { userId: "other-user" });
+  await expect(updateUsername(userId, "newname")).rejects.toThrow();
+  expect(documents.get("Usernames/legacy")).toEqual({ userId: "other-user" });
+  expect(documents.has("Usernames/newname")).toBe(false);
 });

@@ -1,0 +1,106 @@
+name: Firestore rules checks and guarded dev release
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [master]
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Inspect live dev rules or deploy the selected commit to dev
+        type: choice
+        options: [inspect, deploy-dev]
+        default: inspect
+      reviewed_sha:
+        description: Full reviewed commit SHA (required for deploy-dev)
+        type: string
+      expected_ruleset:
+        description: Dev rulesetName from a reviewed inspect artifact (required for deploy-dev)
+        type: string
+      dev_clients_paused:
+        description: Old dev clients are stopped; compatible frontend is ready for coordinated cutover
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firestore-rules-${{ github.event_name == 'workflow_dispatch' && 'dev-release' || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rules-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/firestore-rules/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: npm ci --prefix tools/firestore-rules --ignore-scripts
+      - name: Snapshot and drift guard checks
+        run: python3 -m unittest discover -s scripts -p test_snapshot_firestore_rules.py -v
+      - name: Emulator compatibility and ownership checks
+        run: tools/firestore-rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-sportshub-rules "node --test tools/firestore-rules/rules.test.cjs"
+
+  dev-release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: rules-tests
+    runs-on: ubuntu-latest
+    environment: firestore-dev
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require explicit reviewed revision and paused clients
+        if: inputs.operation == 'deploy-dev'
+        env:
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          EXPECTED_RULESET: ${{ inputs.expected_ruleset }}
+          CLIENTS_PAUSED: ${{ inputs.dev_clients_paused }}
+        run: |
+          test "$REVIEWED_SHA" = "$GITHUB_SHA"
+          test "$CLIENTS_PAUSED" = true
+          test -n "$EXPECTED_RULESET"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix tools/firestore-rules --ignore-scripts
+      - uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.SOCIALSPORTSDEV_GCLOUD_CREDENTIALS }}
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: socialsports-44162
+      - name: Snapshot deployed source and refuse unreviewed drift
+        env:
+          OPERATION: ${{ inputs.operation }}
+          EXPECTED_RULESET: ${{ inputs.expected_ruleset }}
+        run: |
+          if [ "$OPERATION" = deploy-dev ]; then
+            python3 scripts/snapshot-firestore-rules.py --output .tmp/rules-before --expected-ruleset "$EXPECTED_RULESET"
+          else
+            python3 scripts/snapshot-firestore-rules.py --output .tmp/rules-before
+          fi
+      - name: Preserve baseline before any mutation
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-rules-before-${{ github.run_id }}
+          path: .tmp/rules-before/
+          if-no-files-found: error
+      - name: Deploy only dev Firestore rules
+        if: inputs.operation == 'deploy-dev'
+        run: tools/firestore-rules/node_modules/.bin/firebase deploy --only firestore:rules --project socialsports-44162 --non-interactive
+      - name: Verify released source
+        if: inputs.operation == 'deploy-dev'
+        run: python3 scripts/snapshot-firestore-rules.py --output .tmp/rules-after --verify-source
+      - uses: actions/upload-artifact@v4
+        if: always() && inputs.operation == 'deploy-dev'
+        with:
+          name: dev-rules-after-${{ github.run_id }}
+          path: .tmp/rules-after/
+          if-no-files-found: warn
