@@ -7,9 +7,9 @@ const platforms = [
     name: "SPORTSHUB",
     logo: null,
     logoClassName: "",
-    percentage: 2.7,
+    percentage: 2.65,
     fixedFee: 0.3,
-    feeLabel: "2.7% + 30¢",
+    feeLabel: "2.65% + 30¢",
     yearlySubscription: 0,
     highlight: true,
   },
@@ -406,7 +406,7 @@ export default function PricingComparisonSection() {
 
         {/* Bottom note */}
         <p className="text-center text-gray-400 text-xs mt-8">
-          Pricing calculated as of March 2026. Card Processing Fees may apply.
+          Pricing calculated as of October 2026. Card Processing Fees may apply.
         </p>
       </div>
     </div>
