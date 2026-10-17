@@ -3,6 +3,7 @@ package com.functions.fulfilment.models.fulfilmentSession;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.services.BookingApprovalFulfilmentService;
 import com.functions.fulfilment.services.CheckoutFulfilmentService;
+import com.functions.fulfilment.services.PyngCheckoutFulfilmentService;
 import com.functions.fulfilment.services.WaitlistFulfilmentService;
 
 import lombok.Getter;
@@ -11,7 +12,8 @@ import lombok.Getter;
 public enum FulfilmentSessionType {
     CHECKOUT(new CheckoutFulfilmentService()),
     BOOKING_APPROVAL(new BookingApprovalFulfilmentService()),
-    WAITLIST(new WaitlistFulfilmentService());
+    WAITLIST(new WaitlistFulfilmentService()),
+    PYNG_CHECKOUT(new PyngCheckoutFulfilmentService());
 
     private final FulfilmentSessionService<? extends FulfilmentSession> fulfilmentSessionService;
 

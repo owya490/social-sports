@@ -28,10 +28,14 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity.FulfilmentEntityHookInput;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -83,6 +87,10 @@ public class FulfilmentService {
             logger.info("Found old fulfilment sessions to delete: {}", oldSessionIds);
             for (String id : oldSessionIds) {
                 try {
+                    if (shouldRetainPyngCheckout(id)) {
+                        logger.info("Skipping cleanup of in-progress PYNG_CHECKOUT session {}", id);
+                        continue;
+                    }
                     deleteFulfilmentSessionAndTempFormResponses(id);
                     deleted++;
                 } catch (Exception e) {
@@ -95,6 +103,25 @@ public class FulfilmentService {
         } catch (Exception e) {
             logger.error("[FulfilmentService] Error during cleanup of old fulfilment sessions", e);
             throw e;
+        }
+    }
+
+    /**
+     * A Pyng checkout stays until polling has recorded a terminal payment status.
+     */
+    private static boolean shouldRetainPyngCheckout(String fulfilmentSessionId) {
+        try {
+            Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSession(
+                    fulfilmentSessionId, Optional.empty());
+            if (maybeSession.isEmpty() || !(maybeSession.get() instanceof PyngCheckoutFulfilmentSession pyngSession)) {
+                return false;
+            }
+            PyngMetadata metadata = pyngSession.getPyngMetadata();
+            return metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal();
+        } catch (Exception e) {
+            logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
+                    fulfilmentSessionId, e);
+            return false;
         }
     }
 
@@ -198,8 +225,8 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId)
-            throws Exception {
+    public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId,
+            PaymentProvider paymentProvider) throws Exception {
         if (numTickets == null || numTickets <= 0) {
             logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
             throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
@@ -218,7 +245,10 @@ public class FulfilmentService {
                     numTickets, maxTickets, eventId));
         }
 
-        FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventData, eventTicketTypeId);
+        PaymentProvider resolvedPaymentProvider = paymentProvider == null ? PaymentProvider.STRIPE : paymentProvider;
+        FulfilmentSessionType fulfilmentSessionType = resolvedPaymentProvider == PaymentProvider.PYNG
+                ? FulfilmentSessionType.PYNG_CHECKOUT
+                : classifyFulfilmentSessionType(eventData, eventTicketTypeId);
 
         String fulfilmentSessionId = UUID.randomUUID().toString();
 
@@ -233,6 +263,9 @@ public class FulfilmentService {
                         .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             case WAITLIST ->
                 fulfilmentSession = FulfilmentSessionType.WAITLIST.getFulfilmentSessionService()
+                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
+            case PYNG_CHECKOUT ->
+                fulfilmentSession = FulfilmentSessionType.PYNG_CHECKOUT.getFulfilmentSessionService()
                         .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
             default ->
                 throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
@@ -336,7 +369,7 @@ public class FulfilmentService {
             return Optional.of(new GetNextFulfilmentEntityResponse(
                     nextEntityId));
         } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
-                | IllegalArgumentException e) {
+                | IllegalArgumentException | UnsupportedOperationException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
@@ -491,7 +524,7 @@ public class FulfilmentService {
             // Get the next entity
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
         } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
-                | IllegalArgumentException e) {
+                | IllegalArgumentException | UnsupportedOperationException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity by current ID for session: {}",
@@ -578,8 +611,9 @@ public class FulfilmentService {
                 return ((DelayedStripeFulfilmentEntity) entity).getUrl();
             case END:
                 return ((EndFulfilmentEntity) entity).getUrl();
+            case PYNG:
+                return ((PyngFulfilmentEntity) entity).getUrl();
             case FORMS, WAITLIST:
-                // Forms and Waitlist entities don't have URLs, return null
                 return null;
             default:
                 logger.warn("Unknown entity type for URL retrieval: {}", entity.getType());
@@ -664,8 +698,10 @@ public class FulfilmentService {
                 formResponseId = formsEntity.getFormResponseId();
             }
 
+            String url = getEntityUrl(entity);
+
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
-                    getEntityUrl(entity), fulfilmentSession.getEventData().getEventId(),
+                    url, fulfilmentSession.getEventData().getEventId(),
                     formId, formResponseId));
         } catch (Exception e) {
             logger.error(
