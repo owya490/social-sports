@@ -1,5 +1,6 @@
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EmptyEventData, EventData } from "@/interfaces/EventTypes";
+import { Timestamp } from "firebase/firestore";
 import { buildDuplicatedNewEventData } from "../src/events/eventsUtils/duplicateEventUtils";
 
 describe("buildDuplicatedNewEventData", () => {
@@ -37,5 +38,27 @@ describe("buildDuplicatedNewEventData", () => {
     expect(ticketTypes).toHaveLength(1);
     expect(ticketTypes[0].id).not.toBe(originalTicketTypeId);
     expect(ticketTypes[0].vacancy).toBe(20);
+    expect(duplicated.isActive).toBe(true);
+    expect(duplicated.startDate).toBe(source.startDate);
+    expect(duplicated.endDate).toBe(source.endDate);
+    expect(duplicated.registrationDeadline).toBe(source.registrationDeadline);
+  });
+
+  it("uses the title and schedule chosen before duplicating", () => {
+    const startDate = new Timestamp(1_700_000_000, 0);
+    const endDate = new Timestamp(1_700_003_600, 0);
+    const registrationDeadline = new Timestamp(1_699_990_000, 0);
+    const duplicated = buildDuplicatedNewEventData(source, {
+      name: "  Saturday Social  ",
+      startDate,
+      endDate,
+      registrationDeadline,
+    });
+
+    expect(duplicated.name).toBe("Saturday Social");
+    expect(duplicated.startDate).toBe(startDate);
+    expect(duplicated.endDate).toBe(endDate);
+    expect(duplicated.registrationDeadline).toBe(registrationDeadline);
+    expect(duplicated.isActive).toBe(true);
   });
 });

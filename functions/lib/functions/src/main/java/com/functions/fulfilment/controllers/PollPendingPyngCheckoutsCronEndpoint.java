@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.fulfilment.pyng.PyngCheckoutCompletion;
-import com.functions.fulfilment.pyng.PyngCheckoutCompletion.PollPendingPyngCheckoutsResult;
 import com.functions.global.controllers.AbstractConfiguredHttpFunction;
 import com.google.cloud.functions.HttpRequest;
 import com.google.cloud.functions.HttpResponse;
@@ -39,27 +38,16 @@ public class PollPendingPyngCheckoutsCronEndpoint extends AbstractConfiguredHttp
             return;
         }
 
-        PollPendingPyngCheckoutsResult result = null;
-        Throwable pollError = null;
-
         try {
-            result = PyngCheckoutCompletion.pollPendingCheckouts();
-            logger.info("Pyng checkout poll pass complete. checked={}, resumed={}, errors={}",
-                    result.checked(), result.resumed(), result.errors());
+            PyngCheckoutCompletion.pollPendingCheckouts();
         } catch (Exception e) {
-            pollError = e;
             logger.error("Error during Pyng checkout poll pass", e);
-        }
-
-        if (pollError != null) {
             response.setStatusCode(500);
-            response.getWriter().write("Pyng checkout poll pass failed: " + pollError.getMessage());
+            response.getWriter().write("Pyng checkout poll pass failed: " + e.getMessage());
             return;
         }
 
         response.setStatusCode(200);
-        response.getWriter().write(String.format(
-                "{\"checked\":%d,\"resumed\":%d,\"errors\":%d}",
-                result.checked(), result.resumed(), result.errors()));
+        response.getWriter().write("Pyng checkout poll pass complete");
     }
 }

@@ -4,7 +4,7 @@
  * THESIS: Tabs guide the series; Details twins the event hub overview; Past events / Recurrence / Settings are peer work — refuses legacy sidebar drilldown.
  * OWN-WORLD: Honest Clubhouse — surface canvas, Satoshi, 12px radius, yellow only on Save / Update.
  * STORY: Organiser lands on Details (preview, hosts, visibility), edits via panels; schedule and prefs stay peer-findable.
- * FIRST VIEWPORT: Quiet header (← Recurring, title, Template chip, Pause) + peer tabs; Details two-column overview.
+ * FIRST VIEWPORT: Quiet header (← Recurring, title, Template chip) + peer tabs; Details two-column overview.
  * FORM: Event-hub overview twin; Comp A approved; tabs mirror-plus-series; seed overview-twin.
  * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
  */
@@ -46,7 +46,7 @@ import {
 import { extractNewRecurrenceFormDataFromRecurrenceData } from "@/services/src/recurringEvents/recurringEventsUtils";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const logger = new Logger("RecurringHubV2Page");
 const EMPTY_ORDER_TICKETS_MAP = new Map<Order, Ticket[]>();
@@ -60,7 +60,6 @@ export default function OrganiserRecurringHubV2Page() {
   const [section, setSection] = useState<RecurringHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [pauseUpdating, setPauseUpdating] = useState(false);
   const [updatingRecurrenceData, setUpdatingRecurrenceData] = useState(false);
 
   const [eventName, setEventName] = useState("");
@@ -86,7 +85,7 @@ export default function OrganiserRecurringHubV2Page() {
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState(false);
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] =
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
-  const [eventIsActive, setEventIsActive] = useState(false);
+  const [seriesState, setSeriesState] = useState({ isActive: false, statusAvailable: false });
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
@@ -123,7 +122,6 @@ export default function OrganiserRecurringHubV2Page() {
         setEventImage(eventData.image);
         setEventThumbnail(eventData.thumbnail);
         setEventCapacity(inventory.capacity);
-        setEventIsActive(eventData.isActive);
         setEventRegistrationDeadline(eventData.registrationDeadline);
         setEventEventLink(eventData.eventLink ?? "");
         setEventPaused(eventData.paused);
@@ -150,6 +148,7 @@ export default function OrganiserRecurringHubV2Page() {
         setPastEvents(recurrenceData.pastRecurrences || {});
 
         const ended = calculateRecurrenceEnded(template);
+        setSeriesState({ isActive: eventData.isActive, statusAvailable: true });
         setRecurrenceEnded(ended);
         if (ended) {
           setNewRecurrenceData({ ...formData, recurrenceEnabled: false });
@@ -168,21 +167,6 @@ export default function OrganiserRecurringHubV2Page() {
       isActive = false;
     };
   }, [recurrenceTemplateId, router, user.userId]);
-
-  const handleTogglePause = useCallback(async () => {
-    const next = !eventPaused;
-    setPauseUpdating(true);
-    setEventPaused(next);
-    try {
-      const success = await updateRecurrenceTemplateEventData(recurrenceTemplateId, { paused: next });
-      if (!success) setEventPaused(!next);
-    } catch (error) {
-      setEventPaused(!next);
-      logger.error(`Failed to toggle pause on recurring hub: ${error}`);
-    } finally {
-      setPauseUpdating(false);
-    }
-  }, [eventPaused, recurrenceTemplateId]);
 
   const handleSectionChange = (next: RecurringHubSection) => {
     if (next === section) return;
@@ -204,6 +188,15 @@ export default function OrganiserRecurringHubV2Page() {
       await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
       setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
       setFrequency(newRecurrenceData.frequency);
+      try {
+        const template = await getRecurrenceTemplate(recurrenceTemplateId);
+        const ended = calculateRecurrenceEnded(template);
+        setSeriesState({ isActive: template.eventData.isActive, statusAvailable: true });
+        setRecurrenceEnded(ended);
+      } catch (error) {
+        logger.error(`Schedule saved but failed to refresh series status for ${recurrenceTemplateId}: ${error}`);
+        setSeriesState((previous) => ({ ...previous, statusAvailable: false }));
+      }
       if (recurrenceSaveNoticeRequestRef.current === requestId) {
         setSaveNotice("success");
       }
@@ -218,6 +211,9 @@ export default function OrganiserRecurringHubV2Page() {
   };
 
   const listingEventId = recurrenceTemplateId as unknown as EventId;
+  const bookingStatus = !seriesState.statusAvailable
+    ? "unavailable"
+    : seriesState.isActive ? "active" : "inactive";
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-8">
@@ -228,10 +224,6 @@ export default function OrganiserRecurringHubV2Page() {
           startDate={eventStartDate}
           location={eventLocation}
           frequency={frequency}
-          paused={eventPaused}
-          isActive={eventIsActive}
-          onTogglePause={handleTogglePause}
-          pauseUpdating={pauseUpdating}
         />
         <RecurringHubNav current={section} onChange={handleSectionChange} />
       </div>
@@ -258,7 +250,7 @@ export default function OrganiserRecurringHubV2Page() {
             eventEventLink={eventEventLink}
             eventImage={eventImage}
             eventThumbnail={eventThumbnail}
-            isActive={eventIsActive}
+            isActive={seriesState.isActive}
             isPrivate={eventIsPrivate}
             eventTicketTypes={eventTicketTypes}
             orderTicketsMap={EMPTY_ORDER_TICKETS_MAP}
@@ -326,7 +318,12 @@ export default function OrganiserRecurringHubV2Page() {
 
         {section === "Settings" && (
           <RecurringHubSettings
+            loading={loading}
             recurrenceTemplateId={recurrenceTemplateId}
+            paused={eventPaused}
+            setPaused={setEventPaused}
+            seriesStatus={bookingStatus}
+            onManageSchedule={() => handleSectionChange("Recurrence")}
             paymentsActive={eventPaymentsActive}
             setPaymentsActive={setEventPaymentsActive}
             stripeFeeToCustomer={eventStripeFeeToCustomer}
@@ -352,15 +349,15 @@ export default function OrganiserRecurringHubV2Page() {
       {saveNotice ? (
         <div
           role="status"
-          className={`fixed left-4 bottom-4 z-40 rounded-xl border px-4 py-3 text-sm font-sans shadow-sm ${
+          className={`fixed left-4 right-4 sm:right-auto sm:max-w-md bottom-4 z-40 rounded-xl border px-4 py-3 text-sm font-sans shadow-sm ${
             saveNotice === "success"
               ? "border-border bg-background text-foreground"
               : "border-danger/30 bg-background text-danger"
           }`}
         >
           {saveNotice === "success"
-            ? "Recurrence settings saved."
-            : "Failed to save recurrence settings. Try again."}
+            ? "Schedule saved."
+            : "Failed to save schedule. Try again."}
           <button
             type="button"
             className="ml-3 text-xs text-foreground-muted hover:text-foreground"

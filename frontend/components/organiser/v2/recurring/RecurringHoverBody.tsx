@@ -3,7 +3,6 @@
 import { HoverList } from "@/components/organiser/v2/shared/EntityHoverPreview";
 import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
-import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
 import { Timestamp } from "firebase/firestore";
 
 function frequencyLabel(frequency: Frequency): string {
@@ -53,17 +52,4 @@ export function RecurringHoverBody({ template }: RecurringHoverBodyProps) {
       </HoverList>
     </div>
   );
-}
-
-export function RecurringHoverFlags({ template }: RecurringHoverBodyProps) {
-  const ended = calculateRecurrenceEnded(template);
-  const status = ended
-    ? "Ended"
-    : template.recurrenceData.recurrenceEnabled
-      ? "Active"
-      : "Paused";
-  const flags = [status];
-  if (template.eventData.isPrivate) flags.push("Private");
-  if (template.eventData.formId) flags.push("Form attached");
-  return <>{flags.join(" · ")}</>;
 }

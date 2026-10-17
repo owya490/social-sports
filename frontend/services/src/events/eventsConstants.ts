@@ -13,6 +13,7 @@ export enum EventPrivacy {
 export enum CollectionPaths {
   Events = "Events",
   EventsMetadata = "EventsMetadata",
+  EventTeams = "EventTeams",
   DeletedEvents = "DeletedEvents",
 }
 

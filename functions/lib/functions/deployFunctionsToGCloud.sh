@@ -8,6 +8,7 @@
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
+# explainErrorAlert
 
 # Check if the function name is valid and it should be a list of function name and another list of endpoint class name
 
@@ -19,6 +20,7 @@ VALID_FUNCTIONS=(
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
+    "explainErrorAlert"
 )
 
 VALID_ENDPOINTS=(
@@ -29,7 +31,10 @@ VALID_ENDPOINTS=(
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
+    "com.functions.alerts.controllers.ExplainErrorAlertEndpoint"
 )
+
+ERROR_LOG_ALERTS_TOPIC="error-log-alerts"
 
 # Check for exactly 2 arguments
 if [ "$#" -ne 2 ]; then
@@ -59,23 +64,30 @@ if ! [[ " ${VALID_ENVIRONMENTS[@]} " =~ " ${ENVIRONMENT} " ]]; then
     exit 1
 fi
 
-if [ "$ENVIRONMENT" == "dev" ]; then
-    FUNCTIONS_KEY_SOURCE=../../functions_key_dev.json
-    ENV_SOURCE=../../.env.dev
+TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
+EXTRA_DEPLOY_ARGS=()
+if [ "$FUNCTION_NAME" == "explainErrorAlert" ]; then
+    TRIGGER_ARGS=(--gen2 --trigger-topic "$ERROR_LOG_ALERTS_TOPIC" --no-allow-unauthenticated)
+    EXTRA_DEPLOY_ARGS=(--retry --timeout 120s --max-instances 2 --quiet)
 else
-    FUNCTIONS_KEY_SOURCE=../../functions_key_prod.json
-    ENV_SOURCE=../../.env.prod
-fi
-
-for REQUIRED_FILE in "$FUNCTIONS_KEY_SOURCE" "$ENV_SOURCE"; do
-    if [ ! -f "$REQUIRED_FILE" ]; then
-        echo "Missing required local deployment file: $REQUIRED_FILE" >&2
-        exit 1
+    if [ "$ENVIRONMENT" == "dev" ]; then
+        FUNCTIONS_KEY_SOURCE=../../functions_key_dev.json
+        ENV_SOURCE=../../.env.dev
+    else
+        FUNCTIONS_KEY_SOURCE=../../functions_key_prod.json
+        ENV_SOURCE=../../.env.prod
     fi
-done
 
-cp "$FUNCTIONS_KEY_SOURCE" functions_key.json
-cp "$ENV_SOURCE" .env
+    for REQUIRED_FILE in "$FUNCTIONS_KEY_SOURCE" "$ENV_SOURCE"; do
+        if [ ! -f "$REQUIRED_FILE" ]; then
+            echo "Missing required local deployment file: $REQUIRED_FILE" >&2
+            exit 1
+        fi
+    done
+
+    cp "$FUNCTIONS_KEY_SOURCE" functions_key.json
+    cp "$ENV_SOURCE" .env
+fi
 
 # project name is socialsports-44162 for dev and socialsportsprod for prod
 if [ "$ENVIRONMENT" == "dev" ]; then
@@ -84,7 +96,6 @@ else
     PROJECT_NAME="socialsportsprod"
 fi
 
-EXTRA_DEPLOY_ARGS=()
 if [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "globalAppController" ]; then
     EXTRA_DEPLOY_ARGS=(
         --concurrency 80
@@ -106,8 +117,7 @@ echo "Deploying $FUNCTION_NAME (Entry point: $ENDPOINT_CLASS_NAME) to $ENVIRONME
 gcloud functions deploy $FUNCTION_NAME \
     --entry-point $ENDPOINT_CLASS_NAME \
     --runtime java17 \
-    --trigger-http \
-    --allow-unauthenticated \
+    "${TRIGGER_ARGS[@]}" \
     --region australia-southeast1 \
     --project $PROJECT_NAME \
     --set-env-vars PROJECT_NAME=$PROJECT_NAME \

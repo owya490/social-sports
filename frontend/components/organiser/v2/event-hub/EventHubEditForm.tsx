@@ -1,40 +1,20 @@
 "use client";
 
-/**
- * THESIS: Edit details is a calm sectioned operate sheet — Basic / Time / Location / Ticket Types / Sport & Link —
- * not a sticky document toolbar or a view/edit toggle card.
- * OWN-WORLD: Honest Clubhouse light tokens, Satoshi, 12px radius, yellow Update event only;
- * TipTap bubble-on-selection; Luma section rhythm without Appearance themes.
- * STORY: Organiser opens Edit details, adjusts any Sportshub field, taps Update event once.
- * FIRST VIEWPORT: Large title → seamless description → Time timeline → Location → Ticket Types → Sport & Link;
- * yellow Update event in panel footer (form=event-hub-edit-details).
- * FORM: Comp A sectioned-timeline (approved); seed edit-redesign sections-bubble.
- * FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
- */
-
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
-import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
-import {
-  addCalendarDaysToYmd,
-  dateAndTimeInLocalToDate,
-  dateAndTimeInLocalToTimestamp,
-  formatDateToString,
-  formatStringToDate,
-  formatTimeTo12Hour,
-  formatTimeTo24Hour,
-  timestampToDateString,
-  timestampToTimeOfDay,
-} from "@/services/src/datetimeUtils";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
-import { CalendarDaysIcon, ClockIcon, LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
+import { LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Image from "next/image";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { EventHubDescriptionEditor } from "./EventHubDescriptionEditor";
-import { EventHubTicketTypesEditor } from "./EventHubTicketTypesEditor";
+import { getEventDetailsChanges, type EventDetailsDraft } from "./eventDetailsDraft";
+import {
+  EventHubFieldWithIcon as FieldWithIcon,
+  EventHubScheduleFields,
+  eventHubFieldClass as fieldClass,
+  type EventHubScheduleValue,
+} from "./EventHubScheduleFields";
 
 const FORM_ID = "event-hub-edit-details";
 
@@ -53,14 +33,11 @@ type EventHubEditFormProps = {
   eventRegistrationDeadline: Timestamp;
   eventEventLink: string;
   isActive: boolean;
-  eventTicketTypes?: EventTicketTypesMap;
-  orderTicketsMap?: Map<Order, Ticket[]>;
-  setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
-  onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
-  hideTicketTypeFormSelector?: boolean;
+  /** When true, details stay view-only because the event end time has passed. */
+  ended?: boolean;
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
   onSaved: () => void;
-  onSavingChange?: (saving: boolean) => void;
+  onStateChange: (state: { dirty: boolean; saving: boolean; canSave: boolean }) => void;
 };
 
 export function EventHubEditForm({
@@ -74,28 +51,24 @@ export function EventHubEditForm({
   eventRegistrationDeadline,
   eventEventLink,
   isActive,
-  eventTicketTypes,
-  orderTicketsMap,
-  setEventTicketTypes,
-  onPersistTicketTypes,
-  hideTicketTypeFormSelector = true,
+  ended = false,
   updateData,
   onSaved,
-  onSavingChange,
+  onStateChange,
 }: EventHubEditFormProps) {
+  // Live event updates must not replace the draft while this editor is open.
+  const [initialValues] = useState<EventDetailsDraft>({
+    name: eventName,
+    description: eventDescription,
+    location: eventLocation,
+    sport: eventSport,
+    eventLink: eventEventLink ?? "",
+    startDate: eventStartDate,
+    endDate: eventEndDate,
+    registrationDeadline: eventRegistrationDeadline,
+  });
   const [name, setName] = useState(eventName);
   const [description, setDescription] = useState(eventDescription);
-
-  const [startDate, setStartDate] = useState(timestampToDateString(eventStartDate));
-  const [startTime, setStartTime] = useState(timestampToTimeOfDay(eventStartDate));
-  const [endDate, setEndDate] = useState(timestampToDateString(eventEndDate));
-  const [endTime, setEndTime] = useState(timestampToTimeOfDay(eventEndDate));
-  const [registrationDeadlineDate, setRegistrationDeadlineDate] = useState(
-    timestampToDateString(eventRegistrationDeadline)
-  );
-  const [registrationDeadlineTime, setRegistrationDeadlineTime] = useState(
-    timestampToTimeOfDay(eventRegistrationDeadline)
-  );
 
   const [location, setLocation] = useState(eventLocation);
   const [locationLatLng, setLocationLatLng] = useState<{ lat: number; lng: number } | null>(null);
@@ -105,10 +78,19 @@ export function EventHubEditForm({
   const [sport, setSport] = useState(eventSport);
   const [eventLink, setEventLink] = useState(eventEventLink ?? "");
 
-  const [dateWarning, setDateWarning] = useState<string | null>(null);
-  const [timeWarning, setTimeWarning] = useState<string | null>(null);
-  const [registrationDeadlineWarning, setRegistrationDeadlineWarning] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [schedule, setSchedule] = useState<EventHubScheduleValue | null>(null);
+
+  const readOnly = !isActive || ended;
+  const changes = getEventDetailsChanges(initialValues, {
+    name, description, location, sport, eventLink,
+    startDate: schedule?.startDate ?? initialValues.startDate,
+    endDate: schedule?.endDate ?? initialValues.endDate,
+    registrationDeadline: schedule?.registrationDeadline ?? initialValues.registrationDeadline,
+  });
+  const dirty = Object.keys(changes).length > 0;
+  const canSave = dirty && !readOnly && !saving && Boolean(schedule && !schedule.hasBlockingWarning) && !locationError;
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
@@ -117,38 +99,8 @@ export function EventHubEditForm({
   const isLoaded = scriptLoadResult ? scriptLoadResult.isLoaded : false;
   const loadError = scriptLoadResult ? scriptLoadResult.loadError : undefined;
 
-  const prevStartDateRef = useRef<string | null>(null);
-
   useEffect(() => {
-    const nextStartDate = timestampToDateString(eventStartDate);
-    setName(eventName);
-    setDescription(eventDescription);
-    setStartDate(nextStartDate);
-    setStartTime(timestampToTimeOfDay(eventStartDate));
-    setEndDate(timestampToDateString(eventEndDate));
-    setEndTime(timestampToTimeOfDay(eventEndDate));
-    setRegistrationDeadlineDate(timestampToDateString(eventRegistrationDeadline));
-    setRegistrationDeadlineTime(timestampToTimeOfDay(eventRegistrationDeadline));
-    setLocation(eventLocation);
-    setSelectionMade(true);
-    setLocationError("");
-    setSport(eventSport);
-    setEventLink(eventEventLink ?? "");
-    // Hydration is not a user start-date change — keep the event's real end date.
-    prevStartDateRef.current = nextStartDate;
-  }, [
-    eventName,
-    eventDescription,
-    eventStartDate,
-    eventEndDate,
-    eventRegistrationDeadline,
-    eventLocation,
-    eventSport,
-    eventEventLink,
-  ]);
-
-  useEffect(() => {
-    if (!isActive || !isLoaded || !locationInputRef.current) return;
+    if (readOnly || !isLoaded || !locationInputRef.current) return;
     if (autocompleteRef.current) {
       google.maps.event.clearInstanceListeners(autocompleteRef.current);
     }
@@ -159,83 +111,29 @@ export function EventHubEditForm({
         autocompleteRef.current = null;
       }
     };
-  }, [isActive, isLoaded]);
+  }, [readOnly, isLoaded]);
 
   useEffect(() => {
-    const prevStartDate = prevStartDateRef.current;
-    prevStartDateRef.current = startDate;
+    onStateChange({ dirty, saving, canSave });
+  }, [dirty, saving, canSave, onStateChange]);
 
-    // Skip mount / hydration — only shift when the organiser changes start date.
-    if (prevStartDate === null || prevStartDate === startDate) {
-      return;
-    }
-
-    const prevYmd = formatStringToDate(prevStartDate);
-    const nextYmd = formatStringToDate(startDate);
-    const [prevY, prevM, prevD] = prevYmd.split("-").map(Number);
-    const [nextY, nextM, nextD] = nextYmd.split("-").map(Number);
-    const dayDelta = Math.round(
-      (Date.UTC(nextY, nextM - 1, nextD) - Date.UTC(prevY, prevM - 1, prevD)) / (24 * 60 * 60 * 1000)
-    );
-    if (dayDelta !== 0) {
-      const shiftedEndYmd = addCalendarDaysToYmd(formatStringToDate(endDate), dayDelta);
-      setEndDate(formatDateToString(shiftedEndYmd < nextYmd ? nextYmd : shiftedEndYmd));
-    }
-
-    setRegistrationDeadlineDate(startDate);
-    setRegistrationDeadlineTime(startTime);
-    // endDate/startTime intentionally read from the change that triggered this effect
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate]);
-
-  useEffect(() => {
-    const currentDateTime = new Date();
-    const selectedStartDateTime = dateAndTimeInLocalToDate(
-      formatStringToDate(startDate),
-      formatTimeTo24Hour(startTime)
-    );
-    const selectedEndDateTime = dateAndTimeInLocalToDate(formatStringToDate(endDate), formatTimeTo24Hour(endTime));
-    const selectedRegistrationDeadline = dateAndTimeInLocalToDate(
-      formatStringToDate(registrationDeadlineDate),
-      formatTimeTo24Hour(registrationDeadlineTime)
-    );
-
-    setDateWarning(currentDateTime > selectedEndDateTime ? "Event end date and time is in the past!" : null);
-    setTimeWarning(selectedEndDateTime < selectedStartDateTime ? "Event must end after it starts!" : null);
-    setRegistrationDeadlineWarning(
-      selectedRegistrationDeadline > selectedEndDateTime ? "Registration deadline is after event end!" : null
-    );
-  }, [startDate, startTime, endDate, endTime, registrationDeadlineDate, registrationDeadlineTime]);
-
-  useEffect(() => {
-    onSavingChange?.(saving);
-  }, [saving, onSavingChange]);
-
-  const handlePlaceSelect = async () => {
+  const handlePlaceSelect = () => {
     if (!autocompleteRef.current) return;
     const place = autocompleteRef.current.getPlace();
-    if (place.name && place.formatted_address) {
+    if (place.name && place.formatted_address && place.geometry?.location) {
       setSelectionMade(true);
       const fullAddress = `${place.name}, ${place.formatted_address}`;
       setLocation(fullAddress);
       setLocationError("");
-      try {
-        const coords = await getLocationCoordinates(fullAddress);
-        setLocationLatLng(coords);
-      } catch {
-        setLocationError("Failed to get location coordinates");
-        setSelectionMade(false);
-      }
+      setLocationLatLng({ lat: place.geometry.location.lat(), lng: place.geometry.location.lng() });
     }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!isActive || saving) return;
+    if (readOnly || saving || !dirty || !schedule || schedule.hasBlockingWarning) return;
 
-    if (dateWarning || timeWarning || registrationDeadlineWarning) return;
-
-    if (!selectionMade && location.trim() !== "") {
+    if (changes.location !== undefined && !selectionMade && location.trim() !== "") {
       setLocationError("Please select a location from the dropdown");
       return;
     }
@@ -245,232 +143,157 @@ export function EventHubEditForm({
     }
 
     setSaving(true);
+    setSaveError("");
     try {
-      let latLng = locationLatLng;
-      if (!latLng) {
-        latLng = await getLocationCoordinates(location);
+      if (changes.location !== undefined) {
+        changes.locationLatLng = locationLatLng ?? await getLocationCoordinates(location);
       }
-
-      const nextName = name.trim();
-
-      await updateData(eventId, {
-        name: nextName,
-        nameTokens: nextName.toLowerCase().split(" "),
-        description,
-        startDate: dateAndTimeInLocalToTimestamp(formatStringToDate(startDate), formatTimeTo24Hour(startTime)),
-        endDate: dateAndTimeInLocalToTimestamp(formatStringToDate(endDate), formatTimeTo24Hour(endTime)),
-        registrationDeadline: dateAndTimeInLocalToTimestamp(
-          formatStringToDate(registrationDeadlineDate),
-          formatTimeTo24Hour(registrationDeadlineTime)
-        ),
-        location,
-        locationTokens: location.toLowerCase().split(" "),
-        locationLatLng: { lat: latLng.lat, lng: latLng.lng },
-        sport,
-        eventLink,
-      });
+      await updateData(eventId, changes);
 
       onSaved();
     } catch {
-      setLocationError("Couldn’t save — check location and try again.");
+      setSaveError("Couldn't save your changes. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const hasBlockingWarning = Boolean(dateWarning || timeWarning || registrationDeadlineWarning || locationError);
-  const canEditTicketTypes = Boolean(orderTicketsMap && setEventTicketTypes);
-  const readOnly = !isActive;
-
   return (
-    <form id={FORM_ID} onSubmit={handleSubmit} className="space-y-8">
-      {readOnly ? (
-        <p className="text-sm text-foreground-secondary font-sans">
-          These details are view-only. You can copy text, but changes can&apos;t be saved.
-        </p>
-      ) : null}
-      <Section label="Basic Info">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={100}
-          required
-          readOnly={readOnly}
-          aria-label="Event title"
-          placeholder="Event title"
-          className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none read-only:cursor-text"
-        />
-        <div className="space-y-2 pt-4">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-foreground-muted font-sans">Description</span>
-          </div>
-          <EventHubDescriptionEditor
-            description={description}
-            updateDescription={setDescription}
-            editable={isActive}
-          />
-        </div>
-      </Section>
-
-      <Section label="Time">
-        <div className="space-y-3">
-          <TimeRow
-            label="Start"
-            filled
-            dateValue={formatStringToDate(startDate)}
-            timeValue={formatTimeTo24Hour(startTime)}
-            onDateChange={(v) => setStartDate(formatDateToString(v))}
-            onTimeChange={(v) => setStartTime(formatTimeTo12Hour(v))}
-            readOnly={readOnly}
-          />
-          <TimeRow
-            label="End"
-            filled={false}
-            dateValue={formatStringToDate(endDate)}
-            timeValue={formatTimeTo24Hour(endTime)}
-            onDateChange={(v) => setEndDate(formatDateToString(v))}
-            onTimeChange={(v) => setEndTime(formatTimeTo12Hour(v))}
-            readOnly={readOnly}
-          />
-          <div className="pt-1">
-            <p className="text-xs font-medium text-foreground-muted font-sans mb-2">Registration deadline</p>
-            <div className="grid grid-cols-2 gap-2">
-              <FieldWithIcon icon={<CalendarDaysIcon className="h-4 w-4" aria-hidden />}>
-                <input
-                  type="date"
-                  value={formatStringToDate(registrationDeadlineDate)}
-                  onChange={(e) => setRegistrationDeadlineDate(formatDateToString(e.target.value))}
-                  className={fieldClass}
-                  aria-label="Registration deadline date"
-                  readOnly={readOnly}
-                />
-              </FieldWithIcon>
-              <FieldWithIcon icon={<ClockIcon className="h-4 w-4" aria-hidden />}>
-                <input
-                  type="time"
-                  value={formatTimeTo24Hour(registrationDeadlineTime)}
-                  onChange={(e) => setRegistrationDeadlineTime(formatTimeTo12Hour(e.target.value))}
-                  className={fieldClass}
-                  aria-label="Registration deadline time"
-                  readOnly={readOnly}
-                />
-              </FieldWithIcon>
-            </div>
-          </div>
-        </div>
-        {!readOnly && dateWarning ? <Warning>{dateWarning}</Warning> : null}
-        {!readOnly && timeWarning ? <Warning>{timeWarning}</Warning> : null}
-        {!readOnly && registrationDeadlineWarning ? <Warning>{registrationDeadlineWarning}</Warning> : null}
-      </Section>
-
-      <Section label="Location">
-        {!readOnly && loadError ? <Warning>Error loading maps</Warning> : null}
-        <FieldWithIcon icon={<MapPinIcon className="h-4 w-4" aria-hidden />}>
+    <form id={FORM_ID} onSubmit={handleSubmit} aria-busy={saving}>
+      <fieldset disabled={saving} className="min-w-0 space-y-8">
+        {saveError ? <p role="alert" className="text-sm text-danger font-sans">{saveError}</p> : null}
+        {readOnly ? (
+          <p className="text-sm text-foreground-secondary font-sans">
+            {ended
+              ? "This event has ended, so its details can't be changed."
+              : "These details are view-only. You can copy text, but changes can't be saved."}
+          </p>
+        ) : null}
+        <Section label="Basic Info">
           <input
-            ref={locationInputRef}
-            value={location}
-            onChange={(e) => {
-              setLocation(e.target.value);
-              setSelectionMade(false);
-            }}
-            onBlur={() => {
-              if (readOnly) return;
-              if (!selectionMade && location.trim() !== "") {
-                setLocationError("Please select a location from the dropdown");
-              }
-            }}
-            placeholder={isLoaded ? "What’s the address?" : "Loading maps…"}
-            disabled={!readOnly && !isLoaded && !loadError}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={100}
+            required
             readOnly={readOnly}
-            className={fieldClass}
-            aria-label="Event location"
+            aria-label="Event title"
+            placeholder="Event title"
+            className="w-full border-0 border-b border-border bg-transparent px-0 py-2 text-xl font-semibold tracking-tight text-foreground font-sans placeholder:text-foreground-muted focus:border-focus focus:outline-none focus-visible:outline-none read-only:cursor-text"
           />
-        </FieldWithIcon>
-        {!readOnly && locationError ? <Warning>{locationError}</Warning> : null}
-      </Section>
-
-      {canEditTicketTypes ? (
-        <Section label="Ticket Types">
-          <EventHubTicketTypesEditor
-            eventId={eventId}
-            eventTicketTypes={eventTicketTypes}
-            orderTicketsMap={orderTicketsMap!}
-            isActive={isActive}
-            setEventTicketTypes={setEventTicketTypes!}
-            onPersistTicketTypes={onPersistTicketTypes}
-            hideFormSelector={hideTicketTypeFormSelector}
-          />
+          <div className="space-y-2 pt-4">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-medium text-foreground-muted font-sans">Description</span>
+            </div>
+            <EventHubDescriptionEditor
+              description={description}
+              updateDescription={setDescription}
+              editable={!readOnly && !saving}
+            />
+          </div>
         </Section>
-      ) : null}
 
-      <Section label="Sport & Link">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block space-y-1.5 sm:col-span-2">
-            <span className="text-xs font-medium text-foreground-muted font-sans">Sport</span>
-            <FieldWithIcon
-              icon={
-                SPORTS_CONFIG[sport]?.iconImage ? (
-                  <Image
-                    src={SPORTS_CONFIG[sport].iconImage}
-                    alt=""
-                    width={16}
-                    height={16}
-                    className="h-4 w-4 object-contain opacity-70"
+        <EventHubScheduleFields
+          eventStartDate={initialValues.startDate}
+          eventEndDate={initialValues.endDate}
+          eventRegistrationDeadline={initialValues.registrationDeadline}
+          readOnly={readOnly || saving}
+          onChange={setSchedule}
+        />
+
+        <Section label="Location">
+          {!readOnly && loadError ? <Warning>Error loading maps</Warning> : null}
+          <FieldWithIcon icon={<MapPinIcon className="h-4 w-4" aria-hidden />}>
+            <input
+              ref={locationInputRef}
+              value={location}
+              onChange={(e) => {
+                setLocation(e.target.value);
+                setLocationLatLng(null);
+                setSelectionMade(false);
+                setLocationError("");
+              }}
+              onBlur={() => {
+                if (readOnly) return;
+                if (location !== initialValues.location && !selectionMade && location.trim() !== "") {
+                  setLocationError("Please select a location from the dropdown");
+                }
+              }}
+              placeholder={isLoaded ? "What’s the address?" : "Loading maps…"}
+              disabled={!readOnly && !isLoaded && !loadError}
+              readOnly={readOnly}
+              className={fieldClass}
+              aria-label="Event location"
+            />
+          </FieldWithIcon>
+          {!readOnly && locationError ? <Warning>{locationError}</Warning> : null}
+        </Section>
+
+        <Section label="Sport & Link">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <label className="block space-y-1.5 sm:col-span-2">
+              <span className="text-xs font-medium text-foreground-muted font-sans">Sport</span>
+              <FieldWithIcon
+                icon={
+                  SPORTS_CONFIG[sport]?.iconImage ? (
+                    <Image
+                      src={SPORTS_CONFIG[sport].iconImage}
+                      alt=""
+                      width={16}
+                      height={16}
+                      className="h-4 w-4 object-contain opacity-70"
+                    />
+                  ) : (
+                    <StarIcon className="h-4 w-4" aria-hidden />
+                  )
+                }
+              >
+                {readOnly ? (
+                  <input
+                    readOnly
+                    value={SPORTS_CONFIG[sport]?.name ?? sport}
+                    className={fieldClass}
+                    aria-label="Sport"
                   />
                 ) : (
-                  <StarIcon className="h-4 w-4" aria-hidden />
-                )
-              }
-            >
-              {readOnly ? (
+                  <select
+                    value={sport}
+                    onChange={(e) => setSport(e.target.value as SportId)}
+                    className={fieldClass}
+                    aria-label="Sport"
+                  >
+                    {Object.entries(SPORTS_CONFIG).map(([, sportInfo]) => (
+                      <option key={sportInfo.value} value={sportInfo.value}>
+                        {sportInfo.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </FieldWithIcon>
+            </label>
+
+            <label className="block space-y-1.5 sm:col-span-2">
+              <span className="text-xs font-medium text-foreground-muted font-sans">Event link</span>
+              <FieldWithIcon icon={<LinkIcon className="h-4 w-4" aria-hidden />}>
                 <input
-                  readOnly
-                  value={SPORTS_CONFIG[sport]?.name ?? sport}
+                  value={eventLink ?? ""}
+                  onChange={(e) => setEventLink(e.target.value)}
+                  placeholder="https://"
+                  readOnly={readOnly}
                   className={fieldClass}
-                  aria-label="Sport"
                 />
-              ) : (
-                <select
-                  value={sport}
-                  onChange={(e) => setSport(e.target.value as SportId)}
-                  className={fieldClass}
-                  aria-label="Sport"
-                >
-                  {Object.entries(SPORTS_CONFIG).map(([, sportInfo]) => (
-                    <option key={sportInfo.value} value={sportInfo.value}>
-                      {sportInfo.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </FieldWithIcon>
-          </label>
+              </FieldWithIcon>
+            </label>
+          </div>
+        </Section>
 
-          <label className="block space-y-1.5 sm:col-span-2">
-            <span className="text-xs font-medium text-foreground-muted font-sans">Event link</span>
-            <FieldWithIcon icon={<LinkIcon className="h-4 w-4" aria-hidden />}>
-              <input
-                value={eventLink ?? ""}
-                onChange={(e) => setEventLink(e.target.value)}
-                placeholder="https://"
-                readOnly={readOnly}
-                className={fieldClass}
-              />
-            </FieldWithIcon>
-          </label>
-        </div>
-      </Section>
-
-      {/* Hidden submit enables Enter-to-save; real CTA is the panel footer button */}
-      <button type="submit" className="sr-only" disabled={!isActive || saving || hasBlockingWarning} tabIndex={-1}>
-        Update event
-      </button>
+        {/* Hidden submit enables Enter-to-save; real CTA is the panel footer button */}
+        <button type="submit" hidden disabled={!canSave}>
+          Save details
+        </button>
+      </fieldset>
     </form>
   );
 }
-
-const fieldClass =
-  "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 pl-9 pr-3 text-base sm:text-sm text-foreground font-sans placeholder:text-foreground-muted focus:outline-none read-only:cursor-text";
 
 function Section({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -478,71 +301,6 @@ function Section({ label, children }: { label: string; children: ReactNode }) {
       <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted font-sans">{label}</h3>
       {children}
     </section>
-  );
-}
-
-function FieldWithIcon({ icon, children }: { icon: ReactNode; children: ReactNode }) {
-  return (
-    <div className="relative flex items-center rounded-xl border border-border bg-background focus-within:border-focus focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus">
-      <span className="pointer-events-none absolute left-3 text-foreground-muted">{icon}</span>
-      {children}
-    </div>
-  );
-}
-
-function TimeRow({
-  label,
-  filled,
-  dateValue,
-  timeValue,
-  onDateChange,
-  onTimeChange,
-  readOnly = false,
-}: {
-  label: string;
-  filled: boolean;
-  dateValue: string;
-  timeValue: string;
-  onDateChange: (v: string) => void;
-  onTimeChange: (v: string) => void;
-  readOnly?: boolean;
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div className="flex flex-col items-center pt-3" aria-hidden>
-        <span
-          className={`h-2.5 w-2.5 rounded-full border-2 ${
-            filled ? "border-foreground bg-foreground" : "border-foreground-muted bg-background"
-          }`}
-        />
-        {filled ? <span className="mt-1 w-px flex-1 min-h-[2.5rem] bg-border" /> : null}
-      </div>
-      <div className="min-w-0 flex-1 space-y-1.5">
-        <p className="text-xs font-medium text-foreground-muted font-sans">{label}</p>
-        <div className="grid grid-cols-2 gap-2">
-          <FieldWithIcon icon={<CalendarDaysIcon className="h-4 w-4" aria-hidden />}>
-            <input
-              type="date"
-              value={dateValue}
-              onChange={(e) => onDateChange(e.target.value)}
-              className={fieldClass}
-              aria-label={`${label} date`}
-              readOnly={readOnly}
-            />
-          </FieldWithIcon>
-          <FieldWithIcon icon={<ClockIcon className="h-4 w-4" aria-hidden />}>
-            <input
-              type="time"
-              value={timeValue}
-              onChange={(e) => onTimeChange(e.target.value)}
-              className={fieldClass}
-              aria-label={`${label} time`}
-              readOnly={readOnly}
-            />
-          </FieldWithIcon>
-        </div>
-      </div>
-    </div>
   );
 }
 

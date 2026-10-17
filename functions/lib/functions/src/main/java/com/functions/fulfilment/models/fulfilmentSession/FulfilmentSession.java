@@ -24,6 +24,7 @@ import com.google.cloud.firestore.annotation.DocumentId;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -56,6 +57,11 @@ public abstract class FulfilmentSession {
      * List of FulfilmentEntityIds specifying their order in the fulfilment session workflow.
      */
     private List<String> fulfilmentEntityIds;
+    /**
+     * Starts false. Becomes true when the session is frozen and sent to the fulfilment queue in the end step.
+     */
+    @Builder.Default
+    private Boolean isFulfilmentSessionCrystalised = false;
 
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
@@ -133,62 +139,52 @@ public abstract class FulfilmentSession {
         FulfilmentSessionType sessionType =
                 FulfilmentSessionType.valueOf((String) snapshot.get("type"));
 
+        Integer numTickets = getInteger(snapshot, "numTickets");
+        Integer price = getInteger(snapshot, "price");
+        boolean isFulfilmentSessionCrystalised = Boolean.TRUE.equals(
+                snapshot.getBoolean("isFulfilmentSessionCrystalised"));
+
         // Create the appropriate session type
         switch (sessionType) {
             case CHECKOUT:
-                Integer numTicketsCheckout = null;
-                Long numTicketsLongCheckout = snapshot.getLong("numTickets");
-                if (numTicketsLongCheckout != null) {
-                    numTicketsCheckout = numTicketsLongCheckout.intValue();
-                }
                 return CheckoutFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"),
                                 EventData.class))
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsCheckout)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .price(price)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case BOOKING_APPROVAL:
-                Integer numTicketsBookingApproval = null;
-                Long numTicketsLongBookingApproval = snapshot.getLong("numTickets");
-                if (numTicketsLongBookingApproval != null) {
-                    numTicketsBookingApproval = numTicketsLongBookingApproval.intValue();
-                }
                 return BookingApprovalFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"),
                                 EventData.class))
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsBookingApproval)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .price(price)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case WAITLIST:
-                Integer numTicketsWaitlist = null;
-                Long numTicketsLongWaitlist = snapshot.getLong("numTickets");
-                // Firestore does not separate Ints vs Longs 
-                if (numTicketsLongWaitlist != null) {
-                    numTicketsWaitlist = numTicketsLongWaitlist.intValue();
-                }
                 return WaitlistFulfilmentSession.builder()
                         .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
                             EventData.class))
                         .fulfilmentSessionStartTime(
                             snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsWaitlist)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
+                        .price(price)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case PYNG_CHECKOUT:
-                Integer numTicketsPyngCheckout = null;
-                Long numTicketsLongPyngCheckout = snapshot.getLong("numTickets");
-                if (numTicketsLongPyngCheckout != null) {
-                    numTicketsPyngCheckout = numTicketsLongPyngCheckout.intValue();
-                }
                 PyngMetadata pyngMetadata = null;
                 if (snapshot.get("pyngMetadata") != null) {
                     pyngMetadata = objectMapper.convertValue(snapshot.get("pyngMetadata"), PyngMetadata.class);
@@ -200,15 +196,23 @@ public abstract class FulfilmentSession {
                         .fulfilmentSessionStartTime(
                                 snapshot.getTimestamp("fulfilmentSessionStartTime"))
                         .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
-                        .numTickets(numTicketsPyngCheckout)
+                        .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .pyngMetadata(pyngMetadata)
-                        .crystallized(snapshot.getBoolean("crystallized"))
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             default:
                 throw new IllegalArgumentException(
                         "Unknown FulfilmentSession type: " + sessionType);
         }
+    }
+
+    /**
+     * Firestore stores integers as longs and does not distinguish the two.
+     */
+    private static Integer getInteger(DocumentSnapshot snapshot, String field) {
+        Long value = snapshot.getLong(field);
+        return value == null ? null : value.intValue();
     }
 }

@@ -15,6 +15,7 @@ import com.functions.events.models.EventData;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
+import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -29,18 +30,18 @@ import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity.FulfilmentEntityHookInput;
 import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
-import com.functions.fulfilment.payment.PaymentFulfilmentStep;
-import com.functions.fulfilment.payment.PaymentStatus;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.services.StripeService;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
@@ -106,8 +107,7 @@ public class FulfilmentService {
     }
 
     /**
-     * A Pyng checkout stays until polling has recorded a terminal status and END
-     * has handed the session to the reconciliation queue.
+     * A Pyng checkout stays until polling has recorded a terminal payment status.
      */
     private static boolean shouldRetainPyngCheckout(String fulfilmentSessionId) {
         try {
@@ -117,45 +117,12 @@ public class FulfilmentService {
                 return false;
             }
             PyngMetadata metadata = pyngSession.getPyngMetadata();
-            boolean terminal = metadata != null && metadata.getStatus() != null && metadata.getStatus().isTerminal();
-            boolean crystallized = Boolean.TRUE.equals(pyngSession.getCrystallized());
-            return !(terminal && crystallized);
+            return metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal();
         } catch (Exception e) {
             logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
                     fulfilmentSessionId, e);
             return false;
         }
-    }
-
-    private static void requireTerminalPyngPayment(FulfilmentSession session) {
-        if (!(session instanceof PyngCheckoutFulfilmentSession pyngSession)) {
-            throw new FulfilmentProgressionBlockedException(
-                    "Payment step is not on a PYNG_CHECKOUT fulfilment session");
-        }
-        PyngMetadata metadata = pyngSession.getPyngMetadata();
-        if (metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal()) {
-            throw new FulfilmentProgressionBlockedException("Pyng checkout is still pending");
-        }
-    }
-
-    /**
-     * Called by the payment module once a hosted checkout has finished, so the
-     * session can continue through END.
-     */
-    public static void resumeAfterPayment(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
-            throws Exception {
-        crystallizePyngCheckout(fulfilmentSessionId, session);
-    }
-
-    private static void crystallizePyngCheckout(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
-            throws Exception {
-        if (Boolean.TRUE.equals(session.getCrystallized())) {
-            return;
-        }
-        session.setId(fulfilmentSessionId);
-        FulfilmentSessionCrystallizationQueue.enqueue(session);
-        FulfilmentSessionRepository.updateCrystallized(fulfilmentSessionId, true);
-        session.setCrystallized(true);
     }
 
     /**
@@ -268,13 +235,10 @@ public class FulfilmentService {
             throw new IllegalArgumentException("eventTicketTypeId is required");
         }
 
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new Exception("Failed to find event data for event ID: " + eventId);
-        }
-        EventData eventDataForLimits = maybeEventData.get();
-        Integer maxTickets = eventDataForLimits.getMaxTicketsPerTransaction();
+        EventData eventData = EventsRepository.getActiveEventById(eventId)
+                .orElseThrow(() -> new CheckoutDateTimeException("Event " + eventId + " is not available"));
+        EventsUtils.validateEventTiming(eventData);
+        Integer maxTickets = eventData.getMaxTicketsPerTransaction();
         if (maxTickets != null && numTickets > maxTickets) {
             throw new IllegalArgumentException(String.format(
                     "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
@@ -284,7 +248,7 @@ public class FulfilmentService {
         PaymentProvider resolvedPaymentProvider = paymentProvider == null ? PaymentProvider.STRIPE : paymentProvider;
         FulfilmentSessionType fulfilmentSessionType = resolvedPaymentProvider == PaymentProvider.PYNG
                 ? FulfilmentSessionType.PYNG_CHECKOUT
-                : classifyFulfilmentSessionType(eventId, eventTicketTypeId);
+                : classifyFulfilmentSessionType(eventData, eventTicketTypeId);
 
         String fulfilmentSessionId = UUID.randomUUID().toString();
 
@@ -336,15 +300,7 @@ public class FulfilmentService {
         return fulfilmentSessionId;
     }
 
-    private static FulfilmentSessionType classifyFulfilmentSessionType(String eventId, String eventTicketTypeId) {
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new RuntimeException("Failed to find event data for event ID: " + eventId);
-        }
-        EventData eventData = maybeEventData.get();
-        eventData.setEventId(eventId);
-
+    private static FulfilmentSessionType classifyFulfilmentSessionType(EventData eventData, String eventTicketTypeId) {
         ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
         if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
                 && ticketType.getVacancy() <= 0) {
@@ -400,9 +356,7 @@ public class FulfilmentService {
                 throw new FulfilmentEntityNotFoundException(nextEntityId);
             }
 
-            if (nextEntity instanceof PaymentFulfilmentStep paymentStep) {
-                paymentStep.start(fulfilmentSessionId, fulfilmentSession, nextEntityId);
-            } else if (nextEntity.onStartHook().isPresent()) {
+            if (nextEntity.onStartHook().isPresent()) {
                 boolean result = nextEntity.onStartHook().get()
                         .apply(new FulfilmentEntityHookInput(nextEntityId, fulfilmentSession));
                 if (!result) {
@@ -557,9 +511,7 @@ public class FulfilmentService {
                 throw new FulfilmentEntityNotFoundException(currentEntityId);
             }
 
-            if (currentEntity instanceof PaymentFulfilmentStep) {
-                requireTerminalPyngPayment(fulfilmentSession);
-            } else if (currentEntity.onEndHook().isPresent()) {
+            if (currentEntity.onEndHook().isPresent()) {
                 boolean result = currentEntity.onEndHook().get()
                         .apply(new FulfilmentEntityHookInput(currentEntityId, fulfilmentSession));
                 if (!result) {
@@ -659,9 +611,9 @@ public class FulfilmentService {
                 return ((DelayedStripeFulfilmentEntity) entity).getUrl();
             case END:
                 return ((EndFulfilmentEntity) entity).getUrl();
-            case FORMS, WAITLIST, PYNG:
-                // Forms, Waitlist, and Pyng entities don't store a URL on the entity.
-                // The Pyng hosted page URL lives on the session's pyngMetadata.
+            case PYNG:
+                return ((PyngFulfilmentEntity) entity).getUrl();
+            case FORMS, WAITLIST:
                 return null;
             default:
                 logger.warn("Unknown entity type for URL retrieval: {}", entity.getType());
@@ -747,19 +699,10 @@ public class FulfilmentService {
             }
 
             String url = getEntityUrl(entity);
-            PaymentStatus paymentStatus = null;
-            if (entity.getType() == FulfilmentEntityType.PYNG
-                    && fulfilmentSession instanceof PyngCheckoutFulfilmentSession pyngSession) {
-                PyngMetadata metadata = pyngSession.getPyngMetadata();
-                if (metadata != null) {
-                    url = metadata.getHostedPageUrl();
-                    paymentStatus = metadata.getStatus();
-                }
-            }
 
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
                     url, fulfilmentSession.getEventData().getEventId(),
-                    formId, formResponseId, paymentStatus));
+                    formId, formResponseId));
         } catch (Exception e) {
             logger.error(
                     "Failed to get fulfilment entity info for session ID: {} and entity ID: {}",

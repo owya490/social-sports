@@ -17,11 +17,6 @@ public class PyngCheckoutFulfilmentSession extends FulfilmentSession {
     private String eventTicketTypeName;
     @Nullable
     private PyngMetadata pyngMetadata;
-    /**
-     * Set once the session object has been handed to the reconciliation queue.
-     */
-    @Nullable
-    private Boolean crystallized;
 
     {
         setType(FulfilmentSessionType.PYNG_CHECKOUT);

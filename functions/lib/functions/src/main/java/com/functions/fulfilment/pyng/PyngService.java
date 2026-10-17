@@ -22,7 +22,6 @@ import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentS
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
-import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.JavaUtils;
@@ -131,7 +130,9 @@ public final class PyngService {
     /**
      * Continues the fulfilment session when Pyng has finished the checkout.
      * Settled payments and incomplete outcomes both continue. An in-progress
-     * checkout does not.
+     * checkout does not. The pending-checkout poll records status and lets the
+     * Pyng entity end hook gate progression, so this resumes only when a
+     * continuation has been installed.
      */
     public static void continueFulfilment(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
             throws Exception {
@@ -142,12 +143,14 @@ public final class PyngService {
                     fulfilmentSessionId);
             return;
         }
-        logger.info("Pyng payment for fulfilment session {} finished with status {}; continuing fulfilment",
-                fulfilmentSessionId, status);
         Continuation resume = continuation;
         if (resume == null) {
-            resume = FulfilmentService::resumeAfterPayment;
+            logger.info("Pyng payment for fulfilment session {} finished with status {}; the end hook gates progression",
+                    fulfilmentSessionId, status);
+            return;
         }
+        logger.info("Pyng payment for fulfilment session {} finished with status {}; continuing fulfilment",
+                fulfilmentSessionId, status);
         resume.resume(fulfilmentSessionId, session);
     }
 
