@@ -223,9 +223,11 @@ public class FulfilmentServiceTest {
         AtomicReference<Instant> currentTime = new AtomicReference<>(initialTime);
         EventData event = availableEvent(true);
         event.setSupportedPaymentProviders(List.of());
+        event.setPaymentsActive(false);
         event.setRegistrationDeadline(Timestamp.ofTimeSecondsAndNanos(deadline.getEpochSecond(), 0));
         EventData current = availableEvent(true);
         current.setRegistrationDeadline(event.getRegistrationDeadline());
+        current.setPaymentsActive(false);
         current.getEventTicketTypes().get("ticket-1").setVacancy(3);
         events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
         Transaction transaction = mock(Transaction.class);
@@ -335,6 +337,7 @@ public class FulfilmentServiceTest {
         event.setIsActive(isActive);
         event.setIsPrivate(false);
         event.setBookingApprovalEnabled(false);
+        event.setPaymentsActive(true);
         event.setEndDate(Timestamp.ofTimeSecondsAndNanos(Instant.now().plusSeconds(3600).getEpochSecond(), 0));
         event.setRegistrationDeadline(event.getEndDate());
         event.setWaitlistEnabled(true);

@@ -35,6 +35,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
+import com.stripe.param.checkout.SessionCreateParams.PaymentIntentData.CaptureMethod;
 
 /**
  * Service class for handling Stripe checkout operations.
@@ -78,6 +79,10 @@ public class CheckoutService {
             if (scope instanceof FulfilmentInitialisationScope.PartnerPublic) {
                 ResolvedEventTicketType ticket = scope.validateEvent(
                         eventData, request.quantity(), request.eventTicketTypeId(), validationTime);
+                if (Boolean.TRUE.equals(eventData.getBookingApprovalEnabled())
+                        != (request.captureMethod() == CaptureMethod.MANUAL)) {
+                    throw new IllegalArgumentException("Event booking requirements changed; refresh and try again");
+                }
                 scope.validatePaymentProvider(eventData, ticket);
                 validateEventForCheckout(eventData, ticket, request.quantity(), validationTime);
             } else {

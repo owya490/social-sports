@@ -244,7 +244,9 @@ public class CheckoutServiceTest {
         for (Consumer<EventData> mutation : List.<Consumer<EventData>>of(
                 current -> current.setSupportedPaymentProviders(List.of()),
                 current -> current.setSupportedPaymentProviders(List.of(PaymentProvider.PYNG)),
-                current -> current.setMaxTicketsPerTransaction(0))) {
+                current -> current.setMaxTicketsPerTransaction(0),
+                current -> current.setPaymentsActive(false),
+                current -> current.getEventTicketTypes().get("ticket-1").setPrice(49))) {
             event = availableEvent();
             mutation.accept(event);
             when(snapshot.toObject(EventData.class)).thenReturn(event);
@@ -257,7 +259,24 @@ public class CheckoutServiceTest {
         users.verifyNoInteractions();
         accounts.verifyNoInteractions();
         stripeSessions.verifyNoInteractions();
-        verify(transaction, times(3)).get(eventRef);
+        verify(transaction, times(5)).get(eventRef);
+        verifyNoMoreInteractions(transaction);
+    }
+
+    @Test
+    public void partnerApprovalChangeRejectsBothCaptureModesBeforeOrganiserOrWrites() throws Exception {
+        for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
+            event.setBookingApprovalEnabled(capture == CaptureMethod.AUTOMATIC);
+            try {
+                CheckoutService.createStripeCheckoutSession(request(false, capture), PARTNER);
+                fail("Expected changed approval policy rejection");
+            } catch (IllegalArgumentException expected) {
+            }
+        }
+        users.verifyNoInteractions();
+        accounts.verifyNoInteractions();
+        stripeSessions.verifyNoInteractions();
+        verify(transaction, times(2)).get(eventRef);
         verifyNoMoreInteractions(transaction);
     }
 
@@ -278,12 +297,16 @@ public class CheckoutServiceTest {
         });
         try (MockedStatic<Instant> clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
             clock.when(Instant::now).thenAnswer(invocation -> currentTime.get());
-            assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false), PARTNER).stripeCheckoutSessionId());
+            for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
+                currentTime.set(initialTime);
+                event.setBookingApprovalEnabled(capture == CaptureMethod.MANUAL);
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false, capture), PARTNER).stripeCheckoutSessionId());
+            }
         }
-        users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)), times(2));
-        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)));
-        verify(transaction, times(2)).get(eventRef);
-        verify(transaction, times(2)).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
+        users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)), times(4));
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(2));
+        verify(transaction, times(4)).get(eventRef);
+        verify(transaction, times(4)).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
         verifyNoMoreInteractions(transaction);
     }
 
@@ -301,8 +324,12 @@ public class CheckoutServiceTest {
     }
 
     private static CreateStripeCheckoutSessionRequest request(boolean isPrivate) {
+        return request(isPrivate, CaptureMethod.AUTOMATIC);
+    }
+
+    private static CreateStripeCheckoutSessionRequest request(boolean isPrivate, CaptureMethod capture) {
         return new CreateStripeCheckoutSessionRequest("event-1", isPrivate, 1, "https://example.test/cancel",
-                "https://example.test/success", "fulfilment-1", "end-1", CaptureMethod.AUTOMATIC, "ticket-1");
+                "https://example.test/success", "fulfilment-1", "end-1", capture, "ticket-1");
     }
 
     private static EventData availableEvent() {

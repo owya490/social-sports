@@ -8,6 +8,7 @@ import com.functions.events.services.EventTicketTypeService;
 import com.functions.events.utils.EventsUtils;
 import com.functions.fulfilment.payment.PaymentProviderPolicy;
 import com.functions.global.exceptions.NotFoundException;
+import com.functions.stripe.services.StripeService;
 
 public sealed interface FulfilmentInitialisationScope {
     default ResolvedEventTicketType validateEvent(EventData event, Integer quantity, String ticketId) throws Exception {
@@ -38,9 +39,16 @@ public sealed interface FulfilmentInitialisationScope {
     }
 
     default void validatePaymentProvider(EventData event, ResolvedEventTicketType ticket) {
-        if (this instanceof FulfilmentInitialisationScope.PartnerPublic && ticket.getPrice() > 0
-                && !PaymentProviderPolicy.supportsStripe(event)) {
-            throw new IllegalArgumentException("Stripe booking is not available");
+        if (this instanceof FulfilmentInitialisationScope.PartnerPublic) {
+            if (ticket.getPrice() > 0 && !PaymentProviderPolicy.supportsStripe(event)) {
+                throw new IllegalArgumentException("Stripe booking is not available");
+            }
+            if (!Boolean.TRUE.equals(event.getPaymentsActive())) {
+                throw new IllegalArgumentException("Event payments are not enabled");
+            }
+            if (ticket.getPrice() != 0 && ticket.getPrice() < StripeService.MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT) {
+                throw new IllegalArgumentException("Ticket price is not supported for checkout");
+            }
         }
     }
 
