@@ -2,6 +2,7 @@ package com.functions.stripe.services;
 
 import java.time.Instant;
 import java.util.Optional;
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
@@ -15,6 +16,9 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.fulfilment.exceptions.FulfilmentSnapshotChangedException;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
+import com.functions.global.exceptions.NotFoundException;
 import com.functions.stripe.config.StripeConfig;
 import com.functions.stripe.config.StripeCustomFieldKeys;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
@@ -32,6 +36,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
+import com.stripe.param.checkout.SessionCreateParams.PaymentIntentData.CaptureMethod;
 
 /**
  * Service class for handling Stripe checkout operations.
@@ -60,21 +65,40 @@ public class CheckoutService {
      * @return Response containing the checkout URL
      */
     public static CreateStripeCheckoutSessionResponse createStripeCheckoutSession(
-            CreateStripeCheckoutSessionRequest request) throws Exception {
+            CreateStripeCheckoutSessionRequest request, FulfilmentInitialisationScope scope) throws Exception {
+        Objects.requireNonNull(scope, "Initialisation scope is required");
         logger.info("Creating checkout session for event {} ({} tickets)", request.eventId(), request.quantity());
 
         // Section A: Perform SPORTSHUB domain specific operations
+        Instant validationTime = Instant.now();
         CheckoutTransactionResult checkoutTransactionResult = FirebaseService.createFirestoreTransaction(transaction -> {
-            EventData eventData = EventsRepository.getActiveEventById(request.eventId(), request.isPrivate(), transaction)
-                    .orElseThrow(() -> new CheckoutDateTimeException("Event " + request.eventId() + " is not available"));
-            EventsUtils.validateEventTiming(eventData);
+            EventData eventData = EventsRepository.getActiveEventById(request.eventId(),
+                    scope instanceof FulfilmentInitialisationScope.PartnerPublic ? false : request.isPrivate(), transaction)
+                    .orElseThrow(() -> scope instanceof FulfilmentInitialisationScope.PartnerPublic
+                            ? new NotFoundException("Event is not available")
+                            : new CheckoutDateTimeException("Event " + request.eventId() + " is not available"));
+            if (scope instanceof FulfilmentInitialisationScope.PartnerPublic) {
+                ResolvedEventTicketType ticket = scope.validateEvent(
+                        eventData, request.quantity(), request.eventTicketTypeId(), validationTime);
+                scope.validatePaymentProvider(eventData, ticket);
+                validateEventForCheckout(eventData, ticket, request.quantity(), validationTime);
+            } else {
+                EventsUtils.validateEventTiming(eventData);
+                scope.validateBookingSnapshot(eventData,
+                        EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId()));
+            }
+            if ((scope instanceof FulfilmentInitialisationScope.PartnerPublic || scope.bookingSnapshot() != null)
+                    && (Boolean.TRUE.equals(eventData.getBookingApprovalEnabled())
+                            != (request.captureMethod() == CaptureMethod.MANUAL))) {
+                throw new FulfilmentSnapshotChangedException("Event booking requirements changed; refresh and try again");
+            }
 
             String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
             PrivateUserData privateUserData = Users.getPrivateUserDataById(organiserId, Optional.of(transaction));
             
             String stripeAccountId = validateAndGetStripeAccount(organiserId, privateUserData);
 
-            commitReservation(transaction, request, eventData, privateUserData);
+            commitReservation(transaction, request, eventData, privateUserData, scope, validationTime);
 
             return new CheckoutTransactionResult(eventData, stripeAccountId);
         });
@@ -95,8 +119,8 @@ public class CheckoutService {
     }
 
     private static void validateEventForCheckout(EventData eventData, ResolvedEventTicketType ticketType,
-            Integer quantity) throws Exception {
-        EventsUtils.validateEventTiming(eventData);
+            Integer quantity, Instant validationTime) throws Exception {
+        EventsUtils.validateEventTiming(eventData, validationTime);
 
         if (!Boolean.TRUE.equals(eventData.getPaymentsActive())) {
             logger.error("Event " + eventData.getEventId() + " does not have payments enabled");
@@ -131,14 +155,16 @@ public class CheckoutService {
      * @param eventData Event data - contains event details
      * @param privateUserData Private user data - contains organiser details
      */
-    private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData) throws Exception {
+    private static void commitReservation(Transaction transaction, CreateStripeCheckoutSessionRequest request, EventData eventData, PrivateUserData privateUserData, FulfilmentInitialisationScope scope, Instant validationTime) throws Exception {
         ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId());
-        validateEventForCheckout(eventData, ticketType, request.quantity());
+        validateEventForCheckout(eventData, ticketType, request.quantity(),
+                scope instanceof FulfilmentInitialisationScope.PartnerPublic ? validationTime : Instant.now());
 
         Firestore db = FirebaseService.getFirestore();
         String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);
 
-        DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(), request.isPrivate());
+        DocumentReference eventRef = EventsUtils.getEventRef(db, request.eventId(),
+                scope instanceof FulfilmentInitialisationScope.PartnerPublic ? false : request.isPrivate());
         DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
 
         boolean needsActivation = Boolean.FALSE.equals(privateUserData.getStripeAccountActive());

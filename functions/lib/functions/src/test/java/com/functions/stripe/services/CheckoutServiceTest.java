@@ -31,7 +31,12 @@ import org.mockito.MockedStatic;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
+import com.functions.global.exceptions.NotFoundException;
+import java.util.function.Consumer;
+import com.functions.events.models.PaymentProvider;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.users.models.PrivateUserData;
@@ -50,6 +55,8 @@ import com.stripe.param.checkout.SessionCreateParams;
 import com.stripe.param.checkout.SessionCreateParams.PaymentIntentData.CaptureMethod;
 
 public class CheckoutServiceTest {
+    private static final FulfilmentInitialisationScope GUEST = new FulfilmentInitialisationScope.Guest();
+    private static final FulfilmentInitialisationScope PARTNER = new FulfilmentInitialisationScope.PartnerPublic("organiser-1");
     private MockedStatic<FirebaseService> firebase;
     private MockedStatic<Users> users;
     private MockedStatic<Account> accounts;
@@ -164,7 +171,7 @@ public class CheckoutServiceTest {
                         return organiser;
                     });
             try {
-                CheckoutService.createStripeCheckoutSession(request(false));
+                CheckoutService.createStripeCheckoutSession(request(false), GUEST);
                 fail("Expected registration deadline rejection before reservation");
             } catch (CheckoutDateTimeException expected) {
                 users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)));
@@ -182,13 +189,15 @@ public class CheckoutServiceTest {
                 event.setIsActive(isActive);
                 event.setIsPrivate(isPrivate);
 
-                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(isPrivate)).stripeCheckoutSessionId());
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(isPrivate), GUEST).stripeCheckoutSessionId());
+                var boundGuest = GUEST.withBookingSnapshot(event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(isPrivate), boundGuest).stripeCheckoutSessionId());
             }
             DocumentReference expectedRef = isPrivate ? privateEventRef : eventRef;
-            verify(transaction, times(2)).get(expectedRef);
-            verify(transaction, times(2)).update(expectedRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
+            verify(transaction, times(4)).get(expectedRef);
+            verify(transaction, times(4)).update(expectedRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
         }
-        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(4));
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(8));
     }
 
     @Test
@@ -196,7 +205,7 @@ public class CheckoutServiceTest {
         commitFailure = new IOException("Firestore commit unavailable");
 
         try {
-            CheckoutService.createStripeCheckoutSession(request(false));
+            CheckoutService.createStripeCheckoutSession(request(false), GUEST);
             fail("Expected commit failure");
         } catch (IOException expected) {
             assertSame(commitFailure, expected);
@@ -205,9 +214,147 @@ public class CheckoutServiceTest {
         assertFalse(logMessages.stream().anyMatch(message -> message.startsWith("Reservation committed successfully")));
     }
 
+    @Test
+    public void partnerCurrentScopeAndCanonicalTicketChangesRejectBeforeOrganiserProviderOrWrites() throws Exception {
+        List<Consumer<EventData>> invalid = List.of(
+                current -> current.setOrganiserId("different-organiser"),
+                current -> current.setIsPrivate(true),
+                current -> current.setIsPrivate(null),
+                current -> current.setIsActive(false),
+                current -> current.setIsActive(null),
+                current -> current.getEventTicketTypes().get("ticket-1").setId("other-ticket"),
+                current -> current.getEventTicketTypes().get("ticket-1").setVacancy(null));
+        for (Consumer<EventData> mutation : invalid) {
+            event = availableEvent();
+            mutation.accept(event);
+            when(snapshot.toObject(EventData.class)).thenReturn(event);
+            try {
+                CheckoutService.createStripeCheckoutSession(request(false), PARTNER);
+                fail("Expected unavailable partner event");
+            } catch (NotFoundException expected) {
+                assertEquals("Event is not available", expected.getMessage());
+            }
+        }
+        users.verifyNoInteractions();
+        accounts.verifyNoInteractions();
+        stripeSessions.verifyNoInteractions();
+        verify(transaction, times(invalid.size())).get(eventRef);
+        verifyNoMoreInteractions(transaction);
+    }
+
+    @Test
+    public void partnerCurrentPaidProviderAndQuantityRejectBeforeOrganiserOrWrites() throws Exception {
+        for (Consumer<EventData> mutation : List.<Consumer<EventData>>of(
+                current -> current.setSupportedPaymentProviders(List.of()),
+                current -> current.setSupportedPaymentProviders(List.of(PaymentProvider.PYNG)),
+                current -> current.setMaxTicketsPerTransaction(0),
+                current -> current.setPaymentsActive(false),
+                current -> current.getEventTicketTypes().get("ticket-1").setPrice(49))) {
+            event = availableEvent();
+            mutation.accept(event);
+            when(snapshot.toObject(EventData.class)).thenReturn(event);
+            try {
+                CheckoutService.createStripeCheckoutSession(request(false), PARTNER);
+                fail("Expected current booking policy rejection");
+            } catch (IllegalArgumentException expected) {
+            }
+        }
+        users.verifyNoInteractions();
+        accounts.verifyNoInteractions();
+        stripeSessions.verifyNoInteractions();
+        verify(transaction, times(5)).get(eventRef);
+        verifyNoMoreInteractions(transaction);
+    }
+
+    @Test
+    public void bookingApprovalChangeRejectsBothCaptureModesBeforeOrganiserOrWrites() throws Exception {
+        for (FulfilmentInitialisationScope initialScope : List.of(PARTNER, GUEST)) {
+            for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
+                event.setBookingApprovalEnabled(capture == CaptureMethod.AUTOMATIC);
+                var scope = initialScope.withBookingSnapshot(event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                try {
+                    StripeService.getStripeCheckoutFromEventId(request(false, capture), scope);
+                    fail("Expected changed approval policy rejection");
+                } catch (IllegalArgumentException expected) {
+                }
+            }
+        }
+        users.verifyNoInteractions();
+        accounts.verifyNoInteractions();
+        stripeSessions.verifyNoInteractions();
+        verify(transaction, times(4)).get(eventRef);
+        verifyNoMoreInteractions(transaction);
+        event.setBookingApprovalEnabled(true);
+        var boundGuest = GUEST.withBookingSnapshot(event, EventTicketTypeService.resolveById(event, "ticket-1"));
+        assertEquals("cs_test", StripeService.getStripeCheckoutFromEventId(
+                request(false, CaptureMethod.MANUAL), boundGuest).stripeCheckoutSessionId());
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)));
+    }
+
+    @Test
+    public void bookingTicketWorkflowChangesRejectBeforeOrganiserOrWrites() throws Exception {
+        List<Consumer<EventData>> changes = List.of(
+                current -> current.getEventTicketTypes().get("ticket-1").setFormId("new-form"),
+                current -> current.setFormId("new-event-form"),
+                current -> current.getEventTicketTypes().get("ticket-1").setPrice(2000),
+                current -> current.getEventTicketTypes().get("ticket-1").setName("New ticket name"));
+        for (FulfilmentInitialisationScope initialScope : List.of(PARTNER, GUEST)) {
+            for (Consumer<EventData> change : changes) {
+                event = availableEvent();
+                var scope = initialScope.withBookingSnapshot(
+                        event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                change.accept(event);
+                when(snapshot.toObject(EventData.class)).thenReturn(event);
+                try {
+                    StripeService.getStripeCheckoutFromEventId(request(false), scope);
+                    fail("Expected changed ticket workflow rejection");
+                } catch (IllegalArgumentException expected) {
+                }
+            }
+        }
+        users.verifyNoInteractions();
+        accounts.verifyNoInteractions();
+        stripeSessions.verifyNoInteractions();
+        verify(transaction, times(changes.size() * 2)).get(eventRef);
+        verifyNoMoreInteractions(transaction);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void partnerFreeBookingRetainsStripePrerequisitesAndPublicReservationAcrossTransactionRetry() throws Exception {
+        Instant initialTime = Instant.parse("2026-10-18T00:00:00Z");
+        Instant deadline = initialTime.plusSeconds(60);
+        AtomicReference<Instant> currentTime = new AtomicReference<>(initialTime);
+        event.setRegistrationDeadline(Timestamp.ofTimeSecondsAndNanos(deadline.getEpochSecond(), 0));
+        event.getEventTicketTypes().get("ticket-1").setPrice(0);
+        event.setFormId("current-form");
+        event.setSupportedPaymentProviders(List.of());
+        when(FirebaseService.getFirestore().runTransaction(any(Transaction.Function.class))).thenAnswer(invocation -> {
+            Transaction.Function<?> callback = invocation.getArgument(0);
+            callback.updateCallback(transaction);
+            currentTime.set(deadline.plusSeconds(1));
+            return ApiFutures.immediateFuture(callback.updateCallback(transaction));
+        });
+        try (MockedStatic<Instant> clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(invocation -> currentTime.get());
+            for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
+                currentTime.set(initialTime);
+                event.setBookingApprovalEnabled(capture == CaptureMethod.MANUAL);
+                var scope = ((FulfilmentInitialisationScope.PartnerPublic) PARTNER).withBookingSnapshot(
+                        event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false, capture), scope).stripeCheckoutSessionId());
+            }
+        }
+        users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)), times(4));
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(2));
+        verify(transaction, times(4)).get(eventRef);
+        verify(transaction, times(4)).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
+        verifyNoMoreInteractions(transaction);
+    }
+
     private void assertUnavailableBeforeReservation() throws Exception {
         try {
-            CheckoutService.createStripeCheckoutSession(request(false));
+            CheckoutService.createStripeCheckoutSession(request(false), GUEST);
             fail("Expected unavailable event rejection");
         } catch (CheckoutDateTimeException expected) {
             users.verifyNoInteractions();
@@ -219,8 +366,12 @@ public class CheckoutServiceTest {
     }
 
     private static CreateStripeCheckoutSessionRequest request(boolean isPrivate) {
+        return request(isPrivate, CaptureMethod.AUTOMATIC);
+    }
+
+    private static CreateStripeCheckoutSessionRequest request(boolean isPrivate, CaptureMethod capture) {
         return new CreateStripeCheckoutSessionRequest("event-1", isPrivate, 1, "https://example.test/cancel",
-                "https://example.test/success", "fulfilment-1", "end-1", CaptureMethod.AUTOMATIC, "ticket-1");
+                "https://example.test/success", "fulfilment-1", "end-1", capture, "ticket-1");
     }
 
     private static EventData availableEvent() {
@@ -234,6 +385,7 @@ public class CheckoutServiceTest {
         event.setEventId("event-1");
         event.setOrganiserId("organiser-1");
         event.setIsActive(true);
+        event.setIsPrivate(false);
         event.setPaymentsActive(true);
         event.setEndDate(Timestamp.ofTimeSecondsAndNanos(Instant.now().plusSeconds(3600).getEpochSecond(), 0));
         event.setRegistrationDeadline(event.getEndDate());

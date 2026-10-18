@@ -89,6 +89,22 @@ public class EventTicketTypeService {
         return toResolved(ticketType, false);
     }
 
+    public static Optional<ResolvedEventTicketType> resolvePublicById(EventData event, String eventTicketTypeId) {
+        if (event == null || eventTicketTypeId == null || eventTicketTypeId.isBlank()
+                || event.getEventTicketTypes() == null) {
+            return Optional.empty();
+        }
+        EventTicketType ticketType = event.getEventTicketTypes().get(eventTicketTypeId);
+        // Inventory writes use the stored ID as one segment in a dotted field path.
+        if (ticketType == null || !eventTicketTypeId.equals(ticketType.getId())
+                || eventTicketTypeId.chars().anyMatch(character -> ".~*/[]".indexOf(character) >= 0)
+                || ticketType.getName() == null || ticketType.getName().isBlank()
+                || ticketType.getPrice() == null || ticketType.getPrice() < 0 || ticketType.getVacancy() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(toResolved(ticketType, false));
+    }
+
     /**
      * Resolves the ticket type for reserved slots: General Admission by name, else first in map.
      */

@@ -2,17 +2,26 @@ package com.functions.fulfilment.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.Optional;
 
 import org.junit.After;
@@ -24,7 +33,17 @@ import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.fulfilment.models.PaymentProvider;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
+import com.functions.fulfilment.models.InitialisedFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.firebase.services.FirebaseService;
+import com.functions.global.exceptions.NotFoundException;
+import com.google.cloud.firestore.Transaction;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
+import com.functions.fulfilment.pyng.PyngHostedCheckout;
+import com.functions.fulfilment.pyng.PyngService;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
@@ -34,6 +53,8 @@ import com.functions.utils.environment.EnvironmentUtils;
 import com.google.cloud.Timestamp;
 
 public class FulfilmentServiceTest {
+    private static final FulfilmentInitialisationScope GUEST = new FulfilmentInitialisationScope.Guest();
+    private static final FulfilmentInitialisationScope PARTNER = new FulfilmentInitialisationScope.PartnerPublic("organiser-1");
     private MockedStatic<EventsRepository> events;
     private MockedStatic<FulfilmentSessionRepository> sessions;
     private MockedStatic<StripeService> stripe;
@@ -86,22 +107,19 @@ public class FulfilmentServiceTest {
 
     @Test
     public void activeAndLegacyEventsClassifyUsingTheValidatedSnapshot() throws Exception {
-        stripe.when(() -> StripeService.getStripeCheckoutUrl(
-                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString()))
-                .thenReturn(new CreateStripeCheckoutSessionResponse("https://checkout.test/session", "cs_test", "acct_test"));
         for (Boolean isActive : new Boolean[] { true, null }) {
             EventData event = availableEvent(isActive);
-            EventData laterEvent = availableEvent(isActive);
-            laterEvent.getEventTicketTypes().get("ticket-1").setVacancy(1);
-            events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
-            events.when(() -> EventsRepository.getEventById("event-1")).thenReturn(Optional.of(laterEvent));
-            sessions.when(() -> FulfilmentSessionRepository.createFulfilmentSession(anyString(), any()))
-                    .thenReturn("session-1");
 
-            assertEquals("session-1", FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.STRIPE));
+            events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+            AtomicReference<FulfilmentSession> persisted = captureSession();
+            InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
+                    "event-1", 1, "ticket-1", PaymentProvider.STRIPE, GUEST);
+            assertSame(event, persisted.get().getEventData());
+            assertEquals(persisted.get().getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
         }
         sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
-                anyString(), isA(WaitlistFulfilmentSession.class)), times(2));
+                anyString(), isA(WaitlistFulfilmentSession.class), any()), times(2));
+        events.verify(() -> EventsRepository.getEventById(anyString()), times(0));
         stripe.verifyNoInteractions();
     }
 
@@ -111,7 +129,7 @@ public class FulfilmentServiceTest {
         events.when(() -> EventsRepository.getActiveEventById("event-1")).thenThrow(failure);
 
         try {
-            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.STRIPE);
+            FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, GUEST);
             fail("Expected database failure");
         } catch (IllegalStateException expected) {
             assertSame(failure, expected);
@@ -120,9 +138,265 @@ public class FulfilmentServiceTest {
         stripe.verifyNoInteractions();
     }
 
+    @Test
+    public void partnerRejectsMissingScopeAndMalformedCanonicalTicketsBeforeEffects() throws Exception {
+        List<Consumer<EventData>> invalid = List.of(
+                event -> event.setOrganiserId("other-organiser"),
+                event -> event.setIsPrivate(true),
+                event -> event.setIsPrivate(null),
+                event -> event.setIsActive(false),
+                event -> event.setIsActive(null),
+                event -> event.setRegistrationDeadline(null),
+                event -> event.setEndDate(null),
+                event -> event.getEventTicketTypes().get("ticket-1").setId("other-ticket"),
+                event -> event.getEventTicketTypes().get("ticket-1").setPrice(null),
+                event -> event.getEventTicketTypes().get("ticket-1").setVacancy(null));
+        for (Consumer<EventData> mutation : invalid) {
+            EventData event = availableEvent(true);
+            mutation.accept(event);
+            events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+            try {
+                FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+                fail("Expected unavailable partner event");
+            } catch (NotFoundException expected) {
+                assertEquals("Event is not available", expected.getMessage());
+            }
+        }
+        events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.empty());
+        try {
+            FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+            fail("Expected missing public event rejection");
+        } catch (NotFoundException expected) {
+            assertEquals("Event is not available", expected.getMessage());
+        }
+        events.verify(() -> EventsRepository.getActiveEventById(anyString()), times(0));
+        events.verify(() -> EventsRepository.getEventById(anyString()), times(0));
+        sessions.verifyNoInteractions();
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    public void partnerPaidUnsupportedProviderRejectsButFreeWorkflowRemainsAvailable() throws Exception {
+        EventData event = availableEvent(true);
+        event.getEventTicketTypes().get("ticket-1").setVacancy(2);
+        event.setSupportedPaymentProviders(List.of());
+        events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+        try {
+            FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+            fail("Expected unsupported paid booking rejection");
+        } catch (IllegalArgumentException expected) {
+            sessions.verifyNoInteractions();
+            stripe.verifyNoInteractions();
+        }
+        event.getEventTicketTypes().get("ticket-1").setPrice(0);
+        stubStripe();
+        AtomicReference<FulfilmentSession> persisted = captureSession();
+        FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+        assertEquals(FulfilmentEntityType.STRIPE, firstEntity(persisted.get()));
+    }
+
+    @Test
+    public void supportedWorkflowsReturnSavedFirstEntityWithoutSessionReadsOrStartHooks() throws Exception {
+        stubStripe();
+        AtomicReference<FulfilmentSession> persisted = captureSession();
+        for (FulfilmentInitialisationScope scope : List.of(PARTNER, GUEST)) {
+            for (boolean approval : new boolean[] { false, true }) {
+                for (boolean forms : new boolean[] { false, true }) {
+                    EventData event = availableEvent(true);
+                    event.setBookingApprovalEnabled(approval);
+                    event.getEventTicketTypes().get("ticket-1").setVacancy(2);
+                    if (forms) {
+                        event.getEventTicketTypes().get("ticket-1").setFormId("form-1");
+                    }
+                    events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+                    events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+                    InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
+                            "event-1", 1, "ticket-1", PaymentProvider.STRIPE, scope);
+                    FulfilmentSession saved = persisted.get();
+                    assertSame(event, saved.getEventData());
+                    assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
+                    assertEquals(forms ? FulfilmentEntityType.FORMS
+                            : approval ? FulfilmentEntityType.DELAYED_STRIPE : FulfilmentEntityType.STRIPE, firstEntity(saved));
+                    assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
+                    var snapshot = new FulfilmentInitialisationScope.BookingSnapshot("General Admission", 1350,
+                            forms ? "form-1" : null);
+                    FulfilmentInitialisationScope expectedScope = scope instanceof FulfilmentInitialisationScope.PartnerPublic
+                            ? new FulfilmentInitialisationScope.PartnerPublic("organiser-1", snapshot)
+                            : new FulfilmentInitialisationScope.Guest(snapshot);
+                    if (approval) {
+                        stripe.verify(() -> StripeService.getDelayedStripeCheckoutUrl(
+                                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+                    } else {
+                        stripe.verify(() -> StripeService.getStripeCheckoutUrl(
+                                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+                    }
+                }
+            }
+        }
+        sessions.verify(() -> FulfilmentSessionRepository.getFulfilmentSession(anyString(), any()), times(0));
+        events.verify(() -> EventsRepository.getEventById(anyString()), times(0));
+    }
+
+    @Test
+    public void guestPyngInitialisationRetainsTheValidatedPrivateEventAndHostedPaymentStep() throws Exception {
+        EventData event = availableEvent(true);
+        event.setIsPrivate(true);
+        event.getEventTicketTypes().get("ticket-1").setVacancy(2);
+        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+        AtomicReference<FulfilmentSession> persisted = captureSession();
+        PyngHostedCheckout checkout = mock(PyngHostedCheckout.class);
+        when(checkout.checkoutSessionId()).thenReturn("pyng-session");
+        when(checkout.hostedPageUrl()).thenReturn("https://checkout.example/pyng");
+        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class)) {
+            pyng.when(() -> PyngService.createHostedCheckout(any())).thenReturn(checkout);
+            InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
+                    "event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
+            var saved = (PyngCheckoutFulfilmentSession) persisted.get();
+            assertSame(event, saved.getEventData());
+            assertEquals(result.fulfilmentSessionId(), saved.getId());
+            assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
+            assertEquals(FulfilmentEntityType.PYNG, firstEntity(saved));
+            assertEquals("pyng-session", saved.getPyngMetadata().getCheckoutSessionId());
+            pyng.verify(() -> PyngService.createHostedCheckout(saved));
+        }
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void partnerWaitlistRechecksAndCreatesInOneTransactionWithNoCapabilityResult() throws Exception {
+        Instant initialTime = Instant.parse("2026-10-18T00:00:00Z");
+        Instant deadline = initialTime.plusSeconds(60);
+        AtomicReference<Instant> currentTime = new AtomicReference<>(initialTime);
+        EventData event = availableEvent(true);
+        event.setSupportedPaymentProviders(List.of());
+        event.setPaymentsActive(false);
+        event.setRegistrationDeadline(Timestamp.ofTimeSecondsAndNanos(deadline.getEpochSecond(), 0));
+        EventData current = availableEvent(true);
+        current.setRegistrationDeadline(event.getRegistrationDeadline());
+        current.setPaymentsActive(false);
+        events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+        Transaction transaction = mock(Transaction.class);
+        events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
+                .thenReturn(Optional.of(current));
+        AtomicReference<FulfilmentSession> persisted = captureSession();
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class);
+                MockedStatic<Instant> clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(invocation -> currentTime.get());
+            firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
+                    .thenAnswer(invocation -> {
+                        Transaction.Function<?> callback = invocation.getArgument(0);
+                        assertNull(callback.updateCallback(transaction));
+                        currentTime.set(deadline.plusSeconds(1));
+                        Object result = callback.updateCallback(transaction);
+                        assertNull(result);
+                        return result;
+                    });
+            InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
+                    "event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+            FulfilmentSession saved = persisted.get();
+            assertSame(event, saved.getEventData());
+            assertEquals(FulfilmentEntityType.WAITLIST, firstEntity(saved));
+            assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
+            assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
+            sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
+                    result.fulfilmentSessionId(), saved, Optional.of(transaction)), times(2));
+        }
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void partnerWaitlistRejectsAvailableInventoryOnTheFirstAttemptAndOnRetry() throws Exception {
+        EventData event = availableEvent(true);
+        events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+        Transaction transaction = mock(Transaction.class);
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+            for (boolean retry : new boolean[] { false, true }) {
+                EventData current = availableEvent(true);
+                current.getEventTicketTypes().get("ticket-1").setVacancy(3);
+                events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
+                        .thenReturn(Optional.of(current));
+                firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
+                        .thenAnswer(invocation -> {
+                            Transaction.Function<?> callback = invocation.getArgument(0);
+                            if (retry) {
+                                current.getEventTicketTypes().get("ticket-1").setVacancy(0);
+                                assertNull(callback.updateCallback(transaction));
+                                current.getEventTicketTypes().get("ticket-1").setVacancy(3);
+                            }
+                            return callback.updateCallback(transaction);
+                        });
+                try {
+                    FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+                    fail("Expected available inventory rejection");
+                } catch (IllegalArgumentException expected) {
+                    assertEquals("Event booking requirements changed; refresh and try again", expected.getMessage());
+                }
+            }
+        }
+        sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(anyString(), any(), eq(Optional.of(transaction))));
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void partnerWaitlistScopeChangeCannotPersistSession() throws Exception {
+        EventData event = availableEvent(true);
+        events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+        Transaction transaction = mock(Transaction.class);
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+            firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
+                    .thenAnswer(invocation -> ((Transaction.Function<?>) invocation.getArgument(0)).updateCallback(transaction));
+            for (Consumer<EventData> mutation : List.<Consumer<EventData>>of(
+                    current -> current.setOrganiserId("other-organiser"),
+                    current -> current.setIsPrivate(true),
+                    current -> current.setIsActive(false),
+                    current -> current.setWaitlistEnabled(false),
+                    current -> current.getEventTicketTypes().get("ticket-1").setId("changed-ticket"))) {
+                EventData current = availableEvent(true);
+                mutation.accept(current);
+                events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
+                        .thenReturn(Optional.of(current));
+                try {
+                    FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+                    fail("Expected current scope rejection");
+                } catch (NotFoundException expected) {
+                    assertEquals("Event is not available", expected.getMessage());
+                }
+            }
+        }
+        sessions.verifyNoInteractions();
+        stripe.verifyNoInteractions();
+    }
+
+    private void stubStripe() {
+        var response = new CreateStripeCheckoutSessionResponse("https://checkout.test/session", "cs_test", "acct_test");
+        stripe.when(() -> StripeService.getStripeCheckoutUrl(
+                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(response);
+        stripe.when(() -> StripeService.getDelayedStripeCheckoutUrl(
+                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(response);
+    }
+
+    private AtomicReference<FulfilmentSession> captureSession() throws Exception {
+        AtomicReference<FulfilmentSession> persisted = new AtomicReference<>();
+        sessions.when(() -> FulfilmentSessionRepository.createFulfilmentSession(anyString(), any(), any()))
+                .thenAnswer(invocation -> {
+                    persisted.set(invocation.getArgument(1));
+                    return invocation.getArgument(0);
+                });
+        return persisted;
+    }
+
+    private FulfilmentEntityType firstEntity(FulfilmentSession session) {
+        return session.getFulfilmentEntityMap().get(session.getFulfilmentEntityIds().get(0)).getType();
+    }
+
     private void assertUnavailable() throws Exception {
         try {
-            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.STRIPE);
+            FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, GUEST);
             fail("Expected unavailable event rejection");
         } catch (CheckoutDateTimeException expected) {
             sessions.verifyNoInteractions();
@@ -139,9 +413,11 @@ public class FulfilmentServiceTest {
         ticket.setVacancy(0);
         EventData event = new EventData();
         event.setEventId("event-1");
+        event.setOrganiserId("organiser-1");
         event.setIsActive(isActive);
         event.setIsPrivate(false);
         event.setBookingApprovalEnabled(false);
+        event.setPaymentsActive(true);
         event.setEndDate(Timestamp.ofTimeSecondsAndNanos(Instant.now().plusSeconds(3600).getEpochSecond(), 0));
         event.setRegistrationDeadline(event.getEndDate());
         event.setWaitlistEnabled(true);
