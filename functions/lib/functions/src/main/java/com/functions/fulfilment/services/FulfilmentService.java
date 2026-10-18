@@ -35,7 +35,6 @@ import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
-import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -87,8 +86,8 @@ public class FulfilmentService {
             logger.info("Found old fulfilment sessions to delete: {}", oldSessionIds);
             for (String id : oldSessionIds) {
                 try {
-                    if (shouldRetainPyngCheckout(id)) {
-                        logger.info("Skipping cleanup of in-progress PYNG_CHECKOUT session {}", id);
+                    if (isPyngCheckout(id)) {
+                        logger.info("Skipping cleanup of PYNG_CHECKOUT session {}", id);
                         continue;
                     }
                     deleteFulfilmentSessionAndTempFormResponses(id);
@@ -107,17 +106,13 @@ public class FulfilmentService {
     }
 
     /**
-     * A Pyng checkout stays until polling has recorded a terminal payment status.
+     * The cleanup cron never deletes a PYNG_CHECKOUT session.
      */
-    private static boolean shouldRetainPyngCheckout(String fulfilmentSessionId) {
+    private static boolean isPyngCheckout(String fulfilmentSessionId) {
         try {
             Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSession(
                     fulfilmentSessionId, Optional.empty());
-            if (maybeSession.isEmpty() || !(maybeSession.get() instanceof PyngCheckoutFulfilmentSession pyngSession)) {
-                return false;
-            }
-            PyngMetadata metadata = pyngSession.getPyngMetadata();
-            return metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal();
+            return maybeSession.isPresent() && maybeSession.get() instanceof PyngCheckoutFulfilmentSession;
         } catch (Exception e) {
             logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
                     fulfilmentSessionId, e);
