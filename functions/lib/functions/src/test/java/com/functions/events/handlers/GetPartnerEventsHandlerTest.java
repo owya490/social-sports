@@ -3,6 +3,7 @@ package com.functions.events.handlers;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 
 import java.util.List;
 
@@ -14,55 +15,55 @@ import org.mockito.MockedStatic;
 import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.services.EventsService;
-import com.functions.global.exceptions.NotFoundException;
+import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
+import com.functions.partners.models.PartnerContext;
 import com.functions.utils.JavaUtils;
-import com.functions.utils.environment.Environment;
-import com.functions.utils.environment.EnvironmentUtils;
 
 public class GetPartnerEventsHandlerTest {
+    private static final String INTEGRATION = "test-partner";
+    private static final String ORGANISER = "assigned-organiser";
+    private static final AuthContext PARTNER = AuthContext.partner(
+            new PartnerContext(INTEGRATION, ORGANISER, "https://partner.example"));
     private final GetPartnerEventsHandler handler = new GetPartnerEventsHandler();
     private MockedStatic<EventsService> events;
-    private MockedStatic<EnvironmentUtils> environment;
 
     @Before
     public void setUp() {
         events = mockStatic(EventsService.class);
-        environment = mockStatic(EnvironmentUtils.class);
-        environment.when(EnvironmentUtils::getEnvironment).thenReturn(Environment.PRODUCTION);
     }
 
     @After
     public void tearDown() {
-        environment.close();
         events.close();
     }
 
     @Test
-    public void productionPartnerUsesServerOrganiserDespiteClientOverride() throws Exception {
+    public void verifiedPartnerUsesServerOrganiserWithAbsentOrMatchingAssertion() throws Exception {
         GetPartnerEventsResponse response = new GetPartnerEventsResponse(List.of());
-        events.when(() -> EventsService.getPublicPartnerEventsByOrganiser("98PJNSoCmNU5zslxa1wIdZ3mPdf2"))
+        events.when(() -> EventsService.getPublicPartnerEventsByOrganiser(ORGANISER))
                 .thenReturn(response);
-        GetPartnerEventsRequest request = handler.parse(request(
-                "{\"partner\":\"syd-grass\",\"organiserId\":\"other-organiser\"}"));
 
-        assertSame(response, handler.handle(request, AuthContext.anonymous()));
-        events.verify(() -> EventsService.getPublicPartnerEventsByOrganiser("98PJNSoCmNU5zslxa1wIdZ3mPdf2"));
+        for (String data : new String[] { "{}",
+                "{\"partner\":\"test-partner\",\"organiserId\":\"other-organiser\"}" }) {
+            assertSame(response, handler.handle(handler.parse(request(data)), PARTNER));
+        }
+        events.verify(() -> EventsService.getPublicPartnerEventsByOrganiser(ORGANISER), times(2));
         events.verifyNoMoreInteractions();
     }
 
     @Test
-    public void rejectsMissingBlankAndNonStringSelectorsBeforeReadingEvents() throws Exception {
+    public void rejectsMalformedAssertionsAndNonObjectDataBeforeReadingEvents() throws Exception {
         for (String data : new String[] {
-                "{}", "{\"partner\":null}", "{\"partner\":\"\"}", "{\"partner\":\" \"}",
+                "{\"partner\":null}", "{\"partner\":\"\"}", "{\"partner\":\" \"}",
                 "{\"partner\":1}", "{\"partner\":true}", "{\"partner\":[]}", "{\"partner\":{}}",
                 "null", "[]", "1"
         }) {
             try {
                 handler.parse(request(data));
-                fail("Expected invalid partner selector to fail");
+                fail("Expected invalid partner assertion to fail");
             } catch (IllegalArgumentException expected) {
             }
         }
@@ -70,12 +71,12 @@ public class GetPartnerEventsHandlerTest {
     }
 
     @Test
-    public void rejectsMissingOrBlankTypedRequestBeforeReadingEvents() {
+    public void rejectsMissingAndBlankTypedRequestBeforeReadingEvents() {
         for (GetPartnerEventsRequest request : new GetPartnerEventsRequest[] {
-                null, new GetPartnerEventsRequest(null), new GetPartnerEventsRequest(" ")
+                null, new GetPartnerEventsRequest(" ")
         }) {
             try {
-                handler.handle(request, AuthContext.anonymous());
+                handler.handle(request, PARTNER);
                 fail("Expected invalid partner request to fail");
             } catch (IllegalArgumentException expected) {
             }
@@ -84,26 +85,25 @@ public class GetPartnerEventsHandlerTest {
     }
 
     @Test
-    public void reportsUnknownAndInexactSlugsAsNotFound() throws Exception {
-        for (String partner : new String[] { "unknown", "SYD-GRASS", "syd-grass " }) {
+    public void rejectsMismatchedAndInexactAssertionsBeforeReadingEvents() throws Exception {
+        for (String partner : new String[] { "unknown", "TEST-PARTNER", "test-partner " }) {
             GetPartnerEventsRequest request = handler.parse(request("{\"partner\":\"" + partner + "\"}"));
             try {
-                handler.handle(request, AuthContext.anonymous());
-                fail("Expected unknown partner to fail");
-            } catch (NotFoundException expected) {
+                handler.handle(request, PARTNER);
+                fail("Expected mismatched partner assertion to fail");
+            } catch (IllegalArgumentException expected) {
             }
         }
         events.verifyNoInteractions();
     }
 
     @Test
-    public void knownPartnerFailsClosedInDevelopmentAndUnknownEnvironment() {
-        for (Environment target : new Environment[] { Environment.DEVELOPMENT, null }) {
-            environment.when(EnvironmentUtils::getEnvironment).thenReturn(target);
+    public void rejectsNonPartnerContextsBeforeReadingEvents() {
+        for (AuthContext context : new AuthContext[] { AuthContext.anonymous(), AuthContext.authenticated("user") }) {
             try {
-                handler.handle(new GetPartnerEventsRequest("syd-grass"), AuthContext.anonymous());
-                fail("Expected unconfigured partner environment to fail");
-            } catch (IllegalStateException expected) {
+                handler.handle(new GetPartnerEventsRequest(null), context);
+                fail("Expected partner context to be required");
+            } catch (AuthenticationException expected) {
             }
         }
         events.verifyNoInteractions();
@@ -112,11 +112,11 @@ public class GetPartnerEventsHandlerTest {
     @Test
     public void propagatesServiceFailure() {
         IllegalStateException failure = new IllegalStateException("Firestore unavailable");
-        events.when(() -> EventsService.getPublicPartnerEventsByOrganiser("98PJNSoCmNU5zslxa1wIdZ3mPdf2"))
+        events.when(() -> EventsService.getPublicPartnerEventsByOrganiser(ORGANISER))
                 .thenThrow(failure);
 
         try {
-            handler.handle(new GetPartnerEventsRequest("syd-grass"), AuthContext.anonymous());
+            handler.handle(new GetPartnerEventsRequest(null), PARTNER);
             fail("Expected service failure to propagate");
         } catch (IllegalStateException expected) {
             assertSame(failure, expected);

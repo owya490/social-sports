@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -29,16 +30,21 @@ import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.events.models.AbstractEventData.AttendeesMetadata;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
+import com.functions.events.models.PaymentProvider;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerEvent;
 import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.fulfilment.payment.PaymentProviderPolicy;
+import com.functions.fulfilment.pyng.PyngService;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.responses.UnifiedResponse;
+import com.functions.users.services.Users;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
+import com.stripe.model.Account;
 
 public class PartnerEventsServiceTest {
     private static final String ORGANISER = "partner-organiser";
@@ -120,7 +126,8 @@ public class PartnerEventsServiceTest {
         assertEquals(Set.of("events"), fieldNames(json.path("data")));
         assertEquals(Set.of("eventId", "name", "description", "location", "startDate", "endDate",
                 "registrationDeadline", "image", "thumbnail", "eventTags", "paused", "paymentsActive",
-                "waitlistEnabled", "bookingApprovalEnabled", "maxTicketsPerTransaction", "ticketTypes"),
+                "waitlistEnabled", "bookingApprovalEnabled", "maxTicketsPerTransaction", "supportedPaymentProviders",
+                "ticketTypes"),
                 fieldNames(publicEvent));
         assertEquals(Set.of("id", "name", "priceCents", "soldOut", "vacancy"), fieldNames(publicTicket));
         assertEquals("Public event description", publicEvent.path("description").asText());
@@ -134,7 +141,38 @@ public class PartnerEventsServiceTest {
         assertTrue(publicEvent.path("startDate").asText().endsWith("Z"));
         assertEquals(2500, publicTicket.path("priceCents").asInt());
         assertEquals(4, publicTicket.path("vacancy").asInt());
+        assertEquals(JavaUtils.objectMapper.valueToTree(List.of("STRIPE")), publicEvent.path("supportedPaymentProviders"));
         assertFalse(json.toString().contains("private"));
+    }
+
+    @Test
+    public void reportsOnlyConfiguredImplementedHostedPaymentProviders() {
+        List<ProviderCase> cases = List.of(
+                new ProviderCase(null, List.of(PaymentProvider.STRIPE)),
+                new ProviderCase(List.of(), List.of()),
+                new ProviderCase(List.of(PaymentProvider.STRIPE), List.of(PaymentProvider.STRIPE)),
+                new ProviderCase(List.of(PaymentProvider.STRIPE, PaymentProvider.STRIPE), List.of(PaymentProvider.STRIPE)),
+                new ProviderCase(List.of(PaymentProvider.STRIPE, PaymentProvider.PYNG), List.of(PaymentProvider.STRIPE)),
+                new ProviderCase(List.of(PaymentProvider.PYNG, PaymentProvider.STRIPE), List.of(PaymentProvider.STRIPE)),
+                new ProviderCase(List.of(PaymentProvider.PYNG), List.of()),
+                new ProviderCase(Arrays.asList(null, PaymentProvider.PYNG), List.of()));
+
+        try (MockedStatic<Users> users = mockStatic(Users.class);
+                MockedStatic<Account> stripeAccounts = mockStatic(Account.class);
+                MockedStatic<PyngService> pyng = mockStatic(PyngService.class)) {
+            for (ProviderCase testCase : cases) {
+                EventData event = event("event-1");
+                event.setSupportedPaymentProviders(testCase.configured());
+
+                assertEquals(testCase.expected(), load(event).events().get(0).supportedPaymentProviders());
+                assertEquals(!testCase.expected().isEmpty(), PaymentProviderPolicy.supportsStripe(event));
+            }
+            users.verifyNoInteractions();
+            stripeAccounts.verifyNoInteractions();
+            pyng.verifyNoInteractions();
+        }
+        repository.verify(() -> EventsRepository.getActivePublicEventsByOrganiser(ORGANISER), times(cases.size()));
+        repository.verifyNoMoreInteractions();
     }
 
     @Test
@@ -191,7 +229,8 @@ public class PartnerEventsServiceTest {
                 new PartnerTicketType("b", "Early Bird", 1500, true, 0),
                 new PartnerTicketType("z", "Early Bird", 1200, false, 7)), result);
         for (PartnerTicketType advertised : result) {
-            ResolvedEventTicketType checkoutType = EventTicketTypeService.resolveById(event, advertised.id());
+            ResolvedEventTicketType checkoutType = EventTicketTypeService.resolvePublicById(event, advertised.id())
+                    .orElseThrow();
             assertEquals(advertised.id(), checkoutType.getId());
             assertEquals(Integer.valueOf(advertised.priceCents()), checkoutType.getPrice());
         }
@@ -242,25 +281,51 @@ public class PartnerEventsServiceTest {
     @Test
     public void rejectsMalformedOrUnwritablePersistedTicketTypes() {
         List<Consumer<EventTicketType>> invalidChanges = List.of(
+                ticket -> ticket.setId(null),
                 ticket -> ticket.setId(" "),
                 ticket -> ticket.setName(null),
+                ticket -> ticket.setName(" "),
                 ticket -> ticket.setPrice(null),
                 ticket -> ticket.setPrice(-1),
                 ticket -> ticket.setVacancy(null));
         for (Consumer<EventTicketType> change : invalidChanges) {
             EventData invalid = event("invalid-event");
             change.accept(invalid.getEventTicketTypes().get("type-1"));
+            assertFalse(EventTicketTypeService.resolvePublicById(invalid, "type-1").isPresent());
             assertInvalid(invalid);
         }
         EventData alias = event("alias");
         alias.setEventTicketTypes(Map.of("legacy-key", ticket("stored-id", "General Admission", 1000, 1)));
+        assertFalse(EventTicketTypeService.resolvePublicById(alias, "legacy-key").isPresent());
+        assertFalse(EventTicketTypeService.resolvePublicById(alias, "stored-id").isPresent());
+        assertEquals("stored-id", EventTicketTypeService.resolveById(alias, "legacy-key").getId());
+        assertEquals("stored-id", EventTicketTypeService.resolveById(alias, "stored-id").getId());
         assertInvalid(alias);
         for (char character : ".~*/[]".toCharArray()) {
             String id = "invalid" + character + "id";
             EventData invalid = event("invalid-path-id");
             invalid.setEventTicketTypes(Map.of(id, ticket(id, "General Admission", 1000, 1)));
+            assertFalse(EventTicketTypeService.resolvePublicById(invalid, id).isPresent());
             assertInvalid(invalid);
         }
+    }
+
+    @Test
+    public void publicTicketResolutionDoesNotInventMissingTicketTypes() {
+        EventData event = event("event-1");
+        assertFalse(EventTicketTypeService.resolvePublicById(null, "type-1").isPresent());
+        for (String id : new String[] { null, "", " ", "missing" }) {
+            assertFalse(EventTicketTypeService.resolvePublicById(event, id).isPresent());
+        }
+        event.setEventTicketTypes(null);
+        assertFalse(EventTicketTypeService.resolvePublicById(event, "type-1").isPresent());
+        event.setEventTicketTypes(Map.of());
+        assertFalse(EventTicketTypeService.resolvePublicById(event, "type-1").isPresent());
+        Map<String, EventTicketType> nullTicket = new LinkedHashMap<>();
+        nullTicket.put("type-1", null);
+        event.setEventTicketTypes(nullTicket);
+        assertFalse(EventTicketTypeService.resolvePublicById(event, "type-1").isPresent());
+        assertInvalid(event);
     }
 
     @Test
@@ -344,4 +409,6 @@ public class PartnerEventsServiceTest {
         node.fieldNames().forEachRemaining(names::add);
         return names;
     }
+
+    private record ProviderCase(List<PaymentProvider> configured, List<PaymentProvider> expected) {}
 }

@@ -13,9 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.ResolvedEventTicketType;
-import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.fulfilment.models.FulfilmentSessionService;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -29,15 +29,9 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
     private static final Logger logger = LoggerFactory.getLogger(PyngCheckoutFulfilmentService.class);
 
     @Override
-    public PyngCheckoutFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets, String eventTicketTypeId) throws Exception {
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new Exception("Failed to find event data for event ID: " + eventId);
-        }
-
-        EventData eventData = maybeEventData.get();
+    public PyngCheckoutFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, EventData eventData,
+            Integer numTickets, String eventTicketTypeId, FulfilmentInitialisationScope scope) throws Exception {
+        String eventId = eventData.getEventId();
         ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
         List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructPyngCheckoutFulfilmentEntities(
                 eventId, eventData, numTickets, eventTicketTypeId);

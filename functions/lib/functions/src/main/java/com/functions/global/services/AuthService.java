@@ -4,6 +4,7 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.AuthLevel;
+import com.functions.partners.services.PartnerIntegrationService;
 import com.google.cloud.functions.HttpRequest;
 import com.google.firebase.ErrorCode;
 import com.google.firebase.auth.FirebaseAuth;
@@ -28,6 +29,7 @@ public final class AuthService {
         return switch (requiredAuthLevel) {
             case PUBLIC -> AuthContext.anonymous();
             case AUTHENTICATED -> AuthContext.authenticated(verifyFirebaseIdToken(request));
+            case PARTNER -> AuthContext.partner(PartnerIntegrationService.verify(request));
         };
     }
 

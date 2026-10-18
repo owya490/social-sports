@@ -19,6 +19,7 @@ import com.functions.fulfilment.handlers.GetFulfilmentSessionInfoHandler;
 import com.functions.fulfilment.handlers.GetNextFulfilmentEntityHandler;
 import com.functions.fulfilment.handlers.GetPrevFulfilmentEntityHandler;
 import com.functions.fulfilment.handlers.InitFulfilmentSessionHandler;
+import com.functions.fulfilment.handlers.InitPartnerFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
@@ -43,6 +44,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.CREATE_RECURRENCE_TEMPLATE, new CreateRecurrenceTemplateHandler());
         handlers.put(EndpointType.UPDATE_RECURRENCE_TEMPLATE, new UpdateRecurrenceTemplateHandler());
         handlers.put(EndpointType.INIT_FULFILMENT_SESSION, new InitFulfilmentSessionHandler());
+        handlers.put(EndpointType.INIT_PARTNER_FULFILMENT_SESSION, new InitPartnerFulfilmentSessionHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
                 new UpdateFulfilmentEntityWithFormResponseIdHandler());
         handlers.put(EndpointType.GET_PREV_FULFILMENT_ENTITY, new GetPrevFulfilmentEntityHandler());

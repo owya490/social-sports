@@ -5,17 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
-import com.functions.events.models.ResolvedEventTicketType;
-import com.functions.events.repositories.EventsRepository;
-import com.functions.events.services.EventTicketTypeService;
-import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -28,7 +23,6 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity.FulfilmentEntityHookInput;
-import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
@@ -41,7 +35,6 @@ import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoRespons
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
-import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.services.StripeService;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.Transaction;
@@ -225,55 +218,6 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId,
-            PaymentProvider paymentProvider) throws Exception {
-        if (numTickets == null || numTickets <= 0) {
-            logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
-            throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
-        }
-        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
-            throw new IllegalArgumentException("eventTicketTypeId is required");
-        }
-
-        EventData eventData = EventsRepository.getActiveEventById(eventId)
-                .orElseThrow(() -> new CheckoutDateTimeException("Event " + eventId + " is not available"));
-        EventsUtils.validateEventTiming(eventData);
-        Integer maxTickets = eventData.getMaxTicketsPerTransaction();
-        if (maxTickets != null && numTickets > maxTickets) {
-            throw new IllegalArgumentException(String.format(
-                    "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
-                    numTickets, maxTickets, eventId));
-        }
-
-        PaymentProvider resolvedPaymentProvider = paymentProvider == null ? PaymentProvider.STRIPE : paymentProvider;
-        FulfilmentSessionType fulfilmentSessionType = resolvedPaymentProvider == PaymentProvider.PYNG
-                ? FulfilmentSessionType.PYNG_CHECKOUT
-                : classifyFulfilmentSessionType(eventData, eventTicketTypeId);
-
-        String fulfilmentSessionId = UUID.randomUUID().toString();
-
-        FulfilmentSession fulfilmentSession;
-
-        switch (fulfilmentSessionType) {
-            case CHECKOUT ->
-                fulfilmentSession = FulfilmentSessionType.CHECKOUT.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            case BOOKING_APPROVAL ->
-                fulfilmentSession = FulfilmentSessionType.BOOKING_APPROVAL.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            case WAITLIST ->
-                fulfilmentSession = FulfilmentSessionType.WAITLIST.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            case PYNG_CHECKOUT ->
-                fulfilmentSession = FulfilmentSessionType.PYNG_CHECKOUT.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            default ->
-                throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
-        }
-
-        return createFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
-    }
-
     public static String getEndFulfilmentEntityId(String eventId,
             List<FulfilmentEntity> tempEntities, List<String> entityIds) {
         int endEntityIndex = -1;
@@ -289,31 +233,6 @@ public class FulfilmentService {
                     + eventId);
         }
         return entityIds.get(endEntityIndex);
-    }
-
-    private static String createFulfilmentSession(String sessionId, FulfilmentSession fulfilmentSession)
-            throws Exception {
-        String fulfilmentSessionId = FulfilmentSessionRepository.createFulfilmentSession(sessionId, fulfilmentSession);
-
-        logger.info("Fulfilment session created with ID: {} for event ID: {}",
-                fulfilmentSessionId, fulfilmentSession.getEventData().getEventId());
-        return fulfilmentSessionId;
-    }
-
-    private static FulfilmentSessionType classifyFulfilmentSessionType(EventData eventData, String eventTicketTypeId) {
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
-                && ticketType.getVacancy() <= 0) {
-            return FulfilmentSessionType.WAITLIST;
-        }
-
-        FulfilmentSessionType fulfilmentSessionType = FulfilmentSessionType.CHECKOUT;
-
-        if (eventData.getBookingApprovalEnabled()) {
-            fulfilmentSessionType = FulfilmentSessionType.BOOKING_APPROVAL;
-        }
-
-        return fulfilmentSessionType;
     }
 
     private static Optional<GetNextFulfilmentEntityResponse> getNextFulfilmentEntity(

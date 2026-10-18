@@ -17,6 +17,7 @@ import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerEvent;
 import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.fulfilment.payment.PaymentProviderPolicy;
 import com.google.cloud.Timestamp;
 
 /**
@@ -58,7 +59,8 @@ public class EventsService {
                 event.getImage(), event.getThumbnail(), tags == null ? List.of() : List.copyOf(tags),
                 Boolean.TRUE.equals(event.getPaused()), Boolean.TRUE.equals(event.getPaymentsActive()),
                 Boolean.TRUE.equals(event.getWaitlistEnabled()), Boolean.TRUE.equals(event.getBookingApprovalEnabled()),
-                event.getMaxTicketsPerTransaction(), toPartnerTicketTypes(event));
+                event.getMaxTicketsPerTransaction(), PaymentProviderPolicy.supportedPaymentProviders(event),
+                toPartnerTicketTypes(event));
     }
 
     private static List<PartnerTicketType> toPartnerTicketTypes(EventData event) {
@@ -67,19 +69,10 @@ public class EventsService {
             return List.of();
         }
         List<PartnerTicketType> ticketTypes = new ArrayList<>();
-        for (Map.Entry<String, EventTicketType> entry : persistedTypes.entrySet()) {
-            EventTicketType persisted = entry.getValue();
-            // Inventory writes use the stored ID as one segment in a dotted field path.
-            if (persisted == null || persisted.getId() == null || persisted.getId().isBlank()
-                    || !persisted.getId().equals(entry.getKey())
-                    || persisted.getId().chars().anyMatch(character -> ".~*/[]".indexOf(character) >= 0)) {
-                throw new IllegalStateException("Invalid persisted partner ticket ID: " + event.getEventId());
-            }
-            ResolvedEventTicketType type = EventTicketTypeService.resolveById(event, persisted.getId());
-            if (type.getName() == null || type.getName().isBlank()
-                    || type.getPrice() == null || type.getPrice() < 0 || type.getVacancy() == null) {
-                throw new IllegalStateException("Invalid persisted partner ticket fields: " + event.getEventId());
-            }
+        for (String ticketTypeId : persistedTypes.keySet()) {
+            ResolvedEventTicketType type = EventTicketTypeService.resolvePublicById(event, ticketTypeId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Invalid persisted partner ticket type: " + event.getEventId()));
             ticketTypes.add(new PartnerTicketType(type.getId(), type.getName(), type.getPrice(), type.getVacancy() <= 0,
                     Boolean.TRUE.equals(event.getHideVacancy()) ? null : type.getVacancy()));
         }
