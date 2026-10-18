@@ -117,10 +117,27 @@ public class PartnerEventsHttpTest {
     @Test
     public void bothPartnerEndpointsRequireAdmissionBeforeParsingData() throws Exception {
         for (String endpoint : List.of("GET_PARTNER_EVENTS", "INIT_PARTNER_FULFILMENT_SESSION")) {
-            Call denied = call("{\"endpointType\":\"" + endpoint + "\",\"data\":{}}", Map.of(), 401);
-            assertDeniedCors(denied.response());
+            for (String data : List.of("", ",\"data\":null", ",\"data\":{}")) {
+                Call denied = call("{\"endpointType\":\"" + endpoint + "\"" + data + "}", Map.of(), 401);
+                assertDeniedCors(denied.response());
+            }
+            Call wrongOrigin = call("{\"endpointType\":\"" + endpoint + "\"}",
+                    partnerHeaders(KEY, "https://lookalike.example"), 403);
+            assertDeniedCors(wrongOrigin.response());
         }
-        integrations.verifyNoInteractions();
+        events.verifyNoInteractions();
+    }
+
+    @Test
+    public void recognizedPartnerEnvelopeErrorsRetainVerifiedCors() throws Exception {
+        for (String endpoint : List.of("GET_PARTNER_EVENTS", "INIT_PARTNER_FULFILMENT_SESSION")) {
+            for (String data : List.of("", ",\"data\":null", ",\"data\":[]")) {
+                Call invalid = call("{\"endpointType\":\"" + endpoint + "\"" + data + "}",
+                        partnerHeaders(KEY, ORIGIN), 400);
+                assertEquals("Invalid request data", invalid.body().get("errorMessage").asText());
+                assertPartnerCors(invalid.response());
+            }
+        }
         events.verifyNoInteractions();
     }
 
@@ -160,7 +177,7 @@ public class PartnerEventsHttpTest {
         try {
             Call malformed = call("{\"endpointType\":\"private-input-canary\",\"data\":{}}", Map.of(), 400);
             assertEquals("Invalid request data", malformed.body().get("errorMessage").asText());
-            Call missingData = call("{\"endpointType\":\"GET_PARTNER_EVENTS\"}", Map.of(), 400);
+            Call missingData = call("{\"endpointType\":\"GET_PARTNER_EVENTS\"}", Map.of(), 401);
             assertDeniedCors(missingData.response());
             integrations.when(() -> PartnerIntegrationRepository.findById("partner-one"))
                     .thenThrow(new IllegalStateException("private-config-canary " + KEY));
@@ -193,6 +210,11 @@ public class PartnerEventsHttpTest {
         Call firebaseResult = call("{\"endpointType\":\"GET_ORDER\",\"data\":{}}",
                 partnerHeaders("bad-key", ORIGIN), 401);
         verify(firebaseResult.response()).appendHeader("Access-Control-Allow-Origin", "*");
+        for (String endpoint : List.of("GET_SYRIO_EVENTS", "GET_ORDER")) {
+            Call invalid = call("{\"endpointType\":\"" + endpoint + "\"}",
+                    partnerHeaders("bad-key", ORIGIN), 400);
+            verify(invalid.response()).appendHeader("Access-Control-Allow-Origin", "*");
+        }
         HttpRequest request = mock(HttpRequest.class);
         when(request.getMethod()).thenReturn("GET");
         HttpResponse response = mock(HttpResponse.class);

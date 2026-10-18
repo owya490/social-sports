@@ -71,9 +71,13 @@ public final class FulfilmentInitialisationService {
             FirebaseService.createFirestoreTransaction(transaction -> {
                 EventData current = EventsRepository.getActiveEventById(eventId, false, transaction)
                         .orElseThrow(FulfilmentInitialisationService::unavailable);
-                bookingScope.validateEvent(current, numTickets, eventTicketTypeId, validationTime);
+                ResolvedEventTicketType currentTicket = bookingScope.validateEvent(
+                        current, numTickets, eventTicketTypeId, validationTime);
                 if (!Boolean.TRUE.equals(current.getWaitlistEnabled())) {
                     throw unavailable();
+                }
+                if (currentTicket.getVacancy() > 0) {
+                    throw new IllegalArgumentException("Event booking requirements changed; refresh and try again");
                 }
                 FulfilmentSessionRepository.createFulfilmentSession(sessionId, session, Optional.of(transaction));
                 return null;

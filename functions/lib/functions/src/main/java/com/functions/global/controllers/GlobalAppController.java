@@ -1,5 +1,7 @@
 package com.functions.global.controllers;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
@@ -54,33 +56,35 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         EndpointType endpointType = null;
         AuthContext authContext = null;
         try {
-            UnifiedRequest unifiedRequest;
+            JsonNode envelope;
             try {
-                JsonNode envelope = JavaUtils.objectMapper.readTree(request.getReader());
+                envelope = JavaUtils.objectMapper.readTree(request.getReader());
                 JsonNode endpoint = envelope == null ? null : envelope.get("endpointType");
                 if (endpoint != null && endpoint.isTextual()) {
                     endpointType = EndpointType.valueOf(endpoint.textValue());
                 }
-                unifiedRequest = JavaUtils.objectMapper.treeToValue(envelope, UnifiedRequest.class);
             } catch (Exception e) {
-                if (isPartner(endpointType)) {
-                    response.appendHeader("Cache-Control", "no-store");
-                } else {
-                    setWildcardOrigin(response);
-                }
-                response.setStatusCode(400);
-                logOutcome(endpointType, null, Level.WARN, "invalid_request");
-                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                        new ErrorResponse("Invalid request data")));
+                setWildcardOrigin(response);
+                respondInvalidRequest(endpointType, null, response);
                 return;
             }
 
-            endpointType = unifiedRequest == null ? endpointType : unifiedRequest.endpointType();
             if (isPartner(endpointType)) {
                 response.appendHeader("Cache-Control", "no-store");
+                authContext = AuthService.verify(request, endpointType.getAuthLevel());
+                response.appendHeader("Access-Control-Allow-Origin", authContext.requirePartner().verifiedOrigin());
+                response.appendHeader("Vary", "Origin");
             } else {
                 setWildcardOrigin(response);
             }
+            UnifiedRequest unifiedRequest;
+            try {
+                unifiedRequest = JavaUtils.objectMapper.treeToValue(envelope, UnifiedRequest.class);
+            } catch (Exception e) {
+                respondInvalidRequest(endpointType, authContext, response);
+                return;
+            }
+            endpointType = unifiedRequest == null ? endpointType : unifiedRequest.endpointType();
             if (unifiedRequest == null || unifiedRequest.endpointType() == null || unifiedRequest.data() == null) {
                 response.setStatusCode(400);
                 response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
@@ -88,10 +92,8 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
                 return;
             }
 
-            authContext = AuthService.verify(request, endpointType.getAuthLevel());
-            if (isPartner(endpointType)) {
-                response.appendHeader("Access-Control-Allow-Origin", authContext.requirePartner().verifiedOrigin());
-                response.appendHeader("Vary", "Origin");
+            if (authContext == null) {
+                authContext = AuthService.verify(request, endpointType.getAuthLevel());
             }
             Object result = routeRequest(unifiedRequest, authContext);
 
@@ -166,6 +168,13 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
 
     private static boolean isPartner(EndpointType endpointType) {
         return endpointType != null && endpointType.getAuthLevel() == AuthLevel.PARTNER;
+    }
+
+    private static void respondInvalidRequest(EndpointType endpointType, AuthContext authContext,
+            HttpResponse response) throws IOException {
+        response.setStatusCode(400);
+        logOutcome(endpointType, authContext, Level.WARN, "invalid_request");
+        response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Invalid request data")));
     }
 
     private static void logRequestFailure(EndpointType endpointType, AuthContext authContext, String outcome,

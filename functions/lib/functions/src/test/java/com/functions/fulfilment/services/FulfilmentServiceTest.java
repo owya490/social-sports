@@ -239,7 +239,6 @@ public class FulfilmentServiceTest {
         EventData current = availableEvent(true);
         current.setRegistrationDeadline(event.getRegistrationDeadline());
         current.setPaymentsActive(false);
-        current.getEventTicketTypes().get("ticket-1").setVacancy(3);
         events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
         Transaction transaction = mock(Transaction.class);
         events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
@@ -267,6 +266,40 @@ public class FulfilmentServiceTest {
             sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
                     result.fulfilmentSessionId(), saved, Optional.of(transaction)), times(2));
         }
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void partnerWaitlistRejectsAvailableInventoryOnTheFirstAttemptAndOnRetry() throws Exception {
+        EventData event = availableEvent(true);
+        events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+        Transaction transaction = mock(Transaction.class);
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+            for (boolean retry : new boolean[] { false, true }) {
+                EventData current = availableEvent(true);
+                current.getEventTicketTypes().get("ticket-1").setVacancy(3);
+                events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
+                        .thenReturn(Optional.of(current));
+                firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
+                        .thenAnswer(invocation -> {
+                            Transaction.Function<?> callback = invocation.getArgument(0);
+                            if (retry) {
+                                current.getEventTicketTypes().get("ticket-1").setVacancy(0);
+                                assertNull(callback.updateCallback(transaction));
+                                current.getEventTicketTypes().get("ticket-1").setVacancy(3);
+                            }
+                            return callback.updateCallback(transaction);
+                        });
+                try {
+                    FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
+                    fail("Expected available inventory rejection");
+                } catch (IllegalArgumentException expected) {
+                    assertEquals("Event booking requirements changed; refresh and try again", expected.getMessage());
+                }
+            }
+        }
+        sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(anyString(), any(), eq(Optional.of(transaction))));
         stripe.verifyNoInteractions();
     }
 
