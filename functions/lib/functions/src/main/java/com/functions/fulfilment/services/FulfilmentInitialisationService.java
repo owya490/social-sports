@@ -1,5 +1,6 @@
 package com.functions.fulfilment.services;
 
+import java.time.Instant;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -64,10 +65,11 @@ public final class FulfilmentInitialisationService {
         String firstEntityId = session.getFulfilmentEntityIds().get(0);
 
         if (type == FulfilmentSessionType.WAITLIST && scope instanceof FulfilmentInitialisationScope.PartnerPublic) {
+            Instant validationTime = Instant.now();
             FirebaseService.createFirestoreTransaction(transaction -> {
                 EventData current = EventsRepository.getActiveEventById(eventId, false, transaction)
                         .orElseThrow(FulfilmentInitialisationService::unavailable);
-                scope.validateEvent(current, numTickets, eventTicketTypeId);
+                scope.validateEvent(current, numTickets, eventTicketTypeId, validationTime);
                 if (!Boolean.TRUE.equals(current.getWaitlistEnabled())) {
                     throw unavailable();
                 }

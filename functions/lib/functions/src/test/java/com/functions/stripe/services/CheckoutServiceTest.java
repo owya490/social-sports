@@ -262,13 +262,28 @@ public class CheckoutServiceTest {
     }
 
     @Test
-    public void partnerFreeBookingRetainsStripePrerequisitesAndPublicReservation() throws Exception {
+    @SuppressWarnings("unchecked")
+    public void partnerFreeBookingRetainsStripePrerequisitesAndPublicReservationAcrossTransactionRetry() throws Exception {
+        Instant initialTime = Instant.parse("2026-10-18T00:00:00Z");
+        Instant deadline = initialTime.plusSeconds(60);
+        AtomicReference<Instant> currentTime = new AtomicReference<>(initialTime);
+        event.setRegistrationDeadline(Timestamp.ofTimeSecondsAndNanos(deadline.getEpochSecond(), 0));
         event.getEventTicketTypes().get("ticket-1").setPrice(0);
         event.setSupportedPaymentProviders(List.of());
-        assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false), PARTNER).stripeCheckoutSessionId());
-        users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)));
-        verify(transaction).get(eventRef);
-        verify(transaction).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
+        when(FirebaseService.getFirestore().runTransaction(any(Transaction.Function.class))).thenAnswer(invocation -> {
+            Transaction.Function<?> callback = invocation.getArgument(0);
+            callback.updateCallback(transaction);
+            currentTime.set(deadline.plusSeconds(1));
+            return ApiFutures.immediateFuture(callback.updateCallback(transaction));
+        });
+        try (MockedStatic<Instant> clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(invocation -> currentTime.get());
+            assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false), PARTNER).stripeCheckoutSessionId());
+        }
+        users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)), times(2));
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)));
+        verify(transaction, times(2)).get(eventRef);
+        verify(transaction, times(2)).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
         verifyNoMoreInteractions(transaction);
     }
 

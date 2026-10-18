@@ -1,5 +1,7 @@
 package com.functions.fulfilment.models;
 
+import java.time.Instant;
+
 import com.functions.events.models.EventData;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.services.EventTicketTypeService;
@@ -9,13 +11,18 @@ import com.functions.global.exceptions.NotFoundException;
 
 public sealed interface FulfilmentInitialisationScope {
     default ResolvedEventTicketType validateEvent(EventData event, Integer quantity, String ticketId) throws Exception {
+        return validateEvent(event, quantity, ticketId, Instant.now());
+    }
+
+    default ResolvedEventTicketType validateEvent(EventData event, Integer quantity, String ticketId,
+            Instant validationTime) throws Exception {
         if (this instanceof FulfilmentInitialisationScope.PartnerPublic partner) {
             if (!Boolean.TRUE.equals(event.getIsActive()) || !Boolean.FALSE.equals(event.getIsPrivate())
                     || !partner.expectedOrganiserId().equals(event.getOrganiserId())) {
                 throw unavailable();
             }
         }
-        EventsUtils.validateEventTiming(event);
+        EventsUtils.validateEventTiming(event, validationTime);
         if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException("Invalid numTickets");
         }

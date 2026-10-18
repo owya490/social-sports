@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 
 import java.time.Instant;
 import java.util.Map;
@@ -217,19 +218,28 @@ public class FulfilmentServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     public void partnerWaitlistRechecksAndCreatesInOneTransactionWithNoCapabilityResult() throws Exception {
+        Instant initialTime = Instant.parse("2026-10-18T00:00:00Z");
+        Instant deadline = initialTime.plusSeconds(60);
+        AtomicReference<Instant> currentTime = new AtomicReference<>(initialTime);
         EventData event = availableEvent(true);
         event.setSupportedPaymentProviders(List.of());
+        event.setRegistrationDeadline(Timestamp.ofTimeSecondsAndNanos(deadline.getEpochSecond(), 0));
         EventData current = availableEvent(true);
+        current.setRegistrationDeadline(event.getRegistrationDeadline());
         current.getEventTicketTypes().get("ticket-1").setVacancy(3);
         events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
         Transaction transaction = mock(Transaction.class);
         events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
                 .thenReturn(Optional.of(current));
         AtomicReference<FulfilmentSession> persisted = captureSession();
-        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class);
+                MockedStatic<Instant> clock = mockStatic(Instant.class, CALLS_REAL_METHODS)) {
+            clock.when(Instant::now).thenAnswer(invocation -> currentTime.get());
             firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
                     .thenAnswer(invocation -> {
                         Transaction.Function<?> callback = invocation.getArgument(0);
+                        assertNull(callback.updateCallback(transaction));
+                        currentTime.set(deadline.plusSeconds(1));
                         Object result = callback.updateCallback(transaction);
                         assertNull(result);
                         return result;
@@ -242,7 +252,7 @@ public class FulfilmentServiceTest {
             assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
             assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
             sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
-                    result.fulfilmentSessionId(), saved, Optional.of(transaction)));
+                    result.fulfilmentSessionId(), saved, Optional.of(transaction)), times(2));
         }
         stripe.verifyNoInteractions();
     }
