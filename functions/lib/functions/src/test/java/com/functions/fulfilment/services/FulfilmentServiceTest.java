@@ -15,6 +15,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Map;
@@ -40,6 +41,9 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.global.exceptions.NotFoundException;
 import com.google.cloud.firestore.Transaction;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
+import com.functions.fulfilment.pyng.PyngHostedCheckout;
+import com.functions.fulfilment.pyng.PyngService;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
@@ -142,6 +146,8 @@ public class FulfilmentServiceTest {
                 event -> event.setIsPrivate(null),
                 event -> event.setIsActive(false),
                 event -> event.setIsActive(null),
+                event -> event.setRegistrationDeadline(null),
+                event -> event.setEndDate(null),
                 event -> event.getEventTicketTypes().get("ticket-1").setId("other-ticket"),
                 event -> event.getEventTicketTypes().get("ticket-1").setPrice(null),
                 event -> event.getEventTicketTypes().get("ticket-1").setVacancy(null));
@@ -190,40 +196,70 @@ public class FulfilmentServiceTest {
     }
 
     @Test
-    public void supportedPartnerWorkflowsReturnSavedFirstEntityWithoutSessionReadsOrStartHooks() throws Exception {
+    public void supportedWorkflowsReturnSavedFirstEntityWithoutSessionReadsOrStartHooks() throws Exception {
         stubStripe();
         AtomicReference<FulfilmentSession> persisted = captureSession();
-        for (boolean approval : new boolean[] { false, true }) {
-            for (boolean forms : new boolean[] { false, true }) {
-                EventData event = availableEvent(true);
-                event.setBookingApprovalEnabled(approval);
-                event.getEventTicketTypes().get("ticket-1").setVacancy(2);
-                if (forms) {
-                    event.getEventTicketTypes().get("ticket-1").setFormId("form-1");
-                }
-                events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
-                InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
-                        "event-1", 1, "ticket-1", PaymentProvider.STRIPE, PARTNER);
-                FulfilmentSession saved = persisted.get();
-                assertSame(event, saved.getEventData());
-                assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
-                assertEquals(forms ? FulfilmentEntityType.FORMS
-                        : approval ? FulfilmentEntityType.DELAYED_STRIPE : FulfilmentEntityType.STRIPE, firstEntity(saved));
-                assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
-                var expectedScope = new FulfilmentInitialisationScope.PartnerPublic("organiser-1",
-                        new FulfilmentInitialisationScope.BookingSnapshot("General Admission", 1350,
-                                forms ? "form-1" : null));
-                if (approval) {
-                    stripe.verify(() -> StripeService.getDelayedStripeCheckoutUrl(
-                            anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
-                } else {
-                    stripe.verify(() -> StripeService.getStripeCheckoutUrl(
-                            anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+        for (FulfilmentInitialisationScope scope : List.of(PARTNER, GUEST)) {
+            for (boolean approval : new boolean[] { false, true }) {
+                for (boolean forms : new boolean[] { false, true }) {
+                    EventData event = availableEvent(true);
+                    event.setBookingApprovalEnabled(approval);
+                    event.getEventTicketTypes().get("ticket-1").setVacancy(2);
+                    if (forms) {
+                        event.getEventTicketTypes().get("ticket-1").setFormId("form-1");
+                    }
+                    events.when(() -> EventsRepository.getActivePublicEventById("event-1")).thenReturn(Optional.of(event));
+                    events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+                    InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
+                            "event-1", 1, "ticket-1", PaymentProvider.STRIPE, scope);
+                    FulfilmentSession saved = persisted.get();
+                    assertSame(event, saved.getEventData());
+                    assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
+                    assertEquals(forms ? FulfilmentEntityType.FORMS
+                            : approval ? FulfilmentEntityType.DELAYED_STRIPE : FulfilmentEntityType.STRIPE, firstEntity(saved));
+                    assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
+                    var snapshot = new FulfilmentInitialisationScope.BookingSnapshot("General Admission", 1350,
+                            forms ? "form-1" : null);
+                    FulfilmentInitialisationScope expectedScope = scope instanceof FulfilmentInitialisationScope.PartnerPublic
+                            ? new FulfilmentInitialisationScope.PartnerPublic("organiser-1", snapshot)
+                            : new FulfilmentInitialisationScope.Guest(snapshot);
+                    if (approval) {
+                        stripe.verify(() -> StripeService.getDelayedStripeCheckoutUrl(
+                                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+                    } else {
+                        stripe.verify(() -> StripeService.getStripeCheckoutUrl(
+                                anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+                    }
                 }
             }
         }
         sessions.verify(() -> FulfilmentSessionRepository.getFulfilmentSession(anyString(), any()), times(0));
         events.verify(() -> EventsRepository.getEventById(anyString()), times(0));
+    }
+
+    @Test
+    public void guestPyngInitialisationRetainsTheValidatedPrivateEventAndHostedPaymentStep() throws Exception {
+        EventData event = availableEvent(true);
+        event.setIsPrivate(true);
+        event.getEventTicketTypes().get("ticket-1").setVacancy(2);
+        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+        AtomicReference<FulfilmentSession> persisted = captureSession();
+        PyngHostedCheckout checkout = mock(PyngHostedCheckout.class);
+        when(checkout.checkoutSessionId()).thenReturn("pyng-session");
+        when(checkout.hostedPageUrl()).thenReturn("https://checkout.example/pyng");
+        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class)) {
+            pyng.when(() -> PyngService.createHostedCheckout(any())).thenReturn(checkout);
+            InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
+                    "event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
+            var saved = (PyngCheckoutFulfilmentSession) persisted.get();
+            assertSame(event, saved.getEventData());
+            assertEquals(result.fulfilmentSessionId(), saved.getId());
+            assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
+            assertEquals(FulfilmentEntityType.PYNG, firstEntity(saved));
+            assertEquals("pyng-session", saved.getPyngMetadata().getCheckoutSessionId());
+            pyng.verify(() -> PyngService.createHostedCheckout(saved));
+        }
+        stripe.verifyNoInteractions();
     }
 
     @Test

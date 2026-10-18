@@ -190,12 +190,14 @@ public class CheckoutServiceTest {
                 event.setIsPrivate(isPrivate);
 
                 assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(isPrivate), GUEST).stripeCheckoutSessionId());
+                var boundGuest = GUEST.withBookingSnapshot(event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(isPrivate), boundGuest).stripeCheckoutSessionId());
             }
             DocumentReference expectedRef = isPrivate ? privateEventRef : eventRef;
-            verify(transaction, times(2)).get(expectedRef);
-            verify(transaction, times(2)).update(expectedRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
+            verify(transaction, times(4)).get(expectedRef);
+            verify(transaction, times(4)).update(expectedRef, Map.of("eventTicketTypes.ticket-1.vacancy", 13));
         }
-        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(4));
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)), times(8));
     }
 
     @Test
@@ -265,45 +267,55 @@ public class CheckoutServiceTest {
     }
 
     @Test
-    public void partnerApprovalChangeRejectsBothCaptureModesBeforeOrganiserOrWrites() throws Exception {
-        for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
-            event.setBookingApprovalEnabled(capture == CaptureMethod.AUTOMATIC);
-            try {
-                CheckoutService.createStripeCheckoutSession(request(false, capture), PARTNER);
-                fail("Expected changed approval policy rejection");
-            } catch (IllegalArgumentException expected) {
+    public void bookingApprovalChangeRejectsBothCaptureModesBeforeOrganiserOrWrites() throws Exception {
+        for (FulfilmentInitialisationScope initialScope : List.of(PARTNER, GUEST)) {
+            for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
+                event.setBookingApprovalEnabled(capture == CaptureMethod.AUTOMATIC);
+                var scope = initialScope.withBookingSnapshot(event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                try {
+                    StripeService.getStripeCheckoutFromEventId(request(false, capture), scope);
+                    fail("Expected changed approval policy rejection");
+                } catch (IllegalArgumentException expected) {
+                }
             }
         }
         users.verifyNoInteractions();
         accounts.verifyNoInteractions();
         stripeSessions.verifyNoInteractions();
-        verify(transaction, times(2)).get(eventRef);
+        verify(transaction, times(4)).get(eventRef);
         verifyNoMoreInteractions(transaction);
+        event.setBookingApprovalEnabled(true);
+        var boundGuest = GUEST.withBookingSnapshot(event, EventTicketTypeService.resolveById(event, "ticket-1"));
+        assertEquals("cs_test", StripeService.getStripeCheckoutFromEventId(
+                request(false, CaptureMethod.MANUAL), boundGuest).stripeCheckoutSessionId());
+        stripeSessions.verify(() -> Session.create(any(SessionCreateParams.class), any(RequestOptions.class)));
     }
 
     @Test
-    public void partnerTicketWorkflowChangesRejectBeforeOrganiserOrWrites() throws Exception {
+    public void bookingTicketWorkflowChangesRejectBeforeOrganiserOrWrites() throws Exception {
         List<Consumer<EventData>> changes = List.of(
                 current -> current.getEventTicketTypes().get("ticket-1").setFormId("new-form"),
                 current -> current.setFormId("new-event-form"),
                 current -> current.getEventTicketTypes().get("ticket-1").setPrice(2000),
                 current -> current.getEventTicketTypes().get("ticket-1").setName("New ticket name"));
-        for (Consumer<EventData> change : changes) {
-            event = availableEvent();
-            var scope = ((FulfilmentInitialisationScope.PartnerPublic) PARTNER).withBookingSnapshot(
-                    event, EventTicketTypeService.resolveById(event, "ticket-1"));
-            change.accept(event);
-            when(snapshot.toObject(EventData.class)).thenReturn(event);
-            try {
-                CheckoutService.createStripeCheckoutSession(request(false), scope);
-                fail("Expected changed ticket workflow rejection");
-            } catch (IllegalArgumentException expected) {
+        for (FulfilmentInitialisationScope initialScope : List.of(PARTNER, GUEST)) {
+            for (Consumer<EventData> change : changes) {
+                event = availableEvent();
+                var scope = initialScope.withBookingSnapshot(
+                        event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                change.accept(event);
+                when(snapshot.toObject(EventData.class)).thenReturn(event);
+                try {
+                    StripeService.getStripeCheckoutFromEventId(request(false), scope);
+                    fail("Expected changed ticket workflow rejection");
+                } catch (IllegalArgumentException expected) {
+                }
             }
         }
         users.verifyNoInteractions();
         accounts.verifyNoInteractions();
         stripeSessions.verifyNoInteractions();
-        verify(transaction, times(changes.size())).get(eventRef);
+        verify(transaction, times(changes.size() * 2)).get(eventRef);
         verifyNoMoreInteractions(transaction);
     }
 

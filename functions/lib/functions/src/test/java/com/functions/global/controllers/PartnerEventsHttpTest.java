@@ -33,6 +33,7 @@ import org.mockito.MockedStatic;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.global.handlers.HandlerRegistry;
+import com.functions.global.models.EndpointType;
 import com.functions.global.services.AuthService;
 import com.functions.global.testutils.FakeHttpRequest;
 import com.functions.partners.models.PartnerIntegration;
@@ -177,6 +178,14 @@ public class PartnerEventsHttpTest {
         try {
             Call malformed = call("{\"endpointType\":\"private-input-canary\",\"data\":{}}", Map.of(), 400);
             assertEquals("Invalid request data", malformed.body().get("errorMessage").asText());
+            for (String endpoint : List.of(String.valueOf(EndpointType.GET_PARTNER_EVENTS.ordinal()),
+                    String.valueOf(EndpointType.INIT_PARTNER_FULFILMENT_SESSION.ordinal()), "true", "[]", "{}")) {
+                Call invalidType = call("{\"endpointType\":" + endpoint + ",\"data\":{}}",
+                        partnerHeaders(KEY, ORIGIN), 400);
+                assertEquals("Invalid request data", invalidType.body().get("errorMessage").asText());
+            }
+            integrations.verifyNoInteractions();
+            events.verifyNoInteractions();
             Call missingData = call("{\"endpointType\":\"GET_PARTNER_EVENTS\"}", Map.of(), 401);
             assertDeniedCors(missingData.response());
             integrations.when(() -> PartnerIntegrationRepository.findById("partner-one"))

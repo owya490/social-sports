@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.fulfilment.exceptions.FulfilmentSnapshotChangedException;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.global.exceptions.NotFoundException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
@@ -142,6 +143,9 @@ public class StripeService {
             logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", request.eventId());
 
             return response;
+        } catch (FulfilmentSnapshotChangedException e) {
+            logger.warn("Cannot checkout for event {}: booking details changed", request.eventId());
+            throw e;
         } catch (CheckoutDateTimeException e) {
             // We don't need to log error and alert for this error because this
             // time based error is out of our direct control.

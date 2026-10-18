@@ -16,6 +16,7 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.fulfilment.exceptions.FulfilmentSnapshotChangedException;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.global.exceptions.NotFoundException;
 import com.functions.stripe.config.StripeConfig;
@@ -79,14 +80,17 @@ public class CheckoutService {
             if (scope instanceof FulfilmentInitialisationScope.PartnerPublic) {
                 ResolvedEventTicketType ticket = scope.validateEvent(
                         eventData, request.quantity(), request.eventTicketTypeId(), validationTime);
-                if (Boolean.TRUE.equals(eventData.getBookingApprovalEnabled())
-                        != (request.captureMethod() == CaptureMethod.MANUAL)) {
-                    throw new IllegalArgumentException("Event booking requirements changed; refresh and try again");
-                }
                 scope.validatePaymentProvider(eventData, ticket);
                 validateEventForCheckout(eventData, ticket, request.quantity(), validationTime);
             } else {
                 EventsUtils.validateEventTiming(eventData);
+                scope.validateBookingSnapshot(eventData,
+                        EventTicketTypeService.resolveById(eventData, request.eventTicketTypeId()));
+            }
+            if ((scope instanceof FulfilmentInitialisationScope.PartnerPublic || scope.bookingSnapshot() != null)
+                    && (Boolean.TRUE.equals(eventData.getBookingApprovalEnabled())
+                            != (request.captureMethod() == CaptureMethod.MANUAL))) {
+                throw new FulfilmentSnapshotChangedException("Event booking requirements changed; refresh and try again");
             }
 
             String organiserId = EventsUtils.extractOrganiserIdForEvent(eventData);

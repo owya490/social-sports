@@ -60,7 +60,10 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
             try {
                 envelope = JavaUtils.objectMapper.readTree(request.getReader());
                 JsonNode endpoint = envelope == null ? null : envelope.get("endpointType");
-                if (endpoint != null && endpoint.isTextual()) {
+                if (endpoint != null) {
+                    if (!endpoint.isTextual()) {
+                        throw new IllegalArgumentException("Invalid endpointType");
+                    }
                     endpointType = EndpointType.valueOf(endpoint.textValue());
                 }
             } catch (Exception e) {

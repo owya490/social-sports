@@ -40,8 +40,7 @@ public final class FulfilmentInitialisationService {
                 : EventsRepository.getActiveEventById(eventId)
                         .orElseThrow(() -> new CheckoutDateTimeException("Event " + eventId + " is not available"));
         ResolvedEventTicketType ticket = scope.validateEvent(eventData, numTickets, eventTicketTypeId);
-        FulfilmentInitialisationScope bookingScope = scope instanceof FulfilmentInitialisationScope.PartnerPublic partner
-                ? partner.withBookingSnapshot(eventData, ticket) : scope;
+        FulfilmentInitialisationScope bookingScope = scope.withBookingSnapshot(eventData, ticket);
         PaymentProvider provider = paymentProvider == null ? PaymentProvider.STRIPE : paymentProvider;
         if (scope instanceof FulfilmentInitialisationScope.PartnerPublic && provider != PaymentProvider.STRIPE) {
             throw new IllegalArgumentException("Unsupported payment provider");
