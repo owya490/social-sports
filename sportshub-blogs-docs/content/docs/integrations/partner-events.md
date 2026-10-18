@@ -71,8 +71,6 @@ If a field has an unrecognized named value, treat that value as unsupported and 
 
 We may add response fields without changing the major contract version. Within a major version, existing documented fields retain their types and meanings. Removing or renaming fields, changing their types or meanings, or adding mandatory requirements requires a new major contract version and migration instructions.
 
-Contract v1 identifies the interface described here. You do not send a version parameter. Send only the documented request inputs.
-
 ## 1. Load your public events
 
 **Request body**
@@ -84,7 +82,7 @@ Contract v1 identifies the interface described here. You do not send a version p
 }
 ```
 
-The key selects your organiser's public feed. You do not need to send a partner slug or organiser ID.
+Your partner key selects your public event feed.
 
 The feed contains active, public events whose start time is at or after the request time. Events without a start time are omitted. Events that have already started are omitted, even if registration remains open. Future paused, sold-out, and registration-closed events can still appear.
 
@@ -223,8 +221,6 @@ A successful response starts a session and returns its booking URL. It does not 
 ### Open the booking URL
 
 Check that `entryUrl` is a nonempty, absolute URL with origin `https://www.sportshub.net.au`, a path starting with `/fulfilment/`, and no username or password. Then open the URL unchanged. Use the approved SPORTSHUB website origin when testing in another environment.
-
-You do not need another API lookup or to construct a booking URL. Let the hosted flow handle all later steps.
 
 Treat `entryUrl` as a private guest access credential: anyone with the URL may access that session. Keep it in transient page state and out of analytics, shared caches, error messages and logs.
 
