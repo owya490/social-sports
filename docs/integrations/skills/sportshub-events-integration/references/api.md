@@ -4,12 +4,12 @@ description: Display your public SPORTSHUB events and open the hosted booking fl
 weight: 1
 draft: false
 date: 2026-10-14
-lastmod: 2026-10-15
+lastmod: 2026-10-18
 contractVersion: 1
 canonicalURL: https://www.sportshub.net.au/docs/integrations/partner-events/
 ---
 
-**Contract:** v1. **Updated:** 15 October 2026.
+**Contract:** v1. **Updated:** 18 October 2026.
 
 Your website displays events and lets customers select a ticket type and quantity. SPORTSHUB handles the booking after you open its hosted flow.
 
@@ -29,7 +29,7 @@ Send all three operations to the same URL with `POST` and `Content-Type: applica
 https://australia-southeast1-socialsportsprod.cloudfunctions.net/globalAppController
 ```
 
-These operations are public. You do not need an API key, a SPORTSHUB account token, or domain registration. For browser requests, set `credentials: "omit"`.
+For browser requests, set `credentials: "omit"`.
 
 Each request contains `endpointType` and `data`. Check the HTTP status before reading the successful response's `data`.
 
@@ -46,6 +46,16 @@ Invalid request envelopes return HTTP 400. Methods other than `POST` return HTTP
 This reference covers the production API. [Contact us](https://www.sportshub.net.au/docs/contact-us/) to arrange a test environment before testing bookings.
 
 All IDs and event details in the examples below are synthetic.
+
+### Response compatibility
+
+Responses may contain additional fields, including within event and ticket objects. Validate the required fields for each operation and the types of fields your integration uses. Ignore unrecognized fields; do not reject a response solely because it contains them. Use the documented fields to build your own display model instead of storing, logging, or forwarding the full response.
+
+If a field has an unrecognized named value, treat that value as unsupported and keep displaying unaffected event details. Do not infer booking availability or payment support from it. Missing required fields or incorrectly typed fields are unexpected responses; follow the operation's error and retry guidance.
+
+We may add response fields without changing the major contract version. Within a major version, existing documented fields retain their types and meanings. Removing or renaming fields, changing their types or meanings, or adding mandatory requirements requires a new major contract version and migration instructions.
+
+Contract v1 identifies the interface described here. You do not send a version parameter. Send only the documented request inputs.
 
 ## 1. Load your public events
 

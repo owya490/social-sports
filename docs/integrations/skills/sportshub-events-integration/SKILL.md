@@ -15,12 +15,13 @@ Keep `SKILL.md` and the `references` folder together when sharing or installing 
 
 Read the project's instructions and inspect its event display and service layer. Keep the current design and use existing dependencies where practical. Use the partner slug supplied by the user or SPORTSHUB; `example-club` in the reference is a placeholder. If the real slug is missing, ask the user before making API calls. Use the documented production URL unless SPORTSHUB supplies a test environment. Do not guess an organiser ID or substitute another partner's feed.
 
-Keep API requests in the project's service layer. All three operations use JSON POST requests to the documented GAC URL. Use `credentials: "omit"`. Public operations need no API key or Firebase sign-in.
+Keep API requests in the project's service layer. All three operations use JSON POST requests to the documented GAC URL. Use `credentials: "omit"`. Follow the reference's response compatibility rules for all three operations. Contract v1 does not require a version parameter; send only the documented request inputs.
 
 ## Display events and tickets
 
 - Fetch `GET_PARTNER_EVENTS` with the confirmed `partner`. Check the HTTP status and the `data.events` array before using the result. Keep loading, empty, and error states distinct.
-- Use only the documented event and ticket fields. If unexpected personal fields appear, stop consuming the response and report the field names to the user without copying their values. Draft a message for SPORTSHUB if needed; send it only when the user authorizes that action.
+- Validate required fields and the types of fields you use. Ignore additional fields on the response envelope, data, events, and tickets; do not reject a response solely because it has extra fields. Build a display model from documented fields without storing, logging, or forwarding unknown fields. If unexpected personal fields appear, stop consuming the response and report the field names without copying their values. Draft a message for SPORTSHUB if needed; send it only when the user authorizes that action.
+- Treat unrecognized named values as unsupported and keep unaffected event details. Do not infer booking availability or payment support from an unknown value. Missing required fields or incorrectly typed fields are unexpected responses; follow the reference's error and retry guidance.
 - Match events by `eventId`. Display UTC timestamps in `Australia/Sydney`, including daylight saving. Format `priceCents` as AUD; the hosted booking flow determines the final total.
 - Treat `vacancy: null` as a hidden count. Do not infer a count from `soldOut` or other fields. An empty `ticketTypes` array has no ticket ID for this booking handoff; do not generate one.
 - An event in the feed can be paused, closed, or sold out. Treat availability as a display hint and let SPORTSHUB validate the booking. Do not turn off a waitlist solely because `soldOut` is true.
@@ -43,7 +44,7 @@ Session and step IDs grant access to a guest booking. Keep them out of analytics
 
 ## Check the integration
 
-Use synthetic fixtures for populated and empty feeds, request failures, hidden vacancy, no ticket types, Sydney daylight saving, and paused or sold-out events. For booking, stub all three operations. Check double-click prevention, an unknown INIT outcome, a failed NEXT lookup that preserves the session, and a null next-step ID.
+Use synthetic fixtures for populated and empty feeds, request failures, additional response fields, malformed required fields, unrecognized named values, hidden vacancy, no ticket types, Sydney daylight saving, and paused or sold-out events. For booking, stub all three operations. Check double-click prevention, an unknown INIT outcome, a failed NEXT lookup that preserves the session, and a null next-step ID.
 
 A live event-feed request is read-only. A live INIT request can reserve tickets or create payment state. Run a test booking only when the user has approved the environment and test action. Follow the partner's normal deployment process.
 
