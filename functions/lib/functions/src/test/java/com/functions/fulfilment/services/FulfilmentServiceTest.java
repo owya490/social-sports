@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
@@ -209,6 +210,16 @@ public class FulfilmentServiceTest {
                 assertEquals(forms ? FulfilmentEntityType.FORMS
                         : approval ? FulfilmentEntityType.DELAYED_STRIPE : FulfilmentEntityType.STRIPE, firstEntity(saved));
                 assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
+                var expectedScope = new FulfilmentInitialisationScope.PartnerPublic("organiser-1",
+                        new FulfilmentInitialisationScope.BookingSnapshot("General Admission", 1350,
+                                forms ? "form-1" : null));
+                if (approval) {
+                    stripe.verify(() -> StripeService.getDelayedStripeCheckoutUrl(
+                            anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+                } else {
+                    stripe.verify(() -> StripeService.getStripeCheckoutUrl(
+                            anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), eq(expectedScope)));
+                }
             }
         }
         sessions.verify(() -> FulfilmentSessionRepository.getFulfilmentSession(anyString(), any()), times(0));

@@ -33,9 +33,15 @@ public sealed interface FulfilmentInitialisationScope {
                     "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
                     quantity, maxTickets, event.getEventId()));
         }
-        return this instanceof FulfilmentInitialisationScope.PartnerPublic
+        ResolvedEventTicketType ticket = this instanceof FulfilmentInitialisationScope.PartnerPublic
                 ? EventTicketTypeService.resolvePublicById(event, ticketId).orElseThrow(FulfilmentInitialisationScope::unavailable)
                 : EventTicketTypeService.resolveById(event, ticketId);
+        if (this instanceof FulfilmentInitialisationScope.PartnerPublic partner
+                && partner.bookingSnapshot() != null
+                && !partner.bookingSnapshot().equals(BookingSnapshot.from(event, ticket))) {
+            throw new IllegalArgumentException("Event ticket details changed; refresh and try again");
+        }
+        return ticket;
     }
 
     default void validatePaymentProvider(EventData event, ResolvedEventTicketType ticket) {
@@ -58,7 +64,22 @@ public sealed interface FulfilmentInitialisationScope {
 
     record Guest() implements FulfilmentInitialisationScope {}
 
-    record PartnerPublic(String expectedOrganiserId) implements FulfilmentInitialisationScope {
+    record BookingSnapshot(String ticketName, Integer priceCents, String formId) {
+        static BookingSnapshot from(EventData event, ResolvedEventTicketType ticket) {
+            return new BookingSnapshot(ticket.getName(), ticket.getPrice(),
+                    EventTicketTypeService.resolveFormId(event, ticket.getId()).orElse(null));
+        }
+    }
+
+    record PartnerPublic(String expectedOrganiserId, BookingSnapshot bookingSnapshot) implements FulfilmentInitialisationScope {
+        public PartnerPublic(String expectedOrganiserId) {
+            this(expectedOrganiserId, null);
+        }
+
+        public PartnerPublic withBookingSnapshot(EventData event, ResolvedEventTicketType ticket) {
+            return new PartnerPublic(expectedOrganiserId, BookingSnapshot.from(event, ticket));
+        }
+
         public PartnerPublic {
             if (expectedOrganiserId == null || expectedOrganiserId.isBlank()) {
                 throw new IllegalArgumentException("Partner organiser is required");

@@ -40,6 +40,8 @@ public final class FulfilmentInitialisationService {
                 : EventsRepository.getActiveEventById(eventId)
                         .orElseThrow(() -> new CheckoutDateTimeException("Event " + eventId + " is not available"));
         ResolvedEventTicketType ticket = scope.validateEvent(eventData, numTickets, eventTicketTypeId);
+        FulfilmentInitialisationScope bookingScope = scope instanceof FulfilmentInitialisationScope.PartnerPublic partner
+                ? partner.withBookingSnapshot(eventData, ticket) : scope;
         PaymentProvider provider = paymentProvider == null ? PaymentProvider.STRIPE : paymentProvider;
         if (scope instanceof FulfilmentInitialisationScope.PartnerPublic && provider != PaymentProvider.STRIPE) {
             throw new IllegalArgumentException("Unsupported payment provider");
@@ -61,7 +63,7 @@ public final class FulfilmentInitialisationService {
 
         String sessionId = UUID.randomUUID().toString();
         FulfilmentSession session = type.getFulfilmentSessionService().initFulfilmentSession(
-                sessionId, eventData, numTickets, eventTicketTypeId, scope);
+                sessionId, eventData, numTickets, eventTicketTypeId, bookingScope);
         String firstEntityId = session.getFulfilmentEntityIds().get(0);
 
         if (type == FulfilmentSessionType.WAITLIST && scope instanceof FulfilmentInitialisationScope.PartnerPublic) {
@@ -69,7 +71,7 @@ public final class FulfilmentInitialisationService {
             FirebaseService.createFirestoreTransaction(transaction -> {
                 EventData current = EventsRepository.getActiveEventById(eventId, false, transaction)
                         .orElseThrow(FulfilmentInitialisationService::unavailable);
-                scope.validateEvent(current, numTickets, eventTicketTypeId, validationTime);
+                bookingScope.validateEvent(current, numTickets, eventTicketTypeId, validationTime);
                 if (!Boolean.TRUE.equals(current.getWaitlistEnabled())) {
                     throw unavailable();
                 }

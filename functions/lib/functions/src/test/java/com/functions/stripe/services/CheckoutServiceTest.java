@@ -31,6 +31,7 @@ import org.mockito.MockedStatic;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.global.exceptions.NotFoundException;
@@ -281,6 +282,32 @@ public class CheckoutServiceTest {
     }
 
     @Test
+    public void partnerTicketWorkflowChangesRejectBeforeOrganiserOrWrites() throws Exception {
+        List<Consumer<EventData>> changes = List.of(
+                current -> current.getEventTicketTypes().get("ticket-1").setFormId("new-form"),
+                current -> current.setFormId("new-event-form"),
+                current -> current.getEventTicketTypes().get("ticket-1").setPrice(2000),
+                current -> current.getEventTicketTypes().get("ticket-1").setName("New ticket name"));
+        for (Consumer<EventData> change : changes) {
+            event = availableEvent();
+            var scope = ((FulfilmentInitialisationScope.PartnerPublic) PARTNER).withBookingSnapshot(
+                    event, EventTicketTypeService.resolveById(event, "ticket-1"));
+            change.accept(event);
+            when(snapshot.toObject(EventData.class)).thenReturn(event);
+            try {
+                CheckoutService.createStripeCheckoutSession(request(false), scope);
+                fail("Expected changed ticket workflow rejection");
+            } catch (IllegalArgumentException expected) {
+            }
+        }
+        users.verifyNoInteractions();
+        accounts.verifyNoInteractions();
+        stripeSessions.verifyNoInteractions();
+        verify(transaction, times(changes.size())).get(eventRef);
+        verifyNoMoreInteractions(transaction);
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void partnerFreeBookingRetainsStripePrerequisitesAndPublicReservationAcrossTransactionRetry() throws Exception {
         Instant initialTime = Instant.parse("2026-10-18T00:00:00Z");
@@ -288,6 +315,7 @@ public class CheckoutServiceTest {
         AtomicReference<Instant> currentTime = new AtomicReference<>(initialTime);
         event.setRegistrationDeadline(Timestamp.ofTimeSecondsAndNanos(deadline.getEpochSecond(), 0));
         event.getEventTicketTypes().get("ticket-1").setPrice(0);
+        event.setFormId("current-form");
         event.setSupportedPaymentProviders(List.of());
         when(FirebaseService.getFirestore().runTransaction(any(Transaction.Function.class))).thenAnswer(invocation -> {
             Transaction.Function<?> callback = invocation.getArgument(0);
@@ -300,7 +328,9 @@ public class CheckoutServiceTest {
             for (CaptureMethod capture : List.of(CaptureMethod.AUTOMATIC, CaptureMethod.MANUAL)) {
                 currentTime.set(initialTime);
                 event.setBookingApprovalEnabled(capture == CaptureMethod.MANUAL);
-                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false, capture), PARTNER).stripeCheckoutSessionId());
+                var scope = ((FulfilmentInitialisationScope.PartnerPublic) PARTNER).withBookingSnapshot(
+                        event, EventTicketTypeService.resolveById(event, "ticket-1"));
+                assertEquals("cs_test", CheckoutService.createStripeCheckoutSession(request(false, capture), scope).stripeCheckoutSessionId());
             }
         }
         users.verify(() -> Users.getPrivateUserDataById("organiser-1", Optional.of(transaction)), times(4));
