@@ -14,7 +14,8 @@ import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 
 /**
  * Pyng payment completion. When a pending hosted checkout is finished, this
- * records the outcome on the fulfilment session.
+ * records the outcome on the fulfilment session. The Pyng entity end hook
+ * decides when that session may advance.
  */
 public final class PyngCheckoutCompletion {
     private static final Logger logger = LoggerFactory.getLogger(PyngCheckoutCompletion.class);

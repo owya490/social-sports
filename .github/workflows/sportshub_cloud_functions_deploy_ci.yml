@@ -69,6 +69,12 @@ jobs:
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
           echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
           echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
+          echo "PYNG_DEV_USERNAME=\"${{ secrets.PYNG_DEV_USERNAME }}\"" >> .env
+          echo "PYNG_DEV_PASSWORD=\"${{ secrets.PYNG_DEV_PASSWORD }}\"" >> .env
+          echo "PYNG_DEV_SIGNING_SECRET=\"${{ secrets.PYNG_DEV_SIGNING_SECRET }}\"" >> .env
+          echo "PYNG_PROD_USERNAME=\"${{ secrets.PYNG_PROD_USERNAME }}\"" >> .env
+          echo "PYNG_PROD_PASSWORD=\"${{ secrets.PYNG_PROD_PASSWORD }}\"" >> .env
+          echo "PYNG_PROD_SIGNING_SECRET=\"${{ secrets.PYNG_PROD_SIGNING_SECRET }}\"" >> .env
 
       # Deploy Java Cloud Run functions in parallel
       # All functions deploy simultaneously using & to run commands in the background in a non-blocking way

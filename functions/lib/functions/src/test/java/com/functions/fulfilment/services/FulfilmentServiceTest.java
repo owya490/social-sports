@@ -15,7 +15,6 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Map;
@@ -41,9 +40,6 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.global.exceptions.NotFoundException;
 import com.google.cloud.firestore.Transaction;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
-import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
-import com.functions.fulfilment.pyng.PyngHostedCheckout;
-import com.functions.fulfilment.pyng.PyngService;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
@@ -120,6 +116,20 @@ public class FulfilmentServiceTest {
         sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
                 anyString(), isA(WaitlistFulfilmentSession.class), any()), times(2));
         events.verify(() -> EventsRepository.getEventById(anyString()), times(0));
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    public void rejectsPyngBeforeStartingASession() throws Exception {
+        try {
+            FulfilmentInitialisationService.initialise(
+                    "event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
+            fail("Expected Pyng rejection");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Pyng"));
+        }
+        events.verifyNoInteractions();
+        sessions.verifyNoInteractions();
         stripe.verifyNoInteractions();
     }
 
@@ -235,31 +245,6 @@ public class FulfilmentServiceTest {
         }
         sessions.verify(() -> FulfilmentSessionRepository.getFulfilmentSession(anyString(), any()), times(0));
         events.verify(() -> EventsRepository.getEventById(anyString()), times(0));
-    }
-
-    @Test
-    public void guestPyngInitialisationRetainsTheValidatedPrivateEventAndHostedPaymentStep() throws Exception {
-        EventData event = availableEvent(true);
-        event.setIsPrivate(true);
-        event.getEventTicketTypes().get("ticket-1").setVacancy(2);
-        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
-        AtomicReference<FulfilmentSession> persisted = captureSession();
-        PyngHostedCheckout checkout = mock(PyngHostedCheckout.class);
-        when(checkout.checkoutSessionId()).thenReturn("pyng-session");
-        when(checkout.hostedPageUrl()).thenReturn("https://checkout.example/pyng");
-        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class)) {
-            pyng.when(() -> PyngService.createHostedCheckout(any())).thenReturn(checkout);
-            InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
-                    "event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
-            var saved = (PyngCheckoutFulfilmentSession) persisted.get();
-            assertSame(event, saved.getEventData());
-            assertEquals(result.fulfilmentSessionId(), saved.getId());
-            assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
-            assertEquals(FulfilmentEntityType.PYNG, firstEntity(saved));
-            assertEquals("pyng-session", saved.getPyngMetadata().getCheckoutSessionId());
-            pyng.verify(() -> PyngService.createHostedCheckout(saved));
-        }
-        stripe.verifyNoInteractions();
     }
 
     @Test
