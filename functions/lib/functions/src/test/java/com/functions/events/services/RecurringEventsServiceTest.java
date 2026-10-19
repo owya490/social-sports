@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Date;
@@ -220,6 +221,18 @@ public class RecurringEventsServiceTest {
         Assert.assertEquals("Australia/Brisbane", EventTimeZone.stamp(movedPin).getId());
     }
 
+    private static List<Timestamp> legacyUtcSchedule(Timestamp start, RecurrenceData.Frequency frequency, int recurrenceAmount) {
+        List<Timestamp> dates = new ArrayList<>();
+        LocalDateTime anchor = TimeUtils.convertTimestampToLocalDateTime(start);
+        for (int recurrenceNumber = 0; recurrenceNumber <= recurrenceAmount; recurrenceNumber++) {
+            LocalDateTime stepped = frequency == RecurrenceData.Frequency.MONTHLY
+                    ? anchor.plusMonths(recurrenceNumber)
+                    : anchor.plusDays((long) recurrenceNumber * frequency.getValue());
+            dates.add(TimeUtils.convertLocalDateTimeToTimestamp(stepped));
+        }
+        return dates;
+    }
+
     private static NewEventData eventWithClock(ZoneId zone, ZonedDateTime start, ZonedDateTime end, ZonedDateTime deadline) {
         NewEventData event = new NewEventData();
         event.setTimezone(zone.getId());
@@ -354,6 +367,85 @@ public class RecurringEventsServiceTest {
                 recurrenceData, past, LocalDate.of(2026, 10, 4), true, event);
 
         Assert.assertNull(selected);
+    }
+
+    @Test
+    public void legacyMonthlySaveThenCronDoesNotRecreateTheMarchOccurrence() {
+        ZoneId sydney = ZoneId.of("Australia/Sydney");
+        Timestamp start = timestamp(ZonedDateTime.of(2027, 3, 1, 9, 0, 0, 0, sydney));
+        List<Timestamp> legacy = legacyUtcSchedule(start, RecurrenceData.Frequency.MONTHLY, 2);
+        Assert.assertEquals(LocalDateTime.of(2027, 3, 29, 9, 0), inSydney(legacy.get(1)).toLocalDateTime());
+        Assert.assertEquals(ZoneOffset.ofHours(11), inSydney(legacy.get(1)).getOffset());
+
+        Map<String, String> past = Map.of(
+                TimeUtils.getTimestampStringFromTimezone(legacy.get(0), sydney), "anchor-event",
+                TimeUtils.getTimestampStringFromTimezone(legacy.get(1), sydney), "march-event");
+        List<Timestamp> reconciled = RecurringEventsService.scheduleRespectingCreatedOccurrences(
+                start, RecurrenceData.Frequency.MONTHLY, 2, false, sydney, legacy, start, past);
+
+        Assert.assertEquals(legacy.get(1), reconciled.get(0));
+        ZonedDateTime corrected = inSydney(reconciled.get(1));
+        Assert.assertEquals(LocalDateTime.of(2027, 5, 1, 9, 0), corrected.toLocalDateTime());
+        Assert.assertEquals(ZoneOffset.ofHours(10), corrected.getOffset());
+
+        NewEventData event = new NewEventData();
+        event.setTimezone(sydney.getId());
+        event.setStartDate(start);
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(1)
+                .frequency(RecurrenceData.Frequency.MONTHLY)
+                .recurrenceAmount(2)
+                .allRecurrences(reconciled)
+                .pastRecurrences(past)
+                .build();
+
+        Assert.assertNull(RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, past, LocalDate.of(2027, 3, 31), false, event));
+        Timestamp later = RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, past, LocalDate.of(2027, 4, 30), false, event);
+        Assert.assertEquals(reconciled.get(1), later);
+        Assert.assertEquals(LocalDateTime.of(2027, 5, 1, 9, 0), inSydney(later).toLocalDateTime());
+    }
+
+    @Test
+    public void legacyWeeklyAutumnSaveThenCronDoesNotRecreateTheShiftedOccurrence() {
+        ZoneId sydney = ZoneId.of("Australia/Sydney");
+        // 00:30 is early enough that the autumn fallback moves a UTC week-step onto the previous Sydney date.
+        Timestamp start = timestamp(ZonedDateTime.of(2027, 4, 3, 0, 30, 0, 0, sydney));
+        List<Timestamp> legacy = legacyUtcSchedule(start, RecurrenceData.Frequency.WEEKLY, 2);
+        List<Timestamp> wallClock = RecurringEventsService.calculateAllRecurrenceDates(
+                start, RecurrenceData.Frequency.WEEKLY, 2, true, sydney);
+        Assert.assertEquals(LocalDate.of(2027, 4, 9), inSydney(legacy.get(1)).toLocalDate());
+        Assert.assertEquals(LocalDate.of(2027, 4, 10), inSydney(wallClock.get(1)).toLocalDate());
+
+        Map<String, String> past = Map.of(
+                TimeUtils.getTimestampStringFromTimezone(legacy.get(0), sydney), "anchor-event",
+                TimeUtils.getTimestampStringFromTimezone(legacy.get(1), sydney), "created-event");
+        List<Timestamp> reconciled = RecurringEventsService.scheduleRespectingCreatedOccurrences(
+                start, RecurrenceData.Frequency.WEEKLY, 2, false, sydney, legacy, start, past);
+
+        Assert.assertEquals(legacy.get(1), reconciled.get(0));
+        Assert.assertEquals(LocalDateTime.of(2027, 4, 17, 0, 30), inSydney(reconciled.get(1)).toLocalDateTime());
+        Assert.assertEquals(ZoneOffset.ofHours(10), inSydney(reconciled.get(1)).getOffset());
+
+        NewEventData event = new NewEventData();
+        event.setTimezone(sydney.getId());
+        event.setStartDate(start);
+        RecurrenceData recurrenceData = RecurrenceData.builder()
+                .recurrenceEnabled(true)
+                .createDaysBefore(0)
+                .frequency(RecurrenceData.Frequency.WEEKLY)
+                .recurrenceAmount(2)
+                .allRecurrences(reconciled)
+                .pastRecurrences(past)
+                .build();
+
+        Assert.assertNull(RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, past, LocalDate.of(2027, 4, 10), false, event));
+        Timestamp later = RecurringEventsCronService.findNextRecurrenceToCreate(
+                recurrenceData, past, LocalDate.of(2027, 4, 17), false, event);
+        Assert.assertEquals(reconciled.get(1), later);
     }
 
     @Test

@@ -205,11 +205,9 @@ public class RecurringEventsCronService {
     }
 
     /**
-     * Picks the next occurrence that is not already created. Future dates are
-     * recomputed from the template start in the venue zone, because a UTC-stepped
-     * stored instant cannot be repaired by reading it back. An existing
-     * pastRecurrences key for that venue-local day, including the old Sydney key
-     * of a UTC-stepped instant, still counts as created. New keys stay in the
+     * Picks the next occurrence that is not already created. Already-created
+     * ordinals keep the timestamp stored for them, and slots that have not been
+     * created use the venue wall clock. New pastRecurrences keys stay in the
      * Sydney {@code yyyy-MM-dd HH:mm:ss O} format.
      */
     static Timestamp findNextRecurrenceToCreate(RecurrenceData recurrenceData,
@@ -224,7 +222,7 @@ public class RecurringEventsCronService {
         int createDaysBefore = recurrenceData.getCreateDaysBefore() == null
                 ? 0
                 : recurrenceData.getCreateDaysBefore();
-        for (Timestamp recurrenceTimestamp : occurrencesToSchedule(recurrenceData, eventData)) {
+        for (Timestamp recurrenceTimestamp : occurrencesToSchedule(recurrenceData, eventData, pastRecurrences)) {
             if (occurrenceAlreadyCreated(recurrenceTimestamp, pastRecurrences, zone)) {
                 continue;
             }
@@ -239,18 +237,33 @@ public class RecurringEventsCronService {
     }
 
     static List<Timestamp> occurrencesToSchedule(RecurrenceData recurrenceData, NewEventData eventData) {
-        if (eventData != null && eventData.getStartDate() != null
-                && recurrenceData.getFrequency() != null
-                && recurrenceData.getRecurrenceAmount() != null) {
-            return RecurringEventsService.calculateAllRecurrenceDates(
-                    eventData.getStartDate(),
-                    recurrenceData.getFrequency(),
-                    recurrenceData.getRecurrenceAmount(),
-                    true,
-                    EventTimeZone.resolve(eventData));
-        }
+        return occurrencesToSchedule(recurrenceData, eventData, recurrenceData.getPastRecurrences());
+    }
+
+    /**
+     * Honours timestamps already stored for created ordinals. Uncreated slots are
+     * recalculated on the venue wall clock so a UTC-stepped date is not reused.
+     */
+    static List<Timestamp> occurrencesToSchedule(RecurrenceData recurrenceData, NewEventData eventData,
+            Map<String, String> pastRecurrences) {
         List<Timestamp> stored = recurrenceData.getAllRecurrences();
-        return stored == null ? List.of() : stored;
+        if (stored == null) {
+            stored = List.of();
+        }
+        if (eventData == null || eventData.getStartDate() == null
+                || recurrenceData.getFrequency() == null
+                || recurrenceData.getRecurrenceAmount() == null) {
+            return stored;
+        }
+        return RecurringEventsService.scheduleRespectingCreatedOccurrences(
+                eventData.getStartDate(),
+                recurrenceData.getFrequency(),
+                recurrenceData.getRecurrenceAmount(),
+                true,
+                EventTimeZone.resolve(eventData),
+                stored,
+                eventData.getStartDate(),
+                pastRecurrences);
     }
 
     /**

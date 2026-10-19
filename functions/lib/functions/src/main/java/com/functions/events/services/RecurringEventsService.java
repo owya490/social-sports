@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -72,9 +73,16 @@ public class RecurringEventsService {
 
         // A moved pin keeps the previous wall clock when the instants were not retyped.
         EventTimeZone.retainWallClockIfPinMoved(currentRecurrenceTemplate.getEventData(), newEventData);
-        // Calculate all future recurrence Dates in the venue zone.
+        // Recalculate in the venue zone, but keep timestamps already written to pastRecurrences.
         ZoneId zone = EventTimeZone.stamp(newEventData);
-        RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false, zone);
+        RecurrenceData recurrenceData = calculateRecurrenceData(
+                newRecurrenceData,
+                newEventData.getStartDate(),
+                currentRecurrenceTemplate.getRecurrenceData().getAllRecurrences(),
+                currentRecurrenceTemplate.getEventData().getStartDate(),
+                pastRecurrences,
+                false,
+                zone);
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
                 .eventData(newEventData)
                 .recurrenceData(recurrenceData)
@@ -107,20 +115,44 @@ public class RecurringEventsService {
     }
 
     private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, NewEventData eventData, ZoneId zone) {
-        return calculateRecurrenceData(newRecurrenceData, eventData.getStartDate(), Map.of(), true, zone);
+        return calculateRecurrenceData(newRecurrenceData, eventData.getStartDate(), List.of(), null, Map.of(), true, zone);
     }
 
-    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate, Map<String, String> pastRecurrences, boolean isCreate, ZoneId zone) {
-        List<Timestamp> allRecurrences = calculateAllRecurrenceDates(startDate, newRecurrenceData.getFrequency(), newRecurrenceData.getRecurrenceAmount(), isCreate, zone);
+    private static RecurrenceData calculateRecurrenceData(NewRecurrenceData newRecurrenceData, Timestamp startDate,
+            List<Timestamp> existingRecurrences, Timestamp existingAnchor, Map<String, String> pastRecurrences,
+            boolean isCreate, ZoneId zone) {
+        List<Timestamp> allRecurrences = scheduleRespectingCreatedOccurrences(
+                startDate,
+                newRecurrenceData.getFrequency(),
+                newRecurrenceData.getRecurrenceAmount(),
+                isCreate,
+                zone,
+                existingRecurrences,
+                existingAnchor,
+                pastRecurrences);
         return RecurrenceData.builderFromNewRecurrenceData(newRecurrenceData)
                 .allRecurrences(allRecurrences)
                 .pastRecurrences(pastRecurrences)
                 .build();
     }
 
+    /**
+     * Wall-clock dates for slots that have not been created, and the stored timestamp
+     * for an ordinal already present in {@code pastRecurrences}. That stored timestamp
+     * is the occurrence identity the cron dedupes on.
+     */
+    @VisibleForTesting
+    public static List<Timestamp> scheduleRespectingCreatedOccurrences(Timestamp startDate,
+            RecurrenceData.Frequency frequency, Integer recurrenceAmount, boolean isCreate, ZoneId zone,
+            List<Timestamp> existingRecurrences, Timestamp existingAnchor, Map<String, String> pastRecurrences) {
+        List<Timestamp> calculated = calculateAllRecurrenceDates(startDate, frequency, recurrenceAmount, isCreate, zone);
+        return preserveCreatedOccurrences(calculated, existingRecurrences, existingAnchor, isCreate, pastRecurrences);
+    }
+
     @VisibleForTesting
     public static List<Timestamp> calculateAllRecurrenceDates(Timestamp startDate, RecurrenceData.Frequency frequency, Integer recurrenceAmount, boolean isCreate, ZoneId zone) {
         ZoneId eventZone = zone == null ? EventTimeZone.FALLBACK : zone;
+        ZonedDateTime start = Instant.ofEpochSecond(startDate.getSeconds(), startDate.getNanos()).atZone(eventZone);
         logger.info("Calculating all recurrence dates from {} with a frequency of {} for {} times in {}", startDate, frequency, recurrenceAmount, eventZone);
         int starting = isCreate ? 0 : 1;
         switch (frequency) {
@@ -129,31 +161,61 @@ public class RecurringEventsService {
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
                 return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber -> {
                     logger.info("recurrenceNumber {}", recurrenceNumber);
-                    return occurrenceAfterDays(startDate, (long) recurrenceNumber * frequency.getValue(), eventZone);
+                    return TimeUtils.convertZonedDateTimeToTimestamp(
+                            start.plusDays((long) recurrenceNumber * frequency.getValue()));
                 }).collect(Collectors.toList());
             case MONTHLY:
                 // We want to do recurrenceAmount + 1 as we count the initial date as a recurrence, but not in the UI
                 return IntStream.range(starting, recurrenceAmount + 1).mapToObj(recurrenceNumber ->
-                        occurrenceAfterMonths(startDate, recurrenceNumber, eventZone)
+                        TimeUtils.convertZonedDateTimeToTimestamp(start.plusMonths(recurrenceNumber))
                 ).collect(Collectors.toList());
             default:
                 return List.of();
         }
     }
 
-    private static Timestamp occurrenceAfterDays(Timestamp startDate, long days, ZoneId zone) {
-        return toTimestamp(zonedStart(startDate, zone).plusDays(days));
+    static List<Timestamp> preserveCreatedOccurrences(List<Timestamp> calculated, List<Timestamp> existingRecurrences,
+            Timestamp existingAnchor, boolean calculatedIncludesAnchor, Map<String, String> pastRecurrences) {
+        if (calculated == null || calculated.isEmpty()
+                || existingRecurrences == null || existingRecurrences.isEmpty()
+                || pastRecurrences == null || pastRecurrences.isEmpty()) {
+            return calculated == null ? List.of() : calculated;
+        }
+        // Creation stores the anchor at index 0. A later save omits it, so the two lists can be off by one.
+        boolean existingIncludesAnchor = sameTimestamp(existingRecurrences.get(0), existingAnchor);
+        int existingOffset;
+        if (existingIncludesAnchor == calculatedIncludesAnchor) {
+            existingOffset = 0;
+        } else if (existingIncludesAnchor) {
+            existingOffset = 1;
+        } else {
+            existingOffset = -1;
+        }
+        List<Timestamp> reconciled = new ArrayList<>(calculated.size());
+        for (int i = 0; i < calculated.size(); i++) {
+            int existingIndex = i + existingOffset;
+            if (existingIndex >= 0 && existingIndex < existingRecurrences.size()
+                    && occurrenceRecorded(existingRecurrences.get(existingIndex), pastRecurrences)) {
+                reconciled.add(existingRecurrences.get(existingIndex));
+            } else {
+                reconciled.add(calculated.get(i));
+            }
+        }
+        return reconciled;
     }
 
-    private static Timestamp occurrenceAfterMonths(Timestamp startDate, long months, ZoneId zone) {
-        return toTimestamp(zonedStart(startDate, zone).plusMonths(months));
+    private static boolean occurrenceRecorded(Timestamp occurrence, Map<String, String> pastRecurrences) {
+        if (occurrence == null) {
+            return false;
+        }
+        // Ledger keys stay in the Sydney format written by the cron, including for other venue zones.
+        String key = TimeUtils.getTimestampStringFromTimezone(occurrence, EventTimeZone.FALLBACK);
+        return pastRecurrences.containsKey(key);
     }
 
-    private static ZonedDateTime zonedStart(Timestamp startDate, ZoneId zone) {
-        return Instant.ofEpochSecond(startDate.getSeconds(), startDate.getNanos()).atZone(zone);
-    }
-
-    private static Timestamp toTimestamp(ZonedDateTime zonedDateTime) {
-        return TimeUtils.convertZonedDateTimeToTimestamp(zonedDateTime);
+    private static boolean sameTimestamp(Timestamp left, Timestamp right) {
+        return left != null && right != null
+                && left.getSeconds() == right.getSeconds()
+                && left.getNanos() == right.getNanos();
     }
 }
