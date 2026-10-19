@@ -32,6 +32,10 @@ USER_AGENT = (
 )
 PROJECT = "socialsportsprod"
 LOG_LIMIT = 20000
+# A Monday run should sit about seven days after the previous one. Younger
+# readings are not a full week, and older ones fold missed weeks into one delta.
+MIN_BASELINE_AGE = timedelta(days=6)
+MAX_BASELINE_AGE = timedelta(days=10)
 
 # Sheet rows, in order. Each id is one Loops transactional email.
 SECTIONS = (
@@ -209,52 +213,65 @@ def log_count(start: datetime, end: datetime, log_filter: str) -> int:
     return len(lines)
 
 
-def backend_send_rows(start: datetime, end: datetime) -> list[tuple[str, int, int]]:
-    queries = {
-        "payment_ok": (
-            'resource.labels.service_name="stripewebhookendpoint" '
-            'AND jsonPayload.message:"Successfully sent purchase email for order"'
-        ),
-        "payment_fail": (
-            'resource.labels.service_name="stripewebhookendpoint" '
-            'AND (jsonPayload.message:"Failed to send purchase email" '
-            'OR jsonPayload.message:"Failed to send copy of purchase email")'
-        ),
-        "reminder_attempts": (
-            'resource.labels.service_name="email-reminder" '
-            'AND (textPayload:"Sending Loops transactional email with id cm5dwlbsj034sasyzg1w6sg39" '
-            'OR jsonPayload.message:"Sending Loops transactional email with id cm5dwlbsj034sasyzg1w6sg39")'
-        ),
-        "reminder_fail": (
-            'resource.labels.service_name="email-reminder" '
-            'AND (textPayload:"Failed to send event reminder" '
-            'OR jsonPayload.message:"Failed to send event reminder")'
-        ),
-        "event_ok": (
-            'resource.labels.service_name="send-email-on-create-event-v2" '
-            'AND (textPayload:"Loops API response status: 200" '
-            'OR jsonPayload.message:"Loops API response status: 200")'
-        ),
-        "event_status": (
-            'resource.labels.service_name="send-email-on-create-event-v2" '
-            'AND (textPayload:"Loops API response status:" '
-            'OR jsonPayload.message:"Loops API response status:")'
-        ),
-    }
-    with ThreadPoolExecutor(max_workers=len(queries)) as pool:
-        counts = {name: pool.submit(log_count, start, end, query) for name, query in queries.items()}
-        resolved = {name: future.result() for name, future in counts.items()}
-    payment_ok = resolved["payment_ok"]
-    payment_fail = resolved["payment_fail"]
-    reminder_attempts = resolved["reminder_attempts"]
-    reminder_fail = resolved["reminder_fail"]
-    event_ok = resolved["event_ok"]
-    event_status = resolved["event_status"]
+# Java purchase logs are plain text on stripewebhookendpoint. The buyer
+# confirmation is the payment row; an organiser-copy failure is a different send.
+# Event creation logs the first response as "Loops API response status:" and a
+# later attempt as "Loops API retry response status:". A 200 on either is accepted.
+LOG_QUERIES = {
+    "payment_ok": (
+        'resource.labels.service_name="stripewebhookendpoint" '
+        'AND (jsonPayload.message:"Successfully sent purchase email for order" '
+        'OR textPayload:"Successfully sent purchase email for order")'
+    ),
+    "payment_fail": (
+        'resource.labels.service_name="stripewebhookendpoint" '
+        'AND (jsonPayload.message:"Failed to send purchase email" '
+        'OR textPayload:"Failed to send purchase email")'
+    ),
+    "reminder_ok": (
+        'resource.labels.service_name="email-reminder" '
+        'AND (textPayload:"Successfully sent event reminder for eventId=" '
+        'OR jsonPayload.message:"Successfully sent event reminder for eventId=")'
+    ),
+    "reminder_fail": (
+        'resource.labels.service_name="email-reminder" '
+        'AND (textPayload:"Failed to send event reminder" '
+        'OR jsonPayload.message:"Failed to send event reminder")'
+    ),
+    "event_ok": (
+        'resource.labels.service_name="send-email-on-create-event-v2" '
+        'AND (textPayload:"Loops API response status: 200" '
+        'OR jsonPayload.message:"Loops API response status: 200" '
+        'OR textPayload:"Loops API retry response status: 200" '
+        'OR jsonPayload.message:"Loops API retry response status: 200")'
+    ),
+    "event_status": (
+        'resource.labels.service_name="send-email-on-create-event-v2" '
+        'AND (textPayload:"Loops API response status:" '
+        'OR jsonPayload.message:"Loops API response status:")'
+    ),
+}
+
+
+def backend_rows_from_counts(counts: dict[str, int]) -> list[tuple[str, int, int]]:
     return [
-        ("Loops Payment", payment_ok, payment_fail),
-        ("Loops Reminder", max(reminder_attempts - reminder_fail, 0), reminder_fail),
-        ("Loops Event", event_ok, max(event_status - event_ok, 0)),
+        ("Loops Payment", counts["payment_ok"], counts["payment_fail"]),
+        ("Loops Reminder", counts["reminder_ok"], counts["reminder_fail"]),
+        (
+            "Loops Event",
+            counts["event_ok"],
+            max(counts["event_status"] - counts["event_ok"], 0),
+        ),
     ]
+
+
+def backend_send_rows(start: datetime, end: datetime) -> list[tuple[str, int, int]]:
+    with ThreadPoolExecutor(max_workers=len(LOG_QUERIES)) as pool:
+        counts = {
+            name: pool.submit(log_count, start, end, query) for name, query in LOG_QUERIES.items()
+        }
+        resolved = {name: future.result() for name, future in counts.items()}
+    return backend_rows_from_counts(resolved)
 
 
 def format_week(start: datetime, end: datetime) -> str:
@@ -268,12 +285,17 @@ def snapshot_day(snapshot: dict) -> date:
 
 
 def weekly_baseline(snapshots: list[dict], now: datetime) -> dict | None:
-    """Latest reading old enough to be the previous MHR column."""
-    cutoff = now - timedelta(days=6)
+    """Latest reading from the previous week.
+
+    All-time Loops counters have no dates, so a baseline older than
+    MAX_BASELINE_AGE would add the missed weeks into this week's delta.
+    """
+    earliest = now - MAX_BASELINE_AGE
+    latest = now - MIN_BASELINE_AGE
     eligible = [
         snapshot
         for snapshot in snapshots
-        if datetime.fromisoformat(snapshot["takenAt"]) <= cutoff
+        if earliest <= datetime.fromisoformat(snapshot["takenAt"]) <= latest
     ]
     return eligible[-1] if eligible else None
 
@@ -282,8 +304,17 @@ def print_loops_delta(previous: dict | None, current: dict, earlier: list[dict])
     if previous is None:
         if earlier:
             taken = datetime.fromisoformat(earlier[-1]["takenAt"])
-            print(f"Latest Loops reading is {taken:%a %-d %b %Y %H:%M %Z}, under six days ago.")
-            print("The weekly delivery change will show once that reading is six days old.")
+            current_taken = datetime.fromisoformat(current["takenAt"])
+            if current_taken - taken > MAX_BASELINE_AGE:
+                print(f"Latest Loops reading is {taken:%a %-d %b %Y %H:%M %Z}, more than ten days ago.")
+                print("A weekly delivery change needs a baseline from the last ten days.")
+                print(
+                    "This reading is older, so the delta is left out. "
+                    "All-time counters cannot be split into the missing weeks."
+                )
+            else:
+                print(f"Latest Loops reading is {taken:%a %-d %b %Y %H:%M %Z}, under six days ago.")
+                print("The weekly delivery change will show once that reading is six days old.")
         else:
             taken = datetime.fromisoformat(current["takenAt"])
             print(f"Saved a Loops delivery baseline at {taken:%a %-d %b %Y %H:%M %Z}.")
