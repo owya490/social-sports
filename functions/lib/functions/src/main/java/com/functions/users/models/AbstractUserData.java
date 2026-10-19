@@ -38,7 +38,7 @@ public abstract class AbstractUserData {
 	private List<ActiveBooking> activeBookings = new ArrayList<>();
 	private String stripeAccount;
 	private Boolean stripeAccountActive;
-	/** Pyng site id for this organiser. Checkout reads it when opening Pay with Pyng. */
+	/** Organiser Pyng site id. */
 	private String pyngSiteId;
 	private List<String> organiserEvents = new ArrayList<>();
 	private List<String> recurrenceTemplates = new ArrayList<>();

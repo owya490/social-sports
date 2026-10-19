@@ -38,8 +38,6 @@ public class PyngServiceTest {
         ENV.clear();
         ENV.put(PyngConfig.DEV_USERNAME, "partner-user");
         ENV.put(PyngConfig.DEV_PASSWORD, "partner-pass");
-        ENV.put(PyngConfig.API_BASE_URL, "https://sample.pyng.com.au");
-        ENV.put(PyngConfig.RETURN_BASE_URL, "https://www.sportshub.net.au");
         PyngConfig.env = ENV::get;
         PyngConfig.productionOverride = false;
         PyngService.client = PyngCheckoutClient.http();
@@ -85,7 +83,7 @@ public class PyngServiceTest {
         JsonNode body = JavaUtils.objectMapper.readTree(request.body());
         assertEquals(SESSION_ID, body.get("orderId").asText());
         assertEquals(3000, body.get("amount").asInt());
-        assertEquals("https://www.sportshub.net.au/event/success/event-1",
+        assertEquals(PyngConfig.PYNG_DEV_RETURN_TARGET + "/event/success/event-1",
                 body.get("returnTarget").get("url").asText());
         assertTrue(body.get("metadata").get("fulfilmentSessionId").isTextual());
         assertEquals(SESSION_ID, body.get("metadata").get("fulfilmentSessionId").asText());

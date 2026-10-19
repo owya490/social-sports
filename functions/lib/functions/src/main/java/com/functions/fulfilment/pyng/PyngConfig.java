@@ -3,7 +3,6 @@ package com.functions.fulfilment.pyng;
 import java.util.function.Function;
 
 import com.functions.global.handlers.Global;
-import com.functions.utils.UrlUtils;
 import com.functions.utils.environment.Environment;
 import com.functions.utils.environment.EnvironmentUtils;
 
@@ -13,8 +12,8 @@ import com.functions.utils.environment.EnvironmentUtils;
  * not configured here; each organiser stores one on their private user record.
  */
 final class PyngConfig {
-    static final String API_BASE_URL = "PYNG_API_BASE_URL";
-    static final String RETURN_BASE_URL = "PYNG_RETURN_BASE_URL";
+    static final String PYNG_DEV_RETURN_TARGET = "https://social-sports-tau.vercel.app";
+    static final String PYNG_PROD_RETURN_TARGET = "https://sportshub.net.au";
 
     static final String DEV_USERNAME = "PYNG_DEV_USERNAME";
     static final String DEV_PASSWORD = "PYNG_DEV_PASSWORD";
@@ -49,10 +48,6 @@ final class PyngConfig {
     }
 
     static String apiBaseUrl() {
-        String override = optional(API_BASE_URL);
-        if (override != null) {
-            return stripTrailingSlash(override);
-        }
         if (production()) {
             return PRODUCTION_API_BASE_URL;
         }
@@ -60,12 +55,10 @@ final class PyngConfig {
     }
 
     static String returnBaseUrl() {
-        String override = optional(RETURN_BASE_URL);
-        if (override != null) {
-            return stripTrailingSlash(override);
+        if (production()) {
+            return PYNG_PROD_RETURN_TARGET;
         }
-        return stripTrailingSlash(UrlUtils.getUrlWithCurrentEnvironment("")
-                .orElse(UrlUtils.SPORTSHUB_URL));
+        return PYNG_DEV_RETURN_TARGET;
     }
 
     static boolean production() {
@@ -93,13 +86,5 @@ final class PyngConfig {
             return null;
         }
         return value.trim();
-    }
-
-    private static String stripTrailingSlash(String value) {
-        String stripped = value;
-        while (stripped.endsWith("/")) {
-            stripped = stripped.substring(0, stripped.length() - 1);
-        }
-        return stripped;
     }
 }

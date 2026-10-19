@@ -42,7 +42,7 @@ export interface PrivateUserData {
   activeBookings: string[];
   stripeAccount: string | null;
   stripeAccountActive: boolean | null;
-  /** Pyng site id for this organiser. Checkout reads it from the private user document. */
+  /** Organiser Pyng site id. */
   pyngSiteId: string | null;
   organiserEvents: string[];
   recurrenceTemplates: RecurrenceTemplateId[];

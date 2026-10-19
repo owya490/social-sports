@@ -310,8 +310,7 @@ public final class PyngService {
         URI uri = URI.create(url);
         if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null) {
             throw new IllegalStateException(
-                    "Pyng return URL must be https and its origin must be on the site allowlist. Set "
-                            + PyngConfig.RETURN_BASE_URL + " when the app origin is not https.");
+                    "Pyng return URL must be https and its origin must be on the site allowlist.");
         }
         return url;
     }

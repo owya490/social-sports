@@ -29,8 +29,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-function isStripeFulfilmentEntityType(type: FulfilmentEntityType | null | undefined): boolean {
-  return type === FulfilmentEntityType.STRIPE || type === FulfilmentEntityType.DELAYED_STRIPE;
+function isHostedCheckoutFulfilmentEntityType(type: FulfilmentEntityType | null | undefined): boolean {
+  return (
+    type === FulfilmentEntityType.STRIPE ||
+    type === FulfilmentEntityType.DELAYED_STRIPE ||
+    type === FulfilmentEntityType.PYNG
+  );
 }
 
 function hasFulfilmentRedirectUrl(url: URL | null): url is URL {
@@ -71,7 +75,7 @@ const FulfilmentSessionEntityPage = () => {
           return;
         }
 
-        if (isStripeFulfilmentEntityType(getFulfilmentEntityInfoResponse.type)) {
+        if (isHostedCheckoutFulfilmentEntityType(getFulfilmentEntityInfoResponse.type)) {
           if (!hasFulfilmentRedirectUrl(getFulfilmentEntityInfoResponse.url)) {
             fulfilmentSessionEntityPageLogger.error(
               `${getFulfilmentEntityInfoResponse.type} Fulfilment Entity URL is missing when it should not be, fulfilmentSessionId: ${fulfilmentSessionId}, fulfilmentEntityId: ${fulfilmentEntityId}, getFulfilmentEntityInfoResponse: ${JSON.stringify(
