@@ -85,7 +85,7 @@ public class PyngServiceTest {
         JsonNode body = JavaUtils.objectMapper.readTree(request.body());
         assertEquals(SESSION_ID, body.get("orderId").asText());
         assertEquals(3000, body.get("amount").asInt());
-        assertEquals("https://www.sportshub.net.au/fulfilment/" + SESSION_ID + "/entity-1",
+        assertEquals("https://www.sportshub.net.au/event/success/event-1",
                 body.get("returnTarget").get("url").asText());
         assertTrue(body.get("metadata").get("fulfilmentSessionId").isTextual());
         assertEquals(SESSION_ID, body.get("metadata").get("fulfilmentSessionId").asText());

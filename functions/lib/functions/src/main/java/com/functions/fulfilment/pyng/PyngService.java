@@ -6,7 +6,6 @@ import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -16,8 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.events.utils.EventsUtils;
-import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
-import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
@@ -300,8 +297,13 @@ public final class PyngService {
     }
 
     private static String returnUrl(PyngCheckoutFulfilmentSession session) {
-        String url = PyngConfig.returnBaseUrl() + "/fulfilment/"
-                + encodePath(session.getId()) + "/" + encodePath(pyngEntityId(session));
+        if (session.getEventData() == null || session.getEventData().getEventId() == null
+                || session.getEventData().getEventId().isBlank()) {
+            throw new IllegalArgumentException("Pyng return URL requires an event id");
+        }
+        // Same success page Stripe Checkout uses.
+        String url = PyngConfig.returnBaseUrl() + "/event/success/"
+                + encodePath(session.getEventData().getEventId());
         if (url.length() > MAX_RETURN_URL_LENGTH) {
             throw new IllegalArgumentException("Pyng return URL exceeds 2048 characters");
         }
@@ -312,21 +314,6 @@ public final class PyngService {
                             + PyngConfig.RETURN_BASE_URL + " when the app origin is not https.");
         }
         return url;
-    }
-
-    private static String pyngEntityId(PyngCheckoutFulfilmentSession session) {
-        List<String> ids = session.getFulfilmentEntityIds();
-        Map<String, FulfilmentEntity> entities = session.getFulfilmentEntityMap();
-        if (ids == null || entities == null) {
-            throw new IllegalStateException("Pyng checkout session is missing fulfilment entities");
-        }
-        for (String id : ids) {
-            FulfilmentEntity entity = entities.get(id);
-            if (entity != null && entity.getType() == FulfilmentEntityType.PYNG) {
-                return id;
-            }
-        }
-        throw new IllegalStateException("Pyng checkout session has no PYNG fulfilment entity");
     }
 
     private static Map<String, String> metadata(PyngCheckoutFulfilmentSession session) {
