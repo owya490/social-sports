@@ -9,6 +9,38 @@ Cloud Scheduler jobs are managed separately by scripts in this directory.
 Inspect their arguments and the target project before any approved
 scheduler change.
 
+## Provision a partner integration
+
+Use Java 17 and Maven. The command previews the target project and settings
+without contacting Firebase:
+
+```bash
+./provisionPartnerIntegration.sh --environment dev \
+  --partner example-club --organiser '<organiser-user-id>' \
+  --origin https://partner.example
+```
+
+Use the `organiserId` recorded on the club's events. Repeat `--origin` for each
+website origin, including `www` separately when needed. Use no trailing slash
+or page path. Production origins require HTTPS; development also permits
+explicit localhost ports such as `http://localhost:3000`.
+
+To create the record, authenticate with `gcloud auth application-default login`,
+then rerun the command with `--apply`. Use `--environment prod` to target
+production. The operator needs permission to create Firestore documents in the
+selected project. Unset `FIRESTORE_EMULATOR_HOST` for an apply operation.
+
+The command atomically creates `PartnerIntegrations/<integration-id>` and refuses
+to overwrite an existing record. Only the key's SHA-256 hash is stored. The
+original key is displayed once after creation; save it outside the repository
+and give it to the partner with the API reference. Do not tee or log this output.
+Use independent keys in development and production.
+
+Inspect the configuration in Firebase Console. Set `enabled` to `false` to
+disable the integration. If creation fails or times out, inspect the selected
+project before retrying; the record might already exist. Provisioning does not
+deploy the backend or change the partner's website.
+
 ## AI error alerts
 
 Cloud Logging routes eligible function errors through the `error-log-alerts`

@@ -70,6 +70,10 @@ public class EventsUtils {
      * Validates event availability: active, not paused, not concluded, registration still open.
      */
     public static void validateEventTiming(EventData event) throws Exception {
+        validateEventTiming(event, Instant.now());
+    }
+
+    public static void validateEventTiming(EventData event, Instant now) throws Exception {
         if (event == null) {
             logger.error("Failed to validate event timing: event is null");
             throw new RuntimeException("Failed to validate event timing: event is null");
@@ -90,7 +94,6 @@ public class EventsUtils {
             throw new RuntimeException("Event " + eventId + " missing date fields");
         }
 
-        Instant now = Instant.now();
         Instant eventEnd = Instant.ofEpochSecond(endDate.getSeconds(), endDate.getNanos());
         Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
 

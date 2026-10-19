@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.ResolvedEventTicketType;
-import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.fulfilment.models.FulfilmentSessionService;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
@@ -34,20 +34,14 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
 
     private static final Logger logger = LoggerFactory.getLogger(BookingApprovalFulfilmentService.class);
 
-    public BookingApprovalFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets, String eventTicketTypeId) throws Exception {
+    public BookingApprovalFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, EventData eventData,
+            Integer numTickets, String eventTicketTypeId, FulfilmentInitialisationScope scope) throws Exception {
+        String eventId = eventData.getEventId();
         try {
 
-            Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-            if (maybeEventData.isEmpty()) {
-                logger.error("Failed to find event data for event ID: {}", eventId);
-                throw new Exception("Failed to find event data for event ID: " + eventId);
-            }
-
-            EventData eventData = maybeEventData.get();
             ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = constructBookingApprovalFulfilmentEntities(
-                    eventId, eventData, numTickets, fulfilmentSessionId, eventTicketTypeId);
+                    eventId, eventData, numTickets, fulfilmentSessionId, eventTicketTypeId, scope);
             logger.info(
                     "Constructed checkout fulfilment entities for event ID: {}, numTickets: {}, fulfilmentSessionId: {}, entityTypes: {}",
                     eventId, numTickets, fulfilmentSessionId,
@@ -95,7 +89,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructBookingApprovalFulfilmentEntities(
             String eventId, EventData eventData, Integer numTickets, String fulfilmentSessionId,
-            String eventTicketTypeId) throws Exception {
+            String eventTicketTypeId, FulfilmentInitialisationScope scope) throws Exception {
         // Pair of FulfilmentEntityId and FulfilmentEntity
         List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities = new ArrayList<>();
 
@@ -162,7 +156,7 @@ public class BookingApprovalFulfilmentService implements FulfilmentSessionServic
                 var delayedStripeCheckout = StripeService.getDelayedStripeCheckoutUrl(eventId,
                         eventData.getIsPrivate(), numTickets, Optional.of(bookingApprovalSuccessUrl),
                         Optional.of(cancelUrl),
-                        fulfilmentSessionId, endFulfilmentEntityId, eventTicketTypeId);
+                        fulfilmentSessionId, endFulfilmentEntityId, eventTicketTypeId, scope);
 
                 logger.info("Created delayed Stripe checkout link for event ID {}", eventId);
                 logger.debug("Delayed Stripe checkout link: {}", delayedStripeCheckout.url());

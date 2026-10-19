@@ -31,7 +31,7 @@ public class StripeConfig {
 
     // Stripe fee calculation constants
     private static final int STRIPE_FIXED_FEE_CENTS = 30;
-    private static final double STRIPE_PERCENTAGE_FEE = 0.017; // 1.7%
+    private static final double STRIPE_PERCENTAGE_FEE = 0.0165; // 1.65%
 
     // Webhook configuration
     public static final String STRIPE_WEBHOOK_ENDPOINT_SECRET = Global.getEnv("STRIPE_WEBHOOK_ENDPOINT_SECRET");
@@ -74,7 +74,7 @@ public class StripeConfig {
 
     /**
      * Calculates the Stripe fee for a given price.
-     * Stripe fee is 30c + 1.7% of total price.
+     * Stripe fee is 30c + 1.65% of total price.
      * 
      * @param priceInCents The price in cents
      * @return The Stripe fee in cents

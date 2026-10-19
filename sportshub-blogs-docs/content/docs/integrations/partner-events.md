@@ -4,12 +4,12 @@ description: Display your public SPORTSHUB events and open the hosted booking fl
 weight: 1
 draft: false
 date: 2026-10-14
-lastmod: 2026-10-15
+lastmod: 2026-10-18
 contractVersion: 1
 canonicalURL: https://www.sportshub.net.au/docs/integrations/partner-events/
 ---
 
-**Contract:** v1. **Updated:** 15 October 2026.
+**Contract:** v1. **Updated:** 18 October 2026.
 
 Your website displays events and lets customers select a ticket type and quantity. SPORTSHUB handles the booking after you open its hosted flow.
 
@@ -18,12 +18,17 @@ Your website displays events and lets customers select a ticket type and quantit
 | Step | Operation | Result |
 | --- | --- | --- |
 | 1. Load events | `GET_PARTNER_EVENTS` | Public event and ticket information for your calendar. |
-| 2. Start a booking | `INIT_FULFILMENT_SESSION` | A guest booking session ID. |
-| 3. Find the entry step | `GET_NEXT_FULFILMENT_ENTITY` | The step ID to use in the SPORTSHUB booking URL. |
+| 2. Start a booking | `INIT_PARTNER_FULFILMENT_SESSION` | A SPORTSHUB booking URL to open. |
+
+## Before you start
+
+[Contact SPORTSHUB](https://www.sportshub.net.au/docs/contact-us/) to enable your integration and receive a partner key. Confirm the website origins you will use, such as `https://partner.example`. Include `www` separately if your website uses both hostnames. An origin contains the scheme, hostname and port, with no page path or trailing slash.
+
+Use the key supplied for the environment you are calling. It is intended for browser JavaScript and is visible to visitors. It identifies your registered integration.
 
 ## Send requests
 
-Send all three operations to the same URL with `POST` and `Content-Type: application/json`:
+Send both operations to the same URL with `POST`:
 
 **API URL**
 
@@ -31,7 +36,14 @@ Send all three operations to the same URL with `POST` and `Content-Type: applica
 https://australia-southeast1-socialsportsprod.cloudfunctions.net/globalAppController
 ```
 
-These operations are public. You do not need an API key, a SPORTSHUB account token, or domain registration. For browser requests, set `credentials: "omit"`.
+**Request headers**
+
+```http
+Content-Type: application/json
+X-Sportshub-Partner-Key: <partner-key>
+```
+
+Replace `<partner-key>` with your supplied key. For browser requests, set `credentials: "omit"`. The browser supplies the `Origin` header; do not set it yourself. Serve the integration from a registered HTTPS origin. File previews and unregistered hostnames cannot call this production API.
 
 Each request contains `endpointType` and `data`. Check the HTTP status before reading the successful response's `data`.
 
@@ -43,30 +55,38 @@ Each request contains `endpointType` and `data`. Check the HTTP status before re
 }
 ```
 
-Invalid request envelopes return HTTP 400. Methods other than `POST` return HTTP 405; browsers may use `OPTIONS` for preflight.
+Invalid request envelopes return HTTP 400. A missing, invalid or disabled key returns HTTP 401; a denied origin returns HTTP 403. Methods other than `POST` return HTTP 405; browsers may use `OPTIONS` for preflight.
+
+Key or origin failures may appear as a fetch or CORS error in browser JavaScript. Check your key and registered origin with SPORTSHUB before making further requests.
 
 This reference covers the production API. [Contact us](https://www.sportshub.net.au/docs/contact-us/) to arrange a test environment before testing bookings.
 
 All IDs and event details in the examples below are synthetic.
 
+### Response compatibility
+
+Responses may contain additional fields, including within event and ticket objects. Validate the required fields for each operation and the types of fields your integration uses. Ignore unrecognized fields; do not reject a response solely because it contains them. Use the documented fields to build your own display model instead of storing, logging, or forwarding the full response.
+
+If a field has an unrecognized named value, treat that value as unsupported and keep displaying unaffected event details. Do not infer booking availability or payment support from it. Missing required fields or incorrectly typed fields are unexpected responses; follow the operation's error and retry guidance.
+
+We may add response fields without changing the major contract version. Within a major version, existing documented fields retain their types and meanings. Removing or renaming fields, changing their types or meanings, or adding mandatory requirements requires a new major contract version and migration instructions.
+
 ## 1. Load your public events
 
-**Request**
+**Request body**
 
 ```json
 {
   "endpointType": "GET_PARTNER_EVENTS",
-  "data": {
-    "partner": "example-club"
-  }
+  "data": {}
 }
 ```
 
-Replace `example-club` with the partner slug supplied by SPORTSHUB. Use the exact string; the example slug is a placeholder.
+Your partner key selects your public event feed.
 
 The feed contains active, public events whose start time is at or after the request time. Events without a start time are omitted. Events that have already started are omitted, even if registration remains open. Future paused, sold-out, and registration-closed events can still appear.
 
-Events are sorted by start time, then event ID. The response includes the full upcoming feed; v1 has no pagination. A successful empty result is `{"data":{"events":[]}}`.
+Events are sorted by start time, then event ID. The response includes the full upcoming feed, without pagination. A successful empty result is `{"data":{"events":[]}}`.
 
 **Successful response**
 
@@ -90,6 +110,7 @@ Events are sorted by start time, then event ID. The response includes the full u
         "waitlistEnabled": true,
         "bookingApprovalEnabled": false,
         "maxTicketsPerTransaction": 4,
+        "supportedPaymentProviders": ["STRIPE"],
         "ticketTypes": [
           {
             "id": "example-ticket-type",
@@ -124,9 +145,12 @@ Every listed field is present. Fields marked nullable can contain JSON `null`.
 | `waitlistEnabled` | Boolean | Whether the event allows a waitlist. |
 | `bookingApprovalEnabled` | Boolean | Whether the event requires organiser approval. |
 | `maxTicketsPerTransaction` | Positive integer, nullable | Configured quantity limit. Null does not specify a default limit. |
+| `supportedPaymentProviders` | String array | Hosted payment providers supported for the event. Currently, the recognized value is `STRIPE`. |
 | `ticketTypes` | Array | Available ticket-type definitions, described below. |
 
 These flags help your website explain the event. They do not guarantee that a booking will succeed. SPORTSHUB checks the current event and ticket state when the customer books.
+
+Use `supportedPaymentProviders` for payment labels. Show Stripe only when the list contains `STRIPE`; ignore unrecognized provider values. The list does not guarantee payment readiness or ticket availability. An empty list does not by itself rule out a free booking or waitlist. The booking operation below uses Stripe and does not accept a payment-provider selection.
 
 ### Ticket fields
 
@@ -140,7 +164,7 @@ Ticket types are sorted with General Admission first, followed by name and ID.
 | `soldOut` | Boolean | True when the current ticket inventory is zero or less. |
 | `vacancy` | Integer, nullable | Current ticket inventory. Null means the organiser hides the count; use `soldOut` for binary availability. |
 
-Older events can return `ticketTypes: []`. You may display these events, but cannot start a booking through this contract until the organiser configures a ticket type. Do not invent an ID from the event name or price.
+Some events can return `ticketTypes: []`. You may display these events, but cannot start a booking through this contract until the organiser configures a ticket type. Do not invent an ID from the event name or price.
 
 A sold-out ticket can lead to a waitlist when `waitlistEnabled` is true. Keep that option available; SPORTSHUB checks whether the request can proceed.
 
@@ -148,23 +172,24 @@ A sold-out ticket can lead to a waitlist when `waitlistEnabled` is true. Keep th
 
 | HTTP status | Meaning |
 | --- | --- |
-| 400 | `partner` is missing, blank, or not a string. |
-| 404 | The exact partner slug is not supported. |
+| 400 | The request data is invalid. |
+| 401 | The partner key is missing, invalid or disabled. |
+| 403 | The website origin is not allowed. |
 | 500 | The feed could not be returned. Show an error state; do not treat it as an empty calendar. |
 
-Fetch on page load. If you refresh while the page remains visible, we recommend no more than once per minute. You may cache the public feed for that interval, with separate cache entries for each environment and partner. Availability can change between the feed request and checkout.
+Fetch on page load. If you refresh while the page remains visible, we recommend no more than once per minute. Keep only the data needed for the current page; responses use `Cache-Control: no-store` and must not go into shared HTTP caches. Availability can change between the feed request and checkout.
 
 ## 2. Start a booking
 
-Before enabling bookings on your site, test the handoff with your event and ticket types. [Contact us](https://www.sportshub.net.au/docs/contact-us/) to arrange a test.
+Before enabling bookings on your site, test the handoff with your event and ticket types.
 
-Call `INIT_FULFILMENT_SESSION` after a customer chooses a ticket type and quantity and presses Book. Send one request at a time. Do not prefetch booking sessions.
+Call `INIT_PARTNER_FULFILMENT_SESSION` after a customer chooses a ticket type and quantity and presses Book. Send one request at a time. Do not prefetch booking sessions.
 
-**Request**
+**Request body**
 
 ```json
 {
-  "endpointType": "INIT_FULFILMENT_SESSION",
+  "endpointType": "INIT_PARTNER_FULFILMENT_SESSION",
   "data": {
     "eventId": "example-event",
     "numTickets": 1,
@@ -179,79 +204,40 @@ Call `INIT_FULFILMENT_SESSION` after a customer chooses a ticket type and quanti
 | `numTickets` | Positive integer | Requested quantity. Respect the event's configured quantity limit. Sold-out tickets may offer a waitlist. |
 | `eventTicketTypeId` | String | `id` of the selected entry in `ticketTypes`. |
 
-These are the three supported inputs for v1.
+Send exactly these three inputs. Additional inputs are rejected. Use an event and ticket type from your feed; private events and other organisers' events are unavailable through this operation.
 
 **Successful response**
 
 ```json
 {
   "data": {
-    "fulfilmentSessionId": "example-session"
+    "entryUrl": "https://www.sportshub.net.au/fulfilment/example-session/example-step?hideSportshubNavbar=true"
   }
 }
 ```
 
-A successful response starts a session. It does not confirm a booking or payment. SPORTSHUB hosts the remaining forms, checkout, waitlist, approval, and confirmation steps as applicable.
+A successful response starts a session and returns its booking URL. It does not confirm a booking or payment. SPORTSHUB hosts the remaining forms, checkout, waitlist, approval, and confirmation steps as applicable.
 
-Do not retry INIT after a timeout or connection failure, including through a "Try again" button. It may already have created a session or reserved tickets.
+### Open the booking URL
 
-- If you received a session ID, reuse it for the initial NEXT lookup.
-- If you have no session ID, tell the customer the booking attempt could not be confirmed.
+Check that `entryUrl` is a nonempty, absolute URL with origin `https://www.sportshub.net.au`, a path starting with `/fulfilment/`, and no username or password. Then open the URL unchanged. Use the approved SPORTSHUB website origin when testing in another environment.
 
-## 3. Open the SPORTSHUB entry step
+Treat `entryUrl` as a private guest access credential: anyone with the URL may access that session. Keep it in transient page state and out of analytics, shared caches, error messages and logs.
 
-Use the returned session ID with `currentFulfilmentEntityId: null`:
+### Retry guidance
 
-**Request**
+Do not retry INIT after a timeout, connection failure, server error (HTTP 5xx), or unreadable or unexpected success response. Do not show a "Try again" button for INIT while its outcome is unknown. It may already have created a session or reserved tickets. Tell the customer that the booking attempt could not be confirmed.
 
-```json
-{
-  "endpointType": "GET_NEXT_FULFILMENT_ENTITY",
-  "data": {
-    "fulfilmentSessionId": "example-session",
-    "currentFulfilmentEntityId": null
-  }
-}
-```
-
-**Successful response**
-
-```json
-{
-  "data": {
-    "fulfilmentEntityId": "example-step"
-  }
-}
-```
-
-If `fulfilmentEntityId` is null, stop and show an error or ask the customer to contact support. Do not construct a booking URL from null.
-
-For a nonnull step ID, open this URL on SPORTSHUB. Encode each ID as a URL path segment:
-
-**Booking URL**
-
-```text
-https://www.sportshub.net.au/fulfilment/{fulfilmentSessionId}/{fulfilmentEntityId}?hideSportshubNavbar=true
-```
-
-`hideSportshubNavbar=true` is an optional display setting. SPORTSHUB handles the flow from this point.
-
-Use this production website URL with the production API. Ask us for the matching website URL when testing against development.
-
-If this entry lookup fails after INIT succeeds, keep the session ID and offer a retry of the same lookup with `currentFulfilmentEntityId: null`. Reuse that session instead of starting another one.
-
-This reference supports the initial lookup only. Do not call NEXT repeatedly to advance checkout; later steps can change booking state. Let the hosted flow handle them.
-
-Treat session IDs, step IDs, and booking URLs as private guest access credentials: anyone with the URL may access that session. Keep them transient and out of analytics, shared caches, and public logs.
+If you received a valid `entryUrl` but navigation failed, reopen that same URL. Do not start another session to recover from a navigation failure.
 
 ### Booking errors
 
-All failures use `errorMessage`. Handle every non-success status; do not rely on the message text as a stable error code.
+Readable JSON errors use `errorMessage`. Handle every non-success status; do not rely on the message text as a stable error code. A network or CORS failure may have no readable response.
 
-| Operation | HTTP status | Meaning |
-| --- | --- | --- |
-| INIT | 400 | The booking request was not accepted. Examples include an unavailable event, invalid ticket type, excessive quantity, or insufficient inventory. |
-| INIT | 500 | The request could not be completed. Some invalid payloads also return this status. Do not retry INIT while its outcome is unknown. |
-| Initial NEXT | 400 | The entry step could not be determined. |
-| Initial NEXT | 404 | The session is unavailable. |
-| Initial NEXT | 500 | The request could not be processed. |
+| HTTP status | Meaning |
+| --- | --- |
+| 400 | The request is invalid, or current booking rules prevent it. Examples include malformed inputs, excessive quantity or insufficient inventory. |
+| 401 | The partner key is missing, invalid or disabled. |
+| 403 | The website origin is not allowed. |
+| 404 | The event or selected ticket type is unavailable through your integration. |
+| 500 | The request could not be completed. Its outcome may be unknown; follow the retry guidance above. |

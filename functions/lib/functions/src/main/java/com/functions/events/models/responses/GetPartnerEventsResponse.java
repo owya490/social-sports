@@ -5,6 +5,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.functions.events.models.PaymentProvider;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
 
@@ -25,6 +26,7 @@ public record GetPartnerEventsResponse(List<PartnerEvent> events) {
             boolean waitlistEnabled,
             boolean bookingApprovalEnabled,
             @Nullable Integer maxTicketsPerTransaction,
+            List<PaymentProvider> supportedPaymentProviders,
             List<PartnerTicketType> ticketTypes) {}
 
     public record PartnerTicketType(

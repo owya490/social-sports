@@ -22,10 +22,14 @@ public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
 
     public static String createFulfilmentSession(String fulfilmentSessionId,
-                                                 FulfilmentSession fulfilmentSession) throws Exception {
+                                                 FulfilmentSession fulfilmentSession, Optional<Transaction> transaction) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
-            sessionDocRef.create(fulfilmentSession).get();
+            if (transaction.isPresent()) {
+                transaction.get().create(sessionDocRef, fulfilmentSession);
+            } else {
+                sessionDocRef.create(fulfilmentSession).get();
+            }
             return sessionDocRef.getId();
         } catch (Exception e) {
             logger.error("Failed to create fulfilment session for eventId: {}",
