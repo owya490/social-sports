@@ -2,6 +2,7 @@ package com.functions.fulfilment.services;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -102,6 +103,19 @@ public class FulfilmentServiceTest {
         }
         sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(
                 anyString(), isA(WaitlistFulfilmentSession.class)), times(2));
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    public void rejectsPyngBeforeStartingASession() throws Exception {
+        try {
+            FulfilmentService.initFulfilmentSession("event-1", 1, "ticket-1", PaymentProvider.PYNG);
+            fail("Expected Pyng rejection");
+        } catch (IllegalArgumentException expected) {
+            assertTrue(expected.getMessage().contains("Pyng"));
+        }
+        events.verifyNoInteractions();
+        sessions.verifyNoInteractions();
         stripe.verifyNoInteractions();
     }
 

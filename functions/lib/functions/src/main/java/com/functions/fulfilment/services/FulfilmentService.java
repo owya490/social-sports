@@ -227,6 +227,9 @@ public class FulfilmentService {
 
     public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId,
             PaymentProvider paymentProvider) throws Exception {
+        if (paymentProvider == PaymentProvider.PYNG) {
+            throw new IllegalArgumentException("Pay with Pyng is not available");
+        }
         if (numTickets == null || numTickets <= 0) {
             logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
             throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
