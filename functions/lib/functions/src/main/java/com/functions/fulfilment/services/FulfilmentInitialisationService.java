@@ -49,7 +49,9 @@ public final class FulfilmentInitialisationService {
             throw new IllegalArgumentException("Unsupported payment provider");
         }
         FulfilmentSessionType type;
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticket.getVacancy() != null
+        if (provider == PaymentProvider.PYNG) {
+            type = FulfilmentSessionType.PYNG_CHECKOUT;
+        } else if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticket.getVacancy() != null
                 && ticket.getVacancy() <= 0) {
             type = FulfilmentSessionType.WAITLIST;
         } else if (Boolean.TRUE.equals(eventData.getBookingApprovalEnabled())) {
