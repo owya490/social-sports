@@ -10,7 +10,11 @@ import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType }
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { ConflictError } from "@/interfaces/exceptions/ConflictError";
 import { Logger } from "@/observability/logger";
-import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
+import {
+  ATTENDEE_CSV_HEADERS,
+  buildAttendeeCsvData,
+  buildAttendeeEmailList,
+} from "@/services/src/attendee/attendeeCsvUtils";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
@@ -36,6 +40,7 @@ import {
   ArrowPathIcon,
   CheckIcon,
   ChevronDownIcon,
+  ClipboardDocumentIcon,
   ExclamationCircleIcon,
   PlusIcon,
   TicketIcon,
@@ -455,6 +460,8 @@ export function EventHubAttendees({
   const [panelOrder, setPanelOrder] = useState<Order | null>(null);
   const [removeOrder, setRemoveOrder] = useState<Order | null>(null);
   const [removeOpen, setRemoveOpen] = useState(false);
+  const [emailsCopied, setEmailsCopied] = useState(false);
+  const emailsCopiedTimeoutRef = useRef<number | null>(null);
   const hasInitializedTabRef = useRef(false);
 
   useEffect(() => {
@@ -744,6 +751,30 @@ export function EventHubAttendees({
     () => buildAttendeeCsvData(filteredApprovedMap),
     [filteredApprovedMap]
   );
+  const attendeeEmails = useMemo(
+    () => buildAttendeeEmailList(filteredApprovedMap),
+    [filteredApprovedMap]
+  );
+
+  const copyAttendeeEmails = async () => {
+    if (attendeeEmails.length === 0) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(attendeeEmails.join("\n"));
+      setEmailsCopied(true);
+      if (emailsCopiedTimeoutRef.current !== null) {
+        window.clearTimeout(emailsCopiedTimeoutRef.current);
+      }
+      emailsCopiedTimeoutRef.current = window.setTimeout(() => {
+        setEmailsCopied(false);
+        emailsCopiedTimeoutRef.current = null;
+      }, 1600);
+    } catch (error) {
+      logger.error(`Failed to copy attendee emails: ${error}`);
+      toast.error("Could not copy emails");
+    }
+  };
 
   return (
     <EventHubStage>
@@ -772,12 +803,32 @@ export function EventHubAttendees({
               </span>
             ) : null}
           </p>
-          <DownloadCsvButton
-            compact
-            data={approvedAttendeesCsvData}
-            headers={ATTENDEE_CSV_HEADERS}
-            filename={`Attendees_${eventId}.csv`}
-          />
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => void copyAttendeeEmails()}
+              disabled={attendeeEmails.length === 0}
+              aria-label={
+                emailsCopied
+                  ? "Attendee emails copied"
+                  : `Copy ${attendeeEmails.length} attendee email${attendeeEmails.length === 1 ? "" : "s"}`
+              }
+              className="inline-flex items-center gap-1 rounded-lg border border-border bg-background px-1.5 py-1 text-xs font-medium text-foreground-muted font-sans hover:bg-surface-hover hover:text-foreground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+            >
+              {emailsCopied ? (
+                <CheckIcon className="h-3.5 w-3.5" aria-hidden />
+              ) : (
+                <ClipboardDocumentIcon className="h-3.5 w-3.5" aria-hidden />
+              )}
+              <span>{emailsCopied ? "Copied" : "Copy emails"}</span>
+            </button>
+            <DownloadCsvButton
+              compact
+              data={approvedAttendeesCsvData}
+              headers={ATTENDEE_CSV_HEADERS}
+              filename={`Attendees_${eventId}.csv`}
+            />
+          </div>
         </div>
         <div
           className="h-1 w-full rounded-full bg-surface-muted overflow-hidden"

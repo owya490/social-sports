@@ -45,3 +45,25 @@ export function buildAttendeeCsvData(orderTicketsMap: Map<Order, Ticket[]>): Att
     return rows;
   });
 }
+
+/**
+ * Unique emails for people with at least one ticket in the map.
+ * Extra tickets on the same order share one email. Comparison is case-insensitive.
+ */
+export function buildAttendeeEmailList(orderTicketsMap: Map<Order, Ticket[]>): string[] {
+  const byKey = new Map<string, string>();
+  for (const [order, tickets] of orderTicketsMap) {
+    if (tickets.length === 0) {
+      continue;
+    }
+    const email = order.email.trim();
+    if (!email) {
+      continue;
+    }
+    const key = email.toLowerCase();
+    if (!byKey.has(key)) {
+      byKey.set(key, email);
+    }
+  }
+  return Array.from(byKey.values()).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+}

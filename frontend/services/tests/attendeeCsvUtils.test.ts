@@ -1,6 +1,6 @@
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import { buildAttendeeCsvData } from "../src/attendee/attendeeCsvUtils";
+import { buildAttendeeCsvData, buildAttendeeEmailList } from "../src/attendee/attendeeCsvUtils";
 
 function order(overrides: Partial<Order> & Pick<Order, "orderId" | "email" | "fullName" | "tickets">): Order {
   return {
@@ -94,5 +94,49 @@ describe("buildAttendeeCsvData", () => {
     const map = new Map<Order, Ticket[]>([[approvedOrder, []]]);
 
     expect(buildAttendeeCsvData(map)).toEqual([]);
+  });
+});
+
+describe("buildAttendeeEmailList", () => {
+  it("returns one email per attending order, sorted and de-duplicated", () => {
+    const ada = order({
+      orderId: "order-1" as Order["orderId"],
+      email: "Ada@example.com",
+      fullName: "Ada Lovelace",
+      tickets: ["t1", "t2"] as Order["tickets"],
+    });
+    const grace = order({
+      orderId: "order-2" as Order["orderId"],
+      email: "grace@example.com",
+      fullName: "Grace Hopper",
+      tickets: ["t3"] as Order["tickets"],
+    });
+    const adaAgain = order({
+      orderId: "order-3" as Order["orderId"],
+      email: "ada@example.com",
+      fullName: "Ada L",
+      tickets: ["t4"] as Order["tickets"],
+    });
+    const empty = order({
+      orderId: "order-4" as Order["orderId"],
+      email: "empty@example.com",
+      fullName: "No Tickets",
+      tickets: [] as Order["tickets"],
+    });
+    const blank = order({
+      orderId: "order-5" as Order["orderId"],
+      email: "   ",
+      fullName: "Blank Email",
+      tickets: ["t5"] as Order["tickets"],
+    });
+    const map = new Map<Order, Ticket[]>([
+      [ada, [ticket({ ticketId: "t1" as Ticket["ticketId"] }), ticket({ ticketId: "t2" as Ticket["ticketId"] })]],
+      [grace, [ticket({ ticketId: "t3" as Ticket["ticketId"] })]],
+      [adaAgain, [ticket({ ticketId: "t4" as Ticket["ticketId"] })]],
+      [empty, []],
+      [blank, [ticket({ ticketId: "t5" as Ticket["ticketId"] })]],
+    ]);
+
+    expect(buildAttendeeEmailList(map)).toEqual(["Ada@example.com", "grace@example.com"]);
   });
 });
