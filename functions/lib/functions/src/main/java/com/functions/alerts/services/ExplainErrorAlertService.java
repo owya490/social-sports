@@ -7,33 +7,22 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.alerts.clients.AlertSummaryPublisher;
 import com.functions.alerts.clients.ErrorAlertDedupStore;
-import com.functions.alerts.clients.GcpLogAlertPublisher;
-import com.functions.alerts.clients.GeminiClient;
-import com.functions.alerts.clients.LlmClient;
 import com.functions.alerts.models.ParsedErrorLog;
-import com.functions.alerts.repositories.ErrorAlertDedupRepository;
+import com.functions.alerts.models.ErrorAlertNotification;
+import com.functions.alerts.clients.ErrorAlertDedupStore.Reservation;
 
 public class ExplainErrorAlertService {
     private static final Logger logger = LoggerFactory.getLogger(ExplainErrorAlertService.class);
 
     private final ErrorAlertDedupStore dedupStore;
-    private final LlmClient llmClient;
+    private final ErrorAlertSummarizer summarizer;
     private final AlertSummaryPublisher summaryPublisher;
 
-    public ExplainErrorAlertService(
-            ErrorAlertDedupStore dedupStore,
-            LlmClient llmClient,
+    public ExplainErrorAlertService(ErrorAlertDedupStore dedupStore, ErrorAlertSummarizer summarizer,
             AlertSummaryPublisher summaryPublisher) {
         this.dedupStore = dedupStore;
-        this.llmClient = llmClient;
+        this.summarizer = summarizer;
         this.summaryPublisher = summaryPublisher;
-    }
-
-    public static ExplainErrorAlertService fromEnv() {
-        return new ExplainErrorAlertService(
-                new ErrorAlertDedupRepository(),
-                new GeminiClient(),
-                new GcpLogAlertPublisher());
     }
 
     public void processLogEntryJson(String logEntryJson) {
@@ -46,57 +35,44 @@ public class ExplainErrorAlertService {
     }
 
     public void process(ParsedErrorLog parsed) {
-        String fingerprint = CloudLogEntryParser.fingerprint(parsed);
-        if (!dedupStore.tryClaim(fingerprint)) {
-            logger.info("Skipping duplicate error alert fingerprint={}", fingerprint);
+        String fingerprint = ErrorAlertFingerprint.of(parsed);
+        Optional<Reservation> claim = dedupStore.reserve();
+        if (claim.isEmpty()) {
+            logger.info("Skipping error alert; notification budget is active fingerprint={}", fingerprint);
             return;
         }
 
-        String body = SmsText.forSms(AlertTextRedactor.redact(summarize(parsed)));
-        boolean published = summaryPublisher.publish(body);
-        if (published) {
-            dedupStore.markSent(fingerprint);
+        Reservation reservation = claim.get();
+        try {
+            String headline = SmsText.forHeadline(
+                    parsed.functionName() + ": " + ErrorAlertFingerprint.normalizedFirstLine(parsed.message()));
+            String interpretation = summarizer.summarize(parsed).orElse("");
+            String sms = stableSms(fingerprint, headline, interpretation);
+            summaryPublisher.publish(new ErrorAlertNotification(
+                    fingerprint, headline, parsed, interpretation, sms));
+        } catch (RuntimeException failure) {
+            try {
+                dedupStore.release(reservation);
+            } catch (RuntimeException releaseFailure) {
+                failure.addSuppressed(releaseFailure);
+            }
+            throw failure;
         }
-        logger.info("Error alert summary publish complete. function={} fingerprint={} published={}",
-                parsed.functionName(), fingerprint, published);
+        // Publication has happened; failed completion must not release another delivery attempt early.
+        dedupStore.complete(reservation, fingerprint);
+        logger.info("Error alert published. function={} fingerprint={}", parsed.functionName(), fingerprint);
     }
 
-    private String summarize(ParsedErrorLog parsed) {
-        Optional<String> summary = llmClient.summarize(buildPrompt(parsed));
-        if (summary.isPresent() && !summary.get().isBlank()) {
-            return summary.get();
+    private String stableSms(String fingerprint, String headline, String interpretation) {
+        Optional<String> persisted = dedupStore.smsFor(fingerprint);
+        if (persisted.isPresent()) {
+            return persisted.get();
         }
-        return fallbackSms(parsed);
-    }
-
-    static String buildPrompt(ParsedErrorLog parsed) {
-        return """
-                You page SPORTSHUB on-call via SMS.
-                Write 1–2 full sentences, about 200–320 characters. No markdown. No quotes.
-                Do NOT emit 4-6 word stubs such as "globalAppController failed Stripe".
-                The reply MUST include all of: function name, the concrete operation that failed \
-                (for example webhook fulfillment or checkout session expired), exception type, \
-                the first class.method from the stack if present, and the likely cause.
-                Prefer one compact sentence over a headline.
-
-                Function: %s
-                Exception: %s
-                Top frame: %s
-                Log:
-                %s
-                """.formatted(
-                parsed.functionName(),
-                parsed.exceptionType(),
-                parsed.topFrame() == null || parsed.topFrame().isBlank() ? "unknown" : parsed.topFrame(),
-                AlertTextRedactor.redact(SmsText.truncate(parsed.message(), 2500)));
-    }
-
-    static String fallbackSms(ParsedErrorLog parsed) {
-        String exception = parsed.exceptionType() == null || parsed.exceptionType().isBlank()
-                ? "Error"
-                : parsed.exceptionType();
-        String firstLine = parsed.message() == null ? "" : parsed.message().strip().split("\\R", 2)[0];
-        String frame = parsed.topFrame() == null || parsed.topFrame().isBlank() ? "" : " at " + parsed.topFrame();
-        return AlertTextRedactor.redact(parsed.functionName() + ": " + exception + " " + firstLine + frame);
+        if (interpretation.isBlank()) {
+            return headline;
+        }
+        String sms = SmsText.forSmsSubject(interpretation);
+        dedupStore.rememberSms(fingerprint, sms);
+        return sms;
     }
 }

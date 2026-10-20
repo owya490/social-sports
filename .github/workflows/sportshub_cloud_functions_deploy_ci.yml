@@ -11,6 +11,11 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '.github/workflows/weekly_ops.yml'
+      - '.agents/skills/sportshub-weekly-ops/**'
+      - 'docs/operations/README.md'
+      - 'docs/operations/weekly/**'
 
 # Cloud Functions rejects a second update while a previous deployment is still
 # operating on the same function. Keep the complete dev/prod release together
@@ -64,6 +69,12 @@ jobs:
           echo "LOOPS_API_KEY=\"${{ secrets[matrix.env == 'prod' && 'SOCIALSPORTSPROD_LOOPS_API_KEY' || 'SOCIALSPORTSDEV_LOOPS_API_KEY'] }}\"" >> .env
           echo "DEPLOYMENT_ENV=\"${{ matrix.env == 'prod' && 'prod' || 'dev' }}\"" >> .env
           echo "PROJECT_NAME=\"${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }}\"" >> .env
+          echo "PYNG_DEV_USERNAME=\"${{ secrets.PYNG_DEV_USERNAME }}\"" >> .env
+          echo "PYNG_DEV_PASSWORD=\"${{ secrets.PYNG_DEV_PASSWORD }}\"" >> .env
+          echo "PYNG_DEV_SIGNING_SECRET=\"${{ secrets.PYNG_DEV_SIGNING_SECRET }}\"" >> .env
+          echo "PYNG_PROD_USERNAME=\"${{ secrets.PYNG_PROD_USERNAME }}\"" >> .env
+          echo "PYNG_PROD_PASSWORD=\"${{ secrets.PYNG_PROD_PASSWORD }}\"" >> .env
+          echo "PYNG_PROD_SIGNING_SECRET=\"${{ secrets.PYNG_PROD_SIGNING_SECRET }}\"" >> .env
 
       - name: Create process fulfilment session topic
         working-directory: functions/lib/functions
@@ -120,6 +131,20 @@ jobs:
             --set-env-vars PROJECT_NAME=$PROJECT_ID \
             --memory 512 \
             --quiet 2>&1 | sed 's/^/[expirePendingBookingsCron] /') &
+          PIDS+=($!)  # Capture PID of last background process ($!)
+
+          # Deploy pollPendingPyngCheckoutsCron in background
+          echo "Starting deployment of pollPendingPyngCheckoutsCron..."
+          (gcloud functions deploy pollPendingPyngCheckoutsCron \
+            --entry-point com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint \
+            --runtime java17 \
+            --trigger-http \
+            --allow-unauthenticated \
+            --region australia-southeast1 \
+            --project $PROJECT_ID \
+            --set-env-vars PROJECT_NAME=$PROJECT_ID \
+            --memory 512 \
+            --quiet 2>&1 | sed 's/^/[pollPendingPyngCheckoutsCron] /') &
           PIDS+=($!)  # Capture PID of last background process ($!)
 
           # Deploy completeFulfilmentSession in background
@@ -250,6 +275,7 @@ jobs:
           bash ./deploySchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/recurringEventsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/recurringEventsCron' }}
           bash ./deployCleanupOldFulfilmentSessionSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/cleanupOldFulfilmentSessionsCron' }}
           bash ./deployExpirePendingBookingsSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/expirePendingBookingsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/expirePendingBookingsCron' }}
+          bash ./deployPollPendingPyngCheckoutsSchedulerToGCloud.sh ${{ matrix.env == 'prod' && 'socialsportsprod' || 'socialsports-44162' }} australia-southeast1 ${{ matrix.env == 'prod' && 'https://australia-southeast1-socialsportsprod.cloudfunctions.net/pollPendingPyngCheckoutsCron' || 'https://australia-southeast1-socialsports-44162.cloudfunctions.net/pollPendingPyngCheckoutsCron' }}
 
   deploy-python-firebase-functions:
     name: Deploy Python Firebase Functions to ${{ matrix.env }}
@@ -311,3 +337,40 @@ jobs:
         run: |
           source venv/bin/activate
           firebase deploy --only functions:move_inactive_events,functions:create_stripe_standard_account,functions:send_email_on_delete_event,functions:send_email_on_create_event,functions:email_reminder,functions:send_email_on_create_event_v2,functions:send_email_on_delete_event_v2 --force
+
+  deploy-ai-error-alerts:
+    name: Deploy AI error alerts through dev to prod
+    needs: deploy-python-firebase-functions
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions/lib/functions
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify alert configuration
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Authenticate development
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.SOCIALSPORTSDEV_GCLOUD_CREDENTIALS }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: socialsports-44162
+
+      - name: Deploy development with notifications disabled
+        run: python3 error_alert_config.py deploy --environment dev
+
+      - name: Authenticate production
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.SOCIALSPORTSPROD_GCLOUD_CREDENTIALS }}
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: socialsportsprod
+
+      - name: Deploy production preserving notification settings
+        run: python3 error_alert_config.py deploy --environment prod

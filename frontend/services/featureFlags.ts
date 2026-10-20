@@ -12,6 +12,7 @@ export function isBookingMaintenanceActive(): boolean {
 }
 
 // Pay with PYNG — set PAY_WITH_PYNG_ENABLED to true to enable the PYNG checkout button.
+// This overrides an event's supportedPaymentProviders list.
 export const PAY_WITH_PYNG_ENABLED = false;
 
 export function isPayWithPyngEnabled(): boolean {

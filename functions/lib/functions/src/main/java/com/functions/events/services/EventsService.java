@@ -1,14 +1,23 @@
 package com.functions.events.services;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
+import com.functions.events.models.EventTicketType;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.models.responses.GetPartnerEventsResponse;
+import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerEvent;
+import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.fulfilment.payment.PaymentProviderPolicy;
 import com.google.cloud.Timestamp;
 
 /**
@@ -16,6 +25,62 @@ import com.google.cloud.Timestamp;
  */
 public class EventsService {
     private static final Logger logger = LoggerFactory.getLogger(EventsService.class);
+
+    public static GetPartnerEventsResponse getPublicPartnerEventsByOrganiser(String organiserId) {
+        List<PartnerEvent> events = getActivePublicEventsByOrganiser(organiserId).stream()
+                .map(event -> toPartnerEvent(event, organiserId))
+                .sorted(Comparator.comparing(PartnerEvent::startDate).thenComparing(PartnerEvent::eventId))
+                .collect(Collectors.toList());
+        return new GetPartnerEventsResponse(events);
+    }
+
+    private static PartnerEvent toPartnerEvent(EventData event, String organiserId) {
+        if (!Boolean.TRUE.equals(event.getIsActive()) || !Boolean.FALSE.equals(event.getIsPrivate())
+                || !organiserId.equals(event.getOrganiserId())) {
+            throw new IllegalStateException("Inconsistent public partner event: " + event.getEventId());
+        }
+        if (event.getEventId() == null || event.getEventId().isBlank()
+                || event.getName() == null || event.getName().isBlank()
+                || event.getEndDate() == null || event.getEndDate().compareTo(event.getStartDate()) < 0) {
+            throw new IllegalStateException("Invalid required partner event fields: " + event.getEventId());
+        }
+        if (event.getMaxTicketsPerTransaction() != null && event.getMaxTicketsPerTransaction() <= 0) {
+            throw new IllegalStateException("Invalid partner event ticket limit: " + event.getEventId());
+        }
+        List<String> tags = event.getEventTags();
+        if (tags != null && tags.stream().anyMatch(Objects::isNull)) {
+            throw new IllegalStateException("Invalid partner event tags: " + event.getEventId());
+        }
+        return new PartnerEvent(
+                event.getEventId(), event.getName(),
+                event.getDescription() == null ? "" : event.getDescription(),
+                event.getLocation() == null ? "" : event.getLocation(),
+                event.getStartDate(), event.getEndDate(), event.getRegistrationDeadline(),
+                event.getImage(), event.getThumbnail(), tags == null ? List.of() : List.copyOf(tags),
+                Boolean.TRUE.equals(event.getPaused()), Boolean.TRUE.equals(event.getPaymentsActive()),
+                Boolean.TRUE.equals(event.getWaitlistEnabled()), Boolean.TRUE.equals(event.getBookingApprovalEnabled()),
+                event.getMaxTicketsPerTransaction(), PaymentProviderPolicy.supportedPaymentProviders(event),
+                toPartnerTicketTypes(event));
+    }
+
+    private static List<PartnerTicketType> toPartnerTicketTypes(EventData event) {
+        Map<String, EventTicketType> persistedTypes = event.getEventTicketTypes();
+        if (persistedTypes == null || persistedTypes.isEmpty()) {
+            return List.of();
+        }
+        List<PartnerTicketType> ticketTypes = new ArrayList<>();
+        for (String ticketTypeId : persistedTypes.keySet()) {
+            ResolvedEventTicketType type = EventTicketTypeService.resolvePublicById(event, ticketTypeId)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Invalid persisted partner ticket type: " + event.getEventId()));
+            ticketTypes.add(new PartnerTicketType(type.getId(), type.getName(), type.getPrice(), type.getVacancy() <= 0,
+                    Boolean.TRUE.equals(event.getHideVacancy()) ? null : type.getVacancy()));
+        }
+        ticketTypes.sort(Comparator.comparingInt((PartnerTicketType type) ->
+                EventTicketTypeService.isGeneralAdmissionName(type.name()) ? 0 : 1)
+                .thenComparing(PartnerTicketType::name).thenComparing(PartnerTicketType::id));
+        return List.copyOf(ticketTypes);
+    }
 
     /**
      * Get active public events for a specific organiser.

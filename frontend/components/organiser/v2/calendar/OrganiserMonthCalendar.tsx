@@ -8,10 +8,10 @@ import {
   type CalendarDayEvent,
   weekDayLabels,
 } from "@/components/organiser/v2/calendar/calendarUtils";
-import { Popover, PopoverButton, PopoverPanel, Transition } from "@headlessui/react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { CloseButton, Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { Fragment, useMemo, type CSSProperties, type MouseEvent } from "react";
+import { useMemo, type CSSProperties, type MouseEvent } from "react";
 
 const MAX_VISIBLE = 3;
 
@@ -62,10 +62,12 @@ function DayCell({
   day,
   month,
   events,
+  loading,
 }: {
   day: Date;
   month: Date;
   events: CalendarDayEvent[];
+  loading: boolean;
 }) {
   const outside = !isSameMonth(day, month);
   const today = isToday(day);
@@ -98,27 +100,47 @@ function DayCell({
 
         {overflow > 0 ? (
           <Popover className="relative">
-            <PopoverButton className="w-full rounded-sm px-1 py-0.5 text-left text-xs font-medium text-foreground-secondary transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus">
+            <PopoverButton
+              disabled={loading}
+              aria-label={`Show all ${events.length} sessions for ${format(day, "EEEE d MMMM yyyy")}`}
+              className="min-h-6 w-full rounded-sm px-1 py-0.5 text-left text-xs font-medium text-foreground-secondary transition-colors hover:bg-surface-muted hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus disabled:cursor-not-allowed"
+            >
               +{overflow} more
             </PopoverButton>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="opacity-0 translate-y-0.5"
-              enterTo="opacity-100 translate-y-0"
-              leave="transition ease-in duration-75"
-              leaveFrom="opacity-100 translate-y-0"
-              leaveTo="opacity-0 translate-y-0.5"
+            <PopoverPanel
+              anchor="bottom start"
+              focus
+              transition
+              role="region"
+              aria-label={`Sessions for ${format(day, "EEEE d MMMM yyyy")}`}
+              className="z-[100] w-80 scroll-pt-12 rounded-xl border border-border bg-background font-sans shadow-lg transition-opacity duration-100 ease-out data-[closed]:opacity-0 motion-reduce:transition-none [--anchor-gap:4px] [--anchor-padding:max(0.75rem,env(safe-area-inset-top),env(safe-area-inset-right),env(safe-area-inset-bottom),env(safe-area-inset-left))] [--anchor-max-height:20rem]"
             >
-              <PopoverPanel className="absolute left-0 z-30 mt-1 w-56 rounded-xl border border-border bg-background p-2 shadow-lg">
-                <p className="mb-1.5 px-1 text-xs font-semibold text-foreground">{format(day, "EEE d MMM")}</p>
-                <div className="flex max-h-56 flex-col gap-0.5 overflow-y-auto">
-                  {events.map((event) => (
-                    <EventChip key={event.eventId} event={event} />
-                  ))}
-                </div>
-              </PopoverPanel>
-            </Transition>
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-2 border-b border-border bg-background pl-3 pr-1">
+                <h3 className="text-sm font-semibold text-foreground">{format(day, "EEE d MMM")}</h3>
+                <CloseButton
+                  aria-label="Close sessions"
+                  className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg text-foreground-secondary hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
+                >
+                  <XMarkIcon className="h-4 w-4" aria-hidden />
+                </CloseButton>
+              </div>
+              <ul className="space-y-1 p-2">
+                {events.map((event) => (
+                  <li key={event.eventId}>
+                    <Link
+                      href={event.href}
+                      className="flex min-h-11 items-start gap-2 rounded-lg px-2 py-2 text-sm leading-5 text-foreground hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-focus"
+                    >
+                      <span aria-hidden className="mt-1.5 size-1.5 shrink-0 rounded-full" style={{ backgroundColor: event.color }} />
+                      <time dateTime={event.start.toISOString()} className="w-20 shrink-0 whitespace-nowrap tabular-nums text-foreground-secondary">
+                        {format(event.start, "h:mm a")}
+                      </time>
+                      <span className="min-w-0 break-words">{event.name}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </PopoverPanel>
           </Popover>
         ) : null}
       </div>
@@ -132,7 +154,7 @@ export function OrganiserMonthCalendar({
   onPrevMonth,
   onNextMonth,
   onToday,
-  loading,
+  loading = false,
 }: OrganiserMonthCalendarProps) {
   const days = useMemo(() => buildMonthGrid(month), [month]);
   const labels = useMemo(() => weekDayLabels(month), [month]);
@@ -178,6 +200,7 @@ export function OrganiserMonthCalendar({
       <div
         role="grid"
         aria-label={`Calendar for ${title}`}
+        aria-busy={loading}
         className={loading ? "pointer-events-none opacity-60" : undefined}
       >
         <div role="row" className="grid grid-cols-7 border-b border-border bg-surface/40">
@@ -193,10 +216,10 @@ export function OrganiserMonthCalendar({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 [&>*:nth-child(7n)]:border-e-0">
+        <div key={`${format(month, "yyyy-MM")}:${loading}`} className="grid grid-cols-7 [&>*:nth-child(7n)]:border-e-0">
           {days.map((day) => {
             const key = format(day, "yyyy-MM-dd");
-            return <DayCell key={key} day={day} month={month} events={eventsByDay.get(key) ?? []} />;
+            return <DayCell key={key} day={day} month={month} events={eventsByDay.get(key) ?? []} loading={loading} />;
           })}
         </div>
       </div>

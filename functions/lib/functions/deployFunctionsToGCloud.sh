@@ -4,6 +4,7 @@
 # recurringEventsCron
 # cleanupOldFulfilmentSessionsCron
 # expirePendingBookingsCron
+# pollPendingPyngCheckoutsCron
 # completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
@@ -16,6 +17,7 @@ VALID_FUNCTIONS=(
     "recurringEventsCron"
     "cleanupOldFulfilmentSessionsCron"
     "expirePendingBookingsCron"
+    "pollPendingPyngCheckoutsCron"
     "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
@@ -27,6 +29,7 @@ VALID_ENDPOINTS=(
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
+    "com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
@@ -65,23 +68,30 @@ if ! [[ " ${VALID_ENVIRONMENTS[@]} " =~ " ${ENVIRONMENT} " ]]; then
     exit 1
 fi
 
-if [ "$ENVIRONMENT" == "dev" ]; then
-    FUNCTIONS_KEY_SOURCE=../../functions_key_dev.json
-    ENV_SOURCE=../../.env.dev
+TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
+EXTRA_DEPLOY_ARGS=()
+if [ "$FUNCTION_NAME" == "explainErrorAlert" ]; then
+    TRIGGER_ARGS=(--gen2 --trigger-topic "$ERROR_LOG_ALERTS_TOPIC" --no-allow-unauthenticated)
+    EXTRA_DEPLOY_ARGS=(--retry --timeout 120s --max-instances 2 --quiet)
 else
-    FUNCTIONS_KEY_SOURCE=../../functions_key_prod.json
-    ENV_SOURCE=../../.env.prod
-fi
-
-for REQUIRED_FILE in "$FUNCTIONS_KEY_SOURCE" "$ENV_SOURCE"; do
-    if [ ! -f "$REQUIRED_FILE" ]; then
-        echo "Missing required local deployment file: $REQUIRED_FILE" >&2
-        exit 1
+    if [ "$ENVIRONMENT" == "dev" ]; then
+        FUNCTIONS_KEY_SOURCE=../../functions_key_dev.json
+        ENV_SOURCE=../../.env.dev
+    else
+        FUNCTIONS_KEY_SOURCE=../../functions_key_prod.json
+        ENV_SOURCE=../../.env.prod
     fi
-done
 
-cp "$FUNCTIONS_KEY_SOURCE" functions_key.json
-cp "$ENV_SOURCE" .env
+    for REQUIRED_FILE in "$FUNCTIONS_KEY_SOURCE" "$ENV_SOURCE"; do
+        if [ ! -f "$REQUIRED_FILE" ]; then
+            echo "Missing required local deployment file: $REQUIRED_FILE" >&2
+            exit 1
+        fi
+    done
+
+    cp "$FUNCTIONS_KEY_SOURCE" functions_key.json
+    cp "$ENV_SOURCE" .env
+fi
 
 # project name is socialsports-44162 for dev and socialsportsprod for prod
 if [ "$ENVIRONMENT" == "dev" ]; then
@@ -90,7 +100,6 @@ else
     PROJECT_NAME="socialsportsprod"
 fi
 
-EXTRA_DEPLOY_ARGS=()
 if [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "globalAppController" ]; then
     EXTRA_DEPLOY_ARGS=(
         --concurrency 80
@@ -107,10 +116,7 @@ elif [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "stripeWebhookEndpoin
     )
 fi
 
-TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
-if [ "$FUNCTION_NAME" == "explainErrorAlert" ]; then
-    TRIGGER_ARGS=(--gen2 --trigger-topic "$ERROR_LOG_ALERTS_TOPIC" --no-allow-unauthenticated)
-elif [ "$FUNCTION_NAME" == "processFulfilmentSession" ]; then
+if [ "$FUNCTION_NAME" == "processFulfilmentSession" ]; then
     TRIGGER_ARGS=(--gen2 --trigger-topic "$PROCESS_FULFILMENT_SESSIONS_TOPIC" --retry --no-allow-unauthenticated)
 fi
 

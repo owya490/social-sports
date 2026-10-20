@@ -1,212 +1,342 @@
 package com.functions.alerts.services;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.functions.alerts.clients.AlertSummaryPublisher;
 import com.functions.alerts.clients.ErrorAlertDedupStore;
-import com.functions.alerts.clients.LlmClient;
+import com.functions.alerts.clients.ErrorAlertDedupStore.Reservation;
+import com.functions.alerts.models.ErrorAlertNotification;
 import com.functions.alerts.models.ParsedErrorLog;
+import com.functions.alerts.repositories.ErrorAlertDedupRepository;
 
 public class ExplainErrorAlertServiceTest {
+    private ErrorAlertDedupStore store;
+    private List<ErrorAlertNotification> published;
+    private ExplainErrorAlertService service;
 
-    @Test
-    public void process_publishesTruncatedGeminiSummary() {
-        RecordingPublisher publisher = new RecordingPublisher();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                new AllowOnceDedup(),
-                prompt -> Optional.of("x".repeat(400)),
-                publisher);
-
-        service.process(sampleLog());
-
-        assertEquals(1, publisher.bodies.size());
-        assertTrue(publisher.bodies.get(0).length() <= SmsText.MAX_UTF8_BYTES);
-        assertTrue(publisher.bodies.get(0).endsWith("..."));
+    @Before
+    public void setUp() {
+        store = mock(ErrorAlertDedupStore.class);
+        when(store.reserve()).thenReturn(Optional.of(new Reservation("owner")));
+        when(store.smsFor(any())).thenReturn(Optional.empty());
+        published = new ArrayList<>();
+        service = service(published::add);
     }
 
     @Test
-    public void process_fallsBackWhenGeminiBlank() {
-        RecordingPublisher publisher = new RecordingPublisher();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                new AllowOnceDedup(),
-                prompt -> Optional.empty(),
-                publisher);
-
-        service.process(sampleLog());
-
-        assertEquals(1, publisher.bodies.size());
-        assertTrue(publisher.bodies.get(0).contains("globalAppController"));
-        assertTrue(publisher.bodies.get(0).contains("RuntimeException"));
-        assertTrue(publisher.bodies.get(0).contains("WebhookService.process"));
-    }
-
-    @Test
-    public void process_skipsWhenDedupRejects() {
-        RecordingPublisher publisher = new RecordingPublisher();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                fingerprint -> false,
-                prompt -> Optional.of("should not send"),
-                publisher);
-
-        service.process(sampleLog());
-
-        assertTrue(publisher.bodies.isEmpty());
-    }
-
-    @Test
-    public void processLogEntryJson_skipsWarningLogs() {
-        RecordingPublisher publisher = new RecordingPublisher();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                new AllowOnceDedup(),
-                prompt -> Optional.of("should not send"),
-                publisher);
-
-        service.processLogEntryJson("""
-                {
-                  "severity": "WARNING",
-                  "textPayload": "Cannot checkout: vacancy",
-                  "resource": { "labels": { "function_name": "globalAppController" } }
-                }
-                """);
-
-        assertTrue(publisher.bodies.isEmpty());
-    }
-
-    @Test
-    public void process_redactsEmailBeforePublishAndPrompt() {
-        RecordingPublisher publisher = new RecordingPublisher();
-        RecordingLlm llm = new RecordingLlm();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                new AllowOnceDedup(),
-                llm,
-                publisher);
-
-        service.process(new ParsedErrorLog(
-                "emailService",
-                "Failed to send to jane.doe@example.com token=sk_live_abc123XYZ",
+    public void process_trimsLongHeadlineToCompleteWordsWithoutEllipsis() {
+        service.process(new ParsedErrorLog("globalAppController",
+                "Stripe checkout session expired while fulfilling the webhook and then more words overflow "
+                        + "the monitoring subject cap ".repeat(20),
                 "RuntimeException",
-                "EmailService.send(EmailService.java:155)"));
+                "WebhookService.process"));
 
-        assertEquals(1, publisher.bodies.size());
-        assertTrue(publisher.bodies.get(0).contains("[REDACTED_EMAIL]"));
-        assertTrue(publisher.bodies.get(0).contains("[REDACTED]"));
-        assertTrue(!publisher.bodies.get(0).contains("jane.doe@example.com"));
-        assertTrue(!publisher.bodies.get(0).contains("sk_live_abc123XYZ"));
-        assertTrue(llm.prompts.get(0).contains("[REDACTED_EMAIL]"));
-        assertTrue(!llm.prompts.get(0).contains("jane.doe@example.com"));
+        String headline = published.get(0).headline();
+        assertTrue(headline.startsWith("globalAppController:"));
+        assertFalse(headline.contains("Stripe checko..."));
+        assertTrue(headline.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
     }
 
     @Test
-    public void process_doesNotMarkSentWhenPublishFails() {
-        TrackingDedup dedup = new TrackingDedup();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                dedup,
-                prompt -> Optional.of("summary"),
-                summary -> false);
-
+    public void process_publishesFactsSeparatelyFromAiAndCompletesReservation() {
         service.process(sampleLog());
 
-        assertEquals(1, dedup.claims);
-        assertEquals(0, dedup.markedSent);
+        ErrorAlertNotification notification = published.get(0);
+        assertEquals("emailService: Request rejected", notification.headline());
+        assertEquals("Unconfirmed explanation", notification.aiInterpretation());
+        assertEquals("Unconfirmed explanation", notification.sms());
+        assertEquals(sampleLog(), notification.evidence());
+        verify(store).rememberSms(notification.fingerprint(), "Unconfirmed explanation");
+        verify(store).complete(eq(new Reservation("owner")), eq(notification.fingerprint()));
+        verify(store, never()).release(any());
     }
 
     @Test
-    public void process_marksSentAfterSuccessfulPublish() {
-        TrackingDedup dedup = new TrackingDedup();
-        ExplainErrorAlertService service = new ExplainErrorAlertService(
-                dedup,
-                prompt -> Optional.empty(),
-                summary -> true);
-
+    public void process_reusesPersistedSmsSoExtractorIdentityStaysStable() {
+        when(store.smsFor(any())).thenReturn(Optional.of("Persisted SMS sentence."));
+        service = service(published::add, prompt -> Optional.of("Different Gemini wording this time."));
         service.process(sampleLog());
-
-        assertEquals(1, dedup.claims);
-        assertEquals(1, dedup.markedSent);
+        assertEquals("Persisted SMS sentence.", published.get(0).sms());
+        assertEquals("Different Gemini wording this time.", published.get(0).aiInterpretation());
+        verify(store, never()).rememberSms(any(), any());
     }
 
     @Test
-    public void buildPrompt_requiresConcreteSmsFieldsNotShortStubs() {
-        String prompt = ExplainErrorAlertService.buildPrompt(sampleLog());
-        assertTrue(prompt.contains("Do NOT emit 4-6 word stubs"));
-        assertTrue(prompt.contains("globalAppController failed Stripe"));
-        assertTrue(prompt.contains("concrete operation"));
-        assertTrue(prompt.contains("exception type"));
-        assertTrue(prompt.contains("class.method"));
-        assertTrue(prompt.contains("likely cause"));
-        assertTrue(prompt.contains("full sentences"));
-        assertTrue(prompt.contains("Function: globalAppController"));
-        assertTrue(prompt.contains("Exception: RuntimeException"));
-        assertTrue(prompt.contains("WebhookService.process"));
+    public void processLogEntryJson_reusesSmsInsideIncidentWindowThenRefreshesAfterExpiry() {
+        ExpiringSmsStore expiring = new ExpiringSmsStore(Instant.parse("2026-10-11T03:00:00Z"));
+        service = new ExplainErrorAlertService(expiring,
+                new ErrorAlertSummarizer(this::emailServiceStatusInterpretation, parsed -> List.of()),
+                published::add);
+
+        service.processLogEntryJson(emailServiceHttpError(503));
+        assertEquals("Email service returned 503.", published.get(0).sms());
+
+        expiring.advance(Duration.ofDays(1));
+        service.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 503.", published.get(1).sms());
+        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+
+        expiring.advance(Duration.ofDays(30));
+        service.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 403.", published.get(2).sms());
+        assertEquals(published.get(0).fingerprint(), published.get(2).fingerprint());
+        assertNotEquals(published.get(0).sms(), published.get(2).sms());
     }
 
     @Test
-    public void fallbackSms_includesFunctionExceptionAndFrame() {
-        String body = ExplainErrorAlertService.fallbackSms(sampleLog());
-        assertTrue(body.contains("globalAppController"));
-        assertTrue(body.contains("RuntimeException"));
-        assertTrue(body.contains("Failed to fulfill purchase"));
-        assertTrue(body.contains("WebhookService.process"));
+    public void processLogEntryJson_failedCachedPublishDoesNotExtendIncidentWindow() {
+        Instant start = Instant.parse("2026-10-11T03:00:00Z");
+        ExpiringSmsStore failedAttempt = new ExpiringSmsStore(start);
+        ExpiringSmsStore control = new ExpiringSmsStore(start);
+        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(this::emailServiceStatusInterpretation,
+                parsed -> List.of());
+        List<ErrorAlertNotification> controlPublished = new ArrayList<>();
+        int[] attempts = { 0 };
+        ExplainErrorAlertService failing = new ExplainErrorAlertService(failedAttempt, summarizer, notification -> {
+            attempts[0]++;
+            if (attempts[0] == 2) {
+                throw new IllegalStateException("Logging unavailable");
+            }
+            published.add(notification);
+        });
+        ExplainErrorAlertService controlService = new ExplainErrorAlertService(control, summarizer,
+                controlPublished::add);
+
+        failing.processLogEntryJson(emailServiceHttpError(503));
+        controlService.processLogEntryJson(emailServiceHttpError(503));
+        assertEquals("Email service returned 503.", published.get(0).sms());
+        assertEquals("Email service returned 503.", controlPublished.get(0).sms());
+
+        failedAttempt.advance(Duration.ofDays(6));
+        try {
+            failing.processLogEntryJson(emailServiceHttpError(403));
+            fail("Cached lookup must still publish; publisher failure must reach the trigger");
+        } catch (IllegalStateException expected) {
+            assertEquals("Logging unavailable", expected.getMessage());
+        }
+        assertEquals(1, published.size());
+
+        failedAttempt.advance(Duration.ofDays(2));
+        failing.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 403.", published.get(1).sms());
+
+        control.advance(Duration.ofDays(8));
+        controlService.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals("Email service returned 403.", controlPublished.get(1).sms());
+    }
+
+    @Test
+    public void process_pagesCompleteAiSentenceEvenWhenShort() {
+        service = service(published::add, prompt -> Optional.of(SmsTextTest.twoSentenceCheckoutFailure(303)));
+        service.process(sampleLog());
+        assertEquals("Checkout failed in globalAppController.", published.get(0).sms());
+        assertFalse(published.get(0).sms().contains("and persist the"));
+        verify(store).rememberSms(eq(published.get(0).fingerprint()), eq("Checkout failed in globalAppController."));
+    }
+
+    @Test
+    public void process_propagatesInFlightLeaseSoPubSubRedelivers() {
+        when(store.reserve()).thenThrow(new IllegalStateException("Error alert delivery already in progress"));
+        try {
+            service.process(sampleLog());
+            fail("In-flight delivery must not ack");
+        } catch (IllegalStateException expected) {
+            assertEquals("Error alert delivery already in progress", expected.getMessage());
+        }
+        assertTrue(published.isEmpty());
+        verify(store, never()).complete(any(), any());
+    }
+
+    @Test
+    public void process_skipsSuppressedErrorsWithoutCallingAiOrPublisher() {
+        when(store.reserve()).thenReturn(Optional.empty());
+        service = new ExplainErrorAlertService(store, new ErrorAlertSummarizer(prompt -> {
+            throw new AssertionError("Suppressed errors must not call the model");
+        }, parsed -> List.of()), published::add);
+        service.process(sampleLog());
+        assertTrue(published.isEmpty());
+        verify(store, never()).complete(any(), any());
+    }
+
+    @Test
+    public void process_releasesAndPropagatesPublicationFailure() {
+        service = service(notification -> { throw new IllegalStateException("Logging unavailable"); });
+        try {
+            service.process(sampleLog());
+            fail("Publication failure must reach the trigger");
+        } catch (IllegalStateException expected) {
+            assertEquals("Logging unavailable", expected.getMessage());
+        }
+        verify(store).release(any());
+        verify(store, never()).complete(any(), any());
+    }
+
+    @Test
+    public void process_doesNotReleaseAfterPublicationWhenCompletionFails() {
+        doThrow(new IllegalStateException("commit failed")).when(store).complete(any(), any());
+        try {
+            service.process(sampleLog());
+            fail("Completion failure must reach the trigger");
+        } catch (IllegalStateException expected) {
+            assertEquals(1, published.size());
+        }
+        verify(store, never()).release(any());
+    }
+
+    @Test
+    public void process_keepsHeadlineAndFingerprintStableAcrossRequestUuids() {
+        service.process(new ParsedErrorLog("stripeWebhook",
+                "[Webhook-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa] Request rejected", "", ""));
+        service.process(new ParsedErrorLog("stripeWebhook",
+                "[Webhook-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb] Request rejected", "", ""));
+        assertEquals(published.get(0).headline(), published.get(1).headline());
+        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+    }
+
+    @Test
+    public void process_separatesFunctionAndObservedExceptionInIncidentIdentity() {
+        String message = "Organiser does not exist: organiserId=abc123";
+        service.process(new ParsedErrorLog("send_email_on_purchase", message, "", ""));
+        service.process(new ParsedErrorLog("other_function", message, "", ""));
+        service.process(new ParsedErrorLog("send_email_on_purchase", message, "Error", ""));
+
+        assertNotEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+        assertNotEquals(published.get(0).fingerprint(), published.get(2).fingerprint());
+    }
+
+    @Test
+    public void processLogEntryJson_filtersWarningsAndCallableGetBeforeReservations() {
+        service.processLogEntryJson("""
+                {"severity":"WARNING","textPayload":"warning"}
+                """);
+        service.processLogEntryJson("""
+                {"severity":"ERROR","textPayload":"Invalid request, unable to process.",
+                 "labels":{"deployment-callable":"true"},
+                 "httpRequest":{"requestMethod":"GET"},
+                 "sourceLocation":{"function":"_on_call_handler"}}
+                """);
+        verify(store, never()).reserve();
+        assertTrue(published.isEmpty());
+    }
+
+    @Test
+    public void processLogEntryJson_publishesHttpOnlyErrorsWithFactsWhenAiUnavailable() {
+        service = new ExplainErrorAlertService(store,
+                new ErrorAlertSummarizer(prompt -> Optional.empty(), parsed -> List.of()), published::add);
+        service.processLogEntryJson("""
+                {"severity":"ERROR","httpRequest":{"requestMethod":"POST","status":500},
+                 "resource":{"labels":{"service_name":"emailService"}}}
+                """);
+        assertEquals("emailService: HTTP POST status=500", published.get(0).headline());
+        assertEquals("", published.get(0).aiInterpretation());
+    }
+
+    @Test
+    public void process_doesNotCollapseSpacelessMessageToFunctionNameOnly() {
+        service.process(new ParsedErrorLog("createEvent", "x".repeat(400), "", ""));
+        String headline = published.get(0).headline();
+        assertFalse(headline.equals("createEvent:"));
+        assertFalse(headline.equals("createEvent"));
+        assertTrue(headline.startsWith("createEvent:"));
+        assertTrue(headline.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+    }
+
+    private ExplainErrorAlertService service(AlertSummaryPublisher publisher) {
+        return service(publisher, prompt -> Optional.of("Unconfirmed explanation"));
+    }
+
+    private ExplainErrorAlertService service(AlertSummaryPublisher publisher,
+            java.util.function.Function<String, Optional<String>> llm) {
+        return new ExplainErrorAlertService(store,
+                new ErrorAlertSummarizer(llm::apply, parsed -> List.of()),
+                publisher);
     }
 
     private static ParsedErrorLog sampleLog() {
-        return new ParsedErrorLog(
-                "globalAppController",
-                "Failed to fulfill purchase\njava.lang.RuntimeException: boom",
-                "RuntimeException",
-                "com.functions.stripe.services.WebhookService.process(WebhookService.java:1128)");
+        return new ParsedErrorLog("emailService", "Request rejected", "", "");
     }
 
-    private static final class RecordingPublisher implements AlertSummaryPublisher {
-        private final List<String> bodies = new ArrayList<>();
-
-        @Override
-        public boolean publish(String summary) {
-            bodies.add(summary);
-            return true;
+    private Optional<String> emailServiceStatusInterpretation(String prompt) {
+        if (prompt.contains("HTTP status: 503")) {
+            return Optional.of("Email service returned 503.");
         }
-    }
-
-    private static final class AllowOnceDedup implements ErrorAlertDedupStore {
-        private final Set<String> claimed = new HashSet<>();
-
-        @Override
-        public boolean tryClaim(String fingerprint) {
-            return claimed.add(fingerprint);
+        if (prompt.contains("HTTP status: 403")) {
+            return Optional.of("Email service returned 403.");
         }
+        return Optional.of("Unconfirmed explanation");
     }
 
-    private static final class TrackingDedup implements ErrorAlertDedupStore {
-        private int claims;
-        private int markedSent;
+    private static String emailServiceHttpError(int status) {
+        return """
+                {"severity":"ERROR","textPayload":"Request rejected",
+                 "httpRequest":{"requestMethod":"POST","status":%d},
+                 "resource":{"labels":{"service_name":"emailService"}}}
+                """.formatted(status);
+    }
 
-        @Override
-        public boolean tryClaim(String fingerprint) {
-            claims++;
-            return true;
+    private static final class ExpiringSmsStore implements ErrorAlertDedupStore {
+        private Instant now;
+        private final Map<String, String> smsByFingerprint = new HashMap<>();
+        private final Map<String, Instant> savedAtByFingerprint = new HashMap<>();
+
+        ExpiringSmsStore(Instant now) {
+            this.now = now;
+        }
+
+        void advance(Duration duration) {
+            now = now.plus(duration);
         }
 
         @Override
-        public void markSent(String fingerprint) {
-            markedSent++;
+        public Optional<Reservation> reserve() {
+            return Optional.of(new Reservation("owner"));
         }
-    }
-
-    private static final class RecordingLlm implements LlmClient {
-        private final List<String> prompts = new ArrayList<>();
 
         @Override
-        public Optional<String> summarize(String prompt) {
-            prompts.add(prompt);
-            return Optional.empty();
+        public void complete(Reservation reservation, String fingerprint) {
+            if (fingerprint == null || fingerprint.isBlank()) {
+                return;
+            }
+            if (smsByFingerprint.containsKey(fingerprint)) {
+                savedAtByFingerprint.put(fingerprint, now);
+            }
+        }
+
+        @Override
+        public void release(Reservation reservation) {
+        }
+
+        @Override
+        public Optional<String> smsFor(String fingerprint) {
+            String sms = smsByFingerprint.get(fingerprint);
+            Instant savedAt = savedAtByFingerprint.get(fingerprint);
+            if (sms == null || savedAt == null
+                    || !savedAt.isAfter(now.minus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW))) {
+                return Optional.empty();
+            }
+            return Optional.of(sms);
+        }
+
+        @Override
+        public void rememberSms(String fingerprint, String sms) {
+            if (smsFor(fingerprint).isPresent()) {
+                return;
+            }
+            smsByFingerprint.put(fingerprint, sms);
+            savedAtByFingerprint.put(fingerprint, now);
         }
     }
 }

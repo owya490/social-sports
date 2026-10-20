@@ -1,15 +1,37 @@
 package com.functions.alerts.clients;
 
-public interface ErrorAlertDedupStore {
-    /**
-     * Claims an in-flight slot so a concurrent duplicate is skipped.
-     * Does not start the ten-minute sent window; call {@link #markSent} after a successful publish.
-     *
-     * @return true if this fingerprint is allowed to send an SMS now
-     */
-    boolean tryClaim(String fingerprint);
+import java.util.Optional;
 
-    /** Records a successful publish so the ten-minute window applies. */
-    default void markSent(String fingerprint) {
+public interface ErrorAlertDedupStore {
+    record Reservation(String owner) {
     }
+
+    /**
+     * Empty means cooldown or daily budget. Another in-progress delivery throws
+     * so Pub/Sub can redeliver. Infrastructure failures throw.
+     */
+    Optional<Reservation> reserve();
+
+    void complete(Reservation reservation, String fingerprint);
+
+    default void complete(Reservation reservation) {
+        complete(reservation, "");
+    }
+
+    void release(Reservation reservation);
+
+    /**
+     * Stable SMS for this fingerprint while the incident is still active
+     * ({@code smsSavedAt} within the 7-day autoClose window). Lookup is read-only;
+     * activity advances from {@link #complete}. Empty means generate and persist a
+     * new interpretation.
+     */
+    Optional<String> smsFor(String fingerprint);
+
+    /**
+     * Persist trimmed SMS for this fingerprint. Reuses the stored value while the
+     * incident window is open so EXTRACT(sms) identity stays stable. After expiry,
+     * overwrites with the new Gemini wording.
+     */
+    void rememberSms(String fingerprint, String sms);
 }

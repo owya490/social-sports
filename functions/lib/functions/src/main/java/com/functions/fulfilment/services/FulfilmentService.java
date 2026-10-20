@@ -5,16 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
-import com.functions.events.models.ResolvedEventTicketType;
-import com.functions.events.repositories.EventsRepository;
-import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
@@ -28,9 +24,12 @@ import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity.FulfilmentEntityHookInput;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
@@ -81,6 +80,10 @@ public class FulfilmentService {
             logger.info("Found old fulfilment sessions to delete: {}", oldSessionIds);
             for (String id : oldSessionIds) {
                 try {
+                    if (shouldRetainPyngCheckout(id)) {
+                        logger.info("Skipping cleanup of in-progress PYNG_CHECKOUT session {}", id);
+                        continue;
+                    }
                     deleteFulfilmentSessionAndTempFormResponses(id);
                     deleted++;
                 } catch (Exception e) {
@@ -93,6 +96,25 @@ public class FulfilmentService {
         } catch (Exception e) {
             logger.error("[FulfilmentService] Error during cleanup of old fulfilment sessions", e);
             throw e;
+        }
+    }
+
+    /**
+     * A Pyng checkout stays until polling has recorded a terminal payment status.
+     */
+    private static boolean shouldRetainPyngCheckout(String fulfilmentSessionId) {
+        try {
+            Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSession(
+                    fulfilmentSessionId, Optional.empty());
+            if (maybeSession.isEmpty() || !(maybeSession.get() instanceof PyngCheckoutFulfilmentSession pyngSession)) {
+                return false;
+            }
+            PyngMetadata metadata = pyngSession.getPyngMetadata();
+            return metadata == null || metadata.getStatus() == null || !metadata.getStatus().isTerminal();
+        } catch (Exception e) {
+            logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
+                    fulfilmentSessionId, e);
+            return false;
         }
     }
 
@@ -196,52 +218,6 @@ public class FulfilmentService {
         return Optional.empty();
     }
 
-    public static String initFulfilmentSession(String eventId, Integer numTickets, String eventTicketTypeId)
-            throws Exception {
-        if (numTickets == null || numTickets <= 0) {
-            logger.error("Invalid numTickets {} for eventId {}", numTickets, eventId);
-            throw new Exception("Invalid numTickets " + numTickets + " for eventId " + eventId);
-        }
-        if (eventTicketTypeId == null || eventTicketTypeId.isBlank()) {
-            throw new IllegalArgumentException("eventTicketTypeId is required");
-        }
-
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new Exception("Failed to find event data for event ID: " + eventId);
-        }
-        EventData eventDataForLimits = maybeEventData.get();
-        Integer maxTickets = eventDataForLimits.getMaxTicketsPerTransaction();
-        if (maxTickets != null && numTickets > maxTickets) {
-            throw new IllegalArgumentException(String.format(
-                    "Requested %d tickets exceeds maxTicketsPerTransaction (%d) for event %s",
-                    numTickets, maxTickets, eventId));
-        }
-
-        FulfilmentSessionType fulfilmentSessionType = classifyFulfilmentSessionType(eventId, eventTicketTypeId);
-
-        String fulfilmentSessionId = UUID.randomUUID().toString();
-
-        FulfilmentSession fulfilmentSession;
-
-        switch (fulfilmentSessionType) {
-            case CHECKOUT ->
-                fulfilmentSession = FulfilmentSessionType.CHECKOUT.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            case BOOKING_APPROVAL ->
-                fulfilmentSession = FulfilmentSessionType.BOOKING_APPROVAL.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            case WAITLIST ->
-                fulfilmentSession = FulfilmentSessionType.WAITLIST.getFulfilmentSessionService()
-                        .initFulfilmentSession(fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
-            default ->
-                throw new Exception("Invalid fulfilment session type: " + fulfilmentSessionType);
-        }
-
-        return createFulfilmentSession(fulfilmentSessionId, fulfilmentSession);
-    }
-
     public static String getEndFulfilmentEntityId(String eventId,
             List<FulfilmentEntity> tempEntities, List<String> entityIds) {
         int endEntityIndex = -1;
@@ -257,39 +233,6 @@ public class FulfilmentService {
                     + eventId);
         }
         return entityIds.get(endEntityIndex);
-    }
-
-    private static String createFulfilmentSession(String sessionId, FulfilmentSession fulfilmentSession)
-            throws Exception {
-        String fulfilmentSessionId = FulfilmentSessionRepository.createFulfilmentSession(sessionId, fulfilmentSession);
-
-        logger.info("Fulfilment session created with ID: {} for event ID: {}",
-                fulfilmentSessionId, fulfilmentSession.getEventData().getEventId());
-        return fulfilmentSessionId;
-    }
-
-    private static FulfilmentSessionType classifyFulfilmentSessionType(String eventId, String eventTicketTypeId) {
-        Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-        if (maybeEventData.isEmpty()) {
-            logger.error("Failed to find event data for event ID: {}", eventId);
-            throw new RuntimeException("Failed to find event data for event ID: " + eventId);
-        }
-        EventData eventData = maybeEventData.get();
-        eventData.setEventId(eventId);
-
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
-        if (Boolean.TRUE.equals(eventData.getWaitlistEnabled()) && ticketType.getVacancy() != null
-                && ticketType.getVacancy() <= 0) {
-            return FulfilmentSessionType.WAITLIST;
-        }
-
-        FulfilmentSessionType fulfilmentSessionType = FulfilmentSessionType.CHECKOUT;
-
-        if (eventData.getBookingApprovalEnabled()) {
-            fulfilmentSessionType = FulfilmentSessionType.BOOKING_APPROVAL;
-        }
-
-        return fulfilmentSessionType;
     }
 
     private static Optional<GetNextFulfilmentEntityResponse> getNextFulfilmentEntity(
@@ -345,7 +288,7 @@ public class FulfilmentService {
             return Optional.of(new GetNextFulfilmentEntityResponse(
                     nextEntityId));
         } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
-                | IllegalArgumentException e) {
+                | IllegalArgumentException | IllegalStateException | UnsupportedOperationException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity for session ID: {}",
@@ -500,7 +443,7 @@ public class FulfilmentService {
             // Get the next entity
             return getNextFulfilmentEntity(fulfilmentSessionId, currentIndex);
         } catch (FulfilmentSessionNotFoundException | FulfilmentEntityNotFoundException
-                | IllegalArgumentException e) {
+                | IllegalArgumentException | IllegalStateException | UnsupportedOperationException e) {
             throw e;
         } catch (Exception e) {
             logger.error("Failed to get next fulfilment entity by current ID for session: {}",
@@ -587,8 +530,9 @@ public class FulfilmentService {
                 return ((DelayedStripeFulfilmentEntity) entity).getUrl();
             case END:
                 return ((EndFulfilmentEntity) entity).getUrl();
+            case PYNG:
+                return ((PyngFulfilmentEntity) entity).getUrl();
             case FORMS, WAITLIST:
-                // Forms and Waitlist entities don't have URLs, return null
                 return null;
             default:
                 logger.warn("Unknown entity type for URL retrieval: {}", entity.getType());
@@ -673,8 +617,10 @@ public class FulfilmentService {
                 formResponseId = formsEntity.getFormResponseId();
             }
 
+            String url = getEntityUrl(entity);
+
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
-                    getEntityUrl(entity), fulfilmentSession.getEventData().getEventId(),
+                    url, fulfilmentSession.getEventData().getEventId(),
                     formId, formResponseId));
         } catch (Exception e) {
             logger.error(

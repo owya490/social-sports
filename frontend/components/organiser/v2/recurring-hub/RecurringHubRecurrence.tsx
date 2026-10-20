@@ -178,11 +178,11 @@ export function RecurringHubRecurrence({
           <h3 className="text-sm font-semibold text-foreground font-sans mb-1">Schedule</h3>
           <div className="divide-y divide-border border-t border-border">
             <EventHubPreferenceRow
-              title={isRecurrenceEnded ? "Re-enable recurrence" : "Enable recurrence"}
+              title="Create future events"
               description={
                 isRecurrenceEnded
-                  ? "This series has ended. Re-enable to resume creating occurrences."
-                  : "When on, SPORTSHUB creates the next occurrence from this template."
+                  ? "This series has ended. Turn on and review the upcoming dates before saving to restart it. Existing events stay unchanged."
+                  : "Turn off to stop automatic event creation. Changes take effect when you save the schedule. Existing events stay unchanged."
               }
               checked={newRecurrenceData.recurrenceEnabled}
               onChange={(next) => setNewRecurrenceData({ ...newRecurrenceData, recurrenceEnabled: next })}
@@ -320,7 +320,7 @@ export function RecurringHubRecurrence({
       <div className="flex justify-end">
         <EventHubPrimaryButton onClick={submitNewRecurrenceData} disabled={!dirty || updating}>
           <CheckIcon className="h-4 w-4" aria-hidden />
-          {updating ? "Saving…" : "Save recurrence"}
+          {updating ? "Saving…" : "Save schedule"}
         </EventHubPrimaryButton>
       </div>
     </EventHubStage>

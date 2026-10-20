@@ -1,14 +1,19 @@
 package com.functions.global.controllers;
 
+import java.io.IOException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.event.Level;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.functions.fulfilment.exceptions.FulfilmentProgressionBlockedException;
 import com.functions.global.exceptions.AuthenticationException;
 import com.functions.global.exceptions.AuthorizationException;
 import com.functions.global.exceptions.NotFoundException;
 import com.functions.global.handlers.HandlerRegistry;
 import com.functions.global.models.AuthContext;
+import com.functions.global.models.AuthLevel;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.models.responses.ErrorResponse;
@@ -31,15 +36,16 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
 
     @Override
     public void service(HttpRequest request, HttpResponse response) throws Exception {
-        setResponseHeaders(response);
+        setCommonHeaders(response);
 
-        // Handle preflight (OPTIONS) requests
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatusCode(204); // No Content
+            setWildcardOrigin(response);
+            response.setStatusCode(204);
             return;
         }
 
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
+            setWildcardOrigin(response);
             response.setStatusCode(405); // Method Not Allowed
             response.appendHeader("Allow", "POST");
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
@@ -47,27 +53,51 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
             return;
         }
 
+        EndpointType endpointType = null;
+        AuthContext authContext = null;
         try {
-            UnifiedRequest unifiedRequest;
+            JsonNode envelope;
             try {
-                unifiedRequest =
-                        JavaUtils.objectMapper.readValue(request.getReader(), UnifiedRequest.class);
+                envelope = JavaUtils.objectMapper.readTree(request.getReader());
+                JsonNode endpoint = envelope == null ? null : envelope.get("endpointType");
+                if (endpoint != null) {
+                    if (!endpoint.isTextual()) {
+                        throw new IllegalArgumentException("Invalid endpointType");
+                    }
+                    endpointType = EndpointType.valueOf(endpoint.textValue());
+                }
             } catch (Exception e) {
-                response.setStatusCode(400); // Bad Request
-                logger.error("Could not parse request input:", e);
-                response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                        new ErrorResponse("Invalid request data: " + e.getMessage())));
+                setWildcardOrigin(response);
+                respondInvalidRequest(endpointType, null, response);
                 return;
             }
 
-            if (unifiedRequest.endpointType() == null || unifiedRequest.data() == null) {
+            if (isPartner(endpointType)) {
+                response.appendHeader("Cache-Control", "no-store");
+                authContext = AuthService.verify(request, endpointType.getAuthLevel());
+                response.appendHeader("Access-Control-Allow-Origin", authContext.requirePartner().verifiedOrigin());
+                response.appendHeader("Vary", "Origin");
+            } else {
+                setWildcardOrigin(response);
+            }
+            UnifiedRequest unifiedRequest;
+            try {
+                unifiedRequest = JavaUtils.objectMapper.treeToValue(envelope, UnifiedRequest.class);
+            } catch (Exception e) {
+                respondInvalidRequest(endpointType, authContext, response);
+                return;
+            }
+            endpointType = unifiedRequest == null ? endpointType : unifiedRequest.endpointType();
+            if (unifiedRequest == null || unifiedRequest.endpointType() == null || unifiedRequest.data() == null) {
                 response.setStatusCode(400);
                 response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                         new ErrorResponse("Both endpointType and data are required.")));
                 return;
             }
 
-            AuthContext authContext = AuthService.verify(request, unifiedRequest.endpointType().getAuthLevel());
+            if (authContext == null) {
+                authContext = AuthService.verify(request, endpointType.getAuthLevel());
+            }
             Object result = routeRequest(unifiedRequest, authContext);
 
             response.setStatusCode(200);
@@ -75,47 +105,53 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
                     JavaUtils.objectMapper.writeValueAsString(UnifiedResponse.success(result)));
 
         } catch (AuthenticationException e) {
-            logger.warn("Authentication failed: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "authentication_denied", "Authentication failed", e);
             response.setStatusCode(401);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Invalid partner key" : e.getMessage())));
         } catch (AuthorizationException e) {
-            logger.warn("Authorization failed: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "origin_denied", "Authorization failed", e);
             response.setStatusCode(403);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Partner origin is not allowed" : e.getMessage())));
         } catch (OrderStatusConflictException e) {
-            logger.warn("Order status conflict: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "order_conflict", "Order status conflict", e);
             response.setStatusCode(409);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Order status conflict" : e.getMessage())));
         } catch (FulfilmentProgressionBlockedException e) {
-            logger.warn("Fulfilment progression blocked: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "fulfilment_blocked", "Fulfilment progression blocked", e);
             response.setStatusCode(400);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Invalid request data" : e.getMessage())));
         } catch (IllegalArgumentException e) {
-            logger.warn("Bad request: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "invalid_request", "Bad request", e);
             response.setStatusCode(400);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Invalid request data" : e.getMessage())));
         } catch (NotFoundException e) {
-            logger.warn("Resource not found: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "not_found", "Resource not found", e);
             response.setStatusCode(404);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse(e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Event is not available" : e.getMessage())));
         } catch (CheckoutVacancyException e) {
-            logger.warn("Checkout vacancy error: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "checkout_vacancy", "Checkout vacancy error", e);
             response.setStatusCode(400);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Checkout vacancy error: " + e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Invalid request data"
+                            : "Checkout vacancy error: " + e.getMessage())));
         } catch (CheckoutDateTimeException e) {
-            logger.warn("Checkout date time error: {}", e.getMessage());
+            logRequestFailure(endpointType, authContext, "checkout_date_time", "Checkout date time error", e);
             response.setStatusCode(400);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
-                    new ErrorResponse("Checkout date time error: " + e.getMessage())));
+                    new ErrorResponse(isPartner(endpointType) ? "Invalid request data"
+                            : "Checkout date time error: " + e.getMessage())));
         } catch (Exception e) {
-            logger.error("Error processing request", e);
+            if (isPartner(endpointType)) {
+                logOutcome(endpointType, authContext, Level.ERROR, "server_error");
+            } else {
+                logger.error("Error processing request", e);
+            }
             response.setStatusCode(500);
             response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(
                     new ErrorResponse("Internal server error")));
@@ -133,10 +169,39 @@ public class GlobalAppController extends AbstractConfiguredHttpFunction {
         return handler.handle(handler.parse(unifiedRequest), authContext);
     }
 
-    private void setResponseHeaders(HttpResponse response) {
+    private static boolean isPartner(EndpointType endpointType) {
+        return endpointType != null && endpointType.getAuthLevel() == AuthLevel.PARTNER;
+    }
+
+    private static void respondInvalidRequest(EndpointType endpointType, AuthContext authContext,
+            HttpResponse response) throws IOException {
+        response.setStatusCode(400);
+        logOutcome(endpointType, authContext, Level.WARN, "invalid_request");
+        response.getWriter().write(JavaUtils.objectMapper.writeValueAsString(new ErrorResponse("Invalid request data")));
+    }
+
+    private static void logRequestFailure(EndpointType endpointType, AuthContext authContext, String outcome,
+            String legacyDescription, Exception failure) {
+        if (isPartner(endpointType)) {
+            logOutcome(endpointType, authContext, Level.WARN, outcome);
+        } else {
+            logger.warn("{}: {}", legacyDescription, failure.getMessage());
+        }
+    }
+
+    private static void logOutcome(EndpointType endpointType, AuthContext authContext, Level level, String outcome) {
+        String integrationId = authContext != null && authContext.level() == AuthLevel.PARTNER
+                ? authContext.requirePartner().integrationId() : null;
+        logger.atLevel(level).log("Request endpoint={} outcome={} integrationId={}", endpointType, outcome, integrationId);
+    }
+
+    private static void setWildcardOrigin(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Origin", "*");
+    }
+
+    private void setCommonHeaders(HttpResponse response) {
         response.appendHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        response.appendHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Sportshub-Partner-Key");
         response.appendHeader("Access-Control-Max-Age", "3600"); // Cache preflight for 1 hour
         response.appendHeader("Content-Type", "application/json; charset=UTF-8");
     }

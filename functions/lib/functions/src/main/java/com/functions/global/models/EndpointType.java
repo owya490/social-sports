@@ -8,11 +8,13 @@ import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
+import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
 import com.functions.events.models.responses.GetEventByIdResponse;
+import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.events.models.responses.CreateEventResponse;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
@@ -24,12 +26,14 @@ import com.functions.fulfilment.models.requests.GetFulfilmentSessionInfoRequest;
 import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.GetPrevFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionRequest;
+import com.functions.fulfilment.models.requests.InitPartnerFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.UpdateFulfilmentEntityWithFormResponseIdRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.InitCheckoutFulfilmentSessionResponse;
+import com.functions.fulfilment.models.responses.InitPartnerFulfilmentSessionResponse;
 import com.functions.tickets.models.Ticket;
 import com.functions.tickets.models.requests.BookingApprovalRequest;
 import com.functions.tickets.models.requests.get.GetOrderRequest;
@@ -65,6 +69,8 @@ public enum EndpointType {
             AuthLevel.AUTHENTICATED),
     INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.class, InitCheckoutFulfilmentSessionResponse.class,
             AuthLevel.PUBLIC),
+    INIT_PARTNER_FULFILMENT_SESSION(InitPartnerFulfilmentSessionRequest.class,
+            InitPartnerFulfilmentSessionResponse.class, AuthLevel.PARTNER),
     UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID(UpdateFulfilmentEntityWithFormResponseIdRequest.class, String.class,
             AuthLevel.PUBLIC),
     GET_PREV_FULFILMENT_ENTITY(GetPrevFulfilmentEntityRequest.class, GetPrevFulfilmentEntityResponse.class,
@@ -85,6 +91,7 @@ public enum EndpointType {
     // PUBLIC because Syrio is an external partner that cannot hold a Firebase ID
     // token. TODO: give Syrio its own API-key auth scheme as a follow-up.
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class, AuthLevel.PUBLIC),
+    GET_PARTNER_EVENTS(GetPartnerEventsRequest.class, GetPartnerEventsResponse.class, AuthLevel.PARTNER),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class, AuthLevel.PUBLIC),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class, AuthLevel.AUTHENTICATED),
     GET_TICKET(GetTicketRequest.class, Ticket.class, AuthLevel.AUTHENTICATED),

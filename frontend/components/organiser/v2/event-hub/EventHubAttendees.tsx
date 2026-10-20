@@ -1,5 +1,6 @@
 "use client";
 
+import CopyEmailsButton from "@/components/CopyEmailsButton";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import Loading from "@/components/loading/Loading";
 import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAttendeeDialog";
@@ -10,7 +11,11 @@ import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType }
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { ConflictError } from "@/interfaces/exceptions/ConflictError";
 import { Logger } from "@/observability/logger";
-import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
+import {
+  ATTENDEE_CSV_HEADERS,
+  buildAttendeeCsvData,
+  buildAttendeeEmailList,
+} from "@/services/src/attendee/attendeeCsvUtils";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
@@ -51,6 +56,7 @@ import {
   type RegistrationUpdateIssue,
 } from "./registrationLiveUpdates";
 import { EventHubPanel } from "./EventHubPanel";
+import { EventHubTeams } from "./EventHubTeams";
 import {
   EventHubEmpty,
   EventHubFilters,
@@ -60,7 +66,8 @@ import {
   EventHubStage,
 } from "./EventHubStage";
 
-type TabType = "approved" | "pending" | "declined";
+type TabType = "approved" | "pending" | "declined" | "teams";
+const EMPTY_ORDER_MAP = new Map<Order, Ticket[]>();
 type DeepPanel = "formResponses" | "editTickets" | null;
 
 function countTicketsInOrderMap(
@@ -688,7 +695,9 @@ export function EventHubAttendees({
       ? filteredApprovedMap
       : activeTab === "pending"
         ? filteredPendingMap
-        : filteredDeclinedMap;
+        : activeTab === "declined"
+          ? filteredDeclinedMap
+          : EMPTY_ORDER_MAP;
 
   const orders = useMemo(() => {
     return Array.from(activeMap.keys()).sort((a, b) => a.fullName.localeCompare(b.fullName));
@@ -740,6 +749,10 @@ export function EventHubAttendees({
     () => buildAttendeeCsvData(filteredApprovedMap),
     [filteredApprovedMap]
   );
+  const attendeeEmails = useMemo(
+    () => buildAttendeeEmailList(filteredApprovedMap),
+    [filteredApprovedMap]
+  );
 
   return (
     <EventHubStage>
@@ -768,12 +781,15 @@ export function EventHubAttendees({
               </span>
             ) : null}
           </p>
-          <DownloadCsvButton
-            compact
-            data={approvedAttendeesCsvData}
-            headers={ATTENDEE_CSV_HEADERS}
-            filename={`Attendees_${eventId}.csv`}
-          />
+          <div className="flex items-center gap-1.5">
+            <CopyEmailsButton compact emails={attendeeEmails} />
+            <DownloadCsvButton
+              compact
+              data={approvedAttendeesCsvData}
+              headers={ATTENDEE_CSV_HEADERS}
+              filename={`Attendees_${eventId}.csv`}
+            />
+          </div>
         </div>
         <div
           className="h-1 w-full rounded-full bg-surface-muted overflow-hidden"
@@ -814,9 +830,11 @@ export function EventHubAttendees({
           { id: "approved", label: "Approved", count: approvedTicketCount },
           { id: "pending", label: "Pending", count: pendingTicketCount },
           { id: "declined", label: "Declined", count: declinedTicketCount },
+          { id: "teams", label: "Teams" },
         ]}
         action={
-          <div className="flex items-center gap-2">
+          activeTab === "teams" ? undefined : (
+            <div className="flex items-center gap-2">
             {showListTypeFilter ? (
               <label className="relative inline-flex items-center">
                 <span className="sr-only">Filter by ticket type</span>
@@ -846,12 +864,22 @@ export function EventHubAttendees({
               <PlusIcon className="h-4 w-4" aria-hidden />
               Add attendee
             </EventHubPrimaryButton>
-          </div>
+            </div>
+          )
         }
       />
 
       <div className="pt-1">
-        {loading ? (
+        {activeTab === "teams" ? (
+          <div className="pt-3">
+            <EventHubTeams
+              key={eventId}
+              eventId={eventId}
+              eventName={eventData.name}
+              orderTicketsMap={orderTicketsMap}
+            />
+          </div>
+        ) : loading ? (
           <div className="space-y-0 divide-y divide-border">
             {[0, 1, 2].map((i) => (
               <div key={i} className="py-3">

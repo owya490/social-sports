@@ -23,6 +23,7 @@ interface BookingButtonProps {
   eventName?: string;
   organiser?: PublicUserData;
   eventDate?: string;
+  supportedPaymentProviders: PaymentProvider[];
 }
 
 export default function BookingButton({
@@ -35,6 +36,7 @@ export default function BookingButton({
   eventName,
   organiser,
   eventDate,
+  supportedPaymentProviders,
 }: BookingButtonProps) {
   const router = useRouter();
   const [internalLoading, setInternalLoading] = useState(false);
@@ -123,6 +125,7 @@ export default function BookingButton({
           eventDate={eventDate}
           eventTicketType={eventTicketType}
           quantity={ticketCount}
+          supportedPaymentProviders={supportedPaymentProviders}
           bookingApprovalEnabled={bookingApprovalEnabled}
           onPay={(provider) => {
             void startCheckout(provider);

@@ -6,12 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.functions.events.models.EventData;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 
 public interface FulfilmentSessionService<T extends FulfilmentSession> {
-    T initFulfilmentSession(String fulfilmentSessionId, String eventId, Integer numTickets,
-            String eventTicketTypeId) throws Exception;
+    T initFulfilmentSession(String fulfilmentSessionId, EventData eventData, Integer numTickets,
+            String eventTicketTypeId, FulfilmentInitialisationScope scope) throws Exception;
 
     public static SimpleEntry<Map<String, FulfilmentEntity>, List<String>> getOrderedFulfilmentEntities(
             List<SimpleEntry<String, FulfilmentEntity>> fulfilmentEntities) {

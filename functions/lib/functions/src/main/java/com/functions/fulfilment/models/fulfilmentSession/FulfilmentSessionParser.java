@@ -15,6 +15,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
 import com.google.cloud.Timestamp;
@@ -50,10 +51,14 @@ final class FulfilmentSessionParser {
         session.setStatus(status == null ? null : FulfilmentSessionStatus.valueOf(status));
         session.setPurchaserEmail(text(root, "purchaserEmail"));
         session.setPurchaserName(text(root, "purchaserName"));
+        JsonNode crystalised = root.get("isFulfilmentSessionCrystalised");
+        if (crystalised != null && crystalised.isBoolean()) {
+            session.setIsFulfilmentSessionCrystalised(crystalised.booleanValue());
+        }
         return session;
     }
 
-    private static FulfilmentSession session(FulfilmentSessionType type, JsonNode root) {
+    private static FulfilmentSession session(FulfilmentSessionType type, JsonNode root) throws IOException {
         Integer numTickets = integer(root.get("numTickets"));
         Integer price = integer(root.get("price"));
         String eventTicketTypeId = text(root, "eventTicketTypeId");
@@ -78,6 +83,17 @@ final class FulfilmentSessionParser {
                         .eventTicketTypeId(eventTicketTypeId)
                         .price(price)
                         .build();
+            case PYNG_CHECKOUT:
+                JsonNode metadata = root.get("pyngMetadata");
+                PyngMetadata pyngMetadata = metadata == null || metadata.isNull()
+                        ? null
+                        : objectMapper.treeToValue(metadata, PyngMetadata.class);
+                return PyngCheckoutFulfilmentSession.builder()
+                        .numTickets(numTickets)
+                        .eventTicketTypeId(eventTicketTypeId)
+                        .eventTicketTypeName(text(root, "eventTicketTypeName"))
+                        .pyngMetadata(pyngMetadata)
+                        .build();
             default:
                 throw new IllegalArgumentException("Unknown FulfilmentSession type: " + type);
         }
@@ -96,6 +112,7 @@ final class FulfilmentSessionParser {
                 case FORMS -> FormsFulfilmentEntity.class;
                 case WAITLIST -> WaitlistFulfilmentEntity.class;
                 case END -> EndFulfilmentEntity.class;
+                case PYNG -> PyngFulfilmentEntity.class;
             };
             entities.put(field.getKey(), objectMapper.treeToValue(entity, clazz));
         }

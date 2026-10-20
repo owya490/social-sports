@@ -1,68 +1,99 @@
 package com.functions.alerts.clients;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
+import java.time.Instant;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 
+import com.functions.alerts.models.ErrorAlertNotification;
+import com.functions.alerts.models.ParsedErrorLog;
+import com.functions.alerts.services.SmsText;
 import com.google.cloud.logging.LogEntry;
+import com.google.cloud.logging.Logging;
 import com.google.cloud.logging.Payload;
 import com.google.cloud.logging.Severity;
 
 public class GcpLogAlertPublisherTest {
-
     @Test
-    public void formatPayload_includesKindAndSummaryMarkers() {
-        String payload = GcpLogAlertPublisher.formatPayload("globalAppController failed");
-        assertTrue(payload.contains(GcpLogAlertPublisher.KIND_MARKER));
-        assertTrue(payload.contains(GcpLogAlertPublisher.LOG_MARKER));
-        assertTrue(payload.contains("globalAppController failed"));
-    }
+    public void publish_writesStructuredEvidenceAndAnExactSourceLink() {
+        Logging logging = mock(Logging.class);
+        GcpLogAlertPublisher publisher = new GcpLogAlertPublisher(logging, "test");
+        publisher.publish(notification());
 
-    @Test
-    public void buildEntry_isNoticeTextPayloadOnDedicatedLog() {
-        LogEntry entry = GcpLogAlertPublisher.buildEntry(
-                GcpLogAlertPublisher.formatPayload("body"),
-                "socialsports-44162");
-
-        assertEquals(GcpLogAlertPublisher.LOG_NAME, entry.getLogName());
+        ArgumentCaptor<List<LogEntry>> entries = ArgumentCaptor.captor();
+        verify(logging).write(entries.capture());
+        verify(logging).flush();
+        LogEntry entry = entries.getValue().get(0);
+        Map<String, Object> payload = ((Payload.JsonPayload) entry.getPayload()).getDataAsMap();
+        assertEquals("sportshub-alert-sms", entry.getLogName());
         assertEquals(Severity.NOTICE, entry.getSeverity());
-        assertEquals("global", entry.getResource().getType());
-        assertEquals("sms_summary", entry.getLabels().get(GcpLogAlertPublisher.ALERT_LABEL_KEY));
-        assertEquals(
-                "SPORTSHUB_ALERT_KIND=errorSummary SPORTSHUB_ALERT_SUMMARY body",
-                ((Payload.StringPayload) entry.getPayload()).getData());
+        assertEquals("errorSummary", payload.get("kind"));
+        assertEquals("fingerprint", payload.get("fingerprint"));
+        assertEquals("emailService: Request rejected", payload.get("headline"));
+        assertEquals("Unconfirmed cause", payload.get("sms"));
+        assertEquals("Request rejected", payload.get("observedMessage"));
+        assertEquals("Unconfirmed cause", payload.get("aiInterpretation"));
+        assertEquals(true, payload.get("aiInterpretationIsUnconfirmed"));
+        String link = URLDecoder.decode(payload.get("originalLogUrl").toString(), StandardCharsets.UTF_8);
+        assertTrue(link.contains("insertId=\"original\""));
+        assertTrue(link.contains("logName=\"projects/test/logs/stderr\""));
+        assertTrue(link.contains("timestamp=\"2026-10-11T03:00:00Z\""));
+        assertTrue(link.endsWith("?project=test"));
+        assertEquals(Instant.parse("2026-10-11T03:00:00Z"), entry.getInstantTimestamp());
     }
 
     @Test
-    public void publish_writesTextPayloadAndReturnsTrue() {
-        List<LogEntry> written = new ArrayList<>();
-        GcpLogAlertPublisher publisher = new GcpLogAlertPublisher(written::add);
-
-        assertTrue(publisher.publish("drill body"));
-        assertEquals(1, written.size());
-        LogEntry entry = written.get(0);
-        assertEquals(Severity.NOTICE, entry.getSeverity());
-        assertTrue(((Payload.StringPayload) entry.getPayload()).getData().contains("drill body"));
+    public void buildEntry_pagesTrimmedAiSentencesNotTheLongerInterpretationBlob() {
+        String longAi = "Checkout failed in globalAppController. This looks like a Stripe checkout timeout at "
+                + "WebhookService.process. Check the expired session next. " + "word ".repeat(80);
+        ErrorAlertNotification notification = new ErrorAlertNotification("fingerprint",
+                "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), longAi,
+                SmsText.forSmsSubject(longAi));
+        Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(notification, "test")
+                .getPayload()).getDataAsMap();
+        String sms = payload.get("sms").toString();
+        assertEquals(SmsText.forSmsSubject(longAi), sms);
+        assertEquals(longAi, payload.get("aiInterpretation"));
+        assertTrue(sms.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);
+        assertTrue(longAi.length() > sms.length());
     }
 
     @Test
-    public void publish_returnsFalseWhenWriterThrows() {
-        GcpLogAlertPublisher publisher = new GcpLogAlertPublisher(entry -> {
-            throw new IllegalStateException("Cloud Logging client unavailable");
-        });
-        assertFalse(publisher.publish("body"));
+    public void buildEntry_pagesHeadlineWhenAiInterpretationIsMissing() {
+        ErrorAlertNotification withoutAi = new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", ""), "",
+                "emailService: Request rejected");
+        Map<String, Object> payload = ((Payload.JsonPayload) GcpLogAlertPublisher.buildEntry(withoutAi, "test")
+                .getPayload()).getDataAsMap();
+        assertEquals("emailService: Request rejected", payload.get("sms"));
     }
 
     @Test
-    public void publish_skipsBlankSummary() {
-        List<LogEntry> written = new ArrayList<>();
-        GcpLogAlertPublisher publisher = new GcpLogAlertPublisher(written::add);
-        assertFalse(publisher.publish("  "));
-        assertTrue(written.isEmpty());
+    public void buildEntry_usesTheSameLogIdentityForRedelivery() {
+        assertEquals(GcpLogAlertPublisher.buildEntry(notification(), "test").getInsertId(),
+                GcpLogAlertPublisher.buildEntry(notification(), "test").getInsertId());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void publish_propagatesWriterFailure() {
+        Logging logging = mock(Logging.class);
+        doThrow(new IllegalStateException("unavailable")).when(logging).write(any());
+        new GcpLogAlertPublisher(logging, "test").publish(notification());
+    }
+
+    private static ErrorAlertNotification notification() {
+        return new ErrorAlertNotification("fingerprint", "emailService: Request rejected",
+                new ParsedErrorLog("emailService", "Request rejected", "", "",
+                        Instant.parse("2026-10-11T03:00:00Z"), "", "POST", 400,
+                        "projects/test/logs/stderr", "original"), "Unconfirmed cause", "Unconfirmed cause");
     }
 }

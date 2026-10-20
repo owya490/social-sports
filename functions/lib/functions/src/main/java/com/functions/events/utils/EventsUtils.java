@@ -67,12 +67,21 @@ public class EventsUtils {
     }
 
     /**
-     * Validates event timing: not paused, not concluded, registration still open.
+     * Validates event availability: active, not paused, not concluded, registration still open.
      */
     public static void validateEventTiming(EventData event) throws Exception {
+        validateEventTiming(event, Instant.now());
+    }
+
+    public static void validateEventTiming(EventData event, Instant now) throws Exception {
         if (event == null) {
             logger.error("Failed to validate event timing: event is null");
             throw new RuntimeException("Failed to validate event timing: event is null");
+        }
+
+        if (Boolean.FALSE.equals(event.getIsActive())) {
+            logger.warn("Event {} is inactive", event.getEventId());
+            throw new CheckoutDateTimeException("Event " + event.getEventId() + " is inactive");
         }
 
         boolean paused = event.getPaused() != null ? event.getPaused() : false;
@@ -85,7 +94,6 @@ public class EventsUtils {
             throw new RuntimeException("Event " + eventId + " missing date fields");
         }
 
-        Instant now = Instant.now();
         Instant eventEnd = Instant.ofEpochSecond(endDate.getSeconds(), endDate.getNanos());
         Instant registrationEnd = Instant.ofEpochSecond(registrationDeadline.getSeconds(), registrationDeadline.getNanos());
 

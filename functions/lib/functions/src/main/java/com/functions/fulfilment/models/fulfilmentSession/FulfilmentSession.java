@@ -16,6 +16,7 @@ import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentEntities.PyngFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.StripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.WaitlistFulfilmentEntity;
 import com.google.cloud.Timestamp;
@@ -24,6 +25,7 @@ import com.google.cloud.firestore.annotation.DocumentId;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -56,6 +58,11 @@ public abstract class FulfilmentSession {
      * List of FulfilmentEntityIds specifying their order in the fulfilment session workflow.
      */
     private List<String> fulfilmentEntityIds;
+    /**
+     * Starts false. Becomes true when the session is frozen and sent to the fulfilment queue in the end step.
+     */
+    @Builder.Default
+    private Boolean isFulfilmentSessionCrystalised = false;
 
     private FulfilmentSessionStatus status;
     private String purchaserEmail;
@@ -112,6 +119,9 @@ public abstract class FulfilmentSession {
                     case END:
                         entity = objectMapper.readValue(json, EndFulfilmentEntity.class);
                         break;
+                    case PYNG:
+                        entity = objectMapper.readValue(json, PyngFulfilmentEntity.class);
+                        break;
                     default:
                         throw new IllegalArgumentException(
                                 "Unknown FulfilmentEntity type: " + entityData.get("type"));
@@ -139,6 +149,8 @@ public abstract class FulfilmentSession {
         FulfilmentSessionStatus status = status(snapshot.getString("status"));
         String purchaserEmail = snapshot.getString("purchaserEmail");
         String purchaserName = snapshot.getString("purchaserName");
+        boolean isFulfilmentSessionCrystalised = Boolean.TRUE.equals(
+                snapshot.getBoolean("isFulfilmentSessionCrystalised"));
 
         // Create the appropriate session type
         switch (sessionType) {
@@ -156,6 +168,7 @@ public abstract class FulfilmentSession {
                         .status(status)
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case BOOKING_APPROVAL:
                 return BookingApprovalFulfilmentSession.builder()
@@ -171,10 +184,11 @@ public abstract class FulfilmentSession {
                         .status(status)
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case WAITLIST:
                 return WaitlistFulfilmentSession.builder()
-                        .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"),
                             EventData.class))
                         .fulfilmentSessionStartTime(
                             snapshot.getTimestamp("fulfilmentSessionStartTime"))
@@ -185,6 +199,28 @@ public abstract class FulfilmentSession {
                         .status(status)
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
+                        .build();
+            case PYNG_CHECKOUT:
+                PyngMetadata pyngMetadata = null;
+                if (snapshot.get("pyngMetadata") != null) {
+                    pyngMetadata = objectMapper.convertValue(snapshot.get("pyngMetadata"), PyngMetadata.class);
+                }
+                return PyngCheckoutFulfilmentSession.builder()
+                        .id(snapshot.getId())
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"),
+                                EventData.class))
+                        .fulfilmentSessionStartTime(
+                                snapshot.getTimestamp("fulfilmentSessionStartTime"))
+                        .fulfilmentEntityMap(entityMap).fulfilmentEntityIds(entityIds)
+                        .numTickets(numTickets)
+                        .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
+                        .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .pyngMetadata(pyngMetadata)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
+                        .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             default:
                 throw new IllegalArgumentException(
