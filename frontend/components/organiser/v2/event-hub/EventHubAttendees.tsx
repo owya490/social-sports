@@ -1,5 +1,6 @@
 "use client";
 
+import CopyEmailsButton from "@/components/CopyEmailsButton";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import Loading from "@/components/loading/Loading";
 import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAttendeeDialog";
@@ -10,7 +11,11 @@ import { EMPTY_ORDER_DEFAULTS, Order, OrderAndTicketStatus, OrderAndTicketType }
 import { EMPTY_TICKET, Ticket } from "@/interfaces/TicketTypes";
 import { ConflictError } from "@/interfaces/exceptions/ConflictError";
 import { Logger } from "@/observability/logger";
-import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
+import {
+  ATTENDEE_CSV_HEADERS,
+  buildAttendeeCsvData,
+  buildAttendeeEmailList,
+} from "@/services/src/attendee/attendeeCsvUtils";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
@@ -744,6 +749,10 @@ export function EventHubAttendees({
     () => buildAttendeeCsvData(filteredApprovedMap),
     [filteredApprovedMap]
   );
+  const attendeeEmails = useMemo(
+    () => buildAttendeeEmailList(filteredApprovedMap),
+    [filteredApprovedMap]
+  );
 
   return (
     <EventHubStage>
@@ -772,12 +781,15 @@ export function EventHubAttendees({
               </span>
             ) : null}
           </p>
-          <DownloadCsvButton
-            compact
-            data={approvedAttendeesCsvData}
-            headers={ATTENDEE_CSV_HEADERS}
-            filename={`Attendees_${eventId}.csv`}
-          />
+          <div className="flex items-center gap-1.5">
+            <CopyEmailsButton compact emails={attendeeEmails} />
+            <DownloadCsvButton
+              compact
+              data={approvedAttendeesCsvData}
+              headers={ATTENDEE_CSV_HEADERS}
+              filename={`Attendees_${eventId}.csv`}
+            />
+          </div>
         </div>
         <div
           className="h-1 w-full rounded-full bg-surface-muted overflow-hidden"
