@@ -15,12 +15,7 @@ interface CopyEmailsButtonProps {
   compact?: boolean;
 }
 
-const CopyEmailsButton = ({
-  emails,
-  label = "Copy emails",
-  className = "",
-  compact = false,
-}: CopyEmailsButtonProps) => {
+export function useCopyEmails(emails: string[]) {
   const [copied, setCopied] = useState(false);
   const copiedTimeoutRef = useRef<number | null>(null);
 
@@ -58,11 +53,22 @@ const CopyEmailsButton = ({
       ? "Copy 1 email"
       : `Copy ${emails.length} emails`;
 
+  return { copied, copyEmails, ariaLabel, empty: emails.length === 0 };
+}
+
+const CopyEmailsButton = ({
+  emails,
+  label = "Copy emails",
+  className = "",
+  compact = false,
+}: CopyEmailsButtonProps) => {
+  const { copied, copyEmails, ariaLabel, empty } = useCopyEmails(emails);
+
   return (
     <button
       type="button"
       onClick={() => void copyEmails()}
-      disabled={emails.length === 0}
+      disabled={empty}
       aria-label={ariaLabel}
       className={
         compact
