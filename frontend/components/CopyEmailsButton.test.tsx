@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import CopyEmailsButton from "./CopyEmailsButton";
+import CopyEmailsButton, { formatCopiedEmailList } from "./CopyEmailsButton";
 
 describe("CopyEmailsButton", () => {
   it("offers a copy action for the supplied addresses", () => {
@@ -22,5 +22,11 @@ describe("CopyEmailsButton", () => {
     const markup = renderToStaticMarkup(<CopyEmailsButton emails={["ada@example.com"]} />);
 
     expect(markup).toContain('aria-label="Copy 1 email"');
+  });
+
+  it("copies addresses as a comma-separated list", () => {
+    expect(formatCopiedEmailList(["ada@example.com", "grace@example.com"])).toBe(
+      "ada@example.com, grace@example.com"
+    );
   });
 });
