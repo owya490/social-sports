@@ -1,54 +1,71 @@
 "use client";
 
-import LoadingOrganiser from "@/components/loading/LoadingOrganiser";
 import { SettingsHeader } from "@/components/organiser/v2/settings/SettingsHeader";
 import { SettingsPreferencesPanel } from "@/components/organiser/v2/settings/SettingsPreferencesPanel";
 import { SettingsStripePanel } from "@/components/organiser/v2/settings/SettingsStripePanel";
 import { useUser } from "@/components/utility/UserContext";
+import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getStripeAccId } from "@/services/src/stripe/stripeService";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 const logger = new Logger("OrganiserSettingsV2");
 
 export default function OrganiserSettingsV2Page() {
-  const { user, userLoading } = useUser();
-  const [stripeSetupLoading, setStripeSetupLoading] = useState(false);
-  const [stripeId, setStripeId] = useState("");
-  const [stripeLoading, setStripeLoading] = useState(true);
-
+  const { user, userLoading, auth } = useUser();
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
+  return <AccountSettings key={`${auth.currentUser?.uid ?? ""}:${user.userId}`} userId={user.userId} userLoading={userLoading} />;
+}
+
+function AccountSettings({ userId, userLoading }: { userId: UserId; userLoading: boolean }) {
+  const { auth } = useUser();
+  const [stripeId, setStripeId] = useState("");
+  const [stripeLoading, setStripeLoading] = useState(true);
+  const [stripeError, setStripeError] = useState(false);
+  const [readAttempt, setReadAttempt] = useState(0);
+  const readInFlightRef = useRef(false);
+
   useEffect(() => {
+    let active = true;
+    const isCurrent = () => active && auth.currentUser?.uid === userId;
+    setStripeLoading(true);
+    setStripeError(false);
     const fetchStripeId = async () => {
-      if (userLoading || !user?.userId) {
+      if (userLoading || !userId || auth.currentUser?.uid !== userId) {
         return;
       }
-      setStripeLoading(true);
+      readInFlightRef.current = true;
       try {
-        const response = await getStripeAccId(user.userId);
-        setStripeId(response || "");
+        const response = await getStripeAccId(userId);
+        if (isCurrent()) setStripeId(response);
       } catch (error) {
         logger.error(`Error fetching Stripe account ID: ${error}`);
-        setStripeId("");
+        if (isCurrent()) setStripeError(true);
       } finally {
-        setStripeLoading(false);
+        if (active) {
+          readInFlightRef.current = false;
+          if (auth.currentUser?.uid !== userId) setStripeError(true);
+          setStripeLoading(false);
+        }
       }
     };
     void fetchStripeId();
-  }, [user, userLoading]);
-
-  if (stripeSetupLoading) {
-    return <LoadingOrganiser />;
-  }
+    return () => {
+      active = false;
+      readInFlightRef.current = false;
+    };
+  }, [auth, userId, userLoading, readAttempt]);
 
   const subtitle = stripeLoading
-    ? "Loading your account…"
-    : stripeId
-      ? "Email preferences and Stripe payouts"
-      : "Email preferences · connect Stripe to get paid";
+    ? "Loading your account..."
+    : stripeError
+      ? "Email preferences and Stripe payouts - status unavailable"
+      : stripeId
+        ? "Email preferences and Stripe payouts"
+        : "Email preferences · connect Stripe to get paid";
 
   return (
     <>
@@ -65,9 +82,14 @@ export default function OrganiserSettingsV2Page() {
           <SettingsStripePanel
             stripeId={stripeId}
             stripeLoading={stripeLoading}
-            userId={user.userId}
+            stripeError={stripeError}
+            onRetryStripeStatus={() => {
+              if (readInFlightRef.current || userLoading || !userId || auth.currentUser?.uid !== userId) return;
+              readInFlightRef.current = true;
+              setReadAttempt((attempt) => attempt + 1);
+            }}
+            userId={userId}
             userLoading={userLoading}
-            onConnecting={setStripeSetupLoading}
           />
         </div>
       </div>

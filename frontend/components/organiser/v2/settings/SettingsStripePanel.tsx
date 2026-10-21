@@ -1,64 +1,46 @@
 "use client";
 
 import { useUser } from "@/components/utility/UserContext";
-import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
-import { getRefreshAccountLinkUrl, isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+import { useStripeSetupLink } from "@/components/utility/useStripeSetupLink";
+import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import StripeLogo from "@/public/images/stripe-logo.svg";
 import { ArrowPathIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { SportshubStripeIntegrationIcon } from "./SportshubStripeIntegrationIcon";
 
 type SettingsStripePanelProps = {
   stripeId: string;
   stripeLoading: boolean;
+  stripeError: boolean;
+  onRetryStripeStatus: () => void;
   userId: string;
   userLoading: boolean;
-  onConnecting: (loading: boolean) => void;
 };
+
+const setupReturnPath = "/organiser/v2/dashboard";
+const resyncReturnPath = "/organiser/v2/settings";
 
 export function SettingsStripePanel({
   stripeId,
   stripeLoading,
+  stripeError,
+  onRetryStripeStatus,
   userId,
   userLoading,
-  onConnecting,
 }: SettingsStripePanelProps) {
-  const { user } = useUser();
-  const [resyncing, setResyncing] = useState(false);
+  const { user, auth } = useUser();
+  const authUserId = auth.currentUser?.uid;
   const paymentsActive = isStripeAccountActive(user.stripeAccountActive);
-  const hasStripeAccount = Boolean(stripeId) && !stripeLoading;
-  const needsSetup = !stripeLoading && (!hasStripeAccount || !paymentsActive);
+  const statusKnown = !stripeLoading && !stripeError;
+  const hasStripeAccount = Boolean(stripeId) && statusKnown;
+  const needsSetup = statusKnown && (!hasStripeAccount || !paymentsActive);
   const fullyConnected = hasStripeAccount && paymentsActive;
-
-  const handleStripeAccountLink = async (returnPath: string, onError?: () => void) => {
-    if (userLoading || !userId) return;
-
-    onConnecting(true);
-    window.scrollTo(0, 0);
-    try {
-      const link = await getStripeStandardAccountLink(
-        userId,
-        getUrlWithCurrentHostname(returnPath),
-        getRefreshAccountLinkUrl(),
-      );
-      window.location.href = link;
-    } catch {
-      onConnecting(false);
-      onError?.();
-    }
-  };
-
-  const handleResync = async () => {
-    if (resyncing || userLoading || !userId) return;
-
-    setResyncing(true);
-    await handleStripeAccountLink("/organiser/v2/settings", () => {
-      setResyncing(false);
-    });
-  };
+  const accountAvailable = !userLoading && Boolean(userId) && user.userId === userId && authUserId === userId;
+  const { canOpen, openingDestination: opening, failed, openStripe, retry } = useStripeSetupLink({
+    userId,
+    eligible: !userLoading && statusKnown,
+  });
 
   return (
     <section aria-label="Stripe payments" className="rounded-xl border border-border bg-background overflow-hidden">
@@ -77,14 +59,14 @@ export function SettingsStripePanel({
           {hasStripeAccount ? (
             <button
               type="button"
-              disabled={resyncing || userLoading || !userId}
+              disabled={opening !== null || !canOpen}
               onClick={() => {
-                void handleResync();
+                void openStripe(resyncReturnPath);
               }}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-foreground-secondary hover:text-foreground hover:bg-surface font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 disabled:pointer-events-none"
               aria-label="Resync Stripe account"
             >
-              <ArrowPathIcon className={`h-4 w-4 ${resyncing ? "animate-spin" : ""}`} aria-hidden />
+              <ArrowPathIcon className={`h-4 w-4 ${opening === resyncReturnPath ? "animate-spin motion-reduce:animate-none" : ""}`} aria-hidden />
               <span className="hidden sm:inline">Resync</span>
             </button>
           ) : null}
@@ -107,6 +89,21 @@ export function SettingsStripePanel({
           <div className="space-y-2">
             <Skeleton height={14} width={120} />
             <Skeleton height={44} className="!rounded-lg" />
+          </div>
+        ) : stripeError ? (
+          <div role="alert" className="space-y-2 font-sans">
+            <p className="text-sm font-semibold text-foreground">Status unavailable</p>
+            <p className="text-xs text-foreground-muted">
+              We couldn&apos;t check your Stripe account. Retry loading before connecting or resyncing.
+            </p>
+            <button
+              type="button"
+              onClick={onRetryStripeStatus}
+              disabled={!accountAvailable}
+              className="text-sm font-semibold text-foreground underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+            >
+              Retry loading Stripe status
+            </button>
           </div>
         ) : (
           <div className="space-y-4">
@@ -149,18 +146,36 @@ export function SettingsStripePanel({
                 </div>
                 <button
                   type="button"
-                  disabled={userLoading || !userId}
+                  disabled={opening !== null || !canOpen}
                   onClick={() => {
-                    void handleStripeAccountLink("/organiser/v2/dashboard");
+                    void openStripe(setupReturnPath);
                   }}
                   className="inline-flex w-full sm:w-auto items-center justify-center rounded-xl bg-accent px-4 py-2.5 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60 disabled:pointer-events-none"
                 >
-                  {hasStripeAccount ? "Continue Stripe setup" : "Connect Stripe"}
+                  {opening === setupReturnPath ? "Opening Stripe..." : hasStripeAccount ? "Continue Stripe setup" : "Connect Stripe"}
                 </button>
               </div>
             ) : null}
           </div>
         )}
+        {opening !== null ? (
+          <p role="status" className="text-sm text-foreground-muted font-sans">Opening Stripe...</p>
+        ) : null}
+        {failed ? (
+          <div role="alert" className="space-y-2 text-sm font-sans">
+            <p className="text-danger">
+              We couldn&apos;t open Stripe. Setup may have started. Try opening Stripe again, or check your Stripe dashboard before continuing.
+            </p>
+            <button
+              type="button"
+              disabled={!canOpen}
+              onClick={() => void retry()}
+              className="font-semibold text-foreground underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+            >
+              Try opening Stripe again
+            </button>
+          </div>
+        ) : null}
       </div>
     </section>
   );

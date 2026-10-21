@@ -20,11 +20,12 @@ import Skeleton from "react-loading-skeleton";
 type RecurringHubRecurrenceProps = {
   loading: boolean;
   updating: boolean;
+  saveBlocked?: boolean;
   startDate: Timestamp;
   newRecurrenceData: NewRecurrenceFormData;
   originalRecurrenceData: NewRecurrenceFormData | null;
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
-  submitNewRecurrenceData: () => void;
+  submitNewRecurrenceData: () => void | Promise<void>;
   isRecurrenceEnded: boolean;
   capacity?: number;
 };
@@ -128,6 +129,7 @@ function formatRecurrenceDate(date: Timestamp) {
 export function RecurringHubRecurrence({
   loading,
   updating,
+  saveBlocked = false,
   startDate,
   newRecurrenceData,
   originalRecurrenceData,
@@ -318,7 +320,10 @@ export function RecurringHubRecurrence({
       </section>
 
       <div className="flex justify-end">
-        <EventHubPrimaryButton onClick={submitNewRecurrenceData} disabled={!dirty || updating}>
+        <EventHubPrimaryButton onClick={() => {
+          if (saveBlocked || updating || !dirty) return;
+          void Promise.resolve(submitNewRecurrenceData()).catch(() => undefined);
+        }} disabled={!dirty || updating || saveBlocked}>
           <CheckIcon className="h-4 w-4" aria-hidden />
           {updating ? "Saving…" : "Save schedule"}
         </EventHubPrimaryButton>

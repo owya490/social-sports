@@ -1,16 +1,19 @@
-import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
-import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
-import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+"use client";
+
+import { useStripeSetupLink } from "@/components/utility/useStripeSetupLink";
 import { BoltIcon, CreditCardIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
-import { Dispatch, SetStateAction } from "react";
 import { HighlightButton } from "../elements/HighlightButton";
 
 export default function OnboardingStripeSetup(props: {
   userId: string;
-  setLoading: Dispatch<SetStateAction<boolean>>;
   userLoading: boolean;
 }) {
-  const { userLoading } = props;
+  const { userId, userLoading } = props;
+  const { canOpen, openingDestination, failed, openStripe, retry } = useStripeSetupLink({
+    userId,
+    eligible: !userLoading,
+  });
+  const opening = openingDestination !== null;
 
   return (
     <div className="bg-organiser-light-gray p-6 sm:p-8 rounded-2xl">
@@ -46,22 +49,27 @@ export default function OnboardingStripeSetup(props: {
 
       <HighlightButton
         className="w-full sm:w-auto sm:ml-auto"
-        disabled={userLoading || !props.userId}
-        onClick={async () => {
-          if (userLoading || !props.userId) return;
-
-          props.setLoading(true);
-          window.scrollTo(0, 0);
-          const link = await getStripeStandardAccountLink(
-            props.userId,
-            getUrlWithCurrentHostname("/onboarding/organiser"),
-            getRefreshAccountLinkUrl()
-          );
-          window.location.assign(link);
-        }}
+        disabled={opening || !canOpen}
+        onClick={() => void openStripe("/onboarding/organiser")}
       >
-        {userLoading ? "Loading..." : "Connect payouts"}
+        {opening ? "Opening Stripe..." : userLoading ? "Loading..." : "Connect payouts"}
       </HighlightButton>
+      {opening ? <p role="status" className="mt-3 text-sm text-gray-700">Opening Stripe...</p> : null}
+      {failed ? (
+        <div role="alert" className="mt-4 space-y-2 text-sm">
+          <p className="text-danger">
+            We couldn&apos;t open Stripe. Setup may have started. Try opening Stripe again, or continue with free events and finish payouts later.
+          </p>
+          <button
+            type="button"
+            disabled={!canOpen}
+            onClick={() => void retry()}
+            className="font-semibold underline underline-offset-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-60"
+          >
+            Try opening Stripe again
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

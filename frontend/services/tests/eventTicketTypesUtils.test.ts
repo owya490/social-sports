@@ -1,7 +1,9 @@
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
+import { EventFormAttachmentResult, EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import {
   GENERAL_TICKET_TYPE_NAME,
+  applyEventFormAttachmentToTicketTypes,
   resolveEventTicketTypeName,
   resolveFormIdForTicketType,
 } from "../src/events/eventsUtils/eventTicketTypesUtils";
@@ -33,6 +35,37 @@ const eventWithTypes = {
     },
   },
 };
+
+describe("applyEventFormAttachmentToTicketTypes", () => {
+  const result: EventFormAttachmentResult = {
+    eventId: "event-1" as EventId,
+    target: { kind: "ticketType", eventTicketTypeId: gaTypeId, ticketTypeName: "Renamed VIP" },
+    formId: null,
+    eventFormIdUpdated: false,
+  };
+
+  it("reconciles the authoritative name and form without replaying inventory or siblings", () => {
+    const currentTypes = {
+      ...eventWithTypes.eventTicketTypes,
+      [gaTypeId]: { ...eventWithTypes.eventTicketTypes[gaTypeId], capacity: 40, vacancy: 3 },
+    };
+    const reconciled = applyEventFormAttachmentToTicketTypes(currentTypes, result)!;
+
+    expect(reconciled[gaTypeId]).toEqual({ ...currentTypes[gaTypeId], name: "Renamed VIP", formId: null });
+    expect(reconciled[vipTypeId]).toBe(currentTypes[vipTypeId]);
+    expect(currentTypes[gaTypeId].formId).toBe(gaFormId);
+    expect(resolveFormIdForTicketType({ formId: eventFormId, eventTicketTypes: reconciled }, gaTypeId)).toBeNull();
+  });
+
+  it("does not recreate missing targets or modify types for a legacy save", () => {
+    const currentTypes = { [vipTypeId]: eventWithTypes.eventTicketTypes[vipTypeId] };
+    expect(applyEventFormAttachmentToTicketTypes(currentTypes, result)).toBe(currentTypes);
+    expect(applyEventFormAttachmentToTicketTypes(undefined, result)).toBeUndefined();
+    expect(applyEventFormAttachmentToTicketTypes(currentTypes, {
+      ...result, target: { kind: "legacyEvent" }, eventFormIdUpdated: true,
+    })).toBe(currentTypes);
+  });
+});
 
 describe("resolveFormIdForTicketType", () => {
   it("uses the ticket type formId instead of the event-level formId", () => {

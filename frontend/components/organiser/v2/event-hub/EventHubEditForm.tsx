@@ -35,6 +35,7 @@ type EventHubEditFormProps = {
   isActive: boolean;
   /** When true, details stay view-only because the event end time has passed. */
   ended?: boolean;
+  commitBlocked?: boolean;
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
   onSaved: () => void;
   onStateChange: (state: { dirty: boolean; saving: boolean; canSave: boolean }) => void;
@@ -52,6 +53,7 @@ export function EventHubEditForm({
   eventEventLink,
   isActive,
   ended = false,
+  commitBlocked = false,
   updateData,
   onSaved,
   onStateChange,
@@ -90,7 +92,7 @@ export function EventHubEditForm({
     registrationDeadline: schedule?.registrationDeadline ?? initialValues.registrationDeadline,
   });
   const dirty = Object.keys(changes).length > 0;
-  const canSave = dirty && !readOnly && !saving && Boolean(schedule && !schedule.hasBlockingWarning) && !locationError;
+  const canSave = dirty && !readOnly && !saving && !commitBlocked && Boolean(schedule && !schedule.hasBlockingWarning) && !locationError;
 
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
@@ -131,7 +133,7 @@ export function EventHubEditForm({
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (readOnly || saving || !dirty || !schedule || schedule.hasBlockingWarning) return;
+    if (commitBlocked || readOnly || saving || !dirty || !schedule || schedule.hasBlockingWarning) return;
 
     if (changes.location !== undefined && !selectionMade && location.trim() !== "") {
       setLocationError("Please select a location from the dropdown");

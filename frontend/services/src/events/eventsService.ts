@@ -3,6 +3,8 @@ import {
   EmptyEventData,
   EventData,
   EventDataWithoutOrganiser,
+  EventFormAttachmentIntent,
+  EventFormAttachmentResult,
   EventId,
   EventMetadata,
   NewEventData,
@@ -11,6 +13,7 @@ import {
 import {
   DocumentData,
   DocumentReference,
+  FieldPath,
   WriteBatch,
   arrayRemove,
   arrayUnion,
@@ -48,6 +51,8 @@ import { extractEventsMetadataFields, rateLimitCreateEvents } from "./eventsUtil
 import {
   applyGeneralAdmissionInventoryFields,
   buildGeneralAdmissionInventoryUpdates,
+  GENERAL_TICKET_TYPE_NAME,
+  hasEventTicketTypes,
   resolveGeneralAdmissionInventory,
 } from "./eventsUtils/eventTicketTypesUtils";
 import {
@@ -283,6 +288,60 @@ export async function updateEventById(eventId: EventId, updatedData: Partial<Eve
     eventServiceLogger.error(`updateEventById ${error}`);
     throw error;
   }
+}
+
+export class EventFormAttachmentTargetError extends Error {
+  readonly name = "EventFormAttachmentTargetError";
+}
+
+export async function updateEventFormAttachment(
+  intent: EventFormAttachmentIntent
+): Promise<EventFormAttachmentResult> {
+  const { eventId, target, formId } = intent;
+  const eventDocRef = await findEventDocRef(eventId);
+
+  return runTransaction<EventFormAttachmentResult>(db, async (transaction) => {
+    const eventSnapshot = await transaction.get(eventDocRef);
+    if (!eventSnapshot.exists()) {
+      throw new Error(`Event with id '${eventId}' not found.`);
+    }
+
+    const event = eventSnapshot.data() as EventDataWithoutOrganiser;
+    if (target.kind === "legacyEvent") {
+      if (hasEventTicketTypes(event)) {
+        throw new EventFormAttachmentTargetError(
+          "This event now uses ticket types. Choose a current ticket type and try again."
+        );
+      }
+      transaction.update(eventDocRef, new FieldPath("formId"), formId);
+      return { eventId, target, formId, eventFormIdUpdated: true };
+    }
+
+    const types = event.eventTicketTypes;
+    const ticketType =
+      types && Object.prototype.hasOwnProperty.call(types, target.eventTicketTypeId)
+        ? types[target.eventTicketTypeId]
+        : undefined;
+    if (!ticketType) {
+      throw new EventFormAttachmentTargetError(
+        "This ticket type no longer exists. Choose a current ticket type and try again."
+      );
+    }
+
+    const eventFormIdUpdated = ticketType.name === GENERAL_TICKET_TYPE_NAME;
+    const typeFormPath = new FieldPath("eventTicketTypes", target.eventTicketTypeId, "formId");
+    if (eventFormIdUpdated) {
+      transaction.update(eventDocRef, typeFormPath, formId, new FieldPath("formId"), formId);
+    } else {
+      transaction.update(eventDocRef, typeFormPath, formId);
+    }
+    return {
+      eventId,
+      target: { ...target, ticketTypeName: ticketType.name },
+      formId,
+      eventFormIdUpdated,
+    };
+  });
 }
 
 export async function archiveAndDeleteEvent(eventId: EventId, userId: UserId, email: string): Promise<void> {
