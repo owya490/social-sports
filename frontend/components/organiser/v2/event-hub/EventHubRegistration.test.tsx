@@ -139,9 +139,12 @@ function HarnessOwner({ initialEvent, onSaved, showRegistration }: {
     onSaved: (result) => {
       onSaved(result);
       if (!isCurrentAccount()) return;
+      const previousName = result.target.kind === "ticketType"
+        ? eventData.eventTicketTypes?.[result.target.eventTicketTypeId]?.name
+        : undefined;
       setEventData((current) => ({
         ...current,
-        eventTicketTypes: applyEventFormAttachmentToTicketTypes(current.eventTicketTypes, result),
+        eventTicketTypes: applyEventFormAttachmentToTicketTypes(current.eventTicketTypes, result, previousName),
         ...(result.eventFormIdUpdated ? { formId: result.formId } : {}),
       }));
     },

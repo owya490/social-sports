@@ -44,14 +44,17 @@ describe("applyEventFormAttachmentToTicketTypes", () => {
     eventFormIdUpdated: false,
   };
 
-  it("reconciles the authoritative name and form without replaying inventory or siblings", () => {
+  it.each([
+    [GENERAL_TICKET_TYPE_NAME, "Renamed VIP"],
+    ["Newer VIP name", "Newer VIP name"],
+  ])("reconciles the form while preserving the current name %s when newer", (currentName, expectedName) => {
     const currentTypes = {
       ...eventWithTypes.eventTicketTypes,
-      [gaTypeId]: { ...eventWithTypes.eventTicketTypes[gaTypeId], capacity: 40, vacancy: 3 },
+      [gaTypeId]: { ...eventWithTypes.eventTicketTypes[gaTypeId], name: currentName, capacity: 40, vacancy: 3 },
     };
-    const reconciled = applyEventFormAttachmentToTicketTypes(currentTypes, result)!;
+    const reconciled = applyEventFormAttachmentToTicketTypes(currentTypes, result, GENERAL_TICKET_TYPE_NAME)!;
 
-    expect(reconciled[gaTypeId]).toEqual({ ...currentTypes[gaTypeId], name: "Renamed VIP", formId: null });
+    expect(reconciled[gaTypeId]).toEqual({ ...currentTypes[gaTypeId], name: expectedName, formId: null });
     expect(reconciled[vipTypeId]).toBe(currentTypes[vipTypeId]);
     expect(currentTypes[gaTypeId].formId).toBe(gaFormId);
     expect(resolveFormIdForTicketType({ formId: eventFormId, eventTicketTypes: reconciled }, gaTypeId)).toBeNull();

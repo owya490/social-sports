@@ -176,7 +176,7 @@ it("rejects an attendee refresh after live auth changes without applying its sna
   expect(mockRouter.push).not.toHaveBeenCalled();
 });
 
-it("owns attachment persistence across tabs and preserves current inventory without reconciling another event", async () => {
+it("owns attachment persistence across tabs and preserves newer names and inventory without reconciling another event", async () => {
   const typeId = "general" as EventTicketTypeId;
   const siblingId = "sibling" as EventTicketTypeId;
   const types = {
@@ -199,12 +199,12 @@ it("owns attachment persistence across tabs and preserves current inventory with
   act(() => { void save({ eventId: result.eventId, target: { kind: "ticketType", eventTicketTypeId: typeId }, formId: null }); });
   await openTab("Details");
   act(() => mockListing.setEventTicketTypes!({ ...types,
-    [typeId]: { ...types[typeId], vacancy: 1 }, [siblingId]: { ...types[siblingId], price: 2500 },
+    [typeId]: { ...types[typeId], name: "Newer name", vacancy: 1 }, [siblingId]: { ...types[siblingId], price: 2500 },
   }));
   const currentTypes = mockListing.eventTicketTypes!;
   const inventory = { capacity: mockListing.eventCapacity, vacancy: mockListing.eventVacancy };
   await act(async () => { pending.resolve(result); });
-  expect(mockListing.eventTicketTypes?.[typeId]).toEqual({ ...currentTypes[typeId], name: "Renamed" });
+  expect(mockListing.eventTicketTypes?.[typeId]).toEqual(currentTypes[typeId]);
   expect(mockListing.eventTicketTypes?.[siblingId]).toBe(currentTypes[siblingId]);
   expect(mockListing.eventCapacity).toBe(inventory.capacity);
   expect(mockListing.eventVacancy).toBe(inventory.vacancy);

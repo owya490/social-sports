@@ -8,7 +8,8 @@ export const GENERAL_TICKET_TYPE_NAME = "General Admission";
 
 export function applyEventFormAttachmentToTicketTypes(
   currentTypes: EventTicketTypesMap | undefined,
-  result: EventFormAttachmentResult
+  result: EventFormAttachmentResult,
+  previousName?: string,
 ): EventTicketTypesMap | undefined {
   if (result.target.kind !== "ticketType" || !currentTypes) return currentTypes;
   const { eventTicketTypeId, ticketTypeName } = result.target;
@@ -17,7 +18,11 @@ export function applyEventFormAttachmentToTicketTypes(
   if (!currentType) return currentTypes;
   return {
     ...currentTypes,
-    [eventTicketTypeId]: { ...currentType, name: ticketTypeName, formId: result.formId },
+    [eventTicketTypeId]: {
+      ...currentType,
+      name: currentType.name === previousName ? ticketTypeName : currentType.name,
+      formId: result.formId,
+    },
   };
 }
 

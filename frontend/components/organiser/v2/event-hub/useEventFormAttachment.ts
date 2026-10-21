@@ -45,6 +45,7 @@ export function useEventFormAttachment({ eventId, canSave, isCurrentAccount, onS
     const generation = lifetimeRef.current.generation;
     const isCurrentGeneration = () => lifetimeRef.current.active && lifetimeRef.current.generation === generation;
     const isCurrent = () => isCurrentGeneration() && optionsRef.current.isCurrentAccount();
+    const onSaved = optionsRef.current.onSaved;
     setIsSaving(true);
     setIntent(requested);
     setError(null);
@@ -65,7 +66,7 @@ export function useEventFormAttachment({ eventId, canSave, isCurrentAccount, onS
         return;
       }
       if (!isCurrent()) return;
-      optionsRef.current.onSaved(result);
+      onSaved(result);
       if (!isCurrent()) return;
       setIntent(null);
       setSavedResult(result);

@@ -63,7 +63,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 type EventSettingsPatch = Partial<Pick<EventData, EventBooleanSettingKey | "maxTicketsPerTransaction">>;
 
 type EventReadReconciliation = {
-  ticketTypes: Map<EventTicketTypeId, EventFormAttachmentResult>;
+  ticketTypes: Map<EventTicketTypeId, { result: EventFormAttachmentResult; previousName: string | undefined }>;
   eventForm: EventFormAttachmentResult | null;
   settings: EventSettingsPatch;
 };
@@ -146,8 +146,8 @@ function EventHubOwner({ eventId }: { eventId: EventId }) {
     try {
       const loadedEvent = await getEventById(eventId);
       let types = loadedEvent.eventTicketTypes;
-      for (const result of reconciliation.ticketTypes.values()) {
-        types = applyEventFormAttachmentToTicketTypes(types, result);
+      for (const { result, previousName } of reconciliation.ticketTypes.values()) {
+        types = applyEventFormAttachmentToTicketTypes(types, result, previousName);
       }
       const event = {
         ...loadedEvent,
@@ -187,14 +187,21 @@ function EventHubOwner({ eventId }: { eventId: EventId }) {
     isCurrentAccount,
     onSaved: (result) => {
       if (result.eventId !== eventId || !isCurrentAccount()) return;
+      const previousName = result.target.kind === "ticketType"
+        ? eventTicketTypes?.[result.target.eventTicketTypeId]?.name
+        : undefined;
       for (const attachments of eventReadsRef.current) {
-        if (result.target.kind === "ticketType") attachments.ticketTypes.set(result.target.eventTicketTypeId, result);
+        if (result.target.kind === "ticketType") {
+          const typeId = result.target.eventTicketTypeId;
+          const earlier = attachments.ticketTypes.get(typeId);
+          attachments.ticketTypes.set(typeId, { result, previousName: earlier ? earlier.previousName : previousName });
+        }
         if (result.eventFormIdUpdated) attachments.eventForm = result;
       }
-      setEventTicketTypes((current) => applyEventFormAttachmentToTicketTypes(current, result));
+      setEventTicketTypes((current) => applyEventFormAttachmentToTicketTypes(current, result, previousName));
       setEventData((current) => ({
         ...current,
-        eventTicketTypes: applyEventFormAttachmentToTicketTypes(current.eventTicketTypes, result),
+        eventTicketTypes: applyEventFormAttachmentToTicketTypes(current.eventTicketTypes, result, previousName),
         ...(result.eventFormIdUpdated ? { formId: result.formId } : {}),
       }));
     },
