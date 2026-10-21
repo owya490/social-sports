@@ -177,7 +177,7 @@ public class EmailService {
                 .get();
     }
 
-    private static Map<String, String> buildEmailVariables(Firestore db, DocumentSnapshot event, DocumentSnapshot order,
+    static Map<String, String> buildEmailVariables(Firestore db, DocumentSnapshot event, DocumentSnapshot order,
             String firstName, String orderId) {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
@@ -192,6 +192,7 @@ public class EmailService {
         return buildPurchaseEmailVariables(
                 firstName,
                 event.getString("name"),
+                event.getId(),
                 orderId,
                 quantity,
                 priceInCents,
@@ -203,10 +204,10 @@ public class EmailService {
 
     /**
      * Variables for {@link EmailTemplateType#BOOKING_PENDING} (and organiser copy).
-     * Must match the Loops template: name, eventName, organiserId, orderId, datePurchased,
+     * Must match the Loops template: name, eventName, eventUrl, organiserId, orderId, datePurchased,
      * quantity, price, startDate, endDate, location.
      */
-    private static Map<String, String> buildBookingPendingEmailVariables(
+    static Map<String, String> buildBookingPendingEmailVariables(
             Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
         Timestamp startTimestamp = getTimestampField(event, "startDate");
         Timestamp endTimestamp = getTimestampField(event, "endDate");
@@ -218,24 +219,25 @@ public class EmailService {
         List<?> tickets = (List<?>) order.get("tickets");
         String quantity = tickets != null ? String.valueOf(tickets.size()) : "0";
 
-        return Map.of(
-                "name", defaultString(firstName),
-                "eventName", defaultString(event.getString("name")),
-                "organiserId", defaultString(event.getString("organiserId")),
-                "orderId", defaultString(orderId),
-                "datePurchased", TimeUtils.formatTimestampForEmail(purchasedTimestamp),
-                "quantity", quantity,
-                "price", centsToPurchaseEmailPrice(priceInCents),
-                "startDate", TimeUtils.formatTimestampForEmail(startTimestamp),
-                "endDate", TimeUtils.formatTimestampForEmail(endTimestamp),
-                "location", defaultString(event.getString("location")));
+        return Map.ofEntries(
+                Map.entry("name", defaultString(firstName)),
+                Map.entry("eventName", defaultString(event.getString("name"))),
+                Map.entry("eventUrl", buildEventLink(event.getId())),
+                Map.entry("organiserId", defaultString(event.getString("organiserId"))),
+                Map.entry("orderId", defaultString(orderId)),
+                Map.entry("datePurchased", TimeUtils.formatTimestampForEmail(purchasedTimestamp)),
+                Map.entry("quantity", quantity),
+                Map.entry("price", centsToPurchaseEmailPrice(priceInCents)),
+                Map.entry("startDate", TimeUtils.formatTimestampForEmail(startTimestamp)),
+                Map.entry("endDate", TimeUtils.formatTimestampForEmail(endTimestamp)),
+                Map.entry("location", defaultString(event.getString("location"))));
     }
 
     /**
      * Variables for {@link EmailTemplateType#BOOKING_APPROVED}.
-     * Must match the Loops template: name, eventName, orderId, ticketCount.
+     * Must match the Loops template: name, eventName, eventUrl, orderId, ticketCount.
      */
-    private static Map<String, String> buildBookingApprovedEmailVariables(
+    static Map<String, String> buildBookingApprovedEmailVariables(
             Firestore db, DocumentSnapshot event, DocumentSnapshot order, String firstName, String orderId) {
         List<?> tickets = (List<?>) order.get("tickets");
         String ticketCount = tickets != null ? String.valueOf(tickets.size()) : "0";
@@ -243,6 +245,7 @@ public class EmailService {
         return Map.of(
                 "name", defaultString(firstName),
                 "eventName", defaultString(event.getString("name")),
+                "eventUrl", buildEventLink(event.getId()),
                 "orderId", defaultString(orderId),
                 "ticketCount", ticketCount);
     }
@@ -335,6 +338,7 @@ public class EmailService {
     private static Map<String, String> buildPurchaseEmailVariables(
             String firstName,
             String eventName,
+            String eventId,
             String orderId,
             String quantity,
             Double priceInCents,
@@ -350,17 +354,24 @@ public class EmailService {
         String resolvedStartDate = defaultString(startDate);
         String resolvedEndDate = defaultString(endDate);
         String resolvedLocation = defaultString(location);
-        return Map.of(
-                "name", resolvedFirstName,
-                "eventName", resolvedEventName,
-                "orderId", resolvedOrderId,
-                "orderLink", buildOrderLink(resolvedOrderId),
-                "datePurchased", resolvedDatePurchased,
-                "quantity", resolvedQuantity,
-                "price", centsToPurchaseEmailPrice(priceInCents),
-                "startDate", resolvedStartDate,
-                "endDate", resolvedEndDate,
-                "location", resolvedLocation);
+        return Map.ofEntries(
+                Map.entry("name", resolvedFirstName),
+                Map.entry("eventName", resolvedEventName),
+                Map.entry("eventUrl", buildEventLink(eventId)),
+                Map.entry("orderId", resolvedOrderId),
+                Map.entry("orderLink", buildOrderLink(resolvedOrderId)),
+                Map.entry("datePurchased", resolvedDatePurchased),
+                Map.entry("quantity", resolvedQuantity),
+                Map.entry("price", centsToPurchaseEmailPrice(priceInCents)),
+                Map.entry("startDate", resolvedStartDate),
+                Map.entry("endDate", resolvedEndDate),
+                Map.entry("location", resolvedLocation));
+    }
+
+    private static String buildEventLink(String eventId) {
+        String resolvedEventId = defaultString(eventId);
+        return UrlUtils.getUrlWithCurrentEnvironment("/event/" + resolvedEventId)
+                .orElse(UrlUtils.SPORTSHUB_URL + "/event/" + resolvedEventId);
     }
 
     private static String buildOrderLink(String orderId) {
