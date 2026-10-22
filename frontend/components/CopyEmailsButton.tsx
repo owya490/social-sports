@@ -7,6 +7,11 @@ import toast from "react-hot-toast";
 
 const logger = new Logger("CopyEmailsButton");
 
+/** Comma-separated addresses, ready to paste into an email client. */
+export function formatCopiedEmailList(emails: string[]): string {
+  return emails.join(", ");
+}
+
 interface CopyEmailsButtonProps {
   emails: string[];
   label?: string;
@@ -37,7 +42,7 @@ const CopyEmailsButton = ({
       return;
     }
     try {
-      await navigator.clipboard.writeText(emails.join("\n"));
+      await navigator.clipboard.writeText(formatCopiedEmailList(emails));
       setCopied(true);
       if (copiedTimeoutRef.current !== null) {
         window.clearTimeout(copiedTimeoutRef.current);
