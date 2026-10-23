@@ -360,11 +360,19 @@ class WeeklyOpsTest(unittest.TestCase):
         grafana = fetcher.request_plan(WEEK, NOW)["grafana"]
         _, end = ops.bounds(WEEK, NOW)
         with patch("fetch_usage.datetime") as clock, patch("fetch_usage.build_opener") as opener:
-            clock.now.return_value = end + timedelta(hours=24) - timedelta(microseconds=1)
-            with self.assertRaisesRegex(ValueError, "24-hour delay"):
+            clock.now.return_value = end + timedelta(hours=3) - timedelta(microseconds=1)
+            with self.assertRaisesRegex(ValueError, "3-hour delay"):
                 fetcher.fetch("grafana", grafana, output)
             opener.assert_not_called()
         self.assertFalse(output.exists())
+        with patch.dict(os.environ, {"GRAFANA_SERVICE_ACCOUNT_TOKEN": "example-token"}, clear=True), \
+                patch("fetch_usage.datetime") as clock, patch("fetch_usage.build_opener") as opener:
+            clock.now.return_value = end + timedelta(hours=3)
+            opener.return_value.open.side_effect = [BytesIO(json.dumps(payload).encode())
+                                                   for payload in (panel_payload(), grafana_payload())]
+            self.assertEqual(fetcher.fetch("grafana", grafana, output), 3)
+            self.assertEqual(opener.return_value.open.call_count, 2)
+        self.assertEqual(json.loads(output.read_text())["captured_at"], "2026-10-05T03:00:00Z")
         token_file.write_text("example-token\n")
         with patch.dict(os.environ, {"VERCEL_TOKEN_FILE": str(token_file)}, clear=True):
             self.assertEqual(fetcher.read_token("VERCEL_TOKEN"), "example-token")
@@ -443,15 +451,15 @@ class WeeklyOpsTest(unittest.TestCase):
 
     def test_normalization_rejects_wrong_provenance_before_producing_metrics(self):
         _, end = ops.bounds(WEEK, NOW)
-        for captured in (end, end + timedelta(hours=24) - timedelta(microseconds=1)):
+        for captured in (end, end + timedelta(hours=3) - timedelta(microseconds=1)):
             data = self.api_evidence()
             data["grafana"]["captured_at"] = ops.iso(captured)
             for allow_missing in (False, True):
                 with self.subTest(captured=captured, allow_missing=allow_missing), \
-                        self.assertRaisesRegex(ValueError, "24-hour delay"):
+                        self.assertRaisesRegex(ValueError, "3-hour delay"):
                     self.normalize_evidence(data, allow_missing_grafana=allow_missing)
         data = self.api_evidence()
-        data["grafana"]["captured_at"] = ops.iso(end + timedelta(hours=24))
+        data["grafana"]["captured_at"] = ops.iso(end + timedelta(hours=3))
         self.assertEqual(self.normalize_evidence(data).metrics["grafana.frontend_sessions"].status, "complete")
         for field, value in (("week", "2026-09-21"), ("vendor", "grafana"),
                              ("captured_at", "2026-10-01T00:00:00Z")):

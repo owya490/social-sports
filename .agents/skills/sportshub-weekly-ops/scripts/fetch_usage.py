@@ -20,7 +20,7 @@ VERCEL_BASE = "https://api.vercel.com/v2/usage"
 TEAM_ID = "team_7wMqFyd9Hz1I882l0vkev0Dz"
 PROJECT_ID = "prj_M871BOaWTRTkX8FKcUvusXpWAqXx"
 TOKEN_ENV = {"vercel": "VERCEL_TOKEN", "grafana": "GRAFANA_SERVICE_ACCOUNT_TOKEN"}
-GRAFANA_COLLECTION_DELAY = timedelta(hours=24)
+GRAFANA_COLLECTION_DELAY = timedelta(hours=3)
 GRAFANA_EXPR = (
     'sum(sum_over_time((grafanacloud_frontend_observability_instance_sessions_per_second'
     '{org_id="1030328"} offset -1d * 60)[1d:1m])) by (id, appName) or vector(0)'
@@ -36,7 +36,7 @@ def require_grafana_delay(week, captured):
     _, end = ops.bounds(week, captured)
     ready = end + GRAFANA_COLLECTION_DELAY
     if captured < ready:
-        raise ValueError(f"Grafana collection requires a 24-hour delay; collect on or after {ops.iso(ready)}. "
+        raise ValueError(f"Grafana collection requires a 3-hour delay; collect on or after {ops.iso(ready)}. "
                          "This is a local safeguard, not a Grafana settlement guarantee.")
 
 

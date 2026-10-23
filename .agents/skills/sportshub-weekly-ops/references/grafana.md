@@ -23,9 +23,10 @@ despite a seven-day dashboard range; it is not a weekly total.
 Use the structured API/MCP response, or Inspect/Data/CSV for requested browser
 reconciliation or fallback, to obtain the daily buckets. Verify
 whether timestamps denote bucket starts or ends before selecting seven full
-UTC days. Collect no earlier than 24 hours after the week ends (Tuesday 00:00
-UTC). This operator-approved local safeguard allows time for the latest bucket
-to settle; it is not a vendor guarantee that values cannot change later.
+UTC days. Collect no earlier than three hours after the week ends (Monday 03:00
+UTC, or 13:00 AEST / 14:00 AEDT in Sydney). This local buffer supports Monday
+afternoon reports. Keep all daily coverage checks; source values can change
+later. The buffer is not a vendor settlement guarantee.
 Sum the seven non-overlapping
 daily totals, not the panel mean/max, an ingestion rate, a running monthly
 counter, or repeated samples of a rolling 24-hour total. Null/missing buckets
