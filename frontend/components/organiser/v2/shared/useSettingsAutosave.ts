@@ -1,6 +1,9 @@
 "use client";
 
+import { Logger } from "@/observability/logger";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
+
+const logger = new Logger("useSettingsAutosave");
 
 export type SettingsAutosaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -130,8 +133,11 @@ export function useSettingsAutosave<Intent>({
         setFeedback({ status: "saved", errorMessage: null, failedIntent: null });
         return { kind: "saved" };
       }
-    } catch {
+    } catch (error) {
       if (!isCurrent()) return { kind: "disposed" };
+      logger.error("Settings autosave threw", {
+        errorMessage: error instanceof Error ? error.message : String(error),
+      });
     } finally {
       mutationLockRef.current = false;
     }
