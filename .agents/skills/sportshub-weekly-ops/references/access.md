@@ -77,12 +77,13 @@ provided through `VERCEL_TOKEN` and `GRAFANA_SERVICE_ACCOUNT_TOKEN` or their
 corresponding `*_FILE` variables. Explicit file flags take precedence. Token
 values are never command arguments; only file paths are passed to the helper.
 
-Grafana requires collection at least 24 hours after the week ends, from Tuesday
-00:00 UTC onward. The fetch helper stops before network access if it is early.
+Grafana requires collection at least three hours after the week ends, from Monday
+03:00 UTC onward (13:00 AEST / 14:00 AEDT in Sydney). The fetch helper stops
+before network access if it is early.
 Normalization also rejects evidence captured before that time; the missing-data
-override does not bypass the delay. This is a local safeguard, not a vendor
-settlement guarantee. Vercel and the credential-free request preview do not
-require that delay.
+override does not bypass the delay. This local buffer supports Monday afternoon
+reports; source values can change later. It is not a vendor settlement guarantee.
+Vercel and the credential-free request preview do not require that delay.
 
 ```bash
 rtk proxy python3 .agents/skills/sportshub-weekly-ops/scripts/fetch_usage.py vercel --week 2026-09-28 --vercel-token-file "$HOME/.config/sportshub-ops/vercel-token" --output .tmp/ops-2026-09-28-vercel.json
