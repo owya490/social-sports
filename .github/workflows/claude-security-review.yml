@@ -59,4 +59,4 @@ jobs:
             (CRITICAL, HIGH, or MEDIUM), then the attack scenario and a concrete fix. Use
             `gh pr comment` only for a finding that cannot be anchored to a diff line.
             If there are no findings, post nothing.
-          claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
+          claude_args: '--model claude-sonnet-5-5 --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr diff:*),Bash(gh pr view:*),Bash(gh pr comment:*)"'
