@@ -2,7 +2,7 @@
 
 import { UserId } from "@/interfaces/UserTypes";
 import { handleAppleSignIn, handleFacebookSignIn, handleGoogleSignIn } from "@/services/src/auth/authService";
-import { useEffect, useTransition } from "react";
+import { useRef, useState } from "react";
 
 const SOCIAL_BUTTON_CLASS =
   "flex h-10 w-full items-center justify-center rounded-xl border border-gray-300 bg-white transition-colors hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-core-text disabled:cursor-not-allowed disabled:opacity-50";
@@ -27,25 +27,27 @@ interface SocialAuthButtonsProps {
 }
 
 export default function SocialAuthButtons({ disabled, onError, onSuccess, onPendingChange }: SocialAuthButtonsProps) {
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
+  const pending = useRef(false);
   const buttonsDisabled = disabled || isPending;
 
-  useEffect(() => {
-    onPendingChange?.(isPending);
-  }, [isPending, onPendingChange]);
-
-  const handleProviderClick = (signIn: () => Promise<UserId | null>) => {
-    startTransition(async () => {
-      try {
-        const userId = await signIn();
-        if (userId === null) {
-          return;
-        }
+  const handleProviderClick = async (signIn: () => Promise<UserId | null>) => {
+    if (disabled || pending.current) return;
+    pending.current = true;
+    setIsPending(true);
+    onPendingChange?.(true);
+    try {
+      const userId = await signIn();
+      if (userId !== null) {
         await onSuccess(userId);
-      } catch (error) {
-        onError(error instanceof Error ? error.message : "Social sign-in failed. Please try again.");
       }
-    });
+    } catch (error) {
+      onError(error instanceof Error ? error.message : "Social sign-in failed. Please try again.");
+    } finally {
+      pending.current = false;
+      setIsPending(false);
+      onPendingChange?.(false);
+    }
   };
 
   return (

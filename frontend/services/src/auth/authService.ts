@@ -15,21 +15,23 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  User,
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, runTransaction, setDoc } from "firebase/firestore";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { auth, db } from "../firebase";
 import { bustOrganiserEventsCache } from "../organiser/organiserEventsCache";
 import { UserNotFoundError } from "../users/userErrors";
-import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { createUser, getFullUserById, getPrivateUserById, updateUser, writeMissingUserProfile } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { mapSocialAuthError, userDataFromSocialProfile } from "./socialAuthUtils";
+import { getAuthPageHref, getSafeReturnTo } from "./authNavigation";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
-export async function handleEmailAndPasswordSignUp(data: NewUserData) {
+export async function handleEmailAndPasswordSignUp(data: NewUserData, returnTo?: string | null) {
   let userCredential; // Declare userCredential outside the try block to access it in the catch block
 
   try {
@@ -48,7 +50,7 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
       userId: userCredential.user.uid,
     });
     // Send email verification
-    await sendEmailVerification(userCredential.user, actionCodeSettings);
+    await sendEmailVerification(userCredential.user, getEmailActionSettings(returnTo));
     authServiceLogger.info("Email Verification sent", {
       email: data.contactInformation.email,
       userId: userCredential.user.uid,
@@ -73,7 +75,11 @@ export async function handleSignOut(setUser: (user: UserData) => void) {
   }
 }
 
-export async function handleEmailAndPasswordSignIn(email: string, password: string): Promise<UserId | null> {
+export async function handleEmailAndPasswordSignIn(
+  email: string,
+  password: string,
+  returnTo?: string | null
+): Promise<UserId | null> {
   let userCredential: UserCredential | undefined = undefined;
 
   try {
@@ -84,34 +90,18 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
 
     if (!userCredential.user.emailVerified) {
       authServiceLogger.info("Email is not verified. Sending verification email.", { userId: userCredential.user.uid });
-      await sendEmailVerification(userCredential.user, actionCodeSettings);
+      await sendEmailVerification(userCredential.user, getEmailActionSettings(returnTo));
       throw new Error("Email is not verified. We have sent another Verification Email");
     } else {
       authServiceLogger.info("Email is verified. Proceeding with login.", { userId: userCredential.user.uid });
       const userId = userCredential.user.uid as UserId;
 
-      try {
-        await getPublicUserById(userId);
-
-        // Sync email from Firebase Auth to Firestore if needed
-        await syncEmailOnLogin(userId);
-
-        return userId; // User exists, sign-in successful
-      } catch (error: unknown) {
-        if (error instanceof UserNotFoundError) {
-          authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
-            userId: userCredential.user.uid,
-          });
-
-          await migrateTempUserToActiveUser(userId);
-          return userId; // User created and temporary data deleted successfully
-        } else {
-          throw error; // Re-throw if it's not a UserNotFoundError
-        }
-      }
+      await migrateTempUserToActiveUser(userId);
+      await syncEmailOnLogin(userCredential.user);
+      return userId;
     }
   } catch (error: unknown) {
-    if (userCredential) {
+    if (userCredential && auth.currentUser?.uid === userCredential.user.uid) {
       try {
         await signOut(auth);
         authServiceLogger.info(`User signed out due to an error ${error}`, { email });
@@ -143,70 +133,29 @@ export async function saveTempUserData(userId: UserId, data: UserData) {
   await setDoc(doc(db, "TempUsers", userId), data);
 }
 
-export async function getTempUserData(userId: UserId): Promise<UserData | null> {
-  try {
-    const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
-    const docSnap = await getDoc(docRef); // Retrieve the document snapshot
-
-    if (docSnap.exists()) {
-      return docSnap.data() as UserData;
-    }
-    return null;
-  } catch (error) {
-    authServiceLogger.error(`Error fetching user data for ID=${userId}: ${error}`);
-    return null;
-  }
-}
-
-async function deleteTempUserData(userId: UserId) {
-  await deleteDoc(doc(db, "TempUsers", userId));
-}
-
 /**
- * Promotes a verified user's staged record in TempUsers to Users/Active and
- * deletes the staged record. Rolls back the created user if migration fails.
- * @returns the migrated user data
- * @throws Error if no temp data exists or the migration fails
+ * Completes a staged user's active profile and removes TempUsers atomically.
+ * Existing active fields survive retries after an interrupted promotion.
  */
-export async function migrateTempUserToActiveUser(userId: UserId): Promise<UserData> {
-  const userData = await getTempUserData(userId);
+export async function migrateTempUserToActiveUser(userId: UserId): Promise<void> {
+  const tempRef = doc(db, "TempUsers", userId);
+  const publicRef = doc(db, "Users", "Active", "Public", userId);
+  const privateRef = doc(db, "Users", "Active", "Private", userId);
 
-  if (userData === null) {
-    authServiceLogger.error("Temporary user data not found after email verification.", { userId });
-    throw new Error("User data not found.");
-  }
+  await runTransaction(db, async (transaction) => {
+    const temp = await transaction.get(tempRef);
+    const publicUser = await transaction.get(publicRef);
+    const privateUser = await transaction.get(privateRef);
 
-  try {
-    await createUser(userData, userId);
-    authServiceLogger.info("Temporary user data found and user created successfully.", { userId });
-
-    // Proceed with deletion of temporary user data
-    await deleteTempUserData(userId);
-    authServiceLogger.info("Temporary user data deleted after successful creation.", { userId });
-    return userData;
-  } catch {
-    authServiceLogger.error("Error during user creation. Attempting rollback.", { userId });
-
-    // Rollback only if user creation succeeded and temporary data deletion failed
-    try {
-      await deleteUser(userId);
-      authServiceLogger.error("User creation rolled back successfully.", { userId });
-    } catch (rollbackError) {
-      const rollbackErrorMessage =
-        rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
-      authServiceLogger.error("Failed to roll back user creation:", {
-        error: rollbackErrorMessage,
-        userId,
-      });
+    if (!temp.exists()) {
+      if (publicUser.exists() && privateUser.exists()) return;
+      throw new Error("User data not found.");
     }
 
-    throw new Error("User creation failed, rolled back the changes.");
-  }
+    await writeMissingUserProfile(transaction, temp.data() as UserData, userId, publicUser, privateUser);
+    transaction.delete(tempRef);
+  });
 }
-
-// Popup completion and UserContext's onAuthStateChanged can both try to provision
-// the Firestore profile at once; share one in-flight promise so we don't double-create.
-let ensureActiveUserInFlight: Promise<UserId> | null = null;
 
 export function handleGoogleSignIn(): Promise<UserId | null> {
   return signInWithSocialProvider(new GoogleAuthProvider());
@@ -246,17 +195,6 @@ async function signInWithSocialProvider(provider: AuthProvider): Promise<UserId 
 }
 
 export async function ensureActiveUserFromAuth(credential?: UserCredential): Promise<UserId> {
-  if (ensureActiveUserInFlight) {
-    return ensureActiveUserInFlight;
-  }
-
-  ensureActiveUserInFlight = provisionActiveUserFromAuth(credential).finally(() => {
-    ensureActiveUserInFlight = null;
-  });
-  return await ensureActiveUserInFlight;
-}
-
-async function provisionActiveUserFromAuth(credential?: UserCredential): Promise<UserId> {
   const user = credential?.user ?? auth.currentUser;
   if (!user) {
     throw new Error("No authenticated user");
@@ -267,8 +205,8 @@ async function provisionActiveUserFromAuth(credential?: UserCredential): Promise
 
   const userId = user.uid as UserId;
   try {
-    await getPublicUserById(userId);
-    await syncEmailOnLogin(userId);
+    await getFullUserById(userId);
+    await syncEmailOnLogin(user);
     return userId;
   } catch (error) {
     if (!(error instanceof UserNotFoundError)) {
@@ -313,10 +251,22 @@ const actionCodeSettings = {
   url: "https://www.sportshub.net.au/login",
 };
 
-export async function resetUserPassword(email: string): Promise<void> {
+function getEmailActionSettings(returnTo?: string | null) {
+  const destination = getSafeReturnTo(returnTo);
+  return destination
+    ? { url: `https://www.sportshub.net.au${getAuthPageHref("/login", destination)}` }
+    : actionCodeSettings;
+}
+
+export async function resetUserPassword(email: string, returnTo?: string | null): Promise<void> {
   try {
     // Send password reset email
-    await sendPasswordResetEmail(auth, email);
+    const destination = getSafeReturnTo(returnTo);
+    if (destination) {
+      await sendPasswordResetEmail(auth, email, getEmailActionSettings(destination));
+    } else {
+      await sendPasswordResetEmail(auth, email);
+    }
     // Password reset email sent successfully
     authServiceLogger.info("Password reset email sent");
   } catch (error) {
@@ -387,16 +337,10 @@ export async function updateUserEmail(newEmail: string, currentPassword: string)
   }
 }
 
-/**
- * Syncs Firebase Auth email with Firestore during login
- * Called automatically after successful login to ensure consistency
- * @param userId - The user ID to sync email for
- */
-export async function syncEmailOnLogin(userId: UserId): Promise<void> {
+export async function syncEmailOnLogin(user: User): Promise<void> {
+  const userId = user.uid as UserId;
   try {
-    const user = auth.currentUser;
-
-    if (!user || !user.email) {
+    if (!user.email || auth.currentUser?.uid !== userId) {
       authServiceLogger.warn("Cannot sync email - no authenticated user", { userId });
       return;
     }
@@ -407,6 +351,7 @@ export async function syncEmailOnLogin(userId: UserId): Promise<void> {
 
     // Sync if emails don't match
     if (currentFirestoreEmail !== user.email) {
+      if (auth.currentUser?.uid !== userId) return;
       authServiceLogger.info("Email mismatch detected, syncing...", {
         userId,
         authEmail: user.email,
