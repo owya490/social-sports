@@ -27,9 +27,6 @@ import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
-import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
-import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
-import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -37,7 +34,6 @@ import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
 import com.google.api.core.ApiFuture;
-import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldValue;
@@ -53,114 +49,13 @@ import com.stripe.model.checkout.Session;
 public class WebhookService {
     private static final Logger logger = LoggerFactory.getLogger(WebhookService.class);
     private static final int MAX_FULFILMENT_RETRIES = 3;
-    private static final int MAX_PURCHASE_EMAIL_RETRIES = 3;
     private static final long FULFILMENT_RETRY_DELAY_MS = 2000;
-    private static final long PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS = 1000;
 
     private enum PaymentIntentCancellationTransactionResult {
         PROCESSED,
         ALREADY_PROCESSED
     }
 
-    @FunctionalInterface
-    interface PurchaseEmailSender {
-        boolean send(String eventId, String visibility, String customerEmail, String fullName, String orderId)
-                throws Exception;
-    }
-
-    @FunctionalInterface
-    private interface RetryableBooleanOperation {
-        boolean run() throws Exception;
-    }
-    
-    /**
-     * Retrieves form response IDs from a fulfilment session on a best-effort basis.
-     * Returns an empty list if the session is not found or has no form entities.
-     * 
-     * @param transaction The Firestore transaction
-     * @param fulfilmentSessionId The fulfilment session ID
-     * @return List of form response IDs
-     */
-    private static List<String> getFormResponseIdsFromFulfilmentSession(
-            Transaction transaction, String fulfilmentSessionId) {
-        
-        if (fulfilmentSessionId == null || fulfilmentSessionId.isEmpty()) {
-            return new ArrayList<>();
-        }
-        
-        try {
-            Firestore db = FirebaseService.getFirestore();
-            DocumentReference fulfilmentSessionRef = db.collection(CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
-                .document(fulfilmentSessionId);
-            
-            DocumentSnapshot fulfilmentSessionSnapshot = transaction.get(fulfilmentSessionRef).get();
-            
-            if (!fulfilmentSessionSnapshot.exists()) {
-                logger.error("Fulfilment session not found: {}. Skipping form response IDs.", fulfilmentSessionId);
-                return new ArrayList<>();
-            }
-            
-            FulfilmentSession fulfilmentSession = FulfilmentSession.fromFirestore(fulfilmentSessionSnapshot);
-            if (fulfilmentSession.getFulfilmentEntityMap() == null
-                    || fulfilmentSession.getFulfilmentEntityMap().isEmpty()) {
-                logger.info("No fulfilment entity map found in fulfilment session {}", fulfilmentSessionId);
-                return new ArrayList<>();
-            }
-
-            List<String> formResponseIds = extractFormResponseIds(fulfilmentSession);
-            
-            if (!formResponseIds.isEmpty()) {
-                logger.info("Retrieved {} form response IDs from fulfilment session {}: {}", 
-                           formResponseIds.size(), fulfilmentSessionId, formResponseIds);
-            } else {
-                logger.info("No form response IDs found in fulfilment session {}", fulfilmentSessionId);
-            }
-            
-            return formResponseIds;
-            
-        } catch (Exception e) {
-            logger.warn("Failed to retrieve form response IDs from fulfilment session {}: {}. " +
-                       "Continuing without form responses.", fulfilmentSessionId, e.getMessage());
-            return new ArrayList<>();
-        }
-    }
-
-    static List<String> extractFormResponseIds(FulfilmentSession fulfilmentSession) {
-
-        List<String> formResponseIds = new ArrayList<>();
-        if (fulfilmentSession == null
-                || fulfilmentSession.getFulfilmentEntityMap() == null
-                || fulfilmentSession.getFulfilmentEntityMap().isEmpty()) {
-            return formResponseIds;
-        }
-
-        Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
-        List<String> fulfilmentEntityIds = fulfilmentSession.getFulfilmentEntityIds();
-        if (fulfilmentEntityIds != null && !fulfilmentEntityIds.isEmpty()) {
-            for (String fulfilmentEntityId : fulfilmentEntityIds) {
-                appendFormResponseId(formResponseIds, fulfilmentEntityMap.get(fulfilmentEntityId));
-            }
-            return formResponseIds;
-        }
-
-        for (FulfilmentEntity fulfilmentEntity : fulfilmentEntityMap.values()) {
-            appendFormResponseId(formResponseIds, fulfilmentEntity);
-        }
-
-        return formResponseIds;
-    }
-
-    private static void appendFormResponseId(List<String> formResponseIds, FulfilmentEntity fulfilmentEntity) {
-        if (!(fulfilmentEntity instanceof FormsFulfilmentEntity formsFulfilmentEntity)) {
-            return;
-        }
-
-        String formResponseId = formsFulfilmentEntity.getFormResponseId();
-        if (formResponseId != null && !formResponseId.isEmpty()) {
-            formResponseIds.add(formResponseId);
-        }
-    }
-    
     /**
      * Checks if a checkout session has already been processed.
      * 
@@ -270,56 +165,6 @@ public class WebhookService {
         }
     }
 
-    private static boolean retryBooleanOperation(
-            String operationName,
-            int maxRetries,
-            long initialDelayMs,
-            boolean exponentialBackoff,
-            RetryableBooleanOperation operation) {
-
-        for (int attempt = 0; attempt < maxRetries; attempt++) {
-            try {
-                if (operation.run()) {
-                    return true;
-                }
-
-                logger.warn("{} returned unsuccessful on attempt {}/{}",
-                        operationName, attempt + 1, maxRetries);
-            } catch (InterruptedException interruptedException) {
-                Thread.currentThread().interrupt();
-                logger.warn("{} interrupted on attempt {}/{}",
-                        operationName, attempt + 1, maxRetries);
-                return false;
-            } catch (Exception e) {
-                logger.warn("{} failed on attempt {}/{}: {}",
-                        operationName, attempt + 1, maxRetries, e.getMessage(), e);
-            }
-
-            if (attempt < maxRetries - 1) {
-                long delayMs = exponentialBackoff
-                        ? initialDelayMs * (1L << attempt)
-                        : initialDelayMs;
-                logger.info("Retrying {} in {}ms", operationName, delayMs);
-                if (!sleepBeforeRetry(delayMs, operationName)) {
-                    return false;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private static boolean sleepBeforeRetry(long delayMs, String operationName) {
-        try {
-            Thread.sleep(delayMs);
-            return true;
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            logger.warn("Interrupted while retrying {}", operationName);
-            return false;
-        }
-    }
-    
     /**
      * Resolves the order and ticket status based on the capture method.
      * 
@@ -574,37 +419,7 @@ public class WebhookService {
             String paymentIntentId,
             String captureMethod,
             String eventTicketTypeId) throws Exception {
-        
-        Firestore db = FirebaseService.getFirestore();
-        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
-        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS)
-            .document(CollectionPaths.ACTIVE)
-            .collection(privacyPath)
-            .document(eventId);
-        DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
 
-        // Retrieve form response IDs from fulfilment session (best effort)
-        List<String> formResponseIds = getFormResponseIdsFromFulfilmentSession(transaction, fulfilmentSessionId);
-        
-        // Read event data
-        ApiFuture<DocumentSnapshot> eventFuture = transaction.get(eventRef);
-        DocumentSnapshot eventSnapshot = eventFuture.get();
-        
-        if (!eventSnapshot.exists()) {
-            logger.error("Unable to find event provided in datastore to fulfill purchase. eventId={}, isPrivate={}", 
-                        eventId, isPrivate);
-            return null;
-        }
-        
-        EventData event = eventSnapshot.toObject(EventData.class);
-        if (event == null) {
-            logger.error("Event data is null for eventId={}", eventId);
-            return null;
-        }
-        event.setEventId(eventId);
-
-        ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, eventTicketTypeId);
-        
         LineItem item = getSingleCheckoutLineItem(lineItems, checkoutSessionId, false);
         if (item == null) {
             return null;
@@ -615,83 +430,36 @@ public class WebhookService {
             logger.error("Item quantity is null for checkout session {}", checkoutSessionId);
             return null;
         }
-        
+
         Long unitAmount = item.getPrice() != null ? item.getPrice().getUnitAmount() : null;
         if (unitAmount == null) {
             logger.error("Item unit amount is null for checkout session {}", checkoutSessionId);
             return null;
         }
-        
-        // Read event metadata
-        ApiFuture<DocumentSnapshot> metadataFuture = transaction.get(eventMetadataRef);
-        DocumentSnapshot maybeEventMetadata = metadataFuture.get();
-        
-        EventMetadata existingEventMetadata = maybeEventMetadata.exists()
-                ? maybeEventMetadata.toObject(EventMetadata.class)
-                : null;
-        EventMetadata eventMetadata = initializeEventMetadata(existingEventMetadata, event.getOrganiserId());
-        
-        // Create order and tickets
-        Timestamp purchaseTime = Timestamp.now();
-        DocumentReference orderRef = db.collection(CollectionPaths.ORDERS).document();
-        
-        long applicationFees = resolveApplicationFees(totalDetails);
-        long discounts = resolveDiscounts(totalDetails);
-        
-        // Resolve status based on capture method
-        OrderAndTicketStatus status = resolveOrderAndTicketStatus(captureMethod);
-        // completeTicketCount is used by dashboards (EventDrilldownStatBanner, AttendeeService,
-        // ReservedSlotService) so it is kept up to date; purchaserMap is deprecated and no
-        // longer written.
-        eventMetadata.setCompleteTicketCount(eventMetadata.getCompleteTicketCount() + quantity.intValue());
-        logger.info("Incremented completeTicketCount for event {}. email={}, name={}",
-                eventId, customerEmail, fullName);
-        
-        List<String> ticketIds = new ArrayList<>();
-        
-        // Create tickets
-        for (int i = 0; i < quantity; i++) {
-            DocumentReference ticketRef = db.collection(CollectionPaths.TICKETS).document();
-            
-            // Associate form response ID with ticket if available
-            String formResponseId = null;
-            if (formResponseIds != null && i < formResponseIds.size()) {
-                formResponseId = formResponseIds.get(i);
-            }
-            
-            Ticket ticket = new Ticket();
-            ticket.setEventId(eventId);
-            ticket.setOrderId(orderRef.getId());
-            ticket.setPrice(unitAmount);
-            ticket.setPurchaseDate(purchaseTime);
-            ticket.setStatus(status);
-            ticket.setFormResponseId(formResponseId);
-            EventTicketTypeService.stampTicket(ticket, ticketType);
-            
-            transaction.create(ticketRef, ticket);
-            ticketIds.add(ticketRef.getId());
-        }
-        
-        // Create order
-        Order order = new Order();
-        order.setOrderId(orderRef.getId());
-        order.setDatePurchased(purchaseTime);
-        order.setEmail(customerEmail);
-        order.setFullName(fullName);
-        order.setPhone(phoneNumber);
-        order.setApplicationFees(applicationFees);
-        order.setDiscounts(discounts);
-        order.setTickets(ticketIds);
-        order.setStripePaymentIntentId(paymentIntentId);
-        order.setStatus(status);
-        
-        transaction.set(orderRef, order);
 
-        appendUniqueValue(eventMetadata.getOrderIds(), orderRef.getId());
-        appendUniqueValue(eventMetadata.getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
-        transaction.set(eventMetadataRef, eventMetadata);
-        
-        return orderRef.getId();
+        EventTicketPurchaseService.MintedPurchase minted =
+                EventTicketPurchaseService.fulfillCompletedEventTicketPurchase(
+                        transaction,
+                        eventId,
+                        isPrivate,
+                        quantity.intValue(),
+                        unitAmount,
+                        eventTicketTypeId,
+                        customerEmail,
+                        fullName,
+                        fulfilmentSessionId,
+                        phoneNumber,
+                        resolveApplicationFees(totalDetails),
+                        resolveDiscounts(totalDetails),
+                        paymentIntentId,
+                        captureMethod);
+        if (minted == null) {
+            return null;
+        }
+
+        appendUniqueValue(minted.eventMetadata().getCompletedStripeCheckoutSessionIds(), checkoutSessionId);
+        transaction.set(minted.eventMetadataRef(), minted.eventMetadata());
+        return minted.orderId();
     }
 
     static long resolveApplicationFees(Session.TotalDetails totalDetails) {
@@ -824,33 +592,12 @@ public class WebhookService {
             String fullName,
             String orderId) {
 
-        return sendPurchaseEmailWithRetries(
+        return EmailService.sendPurchaseEmailWithRetries(
                 eventId,
                 visibility,
                 customerEmail,
                 fullName,
-                orderId,
-                MAX_PURCHASE_EMAIL_RETRIES,
-                PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
-                EmailService::sendPurchaseEmail);
-    }
-
-    static boolean sendPurchaseEmailWithRetries(
-            String eventId,
-            String visibility,
-            String customerEmail,
-            String fullName,
-            String orderId,
-            int maxRetries,
-            long initialRetryDelayMs,
-            PurchaseEmailSender purchaseEmailSender) {
-
-        return retryBooleanOperation(
-                "send purchase email",
-                maxRetries,
-                initialRetryDelayMs,
-                true,
-                () -> purchaseEmailSender.send(eventId, visibility, customerEmail, fullName, orderId));
+                orderId);
     }
     
     /**
@@ -1085,7 +832,7 @@ public class WebhookService {
             // order/ticket persistence after Stripe has already told us the checkout succeeded.
             // TODO: look into how we can robustly not have hanging fulfilment sessions when the initial webhook
             // payment process has gone through.
-            boolean fulfilmentCompleted = retryBooleanOperation(
+            boolean fulfilmentCompleted = EmailService.retryBooleanOperation(
                     "complete fulfilment session",
                     MAX_FULFILMENT_RETRIES,
                     FULFILMENT_RETRY_DELAY_MS,
