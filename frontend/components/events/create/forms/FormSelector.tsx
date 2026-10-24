@@ -14,9 +14,10 @@ export type FormSelectorData = {
 type FormSelectorProps = FormSelectorData & {
   user: UserData;
   updateField: (formId: FormId | null) => void;
+  disabled?: boolean;
 };
 
-export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) => {
+export const FormSelector = ({ formId, user, updateField, disabled = false }: FormSelectorProps) => {
   const logger = new Logger("FormSelector");
   const [forms, setForms] = useState<Form[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,6 +55,7 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
   }, [user.userId]);
 
   const handleFormSelection = (value: string | undefined) => {
+    if (disabled) return;
     const selectedFormId = value === "" || !value ? null : (value as FormId);
     updateField(selectedFormId);
   };
@@ -86,6 +88,7 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
           <div className="ml-2">
             <InvertedHighlightButton
               type="button"
+              disabled={disabled}
               onClick={() => window.open("/organiser/v2/forms/create-form/editor", "_blank")}
             >
               Create Form
@@ -103,6 +106,7 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
           size="lg"
           label="Select Form"
           value={formId || ""}
+          disabled={disabled}
           onChange={handleFormSelection}
         >
           {forms.map((form) => (
@@ -112,7 +116,7 @@ export const FormSelector = ({ formId, user, updateField }: FormSelectorProps) =
           ))}
         </Select>
         <div className="flex items-center justify-center ml-2 ">
-          <button onClick={fetchUserForms} className="hover:bg-core-hover rounded-md p-1">
+          <button type="button" disabled={disabled} aria-label="Reload forms" onClick={fetchUserForms} className="hover:bg-core-hover disabled:opacity-60 rounded-md p-1">
             <ArrowPathIcon className="h-5 w-5 text-black" />
           </button>
         </div>

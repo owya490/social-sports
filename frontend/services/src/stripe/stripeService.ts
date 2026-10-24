@@ -6,28 +6,47 @@ import {
 } from "../firebaseFunctionsService";
 import { getPrivateUserById } from "../users/usersService";
 
-interface StripeCreateStandardAccountResponse {
-  url: string;
-}
-
 const stripeServiceLogger = new Logger("stripeServiceLogger");
 
-export async function getStripeStandardAccountLink(organiserId: string, returnUrl: string, refreshUrl: string) {
+export async function getStripeStandardAccountSetupLink(
+  organiserId: string,
+  returnUrl: string,
+  refreshUrl: string,
+): Promise<string> {
   const content = {
     organiser: organiserId,
     returnUrl: returnUrl,
     refreshUrl: refreshUrl,
   };
   const createAccountFunction = getFirebaseFunctionByName(FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT);
-  return createAccountFunction(content)
-    .then((result) => {
-      const data = JSON.parse(result.data as string) as StripeCreateStandardAccountResponse;
-      return data.url;
-    })
-    .catch((error) => {
-      stripeServiceLogger.warn(`Failed to return Stripe create standard account link. error=${error}`);
-      return "/error";
-    });
+  const result = await createAccountFunction(content);
+  const data: unknown = typeof result.data === "string" ? JSON.parse(result.data) : result.data;
+  if (!data || typeof data !== "object" || !("url" in data) || typeof data.url !== "string") {
+    throw new Error("Stripe setup did not return a destination");
+  }
+
+  const destination = data.url;
+  if (!destination || destination.trim() !== destination || destination === "/error") {
+    throw new Error("Stripe setup did not return a usable destination");
+  }
+
+  const url = new URL(destination);
+  const isStripeDestination = url.protocol === "https:"
+    && (url.hostname === "stripe.com" || url.hostname.endsWith(".stripe.com"));
+  const isReturnDestination = destination === returnUrl && (url.protocol === "http:" || url.protocol === "https:");
+  if (url.username || url.password || (!isStripeDestination && !isReturnDestination)) {
+    throw new Error("Stripe setup returned an unexpected destination");
+  }
+  return destination;
+}
+
+export async function getStripeStandardAccountLink(organiserId: string, returnUrl: string, refreshUrl: string) {
+  try {
+    return await getStripeStandardAccountSetupLink(organiserId, returnUrl, refreshUrl);
+  } catch (error) {
+    stripeServiceLogger.warn(`Failed to return Stripe create standard account link. error=${error}`);
+    return "/error";
+  }
 }
 
 export async function getStripeAccId(userId: UserId): Promise<string> {
@@ -44,7 +63,7 @@ export async function getStripeAccId(userId: UserId): Promise<string> {
     }
     return userData.stripeAccount;
   } catch (e) {
-    stripeServiceLogger.error(e as string);
-    return "";
+    stripeServiceLogger.error(`Failed to read Stripe account ID: ${e}`);
+    throw e;
   }
 }

@@ -24,6 +24,7 @@ interface EventTicketTypeFormDialogProps {
   onSave: (values: EventTicketTypeFormValues) => Promise<void>;
   /** Hide form picker when forms are managed elsewhere (e.g. event hub Forms tab). */
   hideFormSelector?: boolean;
+  commitBlocked?: boolean;
 }
 
 export function EventTicketTypeFormDialog({
@@ -34,6 +35,7 @@ export function EventTicketTypeFormDialog({
   user,
   onSave,
   hideFormSelector = false,
+  commitBlocked = false,
 }: EventTicketTypeFormDialogProps) {
   const [name, setName] = useState(initialValues.name);
   const [priceDollars, setPriceDollars] = useState(String(initialValues.priceDollars));
@@ -57,6 +59,7 @@ export function EventTicketTypeFormDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (saving || commitBlocked) return;
     if (!name.trim()) {
       setError("Name is required");
       return;
@@ -148,7 +151,7 @@ export function EventTicketTypeFormDialog({
                   {error && <p className="text-red-500 text-sm">{error}</p>}
                   <div className="flex justify-end gap-2 mt-2">
                     <InvertedHighlightButton type="button" text="Cancel" onClick={onClose} />
-                    <BlackHighlightButton type="submit" text={saving ? "Saving..." : "Save"} disabled={saving} />
+                    <BlackHighlightButton type="submit" text={saving ? "Saving..." : "Save"} disabled={saving || commitBlocked} />
                   </div>
                 </form>
               </DialogPanel>
