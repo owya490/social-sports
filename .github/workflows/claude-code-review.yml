@@ -2,7 +2,7 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened, labeled]
+    types: [opened, synchronize, ready_for_review, reopened]
     # Optional: Only run on specific file changes
     # paths:
     #   - "src/**/*.ts"
@@ -10,18 +10,14 @@ on:
     #   - "src/**/*.js"
     #   - "src/**/*.jsx"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   claude-review:
-    # Job-level so runs skipped by the condition below (e.g. unrelated labels)
-    # never cancel an in-progress review.
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
-      cancel-in-progress: true
-    # The review runs on the owner's Claude subscription: it runs automatically
-    # on their own PRs, and on anyone else's only when they add the label.
-    if: |
-      (github.event.action != 'labeled' && github.event.pull_request.user.login == 'brian2w') ||
-      (github.event.action == 'labeled' && github.event.label.name == 'claude-review' && github.actor == 'brian2w')
+    # The review runs on the owner's Claude subscription, so only their own PRs trigger it.
+    if: github.event.pull_request.user.login == 'brian2w'
 
     runs-on: ubuntu-latest
     permissions:
