@@ -5,9 +5,9 @@ import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
 import {
   ensureActiveUserFromAuth,
-  getTempUserData,
   migrateTempUserToActiveUser,
 } from "@/services/src/auth/authService";
+import { getAuthPageHref, isProtectedRoute } from "@/services/src/auth/authNavigation";
 import { isSocialAuthUser } from "@/services/src/auth/socialAuthUtils";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { Auth, onAuthStateChanged } from "firebase/auth";
@@ -35,9 +35,6 @@ export default function UserContext({ children }: { children: any }) {
   const pathname = usePathname();
   const [userLoading, setUserLoading] = useState(true);
 
-  const protectedRoutes = ["/organiser", "/profile", "/event/create", "/onboarding"];
-  const LoginRegisterRoutes = ["/register", "/login"];
-
   const refreshUser = async () => {
     if (!user.userId) {
       router.push("/error");
@@ -52,86 +49,56 @@ export default function UserContext({ children }: { children: any }) {
   };
 
   useEffect(() => {
+    let active = true;
+    let authRevision = 0;
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {
-      //need this because on user creation, if the user hasn't changed browsers since register
-      // they might still have the firebase userobject, which after clicking the verify email,
-      // will satify both the above conditions and then skip the create user workflow due to this
-      // redirecting to dashboard, hence we need to do another check to see if they are in the create
-      // user workflow
+      const revision = ++authRevision;
+      const isCurrent = () => active && revision === authRevision && auth.currentUser?.uid === userAuth?.uid;
       setUserLoading(true);
-      if (userAuth && auth.currentUser?.emailVerified) {
+      if (userAuth?.emailVerified) {
         const { uid } = userAuth;
         try {
-          try {
-            const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-            setUser(userData);
-          } catch {
-            if (isSocialAuthUser(userAuth)) {
-              try {
-                await ensureActiveUserFromAuth();
-                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-                setUser(userData);
-              } catch {
-                router.push("/error");
-                return;
-              }
-            } else {
-              try {
-                // The user is verified but their profile was never promoted out of
-                // TempUsers (e.g. they verified their email but never came back
-                // through the login form). Migrate them now so downstream features
-                // relying on Users/Active (e.g. Stripe onboarding) work correctly.
-                await migrateTempUserToActiveUser(uid as UserId);
-                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-                setUser(userData);
-              } catch {
-                router.push("/error");
-                return;
-              }
+          let userData: UserData;
+          if (isSocialAuthUser(userAuth)) {
+            try {
+              userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+            } catch {
+              if (!isCurrent()) return;
+              await ensureActiveUserFromAuth();
+              if (!isCurrent()) return;
+              userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
             }
+          } else {
+            await migrateTempUserToActiveUser(uid as UserId);
+            if (!isCurrent()) return;
+            userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+          }
+          if (isCurrent()) setUser(userData);
+        } catch {
+          if (isCurrent()) {
+            setUser(EmptyUserData as UserData);
+            router.push("/error");
           }
         } finally {
-          setUserLoading(false);
+          if (isCurrent()) setUserLoading(false);
         }
         return;
       }
+      setUser(EmptyUserData as UserData);
       setUserLoading(false);
     });
-    return () => unsubscriber();
-  }, []);
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      if (userLoading) return;
-
-      if (protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
-        if (!auth.currentUser || !auth.currentUser.emailVerified) {
-          router.push("/login");
-        }
-      }
-
-      if (LoginRegisterRoutes.some((prefix) => pathname.startsWith(prefix))) {
-        if (auth.currentUser && auth.currentUser.emailVerified) {
-          //need this because on user creation, if the user hasn't changed browsers since register
-          // they might still have the firebase userobject, which after clicking the verify email,
-          // will satify both the above conditions and then skip the create user workflow due to this
-          // redirecting to dashboard, hence we need to do another check to see if they are in the create
-          // user workflow
-          const { uid } = auth.currentUser;
-          try {
-            const tempUserData = await getTempUserData(uid as UserId);
-            // Verified users without staged signup data are already active (or social-provisioned).
-            if (!tempUserData) {
-              router.push("/");
-            }
-          } catch {
-            router.push("/error");
-          }
-        }
-      }
+    return () => {
+      active = false;
+      unsubscriber();
     };
-
-    checkAuthStatus();
-  }, [user, pathname, userLoading]);
+  }, [router]);
+  useEffect(() => {
+    if (userLoading || !isProtectedRoute(pathname)) return;
+    if (!auth.currentUser?.emailVerified) {
+      const destination = window.location.pathname + window.location.search + window.location.hash;
+      router.replace(getAuthPageHref("/login", destination));
+    }
+  }, [pathname, user.userId, userLoading, router]);
 
   return (
     <LoginUserContext.Provider value={{ userLoading, user, setUser, auth, refreshUser }}>

@@ -25,10 +25,7 @@ export default function AttendeeOnboardingPage() {
 
   useEffect(() => {
     if (userLoading) return;
-    if (!user.userId) {
-      router.replace("/login");
-      return;
-    }
+    if (!user.userId) return;
     if (!hasProvisionedFirestoreProfile(user)) return;
     if (user.onboardingPersona === "organiser") {
       router.replace("/onboarding/organiser");

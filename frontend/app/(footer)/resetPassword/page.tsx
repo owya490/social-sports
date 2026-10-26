@@ -1,36 +1,49 @@
 "use client";
 
 import { Logger } from "@/observability/logger";
+import { getAuthPageHref, getSafeReturnTo } from "@/services/src/auth/authNavigation";
 import { resetUserPassword } from "@/services/src/auth/authService";
 import { sleep } from "@/utilities/sleepUtil";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
-import { useState, useTransition } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 export default function ResetPassword() {
+  return (
+    <Suspense fallback={<p role="status" className="p-6 text-sm text-gray-500">Loading...</p>}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
+  const searchParams = useSearchParams();
+  const returnTo = getSafeReturnTo(searchParams.get("returnTo"));
   const [email, setEmail] = useState("");
   const [resetSuccess, setResetSuccess] = useState(false);
   const [resetFailed, setResetFailed] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const logger = new Logger("resetPasswordLogger");
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isPending) return;
     setResetSuccess(false);
     setResetFailed(false);
 
-    startTransition(async () => {
-      try {
-        await resetUserPassword(email);
-        // Sleep is necessary for better UX and help rate limit
-        await sleep(500);
-        setResetSuccess(true);
-      } catch (error: any) {
-        logger.error("Error: ", error?.message || error);
-        if (error instanceof Error) console.error(error.message);
-        setResetFailed(true);
-      }
-    });
+    setIsPending(true);
+    try {
+      await resetUserPassword(email, returnTo);
+      await sleep(500);
+      setResetSuccess(true);
+    } catch (error) {
+      logger.error("Password reset request failed", { error: error instanceof Error ? error.message : String(error) });
+      if (error instanceof Error) console.error(error.message);
+      setResetFailed(true);
+    } finally {
+      setIsPending(false);
+    }
   };
   return (
     <div className="flex px-6 min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))] flex-1 flex-col pt-16 sm:pt-40">
@@ -86,7 +99,7 @@ export default function ResetPassword() {
             </button>
           </div>
           <div className="mt-4">
-            <Link href="/login" className="font-semibold leading-6 text-black hover:underline flex justify-center">
+            <Link href={getAuthPageHref("/login", returnTo)} className="font-semibold leading-6 text-black hover:underline flex justify-center">
               Return back to login
             </Link>
           </div>
