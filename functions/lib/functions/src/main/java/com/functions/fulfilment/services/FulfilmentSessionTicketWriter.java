@@ -32,6 +32,7 @@ import com.google.cloud.firestore.Transaction;
 /**
  * Saves the result of a queued fulfilment session.
  * Completed sessions become tickets and an order. Expired sessions put that many tickets back on sale.
+ * Both outcomes delete the fulfilment session in the same transaction.
  */
 class FulfilmentSessionTicketWriter {
 
@@ -55,8 +56,34 @@ class FulfilmentSessionTicketWriter {
             ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, tickets.ticketTypeId());
             EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, tickets.count());
             recordSessionOnEvent(transaction, eventId, session.getId());
+            deleteTempFormResponses(session, transaction);
+            FulfilmentSessionRepository.deleteFulfilmentSession(session.getId(), Optional.of(transaction));
             return null;
         });
+    }
+
+    /**
+     * An expired session never submits its forms. The responses are deleted here because the
+     * session document is removed in the same transaction, and cleanup finds them through that document.
+     */
+    private static void deleteTempFormResponses(FulfilmentSession session, Transaction transaction) throws Exception {
+        List<String> entityIds = session.getFulfilmentEntityIds();
+        if (entityIds == null || session.getFulfilmentEntityMap() == null) {
+            return;
+        }
+        for (String entityId : entityIds) {
+            FulfilmentEntity entity = session.getFulfilmentEntityMap().get(entityId);
+            if (!(entity instanceof FormsFulfilmentEntity formsEntity)
+                    || formsEntity.getFormResponseId() == null
+                    || formsEntity.getFormResponseId().isBlank()) {
+                continue;
+            }
+            FormsRepository.deleteTempFormResponse(
+                    formsEntity.getFormId(),
+                    formsEntity.getEventId(),
+                    formsEntity.getFormResponseId(),
+                    Optional.of(transaction));
+        }
     }
 
     /**
