@@ -35,7 +35,10 @@ import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.fulfilment.models.InitialisedFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.pyng.PyngHostedCheckout;
+import com.functions.fulfilment.pyng.PyngService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.global.exceptions.NotFoundException;
 import com.google.cloud.firestore.Transaction;
@@ -120,16 +123,20 @@ public class FulfilmentServiceTest {
     }
 
     @Test
-    public void rejectsPyngBeforeStartingASession() throws Exception {
-        try {
-            FulfilmentInitialisationService.initialise(
+    public void startsPyngCheckoutSession() throws Exception {
+        EventData event = availableEvent(true);
+        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+        AtomicReference<FulfilmentSession> persisted = captureSession();
+        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class)) {
+            pyng.when(() -> PyngService.createHostedCheckout(any()))
+                    .thenReturn(new PyngHostedCheckout("cs-1", "https://sample.pyng.com.au/launch/opaque", "site-1"));
+            InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
                     "event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
-            fail("Expected Pyng rejection");
-        } catch (IllegalArgumentException expected) {
-            assertTrue(expected.getMessage().contains("Pyng"));
+            FulfilmentSession saved = persisted.get();
+            assertEquals(FulfilmentSessionType.PYNG_CHECKOUT, saved.getType());
+            assertEquals(FulfilmentEntityType.DETAILS, firstEntity(saved));
+            assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
         }
-        events.verifyNoInteractions();
-        sessions.verifyNoInteractions();
         stripe.verifyNoInteractions();
     }
 
