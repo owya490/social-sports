@@ -83,7 +83,7 @@ public class PyngServiceTest {
         JsonNode body = JavaUtils.objectMapper.readTree(request.body());
         assertEquals(SESSION_ID, body.get("orderId").asText());
         assertEquals(3000, body.get("amount").asInt());
-        assertEquals(PyngConfig.PYNG_DEV_RETURN_TARGET + "/event/success/event-1",
+        assertEquals(PyngConfig.PYNG_DEV_RETURN_TARGET + "/fulfilment/pyng-complete",
                 body.get("returnTarget").get("url").asText());
         assertTrue(body.get("metadata").get("fulfilmentSessionId").isTextual());
         assertEquals(SESSION_ID, body.get("metadata").get("fulfilmentSessionId").asText());

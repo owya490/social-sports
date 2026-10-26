@@ -8,6 +8,7 @@ import com.functions.events.models.EventData;
 import com.functions.fulfilment.models.fulfilmentSession.BookingApprovalFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
 
 /**
@@ -109,6 +110,9 @@ public class ProcessFulfilmentSessionService {
         }
         if (session instanceof WaitlistFulfilmentSession waitlist) {
             return new RequestedTickets(waitlist.getNumTickets(), waitlist.getEventTicketTypeId(), waitlist.getPrice());
+        }
+        if (session instanceof PyngCheckoutFulfilmentSession pyng) {
+            return new RequestedTickets(pyng.getNumTickets(), pyng.getEventTicketTypeId(), pyng.getPrice());
         }
         return null;
     }

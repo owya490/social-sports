@@ -16,6 +16,7 @@ import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
+import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -52,6 +53,7 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
                 .numTickets(numTickets)
                 .eventTicketTypeId(ticketType.getId())
                 .eventTicketTypeName(ticketType.getName())
+                .price(ticketType.getPrice())
                 .pyngMetadata(null)
                 .build();
 
@@ -86,6 +88,7 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
                     "Failed to construct FORMS entities for Pyng checkout event ID: " + eventId, e);
         }
 
+        tempEntities.add(DetailsFulfilmentEntity.builder().type(FulfilmentEntityType.DETAILS).build());
         tempEntities.add(PyngFulfilmentEntity.builder().type(FulfilmentEntityType.PYNG).build());
         tempEntities.add(EndFulfilmentEntity.builder()
                 .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))

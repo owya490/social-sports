@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.functions.events.models.EventData;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -92,6 +93,7 @@ final class FulfilmentSessionParser {
                         .numTickets(numTickets)
                         .eventTicketTypeId(eventTicketTypeId)
                         .eventTicketTypeName(text(root, "eventTicketTypeName"))
+                        .price(price)
                         .pyngMetadata(pyngMetadata)
                         .build();
             default:
@@ -113,6 +115,7 @@ final class FulfilmentSessionParser {
                 case WAITLIST -> WaitlistFulfilmentEntity.class;
                 case END -> EndFulfilmentEntity.class;
                 case PYNG -> PyngFulfilmentEntity.class;
+                case DETAILS -> DetailsFulfilmentEntity.class;
             };
             entities.put(field.getKey(), objectMapper.treeToValue(entity, clazz));
         }
