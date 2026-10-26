@@ -5,7 +5,7 @@ import FormResponder, { FormResponderRef } from "@/components/forms/FormResponde
 import UnsavedChangesModal from "@/components/forms/UnsavedChangesModal";
 import DetailsFulfilmentEntity from "@/components/fulfilment/PyngDetailsCheckout";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
-import PyngFulfilmentEntity from "@/components/fulfilment/PyngFulfilmentEntity";
+import PyngFulfilmentEntity, { pyngSuccessPagePath } from "@/components/fulfilment/PyngFulfilmentEntity";
 import WaitlistFulfilmentEntity from "@/components/fulfilment/WaitlistFulfilmentEntity";
 import Loading from "@/components/loading/Loading";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
@@ -351,7 +351,15 @@ const FulfilmentSessionEntityPage = () => {
             fulfilmentEntityId={params.fulfilmentEntityId}
             checkoutUrl={getFulfilmentEntityInfoResponse.checkoutUrl}
             fulfilmentSessionInfo={fulfilmentSessionInfo}
-            onSucceeded={handleNext}
+            onSucceeded={async () => {
+              const successPath = pyngSuccessPagePath(getFulfilmentEntityInfoResponse.eventId);
+              if (successPath) {
+                setLoading(true);
+                router.push(successPath);
+                return;
+              }
+              await handleNext();
+            }}
             onPrev={handlePrev}
           />
           {renderErrorAlert()}

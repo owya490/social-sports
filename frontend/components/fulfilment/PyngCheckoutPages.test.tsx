@@ -5,6 +5,7 @@ import {
   PyngCheckoutWaiting,
   openPyngCheckoutOnce,
   pyngPollOutcome,
+  pyngSuccessPagePath,
 } from "./PyngFulfilmentEntity";
 import { PyngDetailsCheckout, canSubmitPyngDetails } from "./PyngDetailsCheckout";
 
@@ -132,6 +133,8 @@ describe("Pyng fulfilment page", () => {
     expect(pyngPollOutcome("SUCCEEDED")).toBe("succeeded");
     expect(pyngPollOutcome("EXPIRED")).toBe("failed");
     expect(pyngPollOutcome("CANCELLED")).toBe("failed");
+    expect(pyngSuccessPagePath("event-1")).toBe("/event/success/event-1");
+    expect(pyngSuccessPagePath(null)).toBeNull();
   });
 });
 

@@ -25,6 +25,13 @@ export function pyngPollOutcome(status: PyngPaymentStatus): "pending" | "succeed
   return "pending";
 }
 
+export function pyngSuccessPagePath(eventId: string | null | undefined): string | null {
+  if (!eventId) {
+    return null;
+  }
+  return `/event/success/${eventId}`;
+}
+
 export function openPyngCheckoutOnce(
   checkoutUrl: string | null,
   alreadyOpened: boolean,
