@@ -9,6 +9,7 @@
 # globalAppController
 # stripeWebhookEndpoint
 # explainErrorAlert
+# processFulfilmentSession
 
 # Check if the function name is valid and it should be a list of function name and another list of endpoint class name
 
@@ -21,6 +22,7 @@ VALID_FUNCTIONS=(
     "globalAppController"
     "stripeWebhookEndpoint"
     "explainErrorAlert"
+    "processFulfilmentSession"
 )
 
 VALID_ENDPOINTS=(
@@ -32,9 +34,11 @@ VALID_ENDPOINTS=(
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
     "com.functions.alerts.controllers.ExplainErrorAlertEndpoint"
+    "com.functions.fulfilment.controllers.ProcessFulfilmentSessionEndpoint"
 )
 
 ERROR_LOG_ALERTS_TOPIC="error-log-alerts"
+PROCESS_FULFILMENT_SESSIONS_TOPIC="process-fulfilment-sessions-topic"
 
 # Check for exactly 2 arguments
 if [ "$#" -ne 2 ]; then
@@ -110,6 +114,10 @@ elif [ "$ENVIRONMENT" == "prod" ] && [ "$FUNCTION_NAME" == "stripeWebhookEndpoin
         --max-instances 5
         --cpu 0.5
     )
+fi
+
+if [ "$FUNCTION_NAME" == "processFulfilmentSession" ]; then
+    TRIGGER_ARGS=(--gen2 --trigger-topic "$PROCESS_FULFILMENT_SESSIONS_TOPIC" --retry --no-allow-unauthenticated)
 fi
 
 echo "Deploying $FUNCTION_NAME (Entry point: $ENDPOINT_CLASS_NAME) to $ENVIRONMENT under project $PROJECT_NAME"

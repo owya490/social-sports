@@ -2,6 +2,7 @@ package com.functions.fulfilment.models.fulfilmentSession;
 
 import static com.functions.utils.JavaUtils.objectMapper;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,10 @@ public abstract class FulfilmentSession {
      */
     @Builder.Default
     private Boolean isFulfilmentSessionCrystalised = false;
+
+    private FulfilmentSessionStatus status;
+    private String purchaserEmail;
+    private String purchaserName;
 
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
@@ -141,6 +146,9 @@ public abstract class FulfilmentSession {
 
         Integer numTickets = getInteger(snapshot, "numTickets");
         Integer price = getInteger(snapshot, "price");
+        FulfilmentSessionStatus status = status(snapshot.getString("status"));
+        String purchaserEmail = snapshot.getString("purchaserEmail");
+        String purchaserName = snapshot.getString("purchaserName");
         boolean isFulfilmentSessionCrystalised = Boolean.TRUE.equals(
                 snapshot.getBoolean("isFulfilmentSessionCrystalised"));
 
@@ -157,6 +165,9 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .price(price)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case BOOKING_APPROVAL:
@@ -170,11 +181,14 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .price(price)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case WAITLIST:
                 return WaitlistFulfilmentSession.builder()
-                        .eventData(objectMapper.convertValue(snapshot.get("eventData"), 
+                        .eventData(objectMapper.convertValue(snapshot.get("eventData"),
                             EventData.class))
                         .fulfilmentSessionStartTime(
                             snapshot.getTimestamp("fulfilmentSessionStartTime"))
@@ -182,6 +196,9 @@ public abstract class FulfilmentSession {
                         .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .price(price)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             case PYNG_CHECKOUT:
@@ -200,6 +217,9 @@ public abstract class FulfilmentSession {
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
                         .pyngMetadata(pyngMetadata)
+                        .status(status)
+                        .purchaserEmail(purchaserEmail)
+                        .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
                         .build();
             default:
@@ -208,11 +228,19 @@ public abstract class FulfilmentSession {
         }
     }
 
+    public static FulfilmentSession fromJson(String json) throws IOException {
+        return FulfilmentSessionParser.parse(json);
+    }
+
     /**
      * Firestore stores integers as longs and does not distinguish the two.
      */
     private static Integer getInteger(DocumentSnapshot snapshot, String field) {
         Long value = snapshot.getLong(field);
         return value == null ? null : value.intValue();
+    }
+
+    private static FulfilmentSessionStatus status(String value) {
+        return value == null || value.isBlank() ? null : FulfilmentSessionStatus.valueOf(value);
     }
 }
