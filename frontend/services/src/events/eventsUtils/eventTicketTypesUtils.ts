@@ -1,9 +1,30 @@
 import { EventTicketType, EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import type { EventFormAttachmentResult } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 
 export const GENERAL_TICKET_TYPE_NAME = "General Admission";
+
+export function applyEventFormAttachmentToTicketTypes(
+  currentTypes: EventTicketTypesMap | undefined,
+  result: EventFormAttachmentResult,
+  previousName?: string,
+): EventTicketTypesMap | undefined {
+  if (result.target.kind !== "ticketType" || !currentTypes) return currentTypes;
+  const { eventTicketTypeId, ticketTypeName } = result.target;
+  if (!Object.prototype.hasOwnProperty.call(currentTypes, eventTicketTypeId)) return currentTypes;
+  const currentType = currentTypes[eventTicketTypeId];
+  if (!currentType) return currentTypes;
+  return {
+    ...currentTypes,
+    [eventTicketTypeId]: {
+      ...currentType,
+      name: currentType.name === previousName ? ticketTypeName : currentType.name,
+      formId: result.formId,
+    },
+  };
+}
 
 type InventoryFields = Partial<{ price: number; capacity: number; vacancy: number }>;
 

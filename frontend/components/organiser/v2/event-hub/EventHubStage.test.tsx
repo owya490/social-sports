@@ -33,6 +33,7 @@ describe("EventHubSavingIndicator", () => {
     expect(markup).toContain("safe-area-inset-bottom");
     expect(markup).toContain("safe-area-inset-right");
     expect(markup).toContain("animate-spin");
+    expect(markup).toContain("motion-reduce:animate-none");
     expect(markup).not.toContain("Retry");
   });
 
@@ -43,6 +44,7 @@ describe("EventHubSavingIndicator", () => {
     expect(markup).toContain("opacity-0");
     expect(markup).not.toContain("Saving changes…");
     expect(markup).not.toContain("animate-spin");
+    expect(markup).not.toContain("Retry");
   });
 
   it("shows a persistent retry action when saving fails", () => {
@@ -53,6 +55,8 @@ describe("EventHubSavingIndicator", () => {
     expect(markup).toContain("Retry");
     expect(markup).toContain('class="pointer-events-none fixed');
     expect(markup).toContain('class="pointer-events-auto inline-flex');
+    expect(markup).toContain("min-h-[44px]");
+    expect(markup).toContain("flex-wrap");
     expect(markup).not.toContain("animate-spin");
   });
 });
