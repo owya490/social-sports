@@ -120,8 +120,17 @@ final class PyngCheckoutClient {
         JsonNode data = data(root);
         String transactionStatus = text(data, "transactionStatus");
         PaymentStatus status = PyngService.mapTransactionStatus(transactionStatus);
-        logger.info("Pyng checkout session {} transactionStatus {} paymentStatus {} transactionId {} traceId {}",
-                checkoutSessionId, transactionStatus, status, text(data, "transactionId"), text(root, "traceId"));
+        String transactionId = text(data, "transactionId");
+        String traceId = text(root, "traceId");
+        if ("Declined".equals(transactionStatus)) {
+            // Human-readable failure description. Pyng includes it on Declined and omits it otherwise.
+            logger.error("Pyng checkout session {} declined: {} transactionId {} orderId {} traceId {}",
+                    checkoutSessionId, text(data, "transactionStatusDescription"), transactionId,
+                    text(data, "orderId"), traceId);
+        } else {
+            logger.info("Pyng checkout session {} transactionStatus {} paymentStatus {} transactionId {} traceId {}",
+                    checkoutSessionId, transactionStatus, status, transactionId, traceId);
+        }
         return status;
     }
 

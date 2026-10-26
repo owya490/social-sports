@@ -6,12 +6,17 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -152,6 +157,45 @@ public class PyngServiceTest {
         PaymentStatus status = PyngService.pollCheckout(session(PaymentStatus.PENDING).getPyngMetadata());
 
         assertEquals(PaymentStatus.SUCCEEDED, status);
+    }
+
+    @Test
+    public void pollCheckoutLogsDeclineDescription() throws Exception {
+        Logger jul = Logger.getLogger(PyngCheckoutClient.class.getName());
+        List<LogRecord> records = new ArrayList<>();
+        Handler handler = new Handler() {
+            @Override
+            public void publish(LogRecord record) {
+                records.add(record);
+            }
+
+            @Override
+            public void flush() {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+        jul.addHandler(handler);
+        try {
+            PyngService.client = new PyngCheckoutClient(request -> new PyngCheckoutClient.RawResponse(200, """
+                    {"data":{"checkoutSessionId":"cs-1","transactionStatus":"Declined","transactionStatusDescription":"Insufficient Funds","transactionId":"txn-9","orderId":"%s"},"traceId":"trace-9"}
+                    """.formatted(SESSION_ID)));
+
+            PaymentStatus status = PyngService.pollCheckout(session(PaymentStatus.PENDING).getPyngMetadata());
+
+            assertEquals(PaymentStatus.CANCELLED, status);
+            assertTrue(records.stream().anyMatch(record -> record.getLevel() == Level.SEVERE
+                    && record.getMessage() != null
+                    && record.getMessage().contains("Insufficient Funds")
+                    && record.getMessage().contains("cs-1")
+                    && record.getMessage().contains("txn-9")
+                    && record.getMessage().contains(SESSION_ID)
+                    && record.getMessage().contains("trace-9")));
+        } finally {
+            jul.removeHandler(handler);
+        }
     }
 
     @Test
