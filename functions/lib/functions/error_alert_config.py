@@ -47,20 +47,21 @@ def policy(project, channels):
 
 
 def managed_policy(project):
-    query_prefix = f'logName="projects/{project}/logs/{SUMMARY_LOG}" AND jsonPayload.fingerprint="'
+    explanation_query = (
+        f'logName="projects/{project}/logs/{SUMMARY_LOG}" AND jsonPayload.kind="errorSummary"'
+    )
     explanation_url = (
         "https://console.cloud.google.com/logs/query;query="
-        + urllib.parse.quote(query_prefix, safe="")
-        + label("fingerprint")
-        + "%22;duration=P7D?project=" + project
+        + urllib.parse.quote(explanation_query, safe="")
+        + ";duration=P7D?project=" + project
     )
     return {
         "displayName": POLICY_NAME,
+        "severity": "ERROR",
         "documentation": {
             "subject": label("sms"),
             "content": (
                 label("sms") + "\n\n"
-                "Observed error: " + label("headline") + "\n\n"
                 "Observed log evidence is primary. AI interpretation is optional and unconfirmed. "
                 "Open the linked log for the evidence, explanation and original error.\n\n"
                 "[AI explanation and evidence]("
@@ -74,8 +75,6 @@ def managed_policy(project):
             "conditionMatchedLog": {
                 "filter": f'logName="projects/{project}/logs/{SUMMARY_LOG}" AND jsonPayload.kind="errorSummary"',
                 "labelExtractors": {
-                    "fingerprint": "EXTRACT(jsonPayload.fingerprint)",
-                    "headline": "EXTRACT(jsonPayload.headline)",
                     "sms": "EXTRACT(jsonPayload.sms)",
                 },
             },

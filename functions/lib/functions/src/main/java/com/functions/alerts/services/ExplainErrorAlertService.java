@@ -36,6 +36,10 @@ public class ExplainErrorAlertService {
 
     public void process(ParsedErrorLog parsed) {
         String fingerprint = ErrorAlertFingerprint.of(parsed);
+        if (dedupStore.smsFor(fingerprint).isPresent()) {
+            logger.info("Skipping error alert; fingerprint already paged fingerprint={}", fingerprint);
+            return;
+        }
         Optional<Reservation> claim = dedupStore.reserve();
         if (claim.isEmpty()) {
             logger.info("Skipping error alert; notification budget is active fingerprint={}", fingerprint);
@@ -47,7 +51,7 @@ public class ExplainErrorAlertService {
             String headline = SmsText.forHeadline(
                     parsed.functionName() + ": " + ErrorAlertFingerprint.normalizedFirstLine(parsed.message()));
             String interpretation = summarizer.summarize(parsed).orElse("");
-            String sms = stableSms(fingerprint, headline, interpretation);
+            String sms = smsForPublish(fingerprint, headline, interpretation);
             summaryPublisher.publish(new ErrorAlertNotification(
                     fingerprint, headline, parsed, interpretation, sms));
         } catch (RuntimeException failure) {
@@ -63,15 +67,8 @@ public class ExplainErrorAlertService {
         logger.info("Error alert published. function={} fingerprint={}", parsed.functionName(), fingerprint);
     }
 
-    private String stableSms(String fingerprint, String headline, String interpretation) {
-        Optional<String> persisted = dedupStore.smsFor(fingerprint);
-        if (persisted.isPresent()) {
-            return persisted.get();
-        }
-        if (interpretation.isBlank()) {
-            return headline;
-        }
-        String sms = SmsText.forSmsSubject(interpretation);
+    private String smsForPublish(String fingerprint, String headline, String interpretation) {
+        String sms = interpretation.isBlank() ? headline : SmsText.forSmsSubject(interpretation);
         dedupStore.rememberSms(fingerprint, sms);
         return sms;
     }

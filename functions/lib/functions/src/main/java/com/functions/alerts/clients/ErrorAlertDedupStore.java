@@ -21,17 +21,16 @@ public interface ErrorAlertDedupStore {
     void release(Reservation reservation);
 
     /**
-     * Stable SMS for this fingerprint while the incident is still active
-     * ({@code smsSavedAt} within the 7-day autoClose window). Lookup is read-only;
-     * activity advances from {@link #complete}. Empty means generate and persist a
-     * new interpretation.
+     * Cached SMS for this fingerprint while the incident is still active
+     * ({@code smsSavedAt} within the 7-day autoClose window). Present means this
+     * error was already paged; do not reserve, interpret, or publish again.
+     * Lookup is read-only; activity advances from {@link #complete}.
      */
     Optional<String> smsFor(String fingerprint);
 
     /**
-     * Persist trimmed SMS for this fingerprint. Reuses the stored value while the
-     * incident window is open so EXTRACT(sms) identity stays stable. After expiry,
-     * overwrites with the new Gemini wording.
+     * Persist trimmed SMS for this fingerprint before the first successful
+     * publication. After expiry, overwrites with the new Gemini wording.
      */
     void rememberSms(String fingerprint, String sms);
 }
