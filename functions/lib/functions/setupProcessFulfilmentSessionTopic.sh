@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # Creates the fulfilment-session Pub/Sub topic and its dead-letter topic.
+# Eventarc retains unacked messages on the trigger subscription for 24 hours.
+# Both topics, and that subscription, retain messages for 7 days. Dead-letter
+# messages stay on their topic for that duration because it has no subscriber.
 # Pass attach-dead-letter after processFulfilmentSession has been deployed so the
 # trigger subscription moves a failing message to the dead-letter topic.
 # Pub/Sub rejects a dead-letter policy below 5 delivery attempts, so 5 is the smallest retry count.
@@ -29,22 +32,28 @@ fi
 
 TOPIC="process-fulfilment-sessions-topic"
 DEAD_LETTER_TOPIC="process-fulfilment-sessions-dead-letter"
+MESSAGE_RETENTION="7d"
 
 echo "Setting up $TOPIC in $ENVIRONMENT project $PROJECT_NAME"
 
 gcloud services enable pubsub.googleapis.com --project="$PROJECT_NAME"
 
-if gcloud pubsub topics describe "$TOPIC" --project="$PROJECT_NAME" >/dev/null 2>&1; then
-    echo "Pub/Sub topic $TOPIC already exists"
-else
-    gcloud pubsub topics create "$TOPIC" --project="$PROJECT_NAME"
-fi
+ensure_topic() {
+    local topic="$1"
+    if gcloud pubsub topics describe "$topic" --project="$PROJECT_NAME" >/dev/null 2>&1; then
+        echo "Pub/Sub topic $topic already exists"
+    else
+        gcloud pubsub topics create "$topic" --project="$PROJECT_NAME" \
+            --message-retention-duration="$MESSAGE_RETENTION"
+    fi
+    gcloud pubsub topics update "$topic" --project="$PROJECT_NAME" \
+        --message-retention-duration="$MESSAGE_RETENTION" \
+        --quiet
+    echo "Message retention for $topic is $MESSAGE_RETENTION"
+}
 
-if gcloud pubsub topics describe "$DEAD_LETTER_TOPIC" --project="$PROJECT_NAME" >/dev/null 2>&1; then
-    echo "Pub/Sub topic $DEAD_LETTER_TOPIC already exists"
-else
-    gcloud pubsub topics create "$DEAD_LETTER_TOPIC" --project="$PROJECT_NAME"
-fi
+ensure_topic "$TOPIC"
+ensure_topic "$DEAD_LETTER_TOPIC"
 
 if [ "$#" -eq 2 ] && [ "$2" == "attach-dead-letter" ]; then
     PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_NAME" --format='value(projectNumber)')
@@ -84,8 +93,9 @@ if [ "$#" -eq 2 ] && [ "$2" == "attach-dead-letter" ]; then
             --project="$PROJECT_NAME" \
             --dead-letter-topic="$DEAD_LETTER_TOPIC" \
             --max-delivery-attempts=5 \
+            --message-retention-duration="$MESSAGE_RETENTION" \
             --quiet
-        echo "Attached dead letter to $SUBSCRIPTION"
+        echo "Attached dead letter to $SUBSCRIPTION with message retention $MESSAGE_RETENTION"
     done <<EOF
 $SUBSCRIPTIONS
 EOF
