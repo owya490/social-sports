@@ -8,11 +8,15 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 
@@ -31,6 +35,7 @@ import org.mockito.MockedStatic;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.events.utils.EventsUtils;
 import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.fulfilment.models.InitialisedFulfilmentSession;
@@ -45,6 +50,8 @@ import com.google.cloud.firestore.Transaction;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.stripe.exceptions.CheckoutVacancyException;
+import com.google.cloud.firestore.DocumentReference;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
 import com.functions.stripe.services.StripeService;
 import com.functions.utils.environment.Environment;
@@ -125,9 +132,16 @@ public class FulfilmentServiceTest {
     @Test
     public void startsPyngCheckoutSession() throws Exception {
         EventData event = availableEvent(true);
+        event.getEventTicketTypes().get("ticket-1").setVacancy(2);
         events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
         AtomicReference<FulfilmentSession> persisted = captureSession();
-        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class)) {
+        DocumentReference eventRef = mock(DocumentReference.class);
+        Transaction transaction = vacancyTransaction(event, eventRef);
+        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class);
+                MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class);
+                MockedStatic<EventsUtils> eventUtils = mockStatic(EventsUtils.class, CALLS_REAL_METHODS)) {
+            runTransactions(firebase, transaction);
+            eventUtils.when(() -> EventsUtils.getEventRef(any(), eq("event-1"), eq(Boolean.FALSE))).thenReturn(eventRef);
             pyng.when(() -> PyngService.createHostedCheckout(any()))
                     .thenReturn(new PyngHostedCheckout("cs-1", "https://sample.pyng.com.au/launch/opaque", "site-1"));
             InitialisedFulfilmentSession result = FulfilmentInitialisationService.initialise(
@@ -136,7 +150,61 @@ public class FulfilmentServiceTest {
             assertEquals(FulfilmentSessionType.PYNG_CHECKOUT, saved.getType());
             assertEquals(FulfilmentEntityType.DETAILS, firstEntity(saved));
             assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
+            verify(transaction).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 1));
+            assertEquals(Integer.valueOf(1), event.getEventTicketTypes().get("ticket-1").getVacancy());
         }
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    public void pyngCheckoutRejectsInsufficientVacancyBeforeStartingHostedCheckout() throws Exception {
+        EventData event = availableEvent(true);
+        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+        DocumentReference eventRef = mock(DocumentReference.class);
+        Transaction transaction = vacancyTransaction(event, eventRef);
+        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class);
+                MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class);
+                MockedStatic<EventsUtils> eventUtils = mockStatic(EventsUtils.class, CALLS_REAL_METHODS)) {
+            runTransactions(firebase, transaction);
+            eventUtils.when(() -> EventsUtils.getEventRef(any(), eq("event-1"), eq(Boolean.FALSE))).thenReturn(eventRef);
+            try {
+                FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
+                fail("Expected vacancy rejection");
+            } catch (CheckoutVacancyException expected) {
+                assertTrue(expected.getMessage().contains("Insufficient tickets"));
+            }
+            pyng.verifyNoInteractions();
+            verify(transaction, never()).update(any(), anyMap());
+        }
+        sessions.verifyNoInteractions();
+        stripe.verifyNoInteractions();
+    }
+
+    @Test
+    public void pyngCheckoutReleasesReservationWhenHostedCheckoutFails() throws Exception {
+        EventData event = availableEvent(true);
+        event.getEventTicketTypes().get("ticket-1").setVacancy(2);
+        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+        DocumentReference eventRef = mock(DocumentReference.class);
+        Transaction transaction = vacancyTransaction(event, eventRef);
+        IllegalStateException pyngFailure = new IllegalStateException("Pyng unavailable");
+        try (MockedStatic<PyngService> pyng = mockStatic(PyngService.class);
+                MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class);
+                MockedStatic<EventsUtils> eventUtils = mockStatic(EventsUtils.class, CALLS_REAL_METHODS)) {
+            runTransactions(firebase, transaction);
+            eventUtils.when(() -> EventsUtils.getEventRef(any(), eq("event-1"), eq(Boolean.FALSE))).thenReturn(eventRef);
+            pyng.when(() -> PyngService.createHostedCheckout(any())).thenThrow(pyngFailure);
+            try {
+                FulfilmentInitialisationService.initialise("event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
+                fail("Expected hosted checkout failure");
+            } catch (IllegalStateException expected) {
+                assertSame(pyngFailure, expected);
+            }
+            verify(transaction).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 1));
+            verify(transaction).update(eventRef, Map.of("eventTicketTypes.ticket-1.vacancy", 2));
+            assertEquals(Integer.valueOf(2), event.getEventTicketTypes().get("ticket-1").getVacancy());
+        }
+        sessions.verifyNoInteractions();
         stripe.verifyNoInteractions();
     }
 
@@ -370,6 +438,25 @@ public class FulfilmentServiceTest {
         stripe.when(() -> StripeService.getDelayedStripeCheckoutUrl(
                 anyString(), anyBoolean(), anyInt(), any(), any(), anyString(), anyString(), anyString(), any()))
                 .thenReturn(response);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Transaction vacancyTransaction(EventData event, DocumentReference eventRef) {
+        Transaction transaction = mock(Transaction.class);
+        events.when(() -> EventsRepository.getActiveEventById("event-1", false, transaction))
+                .thenReturn(Optional.of(event));
+        doAnswer(invocation -> {
+            Map<String, Object> fields = invocation.getArgument(1);
+            event.getEventTicketTypes().get("ticket-1").setVacancy((Integer) fields.get("eventTicketTypes.ticket-1.vacancy"));
+            return null;
+        }).when(transaction).update(eq(eventRef), anyMap());
+        return transaction;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void runTransactions(MockedStatic<FirebaseService> firebase, Transaction transaction) {
+        firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
+                .thenAnswer(invocation -> ((Transaction.Function<?>) invocation.getArgument(0)).updateCallback(transaction));
     }
 
     private AtomicReference<FulfilmentSession> captureSession() throws Exception {
