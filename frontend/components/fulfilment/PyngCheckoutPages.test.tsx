@@ -2,6 +2,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import PyngCompletePage from "@/app/(footer)/fulfilment/pyng-complete/page";
 import {
   PYNG_POLL_INTERVAL_MS,
+  PYNG_REFRESH_MIN_MS,
+  pyngRefreshDelayMs,
   PyngCheckoutWaiting,
   openPyngCheckoutOnce,
   pyngPollOutcome,
@@ -71,6 +73,8 @@ describe("Pyng details checkout", () => {
     expect(blocked).toContain("$30.00 AUD");
     expect(blocked).toContain("Pay with PYNG");
     expect(blocked).toContain("rounded-2xl");
+    expect(blocked).toContain("md:h-full");
+    expect(blocked).not.toContain("overflow-hidden");
     expect(blocked).toContain('disabled=""');
 
     const ready = renderToStaticMarkup(
@@ -115,6 +119,8 @@ describe("Pyng fulfilment page", () => {
     expect(markup).toContain("click here");
     expect(markup).toContain("bg-white");
     expect(markup).toContain("rounded-2xl");
+    expect(markup).toContain("min-h-full");
+    expect(markup).toContain("md:overflow-hidden");
     expect(markup).toContain("Refresh");
     expect(markup).toContain("When you&#x27;ve finished paying, click Refresh to check.");
     expect(markup).toContain("We&#x27;re still waiting for your payment.");
@@ -164,6 +170,9 @@ describe("Pyng fulfilment page", () => {
 
   it("polls every minute and only advances when payment succeeds", () => {
     expect(PYNG_POLL_INTERVAL_MS).toBe(60_000);
+    expect(PYNG_REFRESH_MIN_MS).toBe(3_000);
+    expect(pyngRefreshDelayMs(1_000, 1_400)).toBe(2_600);
+    expect(pyngRefreshDelayMs(1_000, 5_000)).toBe(0);
     expect(pyngPollOutcome("PENDING")).toBe("pending");
     expect(pyngPollOutcome("SUCCEEDED")).toBe("succeeded");
     expect(pyngPollOutcome("EXPIRED")).toBe("failed");

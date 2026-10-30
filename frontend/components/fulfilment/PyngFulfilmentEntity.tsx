@@ -13,7 +13,13 @@ import { ArrowPathIcon, CheckIcon, XMarkIcon } from "@heroicons/react/24/outline
 import { ReactNode, useEffect, useRef, useState } from "react";
 
 export const PYNG_POLL_INTERVAL_MS = 60_000;
+export const PYNG_REFRESH_MIN_MS = 3_000;
 export const PYNG_SUCCESS_REDIRECT_SECONDS = 5;
+
+/** A fast check still shows Checking… long enough to read. */
+export function pyngRefreshDelayMs(startedAt: number, now: number, minMs = PYNG_REFRESH_MIN_MS): number {
+  return Math.max(0, minMs - (now - startedAt));
+}
 
 export function pyngRefreshFeedback(outcome: "pending" | "succeeded", secondsRemaining: number): string {
   if (outcome === "succeeded") {
@@ -65,7 +71,7 @@ type PyngCheckoutWaitingProps = {
 
 function PaymentStatusCard({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <div className="flex h-full min-h-0 flex-1 items-center justify-center overflow-hidden px-4">
+    <div className="flex min-h-full w-full items-center justify-center px-4 py-4 md:h-full md:min-h-0 md:flex-1 md:overflow-hidden md:py-0">
       <div className="w-full max-w-md overflow-hidden rounded-2xl border border-gray-200 bg-white text-center shadow-sm">
         <div className="px-6 py-8 sm:px-8">
           <div className="mx-auto mb-5 flex h-10 w-10 items-center justify-center rounded-full bg-core-text text-white">
@@ -211,8 +217,21 @@ export default function PyngFulfilmentEntity({
       }
       inFlight.current = true;
       setRefreshing(true);
+      const startedAt = Date.now();
+      const waitForMinimum = async () => {
+        const remaining = pyngRefreshDelayMs(startedAt, Date.now());
+        if (remaining > 0) {
+          await new Promise<void>((resolve) => {
+            setTimeout(resolve, remaining);
+          });
+        }
+      };
       try {
         const status = await refreshPyngCheckout(fulfilmentSessionId);
+        if (cancelled || stopped.current) {
+          return;
+        }
+        await waitForMinimum();
         if (cancelled || stopped.current) {
           return;
         }
@@ -235,6 +254,10 @@ export default function PyngFulfilmentEntity({
         logger.error(
           `Failed to refresh Pyng checkout for session ${fulfilmentSessionId} entity ${fulfilmentEntityId}: ${pollError}`
         );
+        if (cancelled) {
+          return;
+        }
+        await waitForMinimum();
         if (!cancelled) {
           setError("Could not check the payment. We'll try again.");
         }

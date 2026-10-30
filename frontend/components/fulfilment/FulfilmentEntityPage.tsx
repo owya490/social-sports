@@ -21,7 +21,7 @@ interface FulfilmentEntityPageProps {
   isSaving?: boolean;
   nextDisabledMessage?: string;
   fulfilmentSessionId: FulfilmentSessionId;
-  /** Stepper, content, and prev/next stay inside the viewport. */
+  /** From md up, stepper, content, and prev/next stay inside the viewport. Below md, the step content scrolls. */
   fitScreen?: boolean;
 }
 
@@ -145,7 +145,13 @@ const FulfilmentEntityPage = ({
           <FulfilmentEntityStepper fulfilmentSessionInfo={fulfilmentSessionInfo} />
         </div>
       </div>
-      <div className={fitScreen ? "flex min-h-0 w-full flex-1 flex-col overflow-hidden" : "w-full"}>{children}</div>
+      <div
+        className={
+          fitScreen ? "flex min-h-0 w-full flex-1 flex-col overflow-y-auto md:overflow-hidden" : "w-full"
+        }
+      >
+        {children}
+      </div>
 
       {/* Navigation buttons positioned to match form width */}
       <div

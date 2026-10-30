@@ -66,8 +66,8 @@ export function PyngDetailsCheckout({
   };
 
   return (
-    <div className="mx-auto grid h-full min-h-0 w-full max-w-5xl grid-rows-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 px-4 md:grid-cols-2 md:grid-rows-1 md:px-8">
-      <section className="flex min-h-0 flex-col overflow-hidden px-5 py-4 md:px-8 md:py-6">
+    <div className="mx-auto grid w-full max-w-5xl gap-3 px-4 py-2 md:h-full md:min-h-0 md:grid-cols-2 md:grid-rows-1 md:px-8">
+      <section className="flex flex-col px-5 py-4 md:min-h-0 md:px-8 md:py-6">
         <h2 className="text-sm font-medium text-foreground-muted font-sans">Order summary</h2>
         <div className="mt-4 flex items-center gap-3">
           {eventThumbnail ? (
@@ -99,7 +99,7 @@ export function PyngDetailsCheckout({
         </div>
       </section>
       <form
-        className="flex min-h-0 flex-col overflow-hidden rounded-2xl bg-background px-5 py-4 md:px-8 md:py-6"
+        className="flex flex-col rounded-2xl bg-background px-5 py-4 md:min-h-0 md:px-8 md:py-6"
         onSubmit={submit}
       >
         <h2 className="text-sm font-medium text-foreground font-sans">Contact info</h2>
