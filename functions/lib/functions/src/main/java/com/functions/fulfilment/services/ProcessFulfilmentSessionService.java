@@ -46,6 +46,15 @@ public class ProcessFulfilmentSessionService {
             throw failure("Fulfilment session " + session.getId() + " has no ticket quantity or ticket type");
         }
 
+        logger.info(
+                "Processing fulfilment session {} type {} status {} event {} ticketType {} tickets {}",
+                session.getId(),
+                session.getType(),
+                session.getStatus(),
+                session.getEventData().getEventId(),
+                tickets.ticketTypeId(),
+                tickets.count());
+
         switch (session.getStatus()) {
             case COMPLETED:
                 if (tickets.priceCents() == null
@@ -57,7 +66,16 @@ public class ProcessFulfilmentSessionService {
                 processCompleted(session);
                 break;
             case EXPIRED:
-                FulfilmentSessionTicketWriter.refundVacancy(session);
+                if (FulfilmentSessionTicketWriter.refundVacancy(session)) {
+                    logger.info(
+                            "Refunded vacancy for expired fulfilment session {} event {} ticketType {} tickets {}",
+                            session.getId(),
+                            session.getEventData().getEventId(),
+                            tickets.ticketTypeId(),
+                            tickets.count());
+                } else {
+                    logger.info("Expired fulfilment session {} already processed", session.getId());
+                }
                 break;
             default:
                 throw failure("Fulfilment session " + session.getId()
@@ -84,9 +102,14 @@ public class ProcessFulfilmentSessionService {
     private static void processCompleted(FulfilmentSession session) throws Exception {
         String orderId = FulfilmentSessionTicketWriter.createTicketsAndOrder(session);
         if (orderId == null) {
-            logger.info("Fulfilment session {} already processed", session.getId());
+            logger.info("Completed fulfilment session {} already processed", session.getId());
             return;
         }
+        logger.info(
+                "Created tickets and order {} for completed fulfilment session {} event {}",
+                orderId,
+                session.getId(),
+                session.getEventData().getEventId());
         EventData eventData = session.getEventData();
         String purchaserName = session.getPurchaserName() == null ? "" : session.getPurchaserName();
         boolean sent = EmailService.sendPurchaseEmailWithRetries(
@@ -96,8 +119,10 @@ public class ProcessFulfilmentSessionService {
                 purchaserName,
                 orderId);
         if (!sent) {
-            logger.error("Purchase email failed for fulfilment session {}", session.getId());
+            logger.error("Purchase email failed for fulfilment session {} order {}", session.getId(), orderId);
+            return;
         }
+        logger.info("Sent purchase email for fulfilment session {} order {}", session.getId(), orderId);
     }
 
     static RequestedTickets requestedTickets(FulfilmentSession session) {
