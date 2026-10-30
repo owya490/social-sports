@@ -5,6 +5,7 @@ import {
   PyngCheckoutWaiting,
   openPyngCheckoutOnce,
   pyngPollOutcome,
+  pyngRefreshFeedback,
   pyngSuccessPagePath,
 } from "./PyngFulfilmentEntity";
 import { PyngDetailsCheckout, canSubmitPyngDetails } from "./PyngDetailsCheckout";
@@ -50,7 +51,7 @@ describe("Pyng details checkout", () => {
     const blocked = renderToStaticMarkup(
       <PyngDetailsCheckout
         eventName="Friday Social"
-        eventImage={null}
+        eventThumbnail={null}
         ticketName="General Admission"
         quantity={2}
         unitPriceCents={1500}
@@ -69,12 +70,13 @@ describe("Pyng details checkout", () => {
     expect(blocked).toContain("General Admission");
     expect(blocked).toContain("$30.00 AUD");
     expect(blocked).toContain("Pay with PYNG");
+    expect(blocked).toContain("rounded-2xl");
     expect(blocked).toContain('disabled=""');
 
     const ready = renderToStaticMarkup(
       <PyngDetailsCheckout
         eventName="Friday Social"
-        eventImage={null}
+        eventThumbnail={null}
         ticketName="General Admission"
         quantity={2}
         unitPriceCents={1500}
@@ -88,6 +90,8 @@ describe("Pyng details checkout", () => {
         onSubmit={() => {}}
       />
     );
+    expect(ready).toContain('value="Ada Lovelace"');
+    expect(ready).toContain('value="ada@example.com"');
     expect(ready).not.toContain('disabled=""');
   });
 });
@@ -99,6 +103,8 @@ describe("Pyng fulfilment page", () => {
         checkoutUrl="https://sample.pyng.com.au/launch/opaque"
         failed={false}
         refreshing={false}
+        awaitingPayment
+        redirectInSeconds={null}
         error=""
         onRefresh={() => {}}
       />
@@ -107,12 +113,41 @@ describe("Pyng fulfilment page", () => {
     expect(markup).toContain("Please keep this one open");
     expect(markup).toContain('href="https://sample.pyng.com.au/launch/opaque"');
     expect(markup).toContain("click here");
+    expect(markup).toContain("bg-white");
+    expect(markup).toContain("rounded-2xl");
     expect(markup).toContain("Refresh");
+    expect(markup).toContain("When you&#x27;ve finished paying, click Refresh to check.");
+    expect(markup).toContain("We&#x27;re still waiting for your payment.");
+  });
+
+  it("counts down after the payment is completed", () => {
+    const markup = renderToStaticMarkup(
+      <PyngCheckoutWaiting
+        checkoutUrl="https://sample.pyng.com.au/launch/opaque"
+        failed={false}
+        refreshing={false}
+        awaitingPayment={false}
+        redirectInSeconds={5}
+        error=""
+        onRefresh={() => {}}
+      />
+    );
+    expect(markup).toContain("Payment completed");
+    expect(markup).toContain("We&#x27;ll redirect you in 5s.");
+    expect(markup).not.toContain("click Refresh to check");
   });
 
   it("does not offer the hosted checkout after payment fails", () => {
     const markup = renderToStaticMarkup(
-      <PyngCheckoutWaiting checkoutUrl="https://sample.pyng.com.au/launch/opaque" failed refreshing={false} error="" onRefresh={() => {}} />
+      <PyngCheckoutWaiting
+        checkoutUrl="https://sample.pyng.com.au/launch/opaque"
+        failed
+        refreshing={false}
+        awaitingPayment={false}
+        redirectInSeconds={null}
+        error=""
+        onRefresh={() => {}}
+      />
     );
     expect(markup).toContain("This payment did not complete");
     expect(markup).not.toContain("click here");
@@ -135,6 +170,8 @@ describe("Pyng fulfilment page", () => {
     expect(pyngPollOutcome("CANCELLED")).toBe("failed");
     expect(pyngSuccessPagePath("event-1")).toBe("/event/success/event-1");
     expect(pyngSuccessPagePath(null)).toBeNull();
+    expect(pyngRefreshFeedback("pending", 0)).toBe("We're still waiting for your payment.");
+    expect(pyngRefreshFeedback("succeeded", 5)).toBe("We'll redirect you in 5s.");
   });
 });
 

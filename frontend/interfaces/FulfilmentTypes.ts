@@ -148,6 +148,9 @@ export type GetFulfilmentEntityInfoResponse = {
   quantity: number | null;
   ticketName: string | null;
   unitPriceCents: number | null;
+  /** Purchaser contact saved on the details step. */
+  purchaserName: string | null;
+  purchaserEmail: string | null;
 };
 
 export type UpdateFulfilmentPurchaserRequest = {

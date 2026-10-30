@@ -29,5 +29,10 @@ public record GetFulfilmentEntityInfoResponse(
                  */
                 @Nullable Integer quantity,
                 @Nullable String ticketName,
-                @Nullable Integer unitPriceCents) {
+                @Nullable Integer unitPriceCents,
+                /**
+                 * Purchaser contact saved on the details step.
+                 */
+                @Nullable String purchaserName,
+                @Nullable String purchaserEmail) {
 }

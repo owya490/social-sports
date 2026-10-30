@@ -336,6 +336,8 @@ const FulfilmentSessionEntityPage = () => {
             ticketName={getFulfilmentEntityInfoResponse.ticketName}
             quantity={getFulfilmentEntityInfoResponse.quantity}
             unitPriceCents={getFulfilmentEntityInfoResponse.unitPriceCents}
+            purchaserName={getFulfilmentEntityInfoResponse.purchaserName}
+            purchaserEmail={getFulfilmentEntityInfoResponse.purchaserEmail}
             fulfilmentSessionInfo={fulfilmentSessionInfo}
             onNext={handleNext}
             onPrev={handlePrev}

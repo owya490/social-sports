@@ -26,7 +26,7 @@ export function canSubmitPyngDetails(name: string, email: string): boolean {
 
 type PyngDetailsCheckoutProps = {
   eventName: string;
-  eventImage: string | null;
+  eventThumbnail: string | null;
   ticketName: string;
   quantity: number;
   unitPriceCents: number;
@@ -42,7 +42,7 @@ type PyngDetailsCheckoutProps = {
 
 export function PyngDetailsCheckout({
   eventName,
-  eventImage,
+  eventThumbnail,
   ticketName,
   quantity,
   unitPriceCents,
@@ -66,18 +66,18 @@ export function PyngDetailsCheckout({
   };
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl md:grid-cols-2">
-      <section className="bg-surface px-6 py-8 md:px-10 md:py-12">
+    <div className="mx-auto grid h-full min-h-0 w-full max-w-5xl grid-rows-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-3 px-4 md:grid-cols-2 md:grid-rows-1 md:px-8">
+      <section className="flex min-h-0 flex-col overflow-hidden px-5 py-4 md:px-8 md:py-6">
         <h2 className="text-sm font-medium text-foreground-muted font-sans">Order summary</h2>
-        <div className="mt-6 flex items-center gap-3">
-          {eventImage ? (
-            <Image src={eventImage} alt="" width={48} height={48} className="h-12 w-12 rounded-md object-cover" />
+        <div className="mt-4 flex items-center gap-3">
+          {eventThumbnail ? (
+            <Image src={eventThumbnail} alt="" width={48} height={48} className="h-12 w-12 rounded-md object-cover" />
           ) : (
             <span className="h-12 w-12 rounded-md bg-border" />
           )}
           <p className="text-sm font-semibold text-foreground font-sans">{eventName}</p>
         </div>
-        <div className="mt-6 flex items-start justify-between gap-4">
+        <div className="mt-4 flex items-start justify-between gap-4">
           <div>
             <p className="text-sm font-medium text-foreground font-sans">{ticketName}</p>
             <p className="mt-1 text-sm text-foreground-muted font-sans">{getEventPriceDisplay(unitPriceCents)} each</p>
@@ -87,7 +87,7 @@ export function PyngDetailsCheckout({
             <p className="mt-1 text-sm font-medium text-foreground font-sans">{getEventPriceDisplay(lineTotalCents)}</p>
           </div>
         </div>
-        <div className="mt-6 space-y-3 border-t border-border pt-4">
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
           <div className="flex items-center justify-between text-sm font-sans">
             <span className="text-foreground-muted">Subtotal</span>
             <span className="text-foreground">{getEventPriceDisplay(lineTotalCents)}</span>
@@ -98,9 +98,12 @@ export function PyngDetailsCheckout({
           </div>
         </div>
       </section>
-      <form className="bg-background px-6 py-8 md:px-10 md:py-12" onSubmit={submit}>
+      <form
+        className="flex min-h-0 flex-col overflow-hidden rounded-2xl bg-background px-5 py-4 md:px-8 md:py-6"
+        onSubmit={submit}
+      >
         <h2 className="text-sm font-medium text-foreground font-sans">Contact info</h2>
-        <label className="mt-6 block text-sm font-medium text-foreground font-sans" htmlFor="pyng-purchaser-name">
+        <label className="mt-4 block text-sm font-medium text-foreground font-sans" htmlFor="pyng-purchaser-name">
           Full name
         </label>
         <input
@@ -125,7 +128,7 @@ export function PyngDetailsCheckout({
         />
         {emailError ? <p className="mt-2 text-sm text-red-600 font-sans">{emailError}</p> : null}
         {saveError ? <p className="mt-2 text-sm text-red-600 font-sans">{saveError}</p> : null}
-        <button type="submit" className={`${payButtonClassName} mt-8`} disabled={!canPay}>
+        <button type="submit" className={`${payButtonClassName} mt-4`} disabled={!canPay}>
           <Image src="/images/pyng-mark.png" alt="" width={20} height={20} className="h-5 w-5" />
           Pay with PYNG
         </button>
@@ -141,6 +144,8 @@ type DetailsFulfilmentEntityProps = {
   ticketName: string | null;
   quantity: number | null;
   unitPriceCents: number | null;
+  purchaserName: string | null;
+  purchaserEmail: string | null;
   fulfilmentSessionInfo: GetFulfilmentSessionInfoResponse | null;
   onNext: () => Promise<void>;
   onPrev: () => Promise<void>;
@@ -153,6 +158,8 @@ export default function DetailsFulfilmentEntity({
   ticketName,
   quantity,
   unitPriceCents,
+  purchaserName,
+  purchaserEmail,
   fulfilmentSessionInfo,
   onNext,
   onPrev,
@@ -161,8 +168,8 @@ export default function DetailsFulfilmentEntity({
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [eventData, setEventData] = useState<EventData | null>(null);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(purchaserName ?? "");
+  const [email, setEmail] = useState(purchaserEmail ?? "");
   const [saveError, setSaveError] = useState("");
   const [saving, setSaving] = useState(false);
   const emailError = email.trim() === "" || validateEmail(email) ? "" : EMAIL_VALIDATION_ERROR_MESSAGE;
@@ -222,10 +229,11 @@ export default function DetailsFulfilmentEntity({
       showNextButton={false}
       fulfilmentSessionInfo={fulfilmentSessionInfo}
       fulfilmentSessionId={fulfilmentSessionId}
+      fitScreen
     >
       <PyngDetailsCheckout
         eventName={eventData?.name || "Event"}
-        eventImage={eventData?.image || null}
+        eventThumbnail={eventData?.thumbnail || null}
         ticketName={ticketName?.trim() || "Ticket"}
         quantity={quantity ?? 0}
         unitPriceCents={unitPriceCents ?? 0}

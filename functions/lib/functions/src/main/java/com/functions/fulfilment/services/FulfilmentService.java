@@ -617,6 +617,8 @@ public class FulfilmentService {
             Integer quantity = null;
             String ticketName = null;
             Integer unitPriceCents = null;
+            String purchaserName = null;
+            String purchaserEmail = null;
             if (fulfilmentSession instanceof PyngCheckoutFulfilmentSession pyngSession) {
                 if (entity.getType() == FulfilmentEntityType.PYNG && pyngSession.getPyngMetadata() != null) {
                     checkoutUrl = pyngSession.getPyngMetadata().getHostedPageUrl();
@@ -625,12 +627,15 @@ public class FulfilmentService {
                     quantity = pyngSession.getNumTickets();
                     ticketName = pyngSession.getEventTicketTypeName();
                     unitPriceCents = pyngSession.getPrice();
+                    purchaserName = fulfilmentSession.getPurchaserName();
+                    purchaserEmail = fulfilmentSession.getPurchaserEmail();
                 }
             }
 
             return Optional.of(new GetFulfilmentEntityInfoResponse(entity.getType(),
                     url, fulfilmentSession.getEventData().getEventId(),
-                    formId, formResponseId, checkoutUrl, quantity, ticketName, unitPriceCents));
+                    formId, formResponseId, checkoutUrl, quantity, ticketName, unitPriceCents,
+                    purchaserName, purchaserEmail));
         } catch (Exception e) {
             logger.error(
                     "Failed to get fulfilment entity info for session ID: {} and entity ID: {}",
