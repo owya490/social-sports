@@ -43,14 +43,17 @@ class FulfilmentSessionTicketWriter {
         return FirebaseService.createFirestoreTransaction(transaction -> mintAndComplete(session, transaction));
     }
 
-    static void refundVacancy(FulfilmentSession session) throws Exception {
+    /**
+     * @return false when this session was already recorded, so a redelivery does not refund again
+     */
+    static boolean refundVacancy(FulfilmentSession session) throws Exception {
         RequestedTickets tickets = ProcessFulfilmentSessionService.requestedTickets(session);
         String eventId = session.getEventData().getEventId();
-        FirebaseService.createFirestoreTransaction(transaction -> {
+        Boolean refunded = FirebaseService.createFirestoreTransaction(transaction -> {
             DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
             EventData event = requireEvent(transaction, eventId);
             if (sessionAlreadyRecorded(transaction, eventId, session.getId())) {
-                return null;
+                return false;
             }
 
             ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(event, tickets.ticketTypeId());
@@ -58,8 +61,9 @@ class FulfilmentSessionTicketWriter {
             recordSessionOnEvent(transaction, eventId, session.getId());
             deleteTempFormResponses(session, transaction);
             FulfilmentSessionRepository.deleteFulfilmentSession(session.getId(), Optional.of(transaction));
-            return null;
+            return true;
         });
+        return Boolean.TRUE.equals(refunded);
     }
 
     /**

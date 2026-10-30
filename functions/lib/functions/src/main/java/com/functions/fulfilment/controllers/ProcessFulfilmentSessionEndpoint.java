@@ -28,8 +28,10 @@ public class ProcessFulfilmentSessionEndpoint implements CloudEventsFunction {
             logger.error("processFulfilmentSession received CloudEvent with no data");
             throw new IllegalStateException("processFulfilmentSession received CloudEvent with no data");
         }
+        logger.info("processFulfilmentSession handling CloudEvent {}", event.getId());
         String cloudEventJson = new String(event.getData().toBytes(), StandardCharsets.UTF_8);
         new ProcessFulfilmentSessionService().process(fulfilmentSessionJson(cloudEventJson));
+        logger.info("processFulfilmentSession completed CloudEvent {}", event.getId());
     }
 
     static String fulfilmentSessionJson(String cloudEventJson) {
