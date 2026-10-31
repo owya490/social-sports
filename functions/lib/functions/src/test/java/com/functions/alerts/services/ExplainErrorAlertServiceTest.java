@@ -65,17 +65,20 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
-    public void process_reusesPersistedSmsSoExtractorIdentityStaysStable() {
+    public void process_skipsAlreadyPagedFingerprintWithoutReservingOrPublishing() {
         when(store.smsFor(any())).thenReturn(Optional.of("Persisted SMS sentence."));
-        service = service(published::add, prompt -> Optional.of("Different Gemini wording this time."));
+        service = new ExplainErrorAlertService(store, new ErrorAlertSummarizer(prompt -> {
+            throw new AssertionError("Already-paged fingerprints must not call the model");
+        }, parsed -> List.of()), published::add);
         service.process(sampleLog());
-        assertEquals("Persisted SMS sentence.", published.get(0).sms());
-        assertEquals("Different Gemini wording this time.", published.get(0).aiInterpretation());
+        assertTrue(published.isEmpty());
+        verify(store, never()).reserve();
         verify(store, never()).rememberSms(any(), any());
+        verify(store, never()).complete(any(), any());
     }
 
     @Test
-    public void processLogEntryJson_reusesSmsInsideIncidentWindowThenRefreshesAfterExpiry() {
+    public void processLogEntryJson_skipsSameFingerprintInsideIncidentWindowThenRefreshesAfterExpiry() {
         ExpiringSmsStore expiring = new ExpiringSmsStore(Instant.parse("2026-10-11T03:00:00Z"));
         service = new ExplainErrorAlertService(expiring,
                 new ErrorAlertSummarizer(this::emailServiceStatusInterpretation, parsed -> List.of()),
@@ -86,56 +89,13 @@ public class ExplainErrorAlertServiceTest {
 
         expiring.advance(Duration.ofDays(1));
         service.processLogEntryJson(emailServiceHttpError(403));
-        assertEquals("Email service returned 503.", published.get(1).sms());
-        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+        assertEquals(1, published.size());
 
         expiring.advance(Duration.ofDays(30));
         service.processLogEntryJson(emailServiceHttpError(403));
-        assertEquals("Email service returned 403.", published.get(2).sms());
-        assertEquals(published.get(0).fingerprint(), published.get(2).fingerprint());
-        assertNotEquals(published.get(0).sms(), published.get(2).sms());
-    }
-
-    @Test
-    public void processLogEntryJson_failedCachedPublishDoesNotExtendIncidentWindow() {
-        Instant start = Instant.parse("2026-10-11T03:00:00Z");
-        ExpiringSmsStore failedAttempt = new ExpiringSmsStore(start);
-        ExpiringSmsStore control = new ExpiringSmsStore(start);
-        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(this::emailServiceStatusInterpretation,
-                parsed -> List.of());
-        List<ErrorAlertNotification> controlPublished = new ArrayList<>();
-        int[] attempts = { 0 };
-        ExplainErrorAlertService failing = new ExplainErrorAlertService(failedAttempt, summarizer, notification -> {
-            attempts[0]++;
-            if (attempts[0] == 2) {
-                throw new IllegalStateException("Logging unavailable");
-            }
-            published.add(notification);
-        });
-        ExplainErrorAlertService controlService = new ExplainErrorAlertService(control, summarizer,
-                controlPublished::add);
-
-        failing.processLogEntryJson(emailServiceHttpError(503));
-        controlService.processLogEntryJson(emailServiceHttpError(503));
-        assertEquals("Email service returned 503.", published.get(0).sms());
-        assertEquals("Email service returned 503.", controlPublished.get(0).sms());
-
-        failedAttempt.advance(Duration.ofDays(6));
-        try {
-            failing.processLogEntryJson(emailServiceHttpError(403));
-            fail("Cached lookup must still publish; publisher failure must reach the trigger");
-        } catch (IllegalStateException expected) {
-            assertEquals("Logging unavailable", expected.getMessage());
-        }
-        assertEquals(1, published.size());
-
-        failedAttempt.advance(Duration.ofDays(2));
-        failing.processLogEntryJson(emailServiceHttpError(403));
         assertEquals("Email service returned 403.", published.get(1).sms());
-
-        control.advance(Duration.ofDays(8));
-        controlService.processLogEntryJson(emailServiceHttpError(403));
-        assertEquals("Email service returned 403.", controlPublished.get(1).sms());
+        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+        assertNotEquals(published.get(0).sms(), published.get(1).sms());
     }
 
     @Test
@@ -200,6 +160,7 @@ public class ExplainErrorAlertServiceTest {
     public void process_keepsHeadlineAndFingerprintStableAcrossRequestUuids() {
         service.process(new ParsedErrorLog("stripeWebhook",
                 "[Webhook-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa] Request rejected", "", ""));
+        when(store.smsFor(any())).thenReturn(Optional.empty());
         service.process(new ParsedErrorLog("stripeWebhook",
                 "[Webhook-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb] Request rejected", "", ""));
         assertEquals(published.get(0).headline(), published.get(1).headline());
@@ -207,9 +168,20 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
+    public void process_keepsFingerprintStableAcrossStackLineNumbers() {
+        service.process(new ParsedErrorLog("globalAppController", "Request rejected", "RuntimeException",
+                "com.functions.stripe.services.WebhookService.process(WebhookService.java:1128)"));
+        when(store.smsFor(any())).thenReturn(Optional.empty());
+        service.process(new ParsedErrorLog("globalAppController", "Request rejected", "RuntimeException",
+                "com.functions.stripe.services.WebhookService.process(WebhookService.java:1201)"));
+        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
+    }
+
+    @Test
     public void process_separatesFunctionAndObservedExceptionInIncidentIdentity() {
         String message = "Organiser does not exist: organiserId=abc123";
         service.process(new ParsedErrorLog("send_email_on_purchase", message, "", ""));
+        when(store.smsFor(any())).thenReturn(Optional.empty());
         service.process(new ParsedErrorLog("other_function", message, "", ""));
         service.process(new ParsedErrorLog("send_email_on_purchase", message, "Error", ""));
 
