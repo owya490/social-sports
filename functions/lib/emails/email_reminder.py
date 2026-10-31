@@ -220,6 +220,8 @@ def send_email_with_loop(
             logger.warning(log_message)
         else:
             logger.error(log_message)
+    else:
+        logger.info(f"Successfully sent event reminder for eventId={event_id} to {email}")
 
     # Sleep for 300ms to avoid getting rate limited. Loops offer 10 emails a second: https://loops.so/docs/api-reference/intro#rate-limiting
     time.sleep(0.3)
