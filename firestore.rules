@@ -2,6 +2,14 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // The form may have been soft-deleted, so check both template collections.
+    function isFormOwner(formId) {
+      return (exists(/databases/$(database)/documents/Forms/FormTemplates/Active/$(formId))
+          && get(/databases/$(database)/documents/Forms/FormTemplates/Active/$(formId)).data.userId == request.auth.uid)
+        || (exists(/databases/$(database)/documents/Forms/FormTemplates/Deleted/$(formId))
+          && get(/databases/$(database)/documents/Forms/FormTemplates/Deleted/$(formId)).data.userId == request.auth.uid);
+    }
+
     // Only allow users to write to their own Userdata fields. Anyone can read. Allow write if User Data does not exist.
     match /Users/{activeModifier}/Public/{userId} {
     	// GET
@@ -99,9 +107,12 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
     
-    // TEMPORARY Everyone can read, and write to RecurrenceEvents Table.
+    // Only the owning organiser can read a recurrence template. Writes go through the Java functions (Admin SDK).
+    // resource == null: the client probes each Active/InActive x Public/Private path for a template id.
     match /RecurringEvents/{activeModifier}/{accessModifier}/{eventId} {
-    	allow read, write: if true;
+      allow read: if request.auth != null
+        && (resource == null || resource.data.eventData.organiserId == request.auth.uid);
+      allow write: if false;
     }
     
     // Everyone can read, can only write or delete your own username, can create if your authd
@@ -135,20 +146,21 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
     
+    // Guests load their own response by id (get); listing and writes are limited to the organiser who owns the form.
+    // Responder saves go through GlobalAppController (Admin SDK).
     match /Forms/FormResponses/Submitted/{formId}/{eventId}/{formResponseId} {
-      allow read: if true;
-      allow create, update: if request.auth != null;
+      allow get: if true;
+      allow list, create, update: if request.auth != null && isFormOwner(formId);
     }
-    
-    
+
     match /Forms/FormResponses/Temp/{formId}/{eventId}/{formResponseId} {
-    	allow read: if true;
-      allow create, update, delete: if request.auth != null;
+      allow get: if true;
+      allow delete: if request.auth != null && isFormOwner(formId);
     }
-    
+
+    // The client never touches this collection directly; all access is via GlobalAppController (Admin SDK).
     match /FulfilmentSessions/{fulfilmentSessionId} {
-    	allow read, update: if true;
-      allow create, delete: if request.auth != null;
+      allow read, write: if false;
     }
     
     // Holds partner key digests and allowed origins; only the Admin SDK (Java functions) may touch it.
