@@ -34,6 +34,8 @@ import com.functions.tickets.models.Ticket;
 import com.functions.tickets.repositories.OrdersRepository;
 import com.functions.tickets.repositories.TicketsRepository;
 import com.google.api.core.ApiFuture;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldValue;
@@ -54,6 +56,34 @@ public class WebhookService {
     private enum PaymentIntentCancellationTransactionResult {
         PROCESSED,
         ALREADY_PROCESSED
+    }
+
+    /**
+     * Maps a failure inside a Firestore transaction callback to the exception to throw.
+     *
+     * Firestore only retries a callback that fails with an {@link ApiException}, so wrapping an
+     * ABORTED contention error in a RuntimeException disables the SDK's retry. ABORTED is rethrown
+     * unwrapped and logged at WARN; if retries are exhausted the caller's outer handler logs the
+     * ERROR that alerting keys off.
+     */
+    static RuntimeException toTransactionFailure(String description, Exception e) {
+        ApiException aborted = findAbortedException(e);
+        if (aborted != null) {
+            logger.warn("Transaction aborted due to contention, leaving retry to Firestore. {}", description);
+            return aborted;
+        }
+        logger.error("{}: {}", description, e.getMessage(), e);
+        return new RuntimeException("Transaction failed", e);
+    }
+
+    private static ApiException findAbortedException(Throwable throwable) {
+        for (Throwable t = throwable; t != null; t = t.getCause()) {
+            if (t instanceof ApiException
+                    && ((ApiException) t).getStatusCode().getCode() == StatusCode.Code.ABORTED) {
+                return (ApiException) t;
+            }
+        }
+        return null;
     }
 
     /**
@@ -815,9 +845,7 @@ public class WebhookService {
                     
                     return orderIdResult;
                 } catch (Exception e) {
-                    logger.error("Error in fulfillment transaction. session={}: {}",
-                            checkoutSessionId, e.getMessage(), e);
-                    throw new RuntimeException("Transaction failed", e);
+                    throw toTransactionFailure("Error in fulfillment transaction. session=" + checkoutSessionId, e);
                 }
             });
             
@@ -930,9 +958,7 @@ public class WebhookService {
                     
                     return true;
                 } catch (Exception e) {
-                    logger.error("Error in expired session transaction. session={}: {}",
-                            checkoutSessionId, e.getMessage(), e);
-                    throw new RuntimeException("Transaction failed", e);
+                    throw toTransactionFailure("Error in expired session transaction. session=" + checkoutSessionId, e);
                 }
             });
             
@@ -1034,9 +1060,8 @@ public class WebhookService {
 
                             return PaymentIntentCancellationTransactionResult.PROCESSED;
                         } catch (Exception e) {
-                            logger.error("Error in payment intent cancellation transaction for {}: {}",
-                                    paymentIntentId, e.getMessage(), e);
-                            throw new RuntimeException("Transaction failed", e);
+                            throw toTransactionFailure(
+                                    "Error in payment intent cancellation transaction for " + paymentIntentId, e);
                         }
                     });
 
