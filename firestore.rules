@@ -149,9 +149,9 @@ service cloud.firestore {
       allow create, update, delete: if request.auth != null;
     }
     
+    // The client never touches this collection directly; all access is via GlobalAppController (Admin SDK).
     match /FulfilmentSessions/{fulfilmentSessionId} {
-    	allow read, update: if true;
-      allow create, delete: if request.auth != null;
+      allow read, write: if false;
     }
     
     // Holds partner key digests and allowed origins; only the Admin SDK (Java functions) may touch it.
