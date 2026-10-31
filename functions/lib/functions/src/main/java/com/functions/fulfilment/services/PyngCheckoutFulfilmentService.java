@@ -13,9 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
+import com.functions.events.repositories.EventsRepository;
 import com.functions.events.services.EventTicketTypeService;
+import com.functions.events.utils.EventsUtils;
+import com.functions.firebase.services.FirebaseService;
+import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.google.cloud.firestore.DocumentReference;
 import com.functions.fulfilment.models.FulfilmentSessionService;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
+import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -52,16 +59,47 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
                 .numTickets(numTickets)
                 .eventTicketTypeId(ticketType.getId())
                 .eventTicketTypeName(ticketType.getName())
+                .price(ticketType.getPrice())
                 .pyngMetadata(null)
                 .build();
 
-        for (Map.Entry<String, FulfilmentEntity> entry : session.getFulfilmentEntityMap().entrySet()) {
-            if (entry.getValue() instanceof PyngFulfilmentEntity pyngEntity) {
-                pyngEntity.start(fulfilmentSessionId, session, entry.getKey());
-                break;
+        // Completion mints tickets without changing vacancy, and expiry puts this quantity back.
+        changeReservedVacancy(eventData, ticketType.getId(), -numTickets);
+        try {
+            for (Map.Entry<String, FulfilmentEntity> entry : session.getFulfilmentEntityMap().entrySet()) {
+                if (entry.getValue() instanceof PyngFulfilmentEntity pyngEntity) {
+                    pyngEntity.start(fulfilmentSessionId, session, entry.getKey());
+                    break;
+                }
             }
+        } catch (Exception startError) {
+            try {
+                changeReservedVacancy(eventData, ticketType.getId(), numTickets);
+            } catch (Exception releaseError) {
+                logger.error("Failed to release reserved vacancy for event {} after Pyng checkout start failed",
+                        eventId, releaseError);
+            }
+            throw startError;
         }
         return session;
+    }
+
+    private static void changeReservedVacancy(EventData eventData, String ticketTypeId, int delta) throws Exception {
+        boolean isPrivate = Boolean.TRUE.equals(eventData.getIsPrivate());
+        String eventId = eventData.getEventId();
+        FirebaseService.createFirestoreTransaction(transaction -> {
+            EventData current = EventsRepository.getActiveEventById(eventId, isPrivate, transaction)
+                    .orElseThrow(() -> new CheckoutDateTimeException("Event " + eventId + " is not available"));
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(current, ticketTypeId);
+            DocumentReference eventRef = EventsUtils.getEventRef(FirebaseService.getFirestore(), eventId, isPrivate);
+            if (delta < 0) {
+                EventTicketTypeService.reserveVacancy(transaction, eventRef, eventId, ticketType, -delta);
+            } else {
+                EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, delta);
+                logger.info("Released {} reserved tickets for event {} type {}", delta, eventId, ticketType.getId());
+            }
+            return null;
+        });
     }
 
     private static List<SimpleEntry<String, FulfilmentEntity>> constructPyngCheckoutFulfilmentEntities(
@@ -86,6 +124,7 @@ public class PyngCheckoutFulfilmentService implements FulfilmentSessionService<P
                     "Failed to construct FORMS entities for Pyng checkout event ID: " + eventId, e);
         }
 
+        tempEntities.add(DetailsFulfilmentEntity.builder().type(FulfilmentEntityType.DETAILS).build());
         tempEntities.add(PyngFulfilmentEntity.builder().type(FulfilmentEntityType.PYNG).build());
         tempEntities.add(EndFulfilmentEntity.builder()
                 .url(UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))

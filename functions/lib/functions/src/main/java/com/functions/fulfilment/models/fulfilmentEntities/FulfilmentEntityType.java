@@ -9,5 +9,6 @@ public enum FulfilmentEntityType {
     FORMS,
     WAITLIST,
     END,
-    PYNG;
+    PYNG,
+    DETAILS;
 }

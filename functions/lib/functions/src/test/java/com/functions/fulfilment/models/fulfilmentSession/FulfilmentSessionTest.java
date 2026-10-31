@@ -5,7 +5,9 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 
 public class FulfilmentSessionTest {
 
@@ -49,5 +51,35 @@ public class FulfilmentSessionTest {
         assertEquals("event-1", session.getEventData().getEventId());
         FormsFulfilmentEntity forms = (FormsFulfilmentEntity) session.getFulfilmentEntityMap().get("form-1");
         assertEquals("response-1", forms.getFormResponseId());
+    }
+
+    @Test
+    public void fromJsonReadsPyngCheckoutWithDetails() throws Exception {
+        String json = """
+                {
+                  "id": "session-1",
+                  "type": "PYNG_CHECKOUT",
+                  "status": "COMPLETED",
+                  "purchaserEmail": "ada@example.com",
+                  "purchaserName": "Ada Lovelace",
+                  "numTickets": 1,
+                  "price": 3000,
+                  "eventTicketTypeId": "general",
+                  "eventData": { "eventId": "event-1" },
+                  "fulfilmentEntityIds": ["details-1"],
+                  "fulfilmentEntityMap": {
+                    "details-1": { "type": "DETAILS" }
+                  },
+                  "pyngMetadata": { "checkoutSessionId": "cs-1", "status": "SUCCEEDED" }
+                }
+                """;
+
+        FulfilmentSession session = FulfilmentSession.fromJson(json);
+
+        assertTrue(session instanceof PyngCheckoutFulfilmentSession);
+        PyngCheckoutFulfilmentSession pyng = (PyngCheckoutFulfilmentSession) session;
+        assertEquals(Integer.valueOf(3000), pyng.getPrice());
+        assertEquals("cs-1", pyng.getPyngMetadata().getCheckoutSessionId());
+        assertTrue(session.getFulfilmentEntityMap().get("details-1") instanceof DetailsFulfilmentEntity);
     }
 }
