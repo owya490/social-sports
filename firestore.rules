@@ -99,9 +99,12 @@ service cloud.firestore {
       allow create: if request.auth != null;
     }
     
-    // TEMPORARY Everyone can read, and write to RecurrenceEvents Table.
+    // Only the owning organiser can read a recurrence template. Writes go through the Java functions (Admin SDK).
+    // resource == null: the client probes each Active/InActive x Public/Private path for a template id.
     match /RecurringEvents/{activeModifier}/{accessModifier}/{eventId} {
-    	allow read, write: if true;
+      allow read: if request.auth != null
+        && (resource == null || resource.data.eventData.organiserId == request.auth.uid);
+      allow write: if false;
     }
     
     // Everyone can read, can only write or delete your own username, can create if your authd
