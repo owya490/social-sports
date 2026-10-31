@@ -9,6 +9,11 @@ import {
   GetFulfilmentEntityInfoResponse,
   GetFulfilmentSessionInfoRequest,
   GetFulfilmentSessionInfoResponse,
+  PyngPaymentStatus,
+  RefreshPyngCheckoutRequest,
+  RefreshPyngCheckoutResponse,
+  UpdateFulfilmentPurchaserRequest,
+  UpdateFulfilmentPurchaserResponse,
   GetNextFulfilmentEntityRequest,
   GetNextFulfilmentEntityResponse,
   GetPrevFulfilmentEntityRequest,
@@ -360,4 +365,31 @@ export async function getFulfilmentSessionInfo(
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }
+}
+
+export async function updateFulfilmentPurchaser(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId,
+  name: string,
+  email: string
+): Promise<UpdateFulfilmentPurchaserResponse> {
+  const request: UpdateFulfilmentPurchaserRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+    name,
+    email,
+  };
+  return await executeGlobalAppControllerFunction<UpdateFulfilmentPurchaserRequest, UpdateFulfilmentPurchaserResponse>(
+    EndpointType.UPDATE_FULFILMENT_PURCHASER,
+    request
+  );
+}
+
+export async function refreshPyngCheckout(fulfilmentSessionId: FulfilmentSessionId): Promise<PyngPaymentStatus> {
+  const request: RefreshPyngCheckoutRequest = { fulfilmentSessionId };
+  const response = await executeGlobalAppControllerFunction<RefreshPyngCheckoutRequest, RefreshPyngCheckoutResponse>(
+    EndpointType.REFRESH_PYNG_CHECKOUT,
+    request
+  );
+  return response.paymentStatus;
 }

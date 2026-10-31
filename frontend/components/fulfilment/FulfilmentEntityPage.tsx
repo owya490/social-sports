@@ -21,6 +21,8 @@ interface FulfilmentEntityPageProps {
   isSaving?: boolean;
   nextDisabledMessage?: string;
   fulfilmentSessionId: FulfilmentSessionId;
+  /** From md up, stepper, content, and prev/next stay inside the viewport. Below md, the step content scrolls. */
+  fitScreen?: boolean;
 }
 
 const FulfilmentEntityPage = ({
@@ -34,6 +36,7 @@ const FulfilmentEntityPage = ({
   isSaving = false,
   nextDisabledMessage,
   fulfilmentSessionId,
+  fitScreen = false,
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
@@ -130,16 +133,30 @@ const FulfilmentEntityPage = ({
   };
 
   return (
-    <div className="relative min-h-screen bg-surface">
-      <div className="w-full flex justify-center">
-        <div className="mt-6 mb-2 screen-width-primary">
+    <div
+      className={
+        fitScreen
+          ? "relative flex h-[calc(100dvh-var(--navbar-height)-var(--footer-height))] flex-col overflow-hidden bg-surface"
+          : "relative min-h-screen bg-surface"
+      }
+    >
+      <div className="flex w-full shrink-0 justify-center">
+        <div className={`${fitScreen ? "mb-2 mt-4" : "mb-2 mt-6"} screen-width-primary`}>
           <FulfilmentEntityStepper fulfilmentSessionInfo={fulfilmentSessionInfo} />
         </div>
       </div>
-      <div className="w-full">{children}</div>
+      <div
+        className={
+          fitScreen ? "flex min-h-0 w-full flex-1 flex-col overflow-y-auto md:overflow-hidden" : "w-full"
+        }
+      >
+        {children}
+      </div>
 
       {/* Navigation buttons positioned to match form width */}
-      <div className="w-full flex justify-center pointer-events-none z-50 pb-20 pt-8">
+      <div
+        className={`pointer-events-none z-50 flex w-full justify-center ${fitScreen ? "shrink-0 px-4 pb-4 pt-3" : "pb-20 pt-8"}`}
+      >
         <div className="screen-width-primary md:px-32">
           <div className="flex items-center">
             <div className="pointer-events-auto relative">

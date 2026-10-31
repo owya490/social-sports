@@ -3,6 +3,7 @@ package com.functions.fulfilment.repositories;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionStatus;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -119,6 +121,41 @@ public class FulfilmentSessionRepository {
             logger.error("Failed to delete fulfilment session for sessionId: {}", sessionId, e);
             throw new Exception("Failed to delete fulfilment session for sessionId: " + sessionId,
                     e);
+        }
+    }
+
+    public static void updatePurchaser(String sessionId, String name, String email) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("purchaserName", name);
+            updates.put("purchaserEmail", email);
+            sessionDocRef.update(updates).get();
+        } catch (Exception e) {
+            logger.error("Failed to update purchaser for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to update purchaser for sessionId: " + sessionId, e);
+        }
+    }
+
+    /**
+     * Records a terminal Pyng outcome after the session has been published.
+     * Crystallising the session stops a later poll from publishing it again.
+     */
+    public static void updatePyngSettlement(String sessionId, PyngMetadata pyngMetadata,
+            FulfilmentSessionStatus status) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
+                    new TypeReference<Map<String, Object>>() {
+                    });
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("pyngMetadata", metadataMap);
+            updates.put("status", status.name());
+            updates.put("isFulfilmentSessionCrystalised", true);
+            sessionDocRef.update(updates).get();
+        } catch (Exception e) {
+            logger.error("Failed to record Pyng settlement for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to record Pyng settlement for sessionId: " + sessionId, e);
         }
     }
 

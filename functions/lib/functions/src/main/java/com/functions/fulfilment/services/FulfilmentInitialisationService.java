@@ -24,9 +24,6 @@ public final class FulfilmentInitialisationService {
     public static InitialisedFulfilmentSession initialise(String eventId, Integer numTickets,
             String eventTicketTypeId, PaymentProvider paymentProvider, FulfilmentInitialisationScope scope)
             throws Exception {
-        if (paymentProvider == PaymentProvider.PYNG) {
-            throw new IllegalArgumentException("Pay with Pyng is not available");
-        }
         Objects.requireNonNull(scope, "Initialisation scope is required");
         if (numTickets == null || numTickets <= 0) {
             if (scope instanceof FulfilmentInitialisationScope.Guest) {
