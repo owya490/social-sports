@@ -1,0 +1,17 @@
+name: Firestore Rules CI
+
+# No path filter: this is a required status check, and a skipped workflow would leave it pending forever.
+on: pull_request
+
+jobs:
+  validate-firestore-rules:
+    name: Validate Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools@13.2.1
+
+      - name: Compile firestore.rules in the Firestore emulator
+        run: firebase emulators:exec --only firestore --project demo-rules-check "scripts/validate-firestore-rules.sh firestore.rules"
