@@ -50,6 +50,32 @@ function applySidebarWidth(collapsed: boolean) {
   );
 }
 
+function SportshubHomeLink({
+  onNavigate,
+  collapsed,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+}) {
+  return (
+    <Link
+      href="/"
+      onClick={onNavigate}
+      aria-label="SPORTSHUB home"
+      className={`shrink-0 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+        collapsed ? "p-1.5" : ""
+      }`}
+    >
+      <Image
+        src={Logo}
+        alt=""
+        priority
+        className={collapsed ? "h-7 w-auto" : "h-8 w-auto shrink-0"}
+      />
+    </Link>
+  );
+}
+
 const navItemClass = (active: boolean, collapsed?: boolean) =>
   `flex items-center rounded-xl text-xs font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
     collapsed ? "justify-center px-2 py-2" : "gap-2.5 px-2.5 py-1.5"
@@ -303,7 +329,7 @@ function SidebarContent({
       <div className={collapsed ? "flex justify-center pb-3" : "pb-2"}>
         {!collapsed ? (
           <div className="flex items-center gap-1.5">
-            <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
+            <SportshubHomeLink onNavigate={onNavigate} />
             <p className="font-sans text-md font-semibold leading-tight text-foreground">
               ORGANISER HUB
               <sup className="ml-0.5 align-super text-[0.55em] font-semibold tracking-wide text-foreground-muted">
@@ -312,9 +338,7 @@ function SidebarContent({
             </p>
           </div>
         ) : (
-          <div className="shrink-0 rounded-xl p-1.5" aria-hidden>
-            <Image src={Logo} alt="" className="h-7 w-auto" priority />
-          </div>
+          <SportshubHomeLink onNavigate={onNavigate} collapsed />
         )}
       </div>
 
