@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import FulfilmentEntityStepper from "./FulfilmentEntityStepper";
-import TimeoutWarningModal from "./TimeoutWarningModal";
 
 interface FulfilmentEntityPageProps {
   children: ReactNode;
@@ -40,7 +39,6 @@ const FulfilmentEntityPage = ({
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
-  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
 
   // Mobile tooltip state (for disabled button clicks)
   const [showMobileTooltip, setShowMobileTooltip] = useState<"prev" | "next" | null>(null);
@@ -78,29 +76,16 @@ const FulfilmentEntityPage = ({
     return `${mm}:${ss}`;
   }, [remainingMs]);
 
-  // Handle timeout redirect and warning
   useEffect(() => {
-    if (remainingMs === null) return;
+    if (remainingMs === null || remainingMs > 0) return;
 
-    // Show warning when 30 seconds remain (and haven't extended session)
-    if (remainingMs <= 30 * 1000 && remainingMs > 0 && !showTimeoutWarning) {
-      setShowTimeoutWarning(true);
-    }
+    // Small delay to ensure the timer shows 00:00 before redirecting
+    const timeoutId = setTimeout(() => {
+      router.push("/timeout");
+    }, 100);
 
-    // Redirect when time is up
-    if (remainingMs <= 0) {
-      // Small delay to ensure the timer shows 00:00 before redirecting
-      const timeoutId = setTimeout(async () => {
-        router.push("/timeout");
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [remainingMs, router, showTimeoutWarning]);
-
-  const hideTimeoutWarningModal = () => {
-    setShowTimeoutWarning(false);
-  };
+    return () => clearTimeout(timeoutId);
+  }, [remainingMs, router]);
 
   // Get tooltip messages based on disabled reasons
   const getPrevTooltipMessage = () => {
@@ -300,11 +285,6 @@ const FulfilmentEntityPage = ({
           </div>
         </div>
       </div>
-      <TimeoutWarningModal
-        isOpen={showTimeoutWarning}
-        remainingSeconds={Math.max(0, Math.floor((remainingMs || 0) / 1000))}
-        hideModal={hideTimeoutWarningModal}
-      />
     </div>
   );
 };
