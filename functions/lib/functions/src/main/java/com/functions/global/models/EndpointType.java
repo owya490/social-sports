@@ -22,6 +22,8 @@ import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
 import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
+import com.functions.fulfilment.models.requests.RefreshPyngCheckoutRequest;
+import com.functions.fulfilment.models.requests.UpdateFulfilmentPurchaserRequest;
 import com.functions.fulfilment.models.requests.GetFulfilmentSessionInfoRequest;
 import com.functions.fulfilment.models.requests.GetNextFulfilmentEntityRequest;
 import com.functions.fulfilment.models.requests.GetPrevFulfilmentEntityRequest;
@@ -29,6 +31,8 @@ import com.functions.fulfilment.models.requests.InitCheckoutFulfilmentSessionReq
 import com.functions.fulfilment.models.requests.InitPartnerFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.UpdateFulfilmentEntityWithFormResponseIdRequest;
 import com.functions.fulfilment.models.responses.GetFulfilmentEntityInfoResponse;
+import com.functions.fulfilment.models.responses.RefreshPyngCheckoutResponse;
+import com.functions.fulfilment.models.responses.UpdateFulfilmentPurchaserResponse;
 import com.functions.fulfilment.models.responses.GetFulfilmentSessionInfoResponse;
 import com.functions.fulfilment.models.responses.GetNextFulfilmentEntityResponse;
 import com.functions.fulfilment.models.responses.GetPrevFulfilmentEntityResponse;
@@ -82,6 +86,9 @@ public enum EndpointType {
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class,
             AuthLevel.PUBLIC),
     COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class, AuthLevel.PUBLIC),
+    UPDATE_FULFILMENT_PURCHASER(UpdateFulfilmentPurchaserRequest.class, UpdateFulfilmentPurchaserResponse.class,
+            AuthLevel.PUBLIC),
+    REFRESH_PYNG_CHECKOUT(RefreshPyngCheckoutRequest.class, RefreshPyngCheckoutResponse.class, AuthLevel.PUBLIC),
     /** An organiser reading their own wrapped data. */
     GET_SPORTSHUB_WRAPPED(GetWrappedRequest.class, GetWrappedResponse.class, AuthLevel.AUTHENTICATED),
     /** Anyone opening a wrapped share link. The wrappedId is the capability. */

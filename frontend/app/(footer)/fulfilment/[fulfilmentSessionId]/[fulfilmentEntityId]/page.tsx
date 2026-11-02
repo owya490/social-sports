@@ -3,7 +3,9 @@
 import { HighlightButton } from "@/components/elements/HighlightButton";
 import FormResponder, { FormResponderRef } from "@/components/forms/FormResponder";
 import UnsavedChangesModal from "@/components/forms/UnsavedChangesModal";
+import DetailsFulfilmentEntity from "@/components/fulfilment/PyngDetailsCheckout";
 import FulfilmentEntityPage from "@/components/fulfilment/FulfilmentEntityPage";
+import PyngFulfilmentEntity, { pyngSuccessPagePath } from "@/components/fulfilment/PyngFulfilmentEntity";
 import WaitlistFulfilmentEntity from "@/components/fulfilment/WaitlistFulfilmentEntity";
 import Loading from "@/components/loading/Loading";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
@@ -30,11 +32,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 function isHostedCheckoutFulfilmentEntityType(type: FulfilmentEntityType | null | undefined): boolean {
-  return (
-    type === FulfilmentEntityType.STRIPE ||
-    type === FulfilmentEntityType.DELAYED_STRIPE ||
-    type === FulfilmentEntityType.PYNG
-  );
+  return type === FulfilmentEntityType.STRIPE || type === FulfilmentEntityType.DELAYED_STRIPE;
 }
 
 function hasFulfilmentRedirectUrl(url: URL | null): url is URL {
@@ -324,6 +322,47 @@ const FulfilmentSessionEntityPage = () => {
             isOpen={showUnsavedChangesModal}
             onConfirm={handleUnsavedChangesConfirm}
             onCancel={handleUnsavedChangesCancel}
+          />
+          {renderErrorAlert()}
+        </>
+      );
+    case FulfilmentEntityType.DETAILS:
+      return (
+        <>
+          <DetailsFulfilmentEntity
+            fulfilmentSessionId={params.fulfilmentSessionId}
+            fulfilmentEntityId={params.fulfilmentEntityId}
+            eventId={getFulfilmentEntityInfoResponse.eventId}
+            ticketName={getFulfilmentEntityInfoResponse.ticketName}
+            quantity={getFulfilmentEntityInfoResponse.quantity}
+            unitPriceCents={getFulfilmentEntityInfoResponse.unitPriceCents}
+            purchaserName={getFulfilmentEntityInfoResponse.purchaserName}
+            purchaserEmail={getFulfilmentEntityInfoResponse.purchaserEmail}
+            fulfilmentSessionInfo={fulfilmentSessionInfo}
+            onNext={handleNext}
+            onPrev={handlePrev}
+          />
+          {renderErrorAlert()}
+        </>
+      );
+    case FulfilmentEntityType.PYNG:
+      return (
+        <>
+          <PyngFulfilmentEntity
+            fulfilmentSessionId={params.fulfilmentSessionId}
+            fulfilmentEntityId={params.fulfilmentEntityId}
+            checkoutUrl={getFulfilmentEntityInfoResponse.checkoutUrl}
+            fulfilmentSessionInfo={fulfilmentSessionInfo}
+            onSucceeded={async () => {
+              const successPath = pyngSuccessPagePath(getFulfilmentEntityInfoResponse.eventId);
+              if (successPath) {
+                setLoading(true);
+                router.push(successPath);
+                return;
+              }
+              await handleNext();
+            }}
+            onPrev={handlePrev}
           />
           {renderErrorAlert()}
         </>

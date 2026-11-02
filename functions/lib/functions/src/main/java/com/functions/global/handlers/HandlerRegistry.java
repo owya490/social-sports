@@ -14,6 +14,8 @@ import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.events.handlers.UpdateRecurrenceTemplateHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
 import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
+import com.functions.fulfilment.handlers.RefreshPyngCheckoutHandler;
+import com.functions.fulfilment.handlers.UpdateFulfilmentPurchaserHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentEntityInfoHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentSessionInfoHandler;
 import com.functions.fulfilment.handlers.GetNextFulfilmentEntityHandler;
@@ -52,6 +54,8 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_FULFILMENT_SESSION_INFO, new GetFulfilmentSessionInfoHandler());
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
         handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
+        handlers.put(EndpointType.UPDATE_FULFILMENT_PURCHASER, new UpdateFulfilmentPurchaserHandler());
+        handlers.put(EndpointType.REFRESH_PYNG_CHECKOUT, new RefreshPyngCheckoutHandler());
         // Same handler, two auth levels: it branches on AuthContext.level().
         GetWrappedHandler getWrappedHandler = new GetWrappedHandler();
         handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, getWrappedHandler);

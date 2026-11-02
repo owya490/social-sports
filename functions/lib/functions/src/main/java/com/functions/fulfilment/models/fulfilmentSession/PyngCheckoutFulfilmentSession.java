@@ -16,6 +16,8 @@ public class PyngCheckoutFulfilmentSession extends FulfilmentSession {
     @Nullable
     private String eventTicketTypeName;
     @Nullable
+    private Integer price;
+    @Nullable
     private PyngMetadata pyngMetadata;
 
     {

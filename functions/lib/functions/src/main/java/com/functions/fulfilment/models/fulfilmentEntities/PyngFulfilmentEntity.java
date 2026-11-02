@@ -63,10 +63,8 @@ public class PyngFulfilmentEntity extends FulfilmentEntity {
         }
 
         PyngHostedCheckout checkout = PyngService.createHostedCheckout(pyngSession);
-        String hostedPageUrl = checkout.hostedPageUrl();
-        if (hostedPageUrl != null && !hostedPageUrl.isBlank()) {
-            setUrl(hostedPageUrl);
-        }
+        // The buyer stays on this fulfilment page. Hosted checkout opens in another tab.
+        setUrl("/fulfilment/" + fulfilmentSessionId + "/" + fulfilmentEntityId);
         PyngMetadata metadata = PyngMetadata.builder()
                 .checkoutSessionId(checkout.checkoutSessionId())
                 .hostedPageUrl(checkout.hostedPageUrl())

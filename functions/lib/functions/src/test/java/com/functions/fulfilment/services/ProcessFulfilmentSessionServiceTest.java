@@ -1,9 +1,13 @@
 package com.functions.fulfilment.services;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.junit.Test;
+
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.services.ProcessFulfilmentSessionService.RequestedTickets;
 
 public class ProcessFulfilmentSessionServiceTest {
 
@@ -21,6 +25,17 @@ public class ProcessFulfilmentSessionServiceTest {
     @Test
     public void missingTicketQuantityFailsSoPubSubCanDeadLetterIt() throws Exception {
         expectFailure(sessionJson("COMPLETED", null), "session-1");
+    }
+
+    @Test
+    public void pyngCheckoutProvidesTicketQuantityAndPrice() throws Exception {
+        String json = sessionJson("COMPLETED", 2).replace("\"type\": \"CHECKOUT\"", "\"type\": \"PYNG_CHECKOUT\"");
+        FulfilmentSession session = FulfilmentSession.fromJson(json);
+        RequestedTickets tickets = ProcessFulfilmentSessionService.requestedTickets(session);
+
+        assertEquals(Integer.valueOf(2), tickets.count());
+        assertEquals("general", tickets.ticketTypeId());
+        assertEquals(Integer.valueOf(1000), tickets.priceCents());
     }
 
     @Test

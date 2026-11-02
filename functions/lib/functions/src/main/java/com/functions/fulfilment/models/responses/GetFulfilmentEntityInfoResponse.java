@@ -19,5 +19,20 @@ public record GetFulfilmentEntityInfoResponse(
                  */
                 @Nullable String eventId,
                 @Nullable String formId,
-                @Nullable String formResponseId) {
+                @Nullable String formResponseId,
+                /**
+                 * Hosted Pyng checkout. The entity url stays on the fulfilment page.
+                 */
+                @Nullable String checkoutUrl,
+                /**
+                 * Order summary for the details step.
+                 */
+                @Nullable Integer quantity,
+                @Nullable String ticketName,
+                @Nullable Integer unitPriceCents,
+                /**
+                 * Purchaser contact saved on the details step.
+                 */
+                @Nullable String purchaserName,
+                @Nullable String purchaserEmail) {
 }

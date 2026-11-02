@@ -20,6 +20,10 @@ const STEP_META: Record<string, { label: string; icon: ReactNode }> = {
     label: "Payment",
     icon: <CreditCardIcon className="h-3.5 w-3.5" />,
   },
+  [FulfilmentEntityType.DETAILS]: {
+    label: "Details",
+    icon: <UserIcon className="h-3.5 w-3.5" />,
+  },
   [FulfilmentEntityType.FORMS]: {
     label: "Forms",
     icon: <DocumentTextIcon className="h-3.5 w-3.5" />,

@@ -6,19 +6,35 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.fulfilment.models.PurchaserDetails;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionStatus;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
+import com.functions.fulfilment.services.FulfilmentSessionPublisher;
 
 /**
- * Pyng payment completion. When a pending hosted checkout is finished, this
- * records the outcome on the fulfilment session. The Pyng entity end hook
- * decides when that session may advance.
+ * Pyng payment completion. A pending hosted checkout is polled from the
+ * fulfilment page and from the minute cron. A terminal outcome is published
+ * as the whole fulfilment session, then recorded so it is not published again.
  */
 public final class PyngCheckoutCompletion {
     private static final Logger logger = LoggerFactory.getLogger(PyngCheckoutCompletion.class);
+
+    @FunctionalInterface
+    interface SessionSource {
+        FulfilmentSession load(String sessionId) throws Exception;
+    }
+
+    @FunctionalInterface
+    interface SettlementStore {
+        void save(String sessionId, PyngMetadata metadata, FulfilmentSessionStatus status) throws Exception;
+    }
+
+    static volatile SessionSource sessions = PyngCheckoutCompletion::loadStoredSession;
+    static volatile SettlementStore settlements = FulfilmentSessionRepository::updatePyngSettlement;
 
     private PyngCheckoutCompletion() {
     }
@@ -32,49 +48,73 @@ public final class PyngCheckoutCompletion {
         List<String> sessionIds = FulfilmentSessionRepository.listPendingPyngCheckoutSessionIds();
         for (String sessionId : sessionIds) {
             try {
-                pollSession(sessionId);
+                refresh(sessionId);
             } catch (Exception e) {
                 logger.error("Failed to poll Pyng checkout for fulfilment session {}", sessionId, e);
             }
         }
     }
 
-    private static void pollSession(String sessionId) throws Exception {
-        Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSession(sessionId,
-                Optional.empty());
-        if (maybeSession.isEmpty() || !(maybeSession.get() instanceof PyngCheckoutFulfilmentSession session)) {
-            logger.info("Skipping fulfilment session {} because it is not a Pyng checkout", sessionId);
-            return;
+    public static PaymentStatus refresh(String sessionId) throws Exception {
+        FulfilmentSession loaded = sessions.load(sessionId);
+        if (!(loaded instanceof PyngCheckoutFulfilmentSession session)) {
+            throw new IllegalArgumentException("Fulfilment session " + sessionId + " is not a Pyng checkout");
         }
         PyngMetadata metadata = session.getPyngMetadata();
-        if (metadata == null || metadata.getStatus() != PaymentStatus.PENDING) {
-            logger.info("Skipping fulfilment session {} because its Pyng status is {}", sessionId,
-                    metadata == null ? null : metadata.getStatus());
-            return;
+        if (metadata == null || metadata.getStatus() == null) {
+            throw new IllegalStateException("Pyng checkout has not started for fulfilment session " + sessionId);
+        }
+        if (Boolean.TRUE.equals(session.getIsFulfilmentSessionCrystalised())) {
+            return metadata.getStatus();
+        }
+        if (metadata.getStatus().isTerminal()) {
+            return settle(sessionId, session, metadata, metadata.getStatus());
         }
 
         PaymentStatus observed = PyngService.pollCheckout(metadata);
         logger.info("Polled Pyng checkout for fulfilment session {} and observed status {}", sessionId, observed);
         if (observed == null || !observed.isTerminal()) {
-            return;
+            return PaymentStatus.PENDING;
         }
-        recordTerminalStatus(sessionId, session, metadata, observed);
+        return settle(sessionId, session, metadata, observed);
     }
 
-    private static void recordTerminalStatus(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session,
-            PyngMetadata metadata, PaymentStatus status) throws Exception {
-        PaymentStatus current = metadata.getStatus();
-        if (current == status) {
-            return;
-        }
-        if (current != null && current.isTerminal()) {
-            logger.error("Refusing to change Pyng payment status from {} to {} for session {}",
-                    current, status, fulfilmentSessionId);
-            return;
+    private static PaymentStatus settle(String sessionId, PyngCheckoutFulfilmentSession session,
+            PyngMetadata metadata, PaymentStatus observed) throws Exception {
+        FulfilmentSessionStatus sessionStatus;
+        if (observed == PaymentStatus.SUCCEEDED) {
+            if (!PurchaserDetails.isValid(session.getPurchaserName(), session.getPurchaserEmail())) {
+                throw new IllegalStateException(
+                        "Pyng checkout settled without a purchaser name and email for session " + sessionId);
+            }
+            sessionStatus = FulfilmentSessionStatus.COMPLETED;
+        } else if (observed == PaymentStatus.EXPIRED || observed == PaymentStatus.CANCELLED) {
+            sessionStatus = FulfilmentSessionStatus.EXPIRED;
+        } else {
+            return observed;
         }
 
-        metadata.setStatus(status);
+        metadata.setStatus(observed);
         session.setPyngMetadata(metadata);
-        FulfilmentSessionRepository.updatePyngMetadata(fulfilmentSessionId, metadata);
+        session.setStatus(sessionStatus);
+        session.setIsFulfilmentSessionCrystalised(true);
+        FulfilmentSessionPublisher.publish(session);
+        settlements.save(sessionId, metadata, sessionStatus);
+        logger.info("Published Pyng fulfilment session {} with payment status {}", sessionId, observed);
+        return observed;
+    }
+
+    private static FulfilmentSession loadStoredSession(String sessionId) throws Exception {
+        Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSession(sessionId,
+                Optional.empty());
+        if (maybeSession.isEmpty()) {
+            throw new IllegalArgumentException("Fulfilment session " + sessionId + " was not found");
+        }
+        return maybeSession.get();
+    }
+
+    static void reset() {
+        sessions = PyngCheckoutCompletion::loadStoredSession;
+        settlements = FulfilmentSessionRepository::updatePyngSettlement;
     }
 }

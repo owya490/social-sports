@@ -59,6 +59,7 @@ export enum FulfilmentEntityType {
   END = "END",
   WAITLIST = "WAITLIST",
   PYNG = "PYNG",
+  DETAILS = "DETAILS",
 }
 
 /**
@@ -141,6 +142,37 @@ export type GetFulfilmentEntityInfoResponse = {
   eventId: EventId | null;
   formId: FormId | null;
   formResponseId: FormResponseId | null;
+  /** Hosted Pyng checkout. The entity url stays on the fulfilment page. */
+  checkoutUrl: string | null;
+  /** Order summary for the details step. */
+  quantity: number | null;
+  ticketName: string | null;
+  unitPriceCents: number | null;
+  /** Purchaser contact saved on the details step. */
+  purchaserName: string | null;
+  purchaserEmail: string | null;
+};
+
+export type UpdateFulfilmentPurchaserRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+  fulfilmentEntityId: FulfilmentEntityId;
+  name: string;
+  email: string;
+};
+
+export type UpdateFulfilmentPurchaserResponse = {
+  success: boolean;
+  message: string;
+};
+
+export type PyngPaymentStatus = "PENDING" | "SUCCEEDED" | "EXPIRED" | "CANCELLED";
+
+export type RefreshPyngCheckoutRequest = {
+  fulfilmentSessionId: FulfilmentSessionId;
+};
+
+export type RefreshPyngCheckoutResponse = {
+  paymentStatus: PyngPaymentStatus;
 };
 
 /**

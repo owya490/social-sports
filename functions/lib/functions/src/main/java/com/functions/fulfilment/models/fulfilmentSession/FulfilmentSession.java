@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
+import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
@@ -122,6 +123,9 @@ public abstract class FulfilmentSession {
                     case PYNG:
                         entity = objectMapper.readValue(json, PyngFulfilmentEntity.class);
                         break;
+                    case DETAILS:
+                        entity = objectMapper.readValue(json, DetailsFulfilmentEntity.class);
+                        break;
                     default:
                         throw new IllegalArgumentException(
                                 "Unknown FulfilmentEntity type: " + entityData.get("type"));
@@ -216,6 +220,7 @@ public abstract class FulfilmentSession {
                         .numTickets(numTickets)
                         .eventTicketTypeId(snapshot.getString("eventTicketTypeId"))
                         .eventTicketTypeName(snapshot.getString("eventTicketTypeName"))
+                        .price(price)
                         .pyngMetadata(pyngMetadata)
                         .status(status)
                         .purchaserEmail(purchaserEmail)

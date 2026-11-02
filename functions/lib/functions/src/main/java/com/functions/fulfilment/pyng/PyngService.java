@@ -3,7 +3,6 @@ package com.functions.fulfilment.pyng;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -301,9 +300,8 @@ public final class PyngService {
                 || session.getEventData().getEventId().isBlank()) {
             throw new IllegalArgumentException("Pyng return URL requires an event id");
         }
-        // Same success page Stripe Checkout uses.
-        String url = PyngConfig.returnBaseUrl() + "/event/success/"
-                + encodePath(session.getEventData().getEventId());
+        // The original tab keeps polling. This tab only tells the buyer to go back.
+        String url = PyngConfig.returnBaseUrl() + "/fulfilment/pyng-complete";
         if (url.length() > MAX_RETURN_URL_LENGTH) {
             throw new IllegalArgumentException("Pyng return URL exceeds 2048 characters");
         }
@@ -326,10 +324,6 @@ public final class PyngService {
         }
         validateMetadata(metadata);
         return metadata;
-    }
-
-    private static String encodePath(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     private static String urlDecode(String value) {

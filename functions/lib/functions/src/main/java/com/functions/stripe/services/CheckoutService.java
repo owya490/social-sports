@@ -168,14 +168,7 @@ public class CheckoutService {
         DocumentReference organiserRef = UsersUtils.getUserRef(db, organiserId);
 
         boolean needsActivation = Boolean.FALSE.equals(privateUserData.getStripeAccountActive());
-        Integer currentVacancy = ticketType.getVacancy();
-
-        // Reserve tickets on General Admission vacancy
-        Integer newVacancy = currentVacancy - request.quantity();
-        EventTicketTypeRepository.setVacancy(transaction, eventRef, ticketType, newVacancy);
-        logger.info("Reserved {} tickets for event {} type {} at {} cents (vacancy: {} -> {})",
-                request.quantity(), request.eventId(), ticketType.getId(), ticketType.getPrice(), currentVacancy,
-                newVacancy);
+        EventTicketTypeService.reserveVacancy(transaction, eventRef, request.eventId(), ticketType, request.quantity());
         
         // Activate Stripe account if needed
         if (needsActivation) {
