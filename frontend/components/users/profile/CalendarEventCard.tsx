@@ -96,6 +96,7 @@ export default function CalendarEventCard({ event }: CalendarEventCardProps) {
                 eventTicketType={eventTicketType}
                 eventName={event.name}
                 organiser={event.organiser}
+                organiserId={event.organiserId}
                 eventDate={timestampToDateString(event.startDate)}
                 supportedPaymentProviders={event.supportedPaymentProviders}
                 bookingApprovalEnabled={event.bookingApprovalEnabled}

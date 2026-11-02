@@ -121,7 +121,10 @@ public class FulfilmentServiceTest {
     }
 
     @Test
-    public void rejectsPyngBeforeStartingASession() throws Exception {
+    public void rejectsPyngForOrganisersOutsideTheAllowlist() throws Exception {
+        EventData event = availableEvent(true);
+        events.when(() -> EventsRepository.getActiveEventById("event-1")).thenReturn(Optional.of(event));
+
         try {
             FulfilmentInitialisationService.initialise(
                     "event-1", 1, "ticket-1", PaymentProvider.PYNG, GUEST);
@@ -129,7 +132,6 @@ public class FulfilmentServiceTest {
         } catch (IllegalArgumentException expected) {
             assertTrue(expected.getMessage().contains("Pyng"));
         }
-        events.verifyNoInteractions();
         sessions.verifyNoInteractions();
         stripe.verifyNoInteractions();
     }

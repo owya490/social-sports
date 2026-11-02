@@ -14,6 +14,7 @@ import com.functions.fulfilment.models.InitialisedFulfilmentSession;
 import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
+import com.functions.fulfilment.payment.PaymentProviderPolicy;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.global.exceptions.NotFoundException;
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
@@ -24,9 +25,6 @@ public final class FulfilmentInitialisationService {
     public static InitialisedFulfilmentSession initialise(String eventId, Integer numTickets,
             String eventTicketTypeId, PaymentProvider paymentProvider, FulfilmentInitialisationScope scope)
             throws Exception {
-        if (paymentProvider == PaymentProvider.PYNG) {
-            throw new IllegalArgumentException("Pay with Pyng is not available");
-        }
         Objects.requireNonNull(scope, "Initialisation scope is required");
         if (numTickets == null || numTickets <= 0) {
             if (scope instanceof FulfilmentInitialisationScope.Guest) {
@@ -47,6 +45,9 @@ public final class FulfilmentInitialisationService {
         PaymentProvider provider = paymentProvider == null ? PaymentProvider.STRIPE : paymentProvider;
         if (scope instanceof FulfilmentInitialisationScope.PartnerPublic && provider != PaymentProvider.STRIPE) {
             throw new IllegalArgumentException("Unsupported payment provider");
+        }
+        if (provider == PaymentProvider.PYNG && !PaymentProviderPolicy.allowsPyngCheckout(eventData)) {
+            throw new IllegalArgumentException("Pay with Pyng is not available");
         }
         FulfilmentSessionType type;
         if (provider == PaymentProvider.PYNG) {
