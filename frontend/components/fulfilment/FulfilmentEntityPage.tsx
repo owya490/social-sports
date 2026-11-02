@@ -5,11 +5,9 @@ import { FULFILMENT_SESSION_EXPIRY_MILLIS } from "@/services/src/fulfilment/fulf
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import FulfilmentEntityStepper from "./FulfilmentEntityStepper";
-import TimeoutWarningModal from "./TimeoutWarningModal";
-import { shouldResetTimeoutWarningDismissal, shouldShowTimeoutWarning } from "./timeoutWarning";
 
 interface FulfilmentEntityPageProps {
   children: ReactNode;
@@ -38,10 +36,6 @@ const FulfilmentEntityPage = ({
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
-  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
-  // Confirm must stay dismissed. The countdown effect used to treat a closed
-  // modal as "not yet shown" and open it again on the next tick.
-  const timeoutWarningDismissedRef = useRef(false);
 
   // Mobile tooltip state (for disabled button clicks)
   const [showMobileTooltip, setShowMobileTooltip] = useState<"prev" | "next" | null>(null);
@@ -79,34 +73,16 @@ const FulfilmentEntityPage = ({
     return `${mm}:${ss}`;
   }, [remainingMs]);
 
-  // Handle timeout redirect and warning
   useEffect(() => {
-    if (remainingMs === null) return;
+    if (remainingMs === null || remainingMs > 0) return;
 
-    if (shouldResetTimeoutWarningDismissal(remainingMs)) {
-      timeoutWarningDismissedRef.current = false;
-      return;
-    }
+    // Small delay to ensure the timer shows 00:00 before redirecting
+    const timeoutId = setTimeout(() => {
+      router.push("/timeout");
+    }, 100);
 
-    if (shouldShowTimeoutWarning(remainingMs, timeoutWarningDismissedRef.current)) {
-      setShowTimeoutWarning(true);
-    }
-
-    // Redirect when time is up
-    if (remainingMs <= 0) {
-      // Small delay to ensure the timer shows 00:00 before redirecting
-      const timeoutId = setTimeout(() => {
-        router.push("/timeout");
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
-    }
+    return () => clearTimeout(timeoutId);
   }, [remainingMs, router]);
-
-  const hideTimeoutWarningModal = () => {
-    timeoutWarningDismissedRef.current = true;
-    setShowTimeoutWarning(false);
-  };
 
   // Get tooltip messages based on disabled reasons
   const getPrevTooltipMessage = () => {
@@ -292,11 +268,6 @@ const FulfilmentEntityPage = ({
           </div>
         </div>
       </div>
-      <TimeoutWarningModal
-        isOpen={showTimeoutWarning}
-        remainingSeconds={Math.max(0, Math.floor((remainingMs || 0) / 1000))}
-        hideModal={hideTimeoutWarningModal}
-      />
     </div>
   );
 };
