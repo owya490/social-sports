@@ -2,16 +2,17 @@
 
 import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventModal";
 import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
+import { EventBooleanSettingKey, EventSettingsIntent } from "@/components/organiser/v2/shared/eventSettingsIntent";
+import { SettingsAutosaveResult } from "@/components/organiser/v2/shared/useSettingsAutosave";
 import { useUser } from "@/components/utility/UserContext";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
-import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
+import { archiveAndDeleteEvent } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import {
-  clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
@@ -30,12 +31,10 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useMemo, useState } from "react";
 import {
   EventHubPreferenceRow,
-  EventHubSavingIndicator,
   EventHubSettingTile,
   EventHubSettingTileRow,
   EventHubStage,
 } from "./EventHubStage";
-import { useSettingsAutosave } from "./useSettingsAutosave";
 
 type EventHubSettingsProps = {
   eventId: EventId;
@@ -43,23 +42,16 @@ type EventHubSettingsProps = {
   eventName: string;
   eventStartDate: Timestamp;
   paused: boolean;
-  setPaused: (value: boolean) => void;
   paymentsActive: boolean;
-  setPaymentsActive: (value: boolean) => void;
   stripeFeeToCustomer: boolean;
-  setStripeFeeToCustomer: (value: boolean) => void;
   promotionalCodesEnabled: boolean;
-  setPromotionalCodesEnabled: (value: boolean) => void;
   hideVacancy: boolean;
-  setHideVacancy: (value: boolean) => void;
   waitlistEnabled: boolean;
-  setWaitlistEnabled: (value: boolean) => void;
   bookingApprovalEnabled: boolean;
-  setBookingApprovalEnabled: (value: boolean) => void;
   showAttendeesOnEventPage: boolean;
-  setShowAttendeesOnEventPage: (value: boolean) => void;
   maxTicketsPerTransaction: number;
-  setMaxTicketsPerTransaction: (n: number) => void;
+  saveSettings: (intent: EventSettingsIntent) => Promise<SettingsAutosaveResult>;
+  isSaving: boolean;
   eventCapacity: number;
   eventPrice: number;
 };
@@ -91,23 +83,16 @@ export function EventHubSettings({
   eventName,
   eventStartDate,
   paused,
-  setPaused,
   paymentsActive,
-  setPaymentsActive,
   stripeFeeToCustomer,
-  setStripeFeeToCustomer,
   promotionalCodesEnabled,
-  setPromotionalCodesEnabled,
   hideVacancy,
-  setHideVacancy,
   waitlistEnabled,
-  setWaitlistEnabled,
   bookingApprovalEnabled,
-  setBookingApprovalEnabled,
   showAttendeesOnEventPage,
-  setShowAttendeesOnEventPage,
   maxTicketsPerTransaction,
-  setMaxTicketsPerTransaction,
+  saveSettings,
+  isSaving,
   eventCapacity,
   eventPrice,
 }: EventHubSettingsProps) {
@@ -116,45 +101,14 @@ export function EventHubSettings({
   const logger = useMemo(() => new Logger("EventHubSettings"), []);
   const [modalOpen, setModalOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const { status: saveStatus, isSaving, run: runSave, retry: retrySave } = useSettingsAutosave();
 
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
   const isFree = isFreeEvent(eventPrice);
   const stripeReady = isStripeAccountActive(user.stripeAccountActive);
   const paymentsLockedDescription = "Connect Stripe to enable this setting.";
 
-  const saveEventSettings = (
-    data: Partial<EventData>,
-    apply: () => void,
-    rollback: () => void
-  ) => {
-    return runSave({
-      apply,
-      rollback,
-      persist: async () => {
-        await updateEventById(eventId, data);
-        bustOrganiserEventsCache();
-      },
-    });
-  };
-
-  const persistToggle =
-    (setLocal: (v: boolean) => void, key: keyof EventData) => (next: boolean) => {
-      void saveEventSettings(
-        { [key]: next } as Partial<EventData>,
-        () => setLocal(next),
-        () => setLocal(!next)
-      );
-    };
-
-  const persistMaxTickets = (next: number) => {
-    const clamped = clampMaxTicketsPerTransaction(next, eventCapacity);
-    const previous = maxTicketsPerTransaction;
-    void saveEventSettings(
-      { maxTicketsPerTransaction: clamped },
-      () => setMaxTicketsPerTransaction(clamped),
-      () => setMaxTicketsPerTransaction(previous)
-    );
+  const persistToggle = (key: EventBooleanSettingKey) => (value: boolean) => {
+    void saveSettings({ kind: "boolean", key, value });
   };
 
   const onConfirm = async () => {
@@ -179,8 +133,6 @@ export function EventHubSettings({
 
   return (
     <EventHubStage>
-      <EventHubSavingIndicator status={saveStatus} onRetry={retrySave} />
-
       <div className="space-y-2">
         <SettingsGroup title="Registration" flush>
           <EventHubSettingTileRow>
@@ -193,7 +145,7 @@ export function EventHubSettings({
               disabled={isSaving}
               onLabel="Open"
               offLabel="Paused"
-              onChange={(open) => persistToggle(setPaused, "paused")(!open)}
+              onChange={(open) => persistToggle("paused")(!open)}
             />
             <EventHubSettingTile
               title={isFree ? "Bookings" : "Payments"}
@@ -210,7 +162,7 @@ export function EventHubSettings({
               disabled={!stripeReady || isSaving}
               onLabel="On"
               offLabel="Off"
-              onChange={persistToggle(setPaymentsActive, "paymentsActive")}
+              onChange={persistToggle("paymentsActive")}
             />
             <EventHubSettingTile
               title="Booking approval"
@@ -225,7 +177,7 @@ export function EventHubSettings({
               disabled={!stripeReady || isSaving}
               onLabel="On"
               offLabel="Off"
-              onChange={persistToggle(setBookingApprovalEnabled, "bookingApprovalEnabled")}
+              onChange={persistToggle("bookingApprovalEnabled")}
             />
             {WAITLIST_ENABLED ? (
               <EventHubSettingTile
@@ -237,7 +189,7 @@ export function EventHubSettings({
                 disabled={isSaving}
                 onLabel="On"
                 offLabel="Off"
-                onChange={persistToggle(setWaitlistEnabled, "waitlistEnabled")}
+                onChange={persistToggle("waitlistEnabled")}
               />
             ) : null}
           </EventHubSettingTileRow>
@@ -251,14 +203,14 @@ export function EventHubSettings({
               description="Add card surcharges and Stripe fees at checkout for the customer to pay."
               checked={stripeFeeToCustomer}
               disabled={!stripeReady || isSaving}
-              onChange={persistToggle(setStripeFeeToCustomer, "stripeFeeToCustomer")}
+              onChange={persistToggle("stripeFeeToCustomer")}
             />
             <EventHubPreferenceRow
               title="Promotional codes"
               description="Let customers apply promotional codes at checkout."
               checked={promotionalCodesEnabled}
               disabled={!stripeReady || isSaving}
-              onChange={persistToggle(setPromotionalCodesEnabled, "promotionalCodesEnabled")}
+              onChange={persistToggle("promotionalCodesEnabled")}
             />
           </SettingsGroup>
         ) : null}
@@ -269,14 +221,14 @@ export function EventHubSettings({
             description="Hide remaining ticket count on the public event page."
             checked={hideVacancy}
             disabled={isSaving}
-            onChange={persistToggle(setHideVacancy, "hideVacancy")}
+            onChange={persistToggle("hideVacancy")}
           />
           <EventHubPreferenceRow
             title="Show attendees on event page"
             description="Display registered attendees on the public listing."
             checked={showAttendeesOnEventPage}
             disabled={isSaving}
-            onChange={persistToggle(setShowAttendeesOnEventPage, "showAttendeesOnEventPage")}
+            onChange={persistToggle("showAttendeesOnEventPage")}
           />
         </SettingsGroup>
 
@@ -292,7 +244,7 @@ export function EventHubSettings({
               <span className="sr-only">Max tickets per transaction</span>
               <select
                 value={maxTicketsPerTransaction}
-                onChange={(e) => persistMaxTickets(Number(e.target.value))}
+                onChange={(e) => void saveSettings({ kind: "maxTickets", value: Number(e.target.value) })}
                 disabled={isSaving}
                 className="rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60"
               >

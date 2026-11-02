@@ -1,11 +1,31 @@
 import { Timestamp } from "firebase/firestore";
-import { createEmptyEventTicketTypes, EventTicketTypesMap } from "./EventTicketTypeTypes";
+import { createEmptyEventTicketTypes, EventTicketTypeId, EventTicketTypesMap } from "./EventTicketTypeTypes";
 import { PaymentProvider } from "./FulfilmentTypes";
 import { FormId } from "./FormTypes";
 import { Branded } from "./index";
 import { EmptyPublicUserData, PublicUserData, UserId } from "./UserTypes";
 
 export type EventId = Branded<string, "EventId">;
+
+export type EventFormAttachmentTarget =
+  | { kind: "ticketType"; eventTicketTypeId: EventTicketTypeId }
+  | { kind: "legacyEvent" };
+
+export type EventFormAttachmentIntent = {
+  eventId: EventId;
+  target: EventFormAttachmentTarget;
+  formId: FormId | null;
+};
+
+export type EventFormAttachmentResult = Omit<EventFormAttachmentIntent, "target"> &
+  (
+    | { target: { kind: "legacyEvent" }; eventFormIdUpdated: true }
+    | {
+        target: { kind: "ticketType"; eventTicketTypeId: EventTicketTypeId; ticketTypeName: string };
+        eventFormIdUpdated: boolean;
+      }
+  );
+
 export type StripeCheckoutSessionId = Branded<string, "StripeCheckoutSessionId">;
 export type StripePaymentIntentId = Branded<string, "StripePaymentIntentId">;
 

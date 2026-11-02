@@ -1,37 +1,19 @@
 import { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { EventHubPreferenceRow, EventHubSettingTile } from "../event-hub/EventHubStage";
-import { runOptimisticSave, SettingsAutosaveOperation } from "../event-hub/useSettingsAutosave";
-import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
-import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { RecurringHubSettings } from "./RecurringHubSettings";
 
 let mockStripeReady = true;
-let mockIsSaving = false;
-const mockRun = jest.fn<Promise<void>, [SettingsAutosaveOperation]>();
+const mockSaveSettings = jest.fn();
 
 jest.mock("@/components/utility/UserContext", () => ({
   useUser: () => ({ user: { stripeAccountActive: mockStripeReady } }),
-}));
-
-jest.mock("@/services/src/recurringEvents/recurringEventsService", () => ({
-  updateRecurrenceTemplateEventData: jest.fn(),
 }));
 
 jest.mock("@/services/src/waitlist/waitlistService", () => ({ WAITLIST_ENABLED: false }));
 
 jest.mock("@/components/organiser/v2/settings/SportshubStripeIntegrationIcon", () => ({
   SportshubStripeIntegrationIcon: () => null,
-}));
-
-jest.mock("../event-hub/useSettingsAutosave", () => ({
-  ...jest.requireActual("../event-hub/useSettingsAutosave"),
-  useSettingsAutosave: () => ({
-    status: mockIsSaving ? "saving" : "idle",
-    isSaving: mockIsSaving,
-    run: mockRun,
-    retry: jest.fn(),
-  }),
 }));
 
 jest.mock("../event-hub/EventHubStage", () => {
@@ -43,34 +25,25 @@ jest.mock("../event-hub/EventHubStage", () => {
   };
 });
 
-const updateTemplate = jest.mocked(updateRecurrenceTemplateEventData);
 const preferenceRow = jest.mocked(EventHubPreferenceRow);
 const settingTile = jest.mocked(EventHubSettingTile);
 
 describe("RecurringHubSettings booking control", () => {
   const props: ComponentProps<typeof RecurringHubSettings> = {
     loading: false,
-    recurrenceTemplateId: "template-1" as RecurrenceTemplateId,
     paused: false,
-    setPaused: jest.fn(),
+    saveSettings: mockSaveSettings,
+    isSaving: false,
     seriesStatus: "active",
     onManageSchedule: jest.fn(),
     paymentsActive: true,
-    setPaymentsActive: jest.fn(),
     stripeFeeToCustomer: true,
-    setStripeFeeToCustomer: jest.fn(),
     promotionalCodesEnabled: false,
-    setPromotionalCodesEnabled: jest.fn(),
     hideVacancy: false,
-    setHideVacancy: jest.fn(),
     waitlistEnabled: false,
-    setWaitlistEnabled: jest.fn(),
     bookingApprovalEnabled: false,
-    setBookingApprovalEnabled: jest.fn(),
     showAttendeesOnEventPage: false,
-    setShowAttendeesOnEventPage: jest.fn(),
     maxTicketsPerTransaction: 1,
-    setMaxTicketsPerTransaction: jest.fn(),
     eventCapacity: 24,
     eventPrice: 1500,
   };
@@ -78,9 +51,6 @@ describe("RecurringHubSettings booking control", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockStripeReady = true;
-    mockIsSaving = false;
-    mockRun.mockResolvedValue(undefined);
-    updateTemplate.mockResolvedValue(true);
   });
 
   function renderBookingTile(overrides: Partial<typeof props> = {}) {
@@ -96,31 +66,12 @@ describe("RecurringHubSettings booking control", () => {
     expect(settingTile).not.toHaveBeenCalled();
   });
 
-  it.each([false, true])("persists the inverse booking switch state when paused=%s", async (paused) => {
+  it.each([false, true])("requests the inverse booking switch state when paused=%s", (paused) => {
     const tile = renderBookingTile({ paused });
     expect(tile.checked).toBe(!paused);
 
     tile.onChange(paused);
-    const [operation] = mockRun.mock.calls[0];
-    await expect(runOptimisticSave(operation)).resolves.toBe(true);
-
-    expect(updateTemplate).toHaveBeenCalledWith("template-1", { paused: !paused });
-    expect(props.setPaused).toHaveBeenCalledWith(!paused);
-    expect(props.setPaymentsActive).not.toHaveBeenCalled();
-  });
-
-  it("rolls back a rejected booking update and can retry the same operation", async () => {
-    updateTemplate.mockRejectedValueOnce(new Error("write failed"));
-    renderBookingTile().onChange(false);
-    const [operation] = mockRun.mock.calls[0];
-
-    await expect(runOptimisticSave(operation)).resolves.toBe(false);
-    expect(props.setPaused).toHaveBeenNthCalledWith(1, true);
-    expect(props.setPaused).toHaveBeenNthCalledWith(2, false);
-
-    await expect(runOptimisticSave(operation)).resolves.toBe(true);
-    expect(props.setPaused).toHaveBeenLastCalledWith(true);
-    expect(updateTemplate).toHaveBeenNthCalledWith(2, "template-1", { paused: true });
+    expect(mockSaveSettings).toHaveBeenCalledWith({ kind: "boolean", key: "paused", value: !paused });
   });
 
   it.each([0, 1500])("keeps booking availability independent of Stripe for price=%i", (eventPrice) => {
@@ -166,8 +117,7 @@ describe("RecurringHubSettings booking control", () => {
   });
 
   it("blocks further changes while a settings save is in flight", () => {
-    mockIsSaving = true;
-    expect(renderBookingTile().disabled).toBe(true);
+    expect(renderBookingTile({ isSaving: true }).disabled).toBe(true);
     expect(settingTile.mock.calls.every(([tile]) => tile.disabled)).toBe(true);
   });
 });

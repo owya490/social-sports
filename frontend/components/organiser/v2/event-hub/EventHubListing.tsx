@@ -62,6 +62,7 @@ type EventHubListingProps = {
   orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
+  commitBlocked?: boolean;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
   mode?: "event" | "template";
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
@@ -89,6 +90,7 @@ export function EventHubListing({
   orderTicketsMap,
   setEventTicketTypes,
   onPersistTicketTypes,
+  commitBlocked = false,
   mode = "event",
   updateData,
 }: EventHubListingProps) {
@@ -380,7 +382,7 @@ export function EventHubListing({
             <EventHubPrimaryButton
               type="submit"
               form={EVENT_HUB_EDIT_FORM_ID}
-              disabled={loading || !editState.canSave}
+              disabled={loading || commitBlocked || !editState.canSave}
             >
               <CheckIcon className="h-4 w-4" aria-hidden />
               {editState.saving ? "Saving…" : "Save details"}
@@ -402,6 +404,7 @@ export function EventHubListing({
             eventEventLink={eventEventLink}
             isActive={canEditDetails}
             ended={ended}
+            commitBlocked={commitBlocked}
             updateData={updateData}
             onSaved={() => {
               setEditOpen(false);
@@ -433,6 +436,7 @@ export function EventHubListing({
               setEventTicketTypes={setEventTicketTypes}
               onPersistTicketTypes={onPersistTicketTypes}
               hideFormSelector={!isTemplate}
+              commitBlocked={commitBlocked}
             />
           </div>
         ) : null}
@@ -444,6 +448,7 @@ export function EventHubListing({
         eventId={eventId}
         eventImage={eventImage}
         eventThumbnail={eventThumbnail}
+        commitBlocked={commitBlocked}
         updateData={updateData}
       />
     </EventHubStage>
@@ -456,6 +461,7 @@ function ChangePhotoPanel({
   eventId,
   eventImage,
   eventThumbnail,
+  commitBlocked = false,
   updateData,
 }: {
   open: boolean;
@@ -463,6 +469,7 @@ function ChangePhotoPanel({
   eventId: EventId;
   eventImage: string;
   eventThumbnail: string;
+  commitBlocked?: boolean;
   updateData: (id: EventId, data: Partial<EventData>) => Promise<void>;
 }) {
   const { user } = useUser();
@@ -510,7 +517,7 @@ function ChangePhotoPanel({
   }, [open, user.userId, initialImages]);
 
   const save = async () => {
-    if (!dirty || saving || uploading || loading) return;
+    if (commitBlocked || !dirty || saving || uploading || loading) return;
     setSaving(true);
     setError("");
     try {
@@ -535,7 +542,7 @@ function ChangePhotoPanel({
       saving={saving || uploading}
       wide
       footer={
-        <EventHubPrimaryButton onClick={save} disabled={!dirty || saving || uploading || loading}>
+        <EventHubPrimaryButton onClick={save} disabled={commitBlocked || !dirty || saving || uploading || loading}>
           <CheckIcon className="h-4 w-4" aria-hidden />
           {uploading ? "Uploading…" : saving ? "Saving…" : "Save photos"}
         </EventHubPrimaryButton>
