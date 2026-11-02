@@ -11,7 +11,15 @@ interface TimeoutWarningModalProps {
 
 const TimeoutWarningModal = ({ isOpen, remainingSeconds, hideModal }: TimeoutWarningModalProps) => {
   return (
-    <Dialog open={isOpen} handler={() => {}} size="sm">
+    <Dialog
+      open={isOpen}
+      handler={(nextOpen) => {
+        if (nextOpen === false) {
+          hideModal();
+        }
+      }}
+      size="sm"
+    >
       <DialogHeader className="mx-2 text-lg font-medium leading-6 flex items-center gap-2">
         <ClockIcon className="h-5 w-5 text-orange-500" />
         Session Timeout Warning
@@ -25,7 +33,7 @@ const TimeoutWarningModal = ({ isOpen, remainingSeconds, hideModal }: TimeoutWar
         </div>
       </DialogBody>
       <DialogFooter className="flex justify-center">
-        <Button className="mx-2 bg-blue-500 hover:bg-blue-600" color="blue" onClick={hideModal}>
+        <Button type="button" className="mx-2 bg-blue-500 hover:bg-blue-600" color="blue" onClick={hideModal}>
           Confirm
         </Button>
       </DialogFooter>

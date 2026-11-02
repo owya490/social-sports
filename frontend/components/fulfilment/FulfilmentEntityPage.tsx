@@ -5,10 +5,11 @@ import { FULFILMENT_SESSION_EXPIRY_MILLIS } from "@/services/src/fulfilment/fulf
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { Tooltip } from "@material-tailwind/react";
 import { useRouter } from "next/navigation";
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import FulfilmentEntityStepper from "./FulfilmentEntityStepper";
 import TimeoutWarningModal from "./TimeoutWarningModal";
+import { shouldResetTimeoutWarningDismissal, shouldShowTimeoutWarning } from "./timeoutWarning";
 
 interface FulfilmentEntityPageProps {
   children: ReactNode;
@@ -38,6 +39,9 @@ const FulfilmentEntityPage = ({
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
   const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
+  // Confirm must stay dismissed. The countdown effect used to treat a closed
+  // modal as "not yet shown" and open it again on the next tick.
+  const timeoutWarningDismissedRef = useRef(false);
 
   // Mobile tooltip state (for disabled button clicks)
   const [showMobileTooltip, setShowMobileTooltip] = useState<"prev" | "next" | null>(null);
@@ -79,23 +83,28 @@ const FulfilmentEntityPage = ({
   useEffect(() => {
     if (remainingMs === null) return;
 
-    // Show warning when 30 seconds remain (and haven't extended session)
-    if (remainingMs <= 30 * 1000 && remainingMs > 0 && !showTimeoutWarning) {
+    if (shouldResetTimeoutWarningDismissal(remainingMs)) {
+      timeoutWarningDismissedRef.current = false;
+      return;
+    }
+
+    if (shouldShowTimeoutWarning(remainingMs, timeoutWarningDismissedRef.current)) {
       setShowTimeoutWarning(true);
     }
 
     // Redirect when time is up
     if (remainingMs <= 0) {
       // Small delay to ensure the timer shows 00:00 before redirecting
-      const timeoutId = setTimeout(async () => {
+      const timeoutId = setTimeout(() => {
         router.push("/timeout");
       }, 100);
 
       return () => clearTimeout(timeoutId);
     }
-  }, [remainingMs, router, showTimeoutWarning]);
+  }, [remainingMs, router]);
 
   const hideTimeoutWarningModal = () => {
+    timeoutWarningDismissedRef.current = true;
     setShowTimeoutWarning(false);
   };
 
