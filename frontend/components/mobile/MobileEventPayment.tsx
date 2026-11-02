@@ -209,6 +209,7 @@ export default function MobileEventPayment(props: MobileEventPaymentProps) {
                         eventTicketType={selectedType?.eventTicketType}
                         eventName={props.eventName}
                         organiser={props.organiser}
+                        organiserId={props.organiserId}
                         eventDate={timestampToDateString(startDate)}
                         supportedPaymentProviders={props.supportedPaymentProviders}
                         className="flex-1 py-2 px-6 bg-black text-white font-semibold rounded-xl active:bg-white active:text-black border-[1px] border-black transition-colors duration-200 text-sm"

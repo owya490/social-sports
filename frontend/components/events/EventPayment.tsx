@@ -216,6 +216,7 @@ export default function EventPayment(props: EventPaymentProps) {
                         eventTicketType={selectedType?.eventTicketType}
                         eventName={props.eventName}
                         organiser={props.organiser}
+                        organiserId={props.organiserId}
                         eventDate={timestampToDateString(startDate)}
                         supportedPaymentProviders={props.supportedPaymentProviders}
                         className="w-full py-3.5 px-6 bg-core-text text-white font-semibold rounded-xl hover:bg-white border-core-text border-[1px] hover:text-core-text transition-colors duration-200"

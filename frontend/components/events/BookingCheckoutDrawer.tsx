@@ -33,6 +33,7 @@ type BookingCheckoutActionsProps = {
   onPay: (provider: PaymentProvider) => void;
   supportedPaymentProviders: PaymentProvider[];
   bookingApprovalEnabled?: boolean;
+  organiserId?: string | null;
 };
 
 export function BookingCheckoutSummary({
@@ -84,9 +85,10 @@ export function BookingCheckoutActions({
   onPay,
   supportedPaymentProviders,
   bookingApprovalEnabled = false,
+  organiserId,
 }: BookingCheckoutActionsProps) {
   const stripeSupported = supportedPaymentProviders.includes(PaymentProvider.STRIPE);
-  const pyngEnabled = isPayWithPyngEnabled();
+  const pyngEnabled = isPayWithPyngEnabled(organiserId);
 
   return (
     <div className="flex flex-col gap-2">
@@ -138,6 +140,7 @@ export default function BookingCheckoutDrawer({
   onPay,
   supportedPaymentProviders,
   bookingApprovalEnabled = false,
+  organiserId,
 }: BookingCheckoutDrawerProps) {
   return (
     <EventHubPanel
@@ -149,6 +152,7 @@ export default function BookingCheckoutDrawer({
           onPay={onPay}
           supportedPaymentProviders={supportedPaymentProviders}
           bookingApprovalEnabled={bookingApprovalEnabled}
+          organiserId={organiserId}
         />
       }
     >
