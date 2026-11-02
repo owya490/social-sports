@@ -91,11 +91,77 @@ service cloud.firestore {
       //allow create
       allow create: if request.auth != null;
     }
-
-    match /DeletedEvents/{eventId} {
+    
+		match /DeletedEvents/{eventId} {
       // GET, UPDATE
       allow read, update: if request.auth != null && resource.data.organiserId == request.auth.uid;
       // CREATE
+      allow create: if request.auth != null;
+    }
+    
+    // TEMPORARY Everyone can read, and write to RecurrenceEvents Table.
+    match /RecurringEvents/{activeModifier}/{accessModifier}/{eventId} {
+    	allow read, write: if true;
+    }
+    
+    // Everyone can read, can only write or delete your own username, can create if your authd
+    match /Usernames/{username} {
+      allow read: if true;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Everyone should be allowed to read from the Custom Event Links Table for routing
+    // Only allow the organiser who owns the Custom Event Link to write
+    match /CustomLinks/Events/{userId}/{customLink} {
+    	allow read: if true;
+      allow create, delete: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Everyone can read FormTemplates so attendees can see and fill out forms
+    // Only organisers whose form that belongs to can write/update/delete those form templates
+    // Can create if authed
+    match /Forms/FormTemplates/Active/{formId} {
+    	allow read: if true;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    // Only organisers whose form that belongs to can read and write those form templates
+    // Can create if authed
+    match /Forms/FormTemplates/Deleted/{formId} {
+      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null;
+    }
+    
+    match /Forms/FormResponses/Submitted/{formId}/{eventId}/{formResponseId} {
+      allow read: if true;
+      allow create, update: if request.auth != null;
+    }
+    
+    
+    match /Forms/FormResponses/Temp/{formId}/{eventId}/{formResponseId} {
+    	allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+    
+    match /FulfilmentSessions/{fulfilmentSessionId} {
+    	allow read, update: if true;
+      allow create, delete: if request.auth != null;
+    }
+    
+    // Holds partner key digests and allowed origins; only the Admin SDK (Java functions) may touch it.
+    match /PartnerIntegrations/{integrationId} {
+      allow read, write: if false;
+    }
+
+    // Allow all reads for event collections
+    // Allow only the organiser whose collection it is to update and delete
+    // Allow any authenticated user to create
+    match /EventCollections/{activeModifier}/{accessModifier}/{eventCollectionId} {
+    	allow read: if true;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.organiserId;
       allow create: if request.auth != null;
     }
   }
