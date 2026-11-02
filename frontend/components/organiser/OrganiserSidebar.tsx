@@ -1,5 +1,6 @@
 "use client";
 
+import { SportshubHomeLink } from "@/components/navbar/SportshubHomeLink";
 import { OrganiserCommandSearch } from "@/components/organiser/OrganiserCommandSearch";
 import {
   isEventsNavGroupPath,
@@ -14,7 +15,6 @@ import {
   welcomeAwareHref,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { useUser } from "@/components/utility/UserContext";
-import Logo from "@/public/images/BlackLogo.svg";
 import { handleSignOut } from "@/services/src/auth/authService";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
@@ -303,7 +303,7 @@ function SidebarContent({
       <div className={collapsed ? "flex justify-center pb-3" : "pb-2"}>
         {!collapsed ? (
           <div className="flex items-center gap-1.5">
-            <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
+            <SportshubHomeLink onClick={onNavigate} priority />
             <p className="font-sans text-md font-semibold leading-tight text-foreground">
               ORGANISER HUB
               <sup className="ml-0.5 align-super text-[0.55em] font-semibold tracking-wide text-foreground-muted">
@@ -312,9 +312,7 @@ function SidebarContent({
             </p>
           </div>
         ) : (
-          <div className="shrink-0 rounded-xl p-1.5" aria-hidden>
-            <Image src={Logo} alt="" className="h-7 w-auto" priority />
-          </div>
+          <SportshubHomeLink onClick={onNavigate} priority className="p-1.5" imageClassName="h-7 w-auto" />
         )}
       </div>
 

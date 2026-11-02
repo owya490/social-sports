@@ -1,6 +1,7 @@
 "use client";
 
 import Loading from "@/components/loading/Loading";
+import { SportshubHomeLink } from "@/components/navbar/SportshubHomeLink";
 import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
@@ -12,12 +13,10 @@ import {
 import { getOrderById } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
 import { useEffect, useMemo, useState } from "react";
-import Logo from "../../public/images/BlackLogo.svg";
 import {
   buildPurchaserOrderDocumentTitle,
   DEFAULT_PURCHASER_ORDER_DOCUMENT_TITLE,
@@ -158,9 +157,7 @@ export default function PurchaserOrderPage() {
       <div className="min-h-[calc(100vh-var(--footer-height)-4rem)] w-full bg-core-hover/30 px-4 py-16">
         <div className="mx-auto max-w-2xl">
           <div className="mb-10 flex justify-center">
-            <Link href="/" className="inline-block" aria-label="SPORTSHUB home">
-              <Image src={Logo} alt="SPORTSHUB" width={140} height={40} className="h-9 w-auto" priority />
-            </Link>
+            <SportshubHomeLink priority imageClassName="h-9 w-auto" />
           </div>
           <div className="rounded-lg border border-core-outline bg-white px-6 py-10 text-center shadow-sm">
             <p className="text-lg font-medium text-core-text">Something went wrong</p>
@@ -180,9 +177,7 @@ export default function PurchaserOrderPage() {
       <div className="min-h-[calc(100vh-var(--footer-height)-4rem)] w-full bg-core-hover/30 px-4 py-10 sm:py-14">
         <div className="mx-auto max-w-2xl space-y-8">
           <div className="flex justify-center">
-            <Link href="/" className="inline-block" aria-label="SPORTSHUB home">
-              <Image src={Logo} alt="SPORTSHUB" width={160} height={46} className="h-10 w-auto" priority />
-            </Link>
+            <SportshubHomeLink priority imageClassName="h-10 w-auto" />
           </div>
           <section className="rounded-xl border border-core-outline bg-white px-6 py-8 shadow-sm sm:px-8">
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500">Order</p>
@@ -220,9 +215,7 @@ export default function PurchaserOrderPage() {
     <div className="min-h-[calc(100vh-var(--footer-height)-4rem)] w-full bg-core-hover/30 px-4 py-10 sm:py-14">
       <div className="mx-auto max-w-2xl space-y-8">
         <div className="flex flex-col items-center gap-6 text-center">
-          <Link href="/" className="inline-block" aria-label="SPORTSHUB home">
-            <Image src={Logo} alt="SPORTSHUB" width={160} height={46} className="h-10 w-auto" priority />
-          </Link>
+          <SportshubHomeLink priority imageClassName="h-10 w-auto" />
         </div>
 
         <section className="overflow-hidden rounded-xl border border-core-outline bg-white shadow-sm">
