@@ -5,14 +5,18 @@ import {
   CustomLinksPanel,
   CustomLinksPanelHandle,
 } from "@/components/organiser/v2/custom-links/CustomLinksPanel";
+import {
+  eventsAvailableForCustomLinks,
+  seriesAvailableForCustomLinks,
+} from "@/components/organiser/v2/custom-links/customLinkDestinations";
 import { useUser } from "@/components/utility/UserContext";
 import { CustomEventLink } from "@/interfaces/CustomLinkTypes";
-import { EventData, EventId } from "@/interfaces/EventTypes";
+import { EventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
 import { getAllOrganiserCustomEventLinks } from "@/services/src/events/customEventLinks/customEventLinksService";
-import { getEventById } from "@/services/src/events/eventsService";
-import { getRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
+import { getOrganiserEvents } from "@/services/src/organiser/organiserEventsService";
+import { getOrganiserRecurrenceTemplates } from "@/services/src/recurringEvents/recurringEventsService";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -39,16 +43,13 @@ export default function OrganiserCustomLinksV2Page() {
     setLoading(true);
     try {
       const [events, templates, linkList] = await Promise.all([
-        Promise.all(
-          user.publicUpcomingOrganiserEvents.map(async (eventId: string) => await getEventById(eventId as EventId)),
-        ),
-        Promise.all(user.recurrenceTemplates.map(async (templateId) => await getRecurrenceTemplate(templateId))),
+        getOrganiserEvents(user.userId),
+        getOrganiserRecurrenceTemplates(user.userId),
         getAllOrganiserCustomEventLinks(user.userId),
       ]);
-      const filteredTemplates = templates.filter((template) => template.recurrenceData.recurrenceEnabled);
 
-      setActiveEvents(events);
-      setActiveRecurringTemplates(filteredTemplates);
+      setActiveEvents(eventsAvailableForCustomLinks(events));
+      setActiveRecurringTemplates(seriesAvailableForCustomLinks(templates));
       setLinks(Object.fromEntries(linkList.map((link) => [link.id, link])));
     } catch (fetchError) {
       logger.error(`Failed to load custom event links: ${fetchError}`);
