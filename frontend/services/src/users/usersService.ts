@@ -10,15 +10,15 @@ import {
 } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
+import { sanitizeUsernameInput } from "@/utilities/usernameValidationUtils";
 import {
   collection,
-  deleteDoc,
   deleteField,
   doc,
+  DocumentSnapshot,
   getDoc,
   getDocs,
   runTransaction,
-  setDoc,
   Timestamp,
   Transaction,
   updateDoc,
@@ -35,31 +35,58 @@ import {
   tryGetActivePublicUserDataFromLocalStorage,
   bustUserLocalStorageCache,
 } from "./usersUtils/getUsersUtils";
-import { generateUsername } from "./usersUtils/usernameUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
 
 export async function createUser(data: UserData, userId: UserId): Promise<void> {
   try {
     userServiceLogger.info(`Creating new user: ${userId}`);
-
-    const uniqueUsername = await generateUsername(data.firstName);
-    // create the username mapping to optimistically "shotgun" that username
-    await createUsernameMapping(uniqueUsername, userId);
-    await setDoc(doc(db, "Users", "Active", "Public", userId), {
-      ...extractPublicUserData(data),
-      // cheekily inject the generated username and name tokens here.
-      username: uniqueUsername,
-      nameTokens: data.firstName.toLowerCase().split(" "),
-    } as PublicUserData);
-    await setDoc(doc(db, "Users", "Active", "Private", userId), {
-      ...extractPrivateUserData(data),
-      onboardingCompletedAt: null,
+    const publicRef = doc(db, "Users", "Active", "Public", userId);
+    const privateRef = doc(db, "Users", "Active", "Private", userId);
+    await runTransaction(db, async (transaction) => {
+      const publicUser = await transaction.get(publicRef);
+      const privateUser = await transaction.get(privateRef);
+      await writeMissingUserProfile(transaction, data, userId, publicUser, privateUser);
     });
     userServiceLogger.info(`User created successfully: ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error creating new user:, ${error}`);
     throw new UsersServiceError(userId);
+  }
+}
+
+export async function writeMissingUserProfile(
+  transaction: Transaction,
+  data: UserData,
+  userId: UserId,
+  publicUser: DocumentSnapshot,
+  privateUser: DocumentSnapshot
+): Promise<void> {
+  if (!publicUser.exists()) {
+    const base = sanitizeUsernameInput(data.firstName) || "user";
+    const fallback = `${base}_${sanitizeUsernameInput(userId) || "account"}`;
+    let username = base;
+    for (let suffix = 0; ; suffix++) {
+      const candidate = suffix < 10 ? `${base}${suffix || ""}` : `${fallback}${suffix - 10 || ""}`;
+      const usernameRef = doc(db, "Usernames", candidate);
+      const mapping = await transaction.get(usernameRef);
+      if (!mapping.exists() || (mapping.data() as UsernameMap).userId === userId) {
+        if (!mapping.exists()) transaction.set(usernameRef, { userId } as UsernameMap);
+        username = candidate;
+        break;
+      }
+    }
+    transaction.set(doc(db, "Users", "Active", "Public", userId), {
+      ...extractPublicUserData(data),
+      userId,
+      username,
+      nameTokens: data.firstName.toLowerCase().split(" "),
+    });
+  }
+  if (!privateUser.exists()) {
+    transaction.set(doc(db, "Users", "Active", "Private", userId), {
+      ...extractPrivateUserData(data), userId, onboardingCompletedAt: null,
+    });
   }
 }
 
@@ -228,9 +255,20 @@ export async function deleteUser(userId: UserId): Promise<void> {
   try {
     const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
-
-    await deleteDoc(publicUserDocRef);
-    await deleteDoc(privateUserDocRef);
+    await runTransaction(db, async (transaction) => {
+      const publicUser = await transaction.get(publicUserDocRef);
+      const privateUser = await transaction.get(privateUserDocRef);
+      if (publicUser.exists()) {
+        const usernameRef = doc(db, "Usernames", (publicUser.data() as PublicUserData).username);
+        const mapping = await transaction.get(usernameRef);
+        if (mapping.exists()) {
+          if ((mapping.data() as UsernameMap).userId !== userId) throw new UsersServiceError(userId);
+          transaction.delete(usernameRef);
+        }
+        transaction.delete(publicUserDocRef);
+      }
+      if (privateUser.exists()) transaction.delete(privateUserDocRef);
+    });
     userServiceLogger.info(`User deleted successfully:", ${userId}`);
   } catch (error) {
     userServiceLogger.error(`Error deleting user with ID ${userId}:, ${error}`);
@@ -400,33 +438,5 @@ export async function getUsernameMapping(
       userServiceLogger.error(`Error fetching username ${username}: ${error}`);
       throw new UsersServiceError(username);
     }
-  }
-}
-
-export async function createUsernameMapping(username: string, userId: UserId): Promise<void> {
-  username = username.toLowerCase();
-  userServiceLogger.info(`Creating username mapping: ${username}`);
-  if (username === undefined || userId === undefined) {
-    userServiceLogger.warn(`Provided username/ userId is undefined: ${username} ${userId}`);
-    throw new UserNotFoundError(username, "UserId/ Username is undefined");
-  }
-  try {
-    await runTransaction(db, async (transaction) => {
-      const usernameDoc = await transaction.get(doc(db, "Usernames", username));
-      if (usernameDoc.exists()) {
-        // oh no, wth, the username doc should not exist, quick error out and don't overwrite it
-        userServiceLogger.error(
-          `Tried to set to a username document that already exists, failing fast.${username} ${userId}`
-        );
-        throw new UsersServiceError(username);
-      }
-      await transaction.set(doc(db, "Usernames", username), {
-        userId: userId,
-      } as UsernameMap);
-    });
-    userServiceLogger.info(`Username mapping for ${username} to ${userId} created successfully.`);
-  } catch (error) {
-    userServiceLogger.error(`Error creating username mapping ${username}: ${error}`);
-    throw new UsersServiceError(username);
   }
 }

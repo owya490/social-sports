@@ -20,10 +20,7 @@ export default function OnboardingPersonaPage() {
 
   useEffect(() => {
     if (userLoading) return;
-    if (!user.userId) {
-      router.replace("/login");
-      return;
-    }
+    if (!user.userId) return;
     if (!hasProvisionedFirestoreProfile(user)) return;
 
     const stillInProductOnboarding =

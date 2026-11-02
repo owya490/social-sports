@@ -410,6 +410,12 @@ A restrained neutral field with a single warm sports accent. Colour communicates
 - **Active:** `bg-surface-muted`, `text-foreground`.
 - **Inactive:** `text-foreground-secondary`, hover `bg-surface-hover`.
 
+### Authentication return
+
+- **Resume the task:** Protected links retain their path, query parameters and fragment through sign-in. Login, registration and password recovery carry the same validated destination, including email continuations.
+- **Completion:** Email and Google authentication resume the requested page after the profile is ready. Ordinary sign-in keeps its existing homepage destination when no task was requested.
+- **Recovery:** Failed attempts and cancelled Google popups retain the destination. Pending controls remain disabled until the operation finishes; stale completions cannot redirect after the user leaves the auth page or changes accounts.
+
 ### Cards / Containers
 
 - **Outlined panel:** White fill, `border-border`, `rounded-xl`, padding `16px`–`20px` (`p-4 sm:p-5`). Used for chart, top events, error recovery, Details overview / Hosts / Visibility.
