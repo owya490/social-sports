@@ -6,28 +6,23 @@ describe("teamBoardFromStored", () => {
     expect(teamBoardFromStored(null)).toEqual({ teams: [], assignments: {} });
   });
 
-  it("keeps valid teams and drops malformed seats", () => {
+  it("keeps ticket ids on each team and ignores old order counts", () => {
     expect(
       teamBoardFromStored({
         teams: [
-          { id: "a", name: "Team A", targetSize: 5 },
+          { id: "a", name: "Team A", targetSize: 5, ticketIds: ["t1", "t1", "", 4, "t2"] },
           { id: "b", name: "Open", targetSize: null },
           { name: "missing id" },
         ],
-        assignments: {
-          order1: { a: 2, b: 0, c: 1.9 },
-          order2: "legacy",
-        },
+        assignments: { order1: { a: 2 } },
         organiserId: "should-be-ignored",
       })
     ).toEqual({
       teams: [
-        { id: "a", name: "Team A", targetSize: 5 },
-        { id: "b", name: "Open", targetSize: null },
+        { id: "a", name: "Team A", targetSize: 5, ticketIds: ["t1", "t2"] },
+        { id: "b", name: "Open", targetSize: null, ticketIds: [] },
       ],
-      assignments: {
-        order1: { a: 2, c: 1 },
-      },
+      assignments: {},
     });
   });
 });

@@ -22,20 +22,17 @@ import {
   TEAM_CSV_HEADERS,
   addTeam,
   autoFillTeams,
-  boardMatchesOrders,
+  boardMatchesTickets,
   buildTeamCsvRows,
   newTeamId,
-  peopleFromOrders,
-  placeSeats,
+  placeTicket,
   removeTeam,
   renameTeam,
-  seatsFor,
-  seatsOnTeam,
   setTeamTargetSize,
-  unassignedSeats,
+  ticketsFromOrders,
   visibleBoard,
   type TeamBoard,
-  type TeamPerson,
+  type TeamTicket,
 } from "./teamBoard";
 
 type EventHubTeamsProps = {
@@ -59,7 +56,7 @@ export function EventHubTeams({
   initialBoard = EMPTY_TEAM_BOARD,
   onPersist,
 }: EventHubTeamsProps) {
-  const people = useMemo(() => peopleFromOrders(orderTicketsMap), [orderTicketsMap]);
+  const tickets = useMemo(() => ticketsFromOrders(orderTicketsMap), [orderTicketsMap]);
   const [remoteBoard, setRemoteBoard] = useState<TeamBoard | null>(null);
   const [remoteError, setRemoteError] = useState(false);
   const [trackedEventId, setTrackedEventId] = useState(eventId);
@@ -72,7 +69,7 @@ export function EventHubTeams({
   const [saveStatus, setSaveStatus] = useState<SettingsAutosaveStatus>("idle");
   const [hasPendingEdit, setHasPendingEdit] = useState(false);
   const [appliedInitialBoard, setAppliedInitialBoard] = useState<TeamBoard | null>(eventId ? null : initialBoard);
-  const [syncedAssignmentKey, setSyncedAssignmentKey] = useState<string | null>(null);
+  const [syncedTicketKey, setSyncedTicketKey] = useState<string | null>(null);
   const [pendingSync, setPendingSync] = useState<TeamBoard | null>(null);
   if (eventId !== trackedEventId) {
     setTrackedEventId(eventId);
@@ -92,17 +89,17 @@ export function EventHubTeams({
   const failedBoardRef = useRef<TeamBoard | null>(null);
   const mountedRef = useRef(true);
   const persistedSyncRef = useRef<TeamBoard | null>(null);
-  if (sourceBoard && (eventId || onPersist) && !hasPendingEdit && !boardMatchesOrders(sourceBoard, people)) {
-    const next = visibleBoard(sourceBoard, people);
-    const key = JSON.stringify(next.assignments);
-    if (syncedAssignmentKey !== key) {
-      setSyncedAssignmentKey(key);
+  if (sourceBoard && (eventId || onPersist) && !hasPendingEdit && !boardMatchesTickets(sourceBoard, tickets)) {
+    const next = visibleBoard(sourceBoard, tickets);
+    const key = JSON.stringify(next.teams.map((team) => [team.id, team.ticketIds]));
+    if (syncedTicketKey !== key) {
+      setSyncedTicketKey(key);
       setPendingSync(next);
       setBoard(next);
       setHasPendingEdit(true);
     }
-  } else if (sourceBoard && boardMatchesOrders(sourceBoard, people) && (syncedAssignmentKey !== null || pendingSync !== null)) {
-    setSyncedAssignmentKey(null);
+  } else if (sourceBoard && boardMatchesTickets(sourceBoard, tickets) && (syncedTicketKey !== null || pendingSync !== null)) {
+    setSyncedTicketKey(null);
     setPendingSync(null);
   }
 
@@ -162,19 +159,17 @@ export function EventHubTeams({
     };
   }, [enqueuePersist]);
 
-  const view = useMemo(() => (board ? visibleBoard(board, people) : EMPTY_TEAM_BOARD), [board, people]);
+  const view = useMemo(() => (board ? visibleBoard(board, tickets) : EMPTY_TEAM_BOARD), [board, tickets]);
 
   useEffect(() => {
     if (!pendingSync || pendingSync !== board || persistedSyncRef.current === pendingSync) return;
     persistedSyncRef.current = pendingSync;
     enqueuePersist(pendingSync);
   }, [board, enqueuePersist, pendingSync]);
-  const unassigned = people.flatMap((person) => {
-    const count = unassignedSeats(person, view.assignments[person.orderId]);
-    return count > 0 ? [{ person, count }] : [];
-  });
-  const unassignedSeatTotal = unassigned.reduce((sum, entry) => sum + entry.count, 0);
-  const csvRows = useMemo(() => buildTeamCsvRows(view, people), [people, view]);
+  const listedTickets = new Map(tickets.map((ticket, index) => [ticket.ticketId, { ticket, index }]));
+  const assignedIds = new Set(view.teams.flatMap((team) => team.ticketIds));
+  const unassigned = tickets.filter((ticket) => !assignedIds.has(ticket.ticketId));
+  const csvRows = useMemo(() => buildTeamCsvRows(view, tickets), [tickets, view]);
   const filename = `${(eventName || "event").trim().replace(/\s+/g, "-").toLowerCase()}-teams.csv`;
 
   const queuePersist = (next: TeamBoard) => {
@@ -232,9 +227,9 @@ export function EventHubTeams({
       ) : null}
       <div className="flex flex-col gap-3 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-foreground-muted font-sans">
-          {people.length === 0
-            ? "Teams are built from approved signups."
-            : `${unassignedSeatTotal} unassigned · ${view.teams.length} ${view.teams.length === 1 ? "team" : "teams"}`}
+          {tickets.length === 0
+            ? "Teams are built from approved tickets."
+            : `${unassigned.length} unassigned · ${view.teams.length} ${view.teams.length === 1 ? "team" : "teams"}`}
           {persists ? "" : " · Preview only"}
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -246,20 +241,20 @@ export function EventHubTeams({
             label="CSV"
           />
           <EventHubGhostButton
-            disabled={view.teams.length === 0 || people.length === 0}
+            disabled={view.teams.length === 0 || tickets.length === 0}
             onClick={() => {
               if (!armReshuffle) {
                 setArmReshuffle(true);
                 return;
               }
-              update(autoFillTeams(view, people, { reshuffle: true }));
+              update(autoFillTeams(view, tickets, { reshuffle: true }));
             }}
           >
             {armReshuffle ? "Reshuffle everyone" : "Reshuffle"}
           </EventHubGhostButton>
           <EventHubGhostButton
-            disabled={view.teams.length === 0 || unassignedSeatTotal === 0}
-            onClick={() => update(autoFillTeams(view, people, { reshuffle: false }))}
+            disabled={view.teams.length === 0 || unassigned.length === 0}
+            onClick={() => update(autoFillTeams(view, tickets, { reshuffle: false }))}
           >
             Auto-fill
           </EventHubGhostButton>
@@ -276,37 +271,34 @@ export function EventHubTeams({
         </div>
       </div>
 
-      {people.length === 0 && view.teams.length === 0 && !creating ? (
+      {tickets.length === 0 && view.teams.length === 0 && !creating ? (
         <EventHubEmpty>
-          No approved attendees yet. Once someone is approved on Registrations, they can be placed on a team.
+          No approved tickets yet. Once a signup is approved on Registrations, each ticket can be placed on a team.
         </EventHubEmpty>
       ) : (
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(16rem,20rem)_minmax(0,1fr)]">
           <section className="rounded-xl border border-border bg-background" aria-label="Unassigned">
             <header className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
               <h2 className="text-sm font-semibold text-foreground font-sans">Unassigned</h2>
-              <span className="text-xs tabular-nums text-foreground-muted font-sans">{unassignedSeatTotal}</span>
+              <span className="text-xs tabular-nums text-foreground-muted font-sans">{unassigned.length}</span>
             </header>
-            {people.length === 0 ? (
+            {tickets.length === 0 ? (
               <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">
-                No approved attendees yet.
+                No approved tickets yet.
               </p>
-            ) : unassignedSeatTotal === 0 ? (
+            ) : unassigned.length === 0 ? (
               <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">
                 Every ticket is on a team.
               </p>
             ) : (
               <ul className="divide-y divide-border">
-                {unassigned.map(({ person, count }) => (
-                  <PersonRow
-                    key={person.orderId}
-                    person={person}
+                {unassigned.map((ticket) => (
+                  <TicketRow
+                    key={ticket.ticketId}
+                    ticket={ticket}
                     teams={view.teams}
                     teamId=""
-                    count={count}
-                    onMove={(amount, toTeamId) =>
-                      update(placeSeats(view, person.orderId, null, toTeamId, amount, seatsFor(person)))
-                    }
+                    onMove={(toTeamId) => update(placeTicket(view, ticket.ticketId, toTeamId))}
                   />
                 ))}
               </ul>
@@ -355,15 +347,18 @@ export function EventHubTeams({
             ) : null}
 
             {view.teams.length === 0 && !creating ? (
-              <EventHubEmpty>Create a team, then move people across from Unassigned or use Auto-fill.</EventHubEmpty>
+              <EventHubEmpty>Create a team, then move tickets across from Unassigned or use Auto-fill.</EventHubEmpty>
             ) : (
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                 {view.teams.map((team) => {
-                  const members = people.flatMap((person) => {
-                    const count = view.assignments[person.orderId]?.[team.id] ?? 0;
-                    return count > 0 ? [{ person, count }] : [];
-                  });
-                  const filled = seatsOnTeam(view, team.id);
+                  const members = team.ticketIds
+                    .flatMap((ticketId) => {
+                      const listed = listedTickets.get(ticketId);
+                      return listed ? [listed] : [];
+                    })
+                    .sort((a, b) => a.index - b.index)
+                    .map((listed) => listed.ticket);
+                  const filled = members.length;
                   const overTarget = team.targetSize != null && filled > team.targetSize;
                   return (
                     <section key={team.id} className="rounded-xl border border-border bg-background" aria-label={team.name}>
@@ -423,21 +418,16 @@ export function EventHubTeams({
                         )}
                       </header>
                       {members.length === 0 ? (
-                        <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">No one yet.</p>
+                        <p className="px-3 py-8 text-center text-sm text-foreground-muted font-sans">No tickets yet.</p>
                       ) : (
                         <ul className="divide-y divide-border">
-                          {members.map(({ person, count }) => (
-                            <PersonRow
-                              key={person.orderId}
-                              person={person}
+                          {members.map((ticket) => (
+                            <TicketRow
+                              key={ticket.ticketId}
+                              ticket={ticket}
                               teams={view.teams}
                               teamId={team.id}
-                              count={count}
-                              onMove={(amount, toTeamId) =>
-                                update(
-                                  placeSeats(view, person.orderId, team.id, toTeamId, amount, seatsFor(person))
-                                )
-                              }
+                              onMove={(toTeamId) => update(placeTicket(view, ticket.ticketId, toTeamId))}
                             />
                           ))}
                         </ul>
@@ -454,37 +444,26 @@ export function EventHubTeams({
   );
 }
 
-function PersonRow({
-  person,
+function TicketRow({
+  ticket,
   teams,
   teamId,
-  count,
   onMove,
 }: {
-  person: TeamPerson;
+  ticket: TeamTicket;
   teams: { id: string; name: string }[];
   teamId: string;
-  count: number;
-  onMove: (count: number, toTeamId: string | null) => void;
+  onMove: (toTeamId: string | null) => void;
 }) {
-  const seats = seatsFor(person);
   const [open, setOpen] = useState(false);
-  const [amount, setAmount] = useState(String(count));
   const [destination, setDestination] = useState("");
   const destinations = [
     ...(teamId ? [{ id: "unassigned", name: "Unassigned" }] : []),
     ...teams.filter((team) => team.id !== teamId).map((team) => ({ id: team.id, name: team.name })),
   ];
-  const ticketLabel =
-    teamId === ""
-      ? count === seats
-        ? `${seats} ${seats === 1 ? "ticket" : "tickets"}`
-        : `${count} of ${seats} unassigned`
-      : `${count} of ${seats}`;
-  const formId = `move-${person.orderId}-${teamId || "unassigned"}`;
+  const formId = `move-${ticket.ticketId}-${teamId || "unassigned"}`;
 
   const openMove = () => {
-    setAmount(String(count));
     setDestination("");
     setOpen(true);
   };
@@ -492,26 +471,21 @@ function PersonRow({
   const submitMove = (event: FormEvent) => {
     event.preventDefault();
     if (!destination) return;
-    const parsed = Number.parseInt(amount, 10);
-    const moving = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 1), count) : count;
-    onMove(moving, destination === "unassigned" ? null : destination);
+    onMove(destination === "unassigned" ? null : destination);
     setOpen(false);
   };
 
   return (
     <li className="flex items-center gap-3 px-3 py-3">
-      <EventHubInitials name={person.fullName} />
+      <EventHubInitials name={ticket.fullName} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-semibold text-foreground font-sans">{person.fullName}</p>
-        <p className="text-xs text-foreground-muted font-sans">
-          <span className="break-all">{person.email || "—"}</span>
-          <span className="whitespace-nowrap">{` · ${ticketLabel}`}</span>
-        </p>
+        <p className="truncate text-sm font-semibold text-foreground font-sans">{ticket.label}</p>
+        <p className="truncate text-xs text-foreground-muted font-sans">{ticket.email || "—"}</p>
       </div>
       {destinations.length > 0 ? (
         <button
           type="button"
-          aria-label={`Move ${person.fullName}`}
+          aria-label={`Move ${ticket.label}`}
           onClick={openMove}
           className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-foreground-muted hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
@@ -521,7 +495,7 @@ function PersonRow({
       <EventHubPanel
         open={open}
         onClose={() => setOpen(false)}
-        title={`Move ${person.fullName}`}
+        title={`Move ${ticket.label}`}
         footer={
           <EventHubPrimaryButton type="submit" form={formId}>
             Move
@@ -529,19 +503,6 @@ function PersonRow({
         }
       >
         <form id={formId} className="space-y-4" onSubmit={submitMove}>
-          <p className="text-sm text-foreground-muted font-sans">
-            {count} {count === 1 ? "person" : "people"} can move from here.
-          </p>
-          <label className="block space-y-1.5">
-            <span className="text-xs font-medium text-foreground-muted font-sans">How many people?</span>
-            <input
-              required
-              inputMode="numeric"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value.replace(/[^\d]/g, ""))}
-              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm text-foreground font-sans focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            />
-          </label>
           <label className="block space-y-1.5">
             <span className="text-xs font-medium text-foreground-muted font-sans">Which team?</span>
             <select
