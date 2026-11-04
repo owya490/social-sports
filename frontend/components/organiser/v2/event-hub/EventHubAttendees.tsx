@@ -1,7 +1,5 @@
 "use client";
 
-import CopyEmailsButton from "@/components/CopyEmailsButton";
-import DownloadCsvButton from "@/components/DownloadCsvButton";
 import Loading from "@/components/loading/Loading";
 import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAttendeeDialog";
 import { FormResponsesTable } from "@/components/organiser/event/forms/FormResponsesTable";
@@ -55,6 +53,7 @@ import {
   mergeOrderTicketsByOrderId,
   type RegistrationUpdateIssue,
 } from "./registrationLiveUpdates";
+import { AttendeeListActions } from "./AttendeeListActions";
 import { EventHubPanel } from "./EventHubPanel";
 import { EventHubTeams } from "./EventHubTeams";
 import {
@@ -771,7 +770,7 @@ export function EventHubAttendees({
 
       <div className="pb-4 space-y-2">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-foreground font-sans tabular-nums">
+          <p className="min-w-0 text-sm font-semibold text-foreground font-sans tabular-nums">
             {goingCount} Going
             {capacity > 0 ? (
               <span className="text-foreground-muted font-normal">
@@ -781,15 +780,12 @@ export function EventHubAttendees({
               </span>
             ) : null}
           </p>
-          <div className="flex items-center gap-1.5">
-            <CopyEmailsButton compact emails={attendeeEmails} />
-            <DownloadCsvButton
-              compact
-              data={approvedAttendeesCsvData}
-              headers={ATTENDEE_CSV_HEADERS}
-              filename={`Attendees_${eventId}.csv`}
-            />
-          </div>
+          <AttendeeListActions
+            emails={attendeeEmails}
+            csvData={approvedAttendeesCsvData}
+            csvHeaders={ATTENDEE_CSV_HEADERS}
+            csvFilename={`Attendees_${eventId}.csv`}
+          />
         </div>
         <div
           className="h-1 w-full rounded-full bg-surface-muted overflow-hidden"
@@ -862,7 +858,7 @@ export function EventHubAttendees({
             ) : null}
             <EventHubPrimaryButton onClick={() => setIsAddOpen(true)}>
               <PlusIcon className="h-4 w-4" aria-hidden />
-              Add attendee
+              <span className="sr-only sm:not-sr-only">Add attendee</span>
             </EventHubPrimaryButton>
             </div>
           )
