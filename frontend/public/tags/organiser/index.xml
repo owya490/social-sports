@@ -1,4 +1,85 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Organiser</title><link>https://www.sportshub.net.au/tags/organiser/</link><description>Recent content in Organiser on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 07 Jul 2026 00:00:00 +1000</lastBuildDate><atom:link href="https://www.sportshub.net.au/tags/organiser/index.xml" rel="self" type="application/rss+xml"/><item><title>Booking Approval: You Choose Who Gets In</title><link>https://www.sportshub.net.au/blogs/features/booking-approval/</link><pubDate>Tue, 07 Jul 2026 00:00:00 +1000</pubDate><guid>https://www.sportshub.net.au/blogs/features/booking-approval/</guid><description>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>SPORTSHUB – Organiser</title><link>https://www.sportshub.net.au/tags/organiser/</link><description>Recent content in Organiser on SPORTSHUB</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Sat, 07 Nov 2026 00:00:00 +1100</lastBuildDate><atom:link href="https://www.sportshub.net.au/tags/organiser/index.xml" rel="self" type="application/rss+xml"/><item><title>Pay with Pyng: A $15 Ticket Drops from 70 Cents to 15</title><link>https://www.sportshub.net.au/blogs/features/pay-with-pyng/</link><pubDate>Sat, 07 Nov 2026 00:00:00 +1100</pubDate><guid>https://www.sportshub.net.au/blogs/features/pay-with-pyng/</guid><description>
+&lt;p>&lt;img src="https://www.sportshub.net.au/images/pyng-mark.png" alt="Pyng" loading="lazy" />&lt;/p>
+&lt;h1>Pay with Pyng: A $15 Ticket Drops from 70 Cents to 15&lt;/h1>&lt;p>&lt;strong>Pay with Pyng&lt;/strong> is rolling out on SPORTSHUB checkout. It takes the payment from a player&amp;rsquo;s bank with PayTo, so the card networks never touch the ticket. On a $15 ticket, that is the difference between a &lt;strong>70 cent&lt;/strong> card surcharge and a &lt;strong>15 cent&lt;/strong> platform fee.&lt;/p>
+&lt;p>Ask players to choose &lt;strong>Pay with Pyng&lt;/strong> when they book. Same ticket, same spot, without the card surcharge.&lt;/p>
+&lt;h2>The $15 ticket, worked out&lt;span class="hx:absolute hx:-mt-20" id="the-15-ticket-worked-out">&lt;/span>
+&lt;a href="#the-15-ticket-worked-out" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>These are the standard SPORTSHUB rates, the same ones card checkout already uses. On a &lt;strong>$15.00&lt;/strong> ticket the card surcharge is:&lt;/p>
+&lt;ul>
+&lt;li>&lt;strong>30 cents&lt;/strong> fixed card fee&lt;/li>
+&lt;li>&lt;strong>1.65%&lt;/strong> card processing, which is &lt;strong>24.75 cents&lt;/strong>&lt;/li>
+&lt;li>&lt;strong>1%&lt;/strong> SPORTSHUB platform fee, which is &lt;strong>15 cents&lt;/strong>&lt;/li>
+&lt;/ul>
+&lt;p>That is &lt;strong>69.75 cents&lt;/strong>, and checkout rounds up to the next cent: &lt;strong>70 cents&lt;/strong>. A player who is charged the card surcharge pays &lt;strong>$15.70&lt;/strong>.&lt;/p>
+&lt;p>Pyng does not use the card networks, so the 30 cents and the 1.65% are not charged. What is left is the platform fee:&lt;/p>
+&lt;p>&lt;strong>1% of $15 = 15 cents.&lt;/strong>&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>&lt;/th>
+&lt;th>Card&lt;/th>
+&lt;th>Pyng&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>Fee on a $15 ticket&lt;/td>
+&lt;td>70¢&lt;/td>
+&lt;td>15¢&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>What it is&lt;/td>
+&lt;td>30¢ + 1.65% card processing + 1% platform fee&lt;/td>
+&lt;td>1% platform fee&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>Saved&lt;/td>
+&lt;td>&lt;/td>
+&lt;td>&lt;strong>55¢&lt;/strong>&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>&lt;strong>55 cents&lt;/strong> back on every $15 ticket. The fee is about four-fifths smaller.&lt;/p>
+&lt;h2>It scales with the ticket&lt;span class="hx:absolute hx:-mt-20" id="it-scales-with-the-ticket">&lt;/span>
+&lt;a href="#it-scales-with-the-ticket" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>The card piece is a fixed 30 cents plus 1.65%. The platform fee is 1% either way. A dearer ticket saves more.&lt;/p>
+&lt;table>
+&lt;thead>
+&lt;tr>
+&lt;th>Ticket&lt;/th>
+&lt;th>Card surcharge&lt;/th>
+&lt;th>With Pyng&lt;/th>
+&lt;th>Saved&lt;/th>
+&lt;/tr>
+&lt;/thead>
+&lt;tbody>
+&lt;tr>
+&lt;td>$10&lt;/td>
+&lt;td>57¢&lt;/td>
+&lt;td>10¢&lt;/td>
+&lt;td>47¢&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>&lt;strong>$15&lt;/strong>&lt;/td>
+&lt;td>&lt;strong>70¢&lt;/strong>&lt;/td>
+&lt;td>&lt;strong>15¢&lt;/strong>&lt;/td>
+&lt;td>&lt;strong>55¢&lt;/strong>&lt;/td>
+&lt;/tr>
+&lt;tr>
+&lt;td>$20&lt;/td>
+&lt;td>83¢&lt;/td>
+&lt;td>20¢&lt;/td>
+&lt;td>63¢&lt;/td>
+&lt;/tr>
+&lt;/tbody>
+&lt;/table>
+&lt;p>A weekly social of 20 players at $15 is &lt;strong>$11 saved every session&lt;/strong>, and about &lt;strong>$572 over a year&lt;/strong>. That money stays with your players, or with the club, instead of the card networks.&lt;/p>
+&lt;p>A few clubs are on a platform-fee exemption. For everyone else, the figures above are the rate at checkout.&lt;/p>
+&lt;h2>What your players do&lt;span class="hx:absolute hx:-mt-20" id="what-your-players-do">&lt;/span>
+&lt;a href="#what-your-players-do" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>At checkout they can pay by card, or they can pay with Pyng. Pyng uses &lt;strong>PayTo&lt;/strong>: the player approves the payment from their bank, and the money moves without a card surcharge.&lt;/p>
+&lt;p>Where Pay with Pyng is on your event, point people at it. The booking screen already says there are no processing fees with Pyng. This post is the longer version of that line, with the $15 ticket filled in.&lt;/p>
+&lt;h2>Use it on the next session&lt;span class="hx:absolute hx:-mt-20" id="use-it-on-the-next-session">&lt;/span>
+&lt;a href="#use-it-on-the-next-session" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h2>&lt;p>Card checkout on a $15 ticket costs &lt;strong>70 cents&lt;/strong>. Pyng leaves &lt;strong>15 cents&lt;/strong>. If your players can pay with Pyng, ask them to.&lt;/p>
+&lt;hr>
+&lt;p>&lt;em>Built with&lt;/em> ❤️ &lt;em>by the &lt;a href="https://www.sportshub.net.au/" target="_blank" rel="noopener">SPORTSHUB&lt;/a> team.&lt;/em>&lt;/p></description></item><item><title>Booking Approval: You Choose Who Gets In</title><link>https://www.sportshub.net.au/blogs/features/booking-approval/</link><pubDate>Tue, 07 Jul 2026 00:00:00 +1000</pubDate><guid>https://www.sportshub.net.au/blogs/features/booking-approval/</guid><description>
 &lt;p>&lt;img src="https://cdn.prod.website-files.com/66de41e2655789935056f9d5/69424632996f3a13c448d636_id-18.png" alt="booking-approval" loading="lazy" />&lt;/p>
 &lt;h1>Booking Approval: You Choose Who Gets In&lt;/h1>&lt;p>Not every event is first-come, first-served. Sometimes you need to check skill level, verify membership, or simply make sure the right people are in the room. That&amp;rsquo;s why we&amp;rsquo;ve launched &lt;strong>Booking Approval&lt;/strong> — a simple way for organisers to review and approve attendees before their spot is confirmed.&lt;/p>
 &lt;p>Players tap &lt;strong>Request to Book&lt;/strong> instead of &lt;strong>Book Now&lt;/strong>. You review each request in your Organiser Hub. And here&amp;rsquo;s the part that matters most: &lt;strong>their payment method is not charged unless you accept them.&lt;/strong>&lt;/p>
