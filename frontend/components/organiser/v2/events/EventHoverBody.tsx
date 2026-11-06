@@ -73,19 +73,15 @@ export function EventHoverDescription({ event }: EventHoverBodyProps) {
   return <p className="line-clamp-2 leading-relaxed">{description}</p>;
 }
 
-export function EventHoverFlags({ event }: EventHoverBodyProps) {
+export function getEventHoverFlags(event: EventData): string {
   const flags = [
-    event.isPrivate ? "Private" : null,
-    event.paused ? "Paused" : null,
     event.waitlistEnabled ? "Waitlist" : null,
     event.bookingApprovalEnabled ? "Approval required" : null,
-    event.paymentsActive ? null : "Payments off",
     event.promotionalCodesEnabled ? "Promo codes" : null,
     event.formId ? "Form attached" : null,
-  ].filter(Boolean) as string[];
+  ].filter(Boolean);
 
-  if (flags.length === 0) return null;
-  return <>{flags.join(" · ")}</>;
+  return flags.join(" · ");
 }
 
 /** @deprecated Prefer composing metrics / description / flags on the row. */

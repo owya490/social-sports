@@ -4,6 +4,7 @@ import {
   useOpenOrganiserMobileNav,
   useOrganiserPageTitle,
 } from "@/components/organiser/OrganiserBreadcrumbContext";
+import { OrganiserNotificationBell } from "@/components/organiser/OrganiserNotificationsPanel";
 import { resolveOrganiserBreadcrumbs } from "@/components/organiser/organiserNav";
 import { welcomeAwareHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import Logo from "@/public/images/BlackLogo.svg";
@@ -97,6 +98,7 @@ export function OrganiserBreadcrumbs() {
               );
             })}
         </ol>
+        <OrganiserNotificationBell />
       </div>
     </nav>
   );

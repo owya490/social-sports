@@ -20,10 +20,9 @@ import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { Logger } from "@/observability/logger";
 import { addCalendarDaysToYmd, dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
-import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
@@ -47,9 +46,7 @@ export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(
   MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100
 ).toFixed(2)}`;
 
-const logger = new Logger("CreateEventWorkbench");
-
-const LOCATION_COORDINATES_ERROR_MESSAGE = "Failed to get location coordinates. Please select a location again.";
+const LOCATION_SELECTION_ERROR_MESSAGE = "Please select a location from the suggestions.";
 
 const validatePrice = (amount: number): string | null => {
   if (amount > 0 && amount < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
@@ -354,28 +351,26 @@ export function CreateEventWorkbench({
 
   useEffect(() => {
     if (isLoaded && locationInputRef.current && !autocompleteRef.current) {
-      autocompleteRef.current = initializeAutocomplete(locationInputRef, async () => {
+      autocompleteRef.current = initializeAutocomplete(locationInputRef, () => {
         if (!autocompleteRef.current) return;
         const place = autocompleteRef.current.getPlace();
-        if (place.name && place.formatted_address) {
-          const fullAddress = `${place.name}, ${place.formatted_address}`;
-          setLocationDraft(fullAddress);
-          setSelectionMade(true);
-          // Drop any previous coordinates until the new place resolves.
-          updateField({ location: fullAddress, lat: 0, lng: 0 });
-          try {
-            const { lat, lng } = await getLocationCoordinates(fullAddress);
-            updateField({ lat, lng });
-            setLocationWarning(null);
-            locationInputRef.current?.setCustomValidity("");
-          } catch (error) {
-            logger.error(`Failed to get location coordinates: ${error}`);
-            updateField({ lat: 0, lng: 0 });
-            setSelectionMade(false);
-            setLocationWarning(LOCATION_COORDINATES_ERROR_MESSAGE);
-            locationInputRef.current?.setCustomValidity(LOCATION_COORDINATES_ERROR_MESSAGE);
-          }
+        if (!place.place_id || !place.name || !place.formatted_address || !place.geometry?.location) {
+          updateField({ location: "", lat: 0, lng: 0 });
+          setSelectionMade(false);
+          setLocationWarning(LOCATION_SELECTION_ERROR_MESSAGE);
+          locationInputRef.current?.setCustomValidity(LOCATION_SELECTION_ERROR_MESSAGE);
+          return;
         }
+        const fullAddress = `${place.name}, ${place.formatted_address}`;
+        setLocationDraft(fullAddress);
+        setSelectionMade(true);
+        updateField({
+          location: fullAddress,
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        });
+        setLocationWarning(null);
+        locationInputRef.current?.setCustomValidity("");
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init autocomplete once maps load
@@ -411,7 +406,7 @@ export function CreateEventWorkbench({
 
     const hasNameError = data.name.trim() === "";
     const hasCapacityError = !data.capacity || data.capacity < 1;
-    const hasLocationMissing = !selectionMade && locationDraft.trim() === "";
+    const hasLocationMissing = !selectionMade;
     const hasLocationError = locationWarning !== null;
     setHasError(
       hasDateError || hasPriceError || hasLocationMissing || hasLocationError || hasNameError || hasCapacityError
@@ -426,7 +421,6 @@ export function CreateEventWorkbench({
     customAmount,
     isFreeEvent,
     selectionMade,
-    locationDraft,
     locationWarning,
     setHasError,
   ]);
@@ -455,8 +449,7 @@ export function CreateEventWorkbench({
   const acceptPaymentsLabel = isFreeEvent ? "Accept bookings" : "Accept payments";
   const hasDescription = hasDescriptionContent(data.description);
 
-  const canCreate =
-    data.name.trim() !== "" && locationWarning === null && (selectionMade || locationDraft.trim() !== "");
+  const canCreate = data.name.trim() !== "" && locationWarning === null && selectionMade;
 
   const closePanel = () => setPanel(null);
 
@@ -749,40 +742,29 @@ export function CreateEventWorkbench({
                       setLocationDraft(next);
                       setSelectionMade(false);
                       setLocationWarning(null);
-                      locationInputRef.current?.setCustomValidity("");
-                      if (next.trim() === "") {
-                        updateField({ location: "", lat: 0, lng: 0 });
-                      } else {
-                        // Typing invalidates any previously resolved coordinates.
-                        updateField({ lat: 0, lng: 0 });
-                      }
+                      locationInputRef.current?.setCustomValidity(LOCATION_SELECTION_ERROR_MESSAGE);
+                      updateField({ location: "", lat: 0, lng: 0 });
                     }}
                     onBlur={() => {
-                      const trimmed = locationDraft.trim();
-                      if (trimmed === "") {
-                        updateField({ location: "", lat: 0, lng: 0 });
-                        setLocationWarning(null);
-                        locationInputRef.current?.setCustomValidity("");
-                        return;
-                      }
                       if (!selectionMade) {
-                        updateField({ location: trimmed });
-                      }
-                      if (locationWarning) {
-                        locationInputRef.current?.setCustomValidity(locationWarning);
-                      } else {
-                        locationInputRef.current?.setCustomValidity("");
+                        setLocationWarning(locationDraft.trim() ? LOCATION_SELECTION_ERROR_MESSAGE : null);
+                        locationInputRef.current?.setCustomValidity(LOCATION_SELECTION_ERROR_MESSAGE);
                       }
                     }}
-                    placeholder={isLoaded ? "Search a location or paste an address" : "Loading maps…"}
+                    placeholder={isLoaded ? "Search and select a location" : "Loading maps…"}
                     disabled={!isLoaded && !loadError}
                     className="w-full bg-transparent border-0 p-0 mt-1 text-base md:text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     aria-label="Event location"
                     aria-invalid={locationWarning !== null}
+                    aria-describedby={locationWarning ? "create-event-location-error" : undefined}
                   />
                 </div>
               </div>
-              {locationWarning ? <p className="text-xs text-danger font-sans px-2.5 pb-2">{locationWarning}</p> : null}
+              {locationWarning ? (
+                <p id="create-event-location-error" className="text-xs text-danger font-sans px-2.5 pb-2">
+                  {locationWarning}
+                </p>
+              ) : null}
             </div>
 
             <OptionCell

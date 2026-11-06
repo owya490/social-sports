@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +19,7 @@ import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.models.ReservedSlot;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.events.utils.EventIdGenerator;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.utils.JavaUtils;
 import com.functions.utils.TimeUtils;
@@ -104,7 +104,7 @@ public class RecurringEventsCronService {
                     NewEventData newEventDataDeepCopy = createEventDataForRecurrence(
                             recurrenceTemplate.getEventData(), recurrenceTimestamp);
                     String newEventId = eventIdsByRecurrence.computeIfAbsent(
-                            recurrenceTimestampString, ignored -> UUID.randomUUID().toString());
+                            recurrenceTimestampString, ignored -> EventIdGenerator.newEventId());
 
                     List<DocumentSnapshot> eventLinkDocuments =
                             CustomEventLinksService.getEventLinkDocumentsPointedToRecurrence(

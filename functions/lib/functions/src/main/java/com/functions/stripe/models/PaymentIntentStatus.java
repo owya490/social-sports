@@ -9,6 +9,7 @@ package com.functions.stripe.models;
  */
 public enum PaymentIntentStatus {
     REQUIRES_CAPTURE("requires_capture"),
+    SUCCEEDED("succeeded"),
     CANCELED("canceled");
 
     private final String stripeStatus;

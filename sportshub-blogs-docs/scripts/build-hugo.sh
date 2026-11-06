@@ -3,6 +3,16 @@
 # Exit on any error
 set -e
 
+if [ "$#" -gt 1 ]; then
+    echo "Usage: $0 [--partner-only|--docs-only]" >&2
+    exit 2
+fi
+BUILD_SCOPE="${1:-all}"
+case "$BUILD_SCOPE" in
+    all|--partner-only|--docs-only) ;;
+    *) echo "Usage: $0 [--partner-only|--docs-only]" >&2; exit 2 ;;
+esac
+
 echo "🚀 Starting Hugo build and integration process..."
 
 # Get the script directory and navigate to project root
@@ -41,6 +51,8 @@ echo "🔨 Deleting public directory..."
 rm -rf "$HUGO_DIR/public"
 
 # Build Hugo static files
+python3 "$PROJECT_ROOT/scripts/package-integration-skill.py" \
+    --output "$HUGO_DIR/static/downloads/sportshub-events-integration.zip"
 echo "🔨 Building Hugo static files..."
 hugo --minify
 
@@ -67,8 +79,32 @@ fi
 
 echo "📋 Copying Hugo static files to Vercel public directory..."
 
+if [ "$BUILD_SCOPE" != all ]; then
+    if [ "$BUILD_SCOPE" = "--docs-only" ]; then
+        while IFS= read -r -d '' file; do
+            relative="${file#"$HUGO_PUBLIC_DIR/"}"
+            destination="$VERCEL_PUBLIC_DIR/$relative"
+            mkdir -p "$(dirname "$destination")"
+            cp "$file" "$destination"
+        done < <(find "$HUGO_PUBLIC_DIR/docs" -type f -name '*.html' -print0)
+    else
+        mkdir -p "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events"
+        cp "$HUGO_PUBLIC_DIR/docs/integrations/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/"
+        cp "$HUGO_PUBLIC_DIR/docs/integrations/partner-events/index.html" "$VERCEL_PUBLIC_DIR/docs/integrations/partner-events/"
+    fi
+    for dir in "css" "js" "downloads"; do
+        cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"
+    done
+    cp "$HUGO_PUBLIC_DIR/en.search-data.json" "$VERCEL_PUBLIC_DIR/"
+    for file in "$HUGO_PUBLIC_DIR"/en.search*.js; do
+        cp "$file" "$VERCEL_PUBLIC_DIR/"
+    done
+    echo "✅ Selected Docs pages, downloads, and assets copied."
+    exit 0
+fi
+
 # Copy directories: blogs, css, js, tags
-for dir in "blogs" "docs" "css" "js" "tags"; do
+for dir in "blogs" "docs" "css" "js" "tags" "downloads"; do
     if [ -d "$HUGO_PUBLIC_DIR/$dir" ]; then
         echo "📁 Copying $dir directory..."
         cp -r "$HUGO_PUBLIC_DIR/$dir" "$VERCEL_PUBLIC_DIR/"

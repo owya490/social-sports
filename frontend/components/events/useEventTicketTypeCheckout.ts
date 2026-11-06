@@ -1,5 +1,6 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import {
   getSortedEventTicketTypes,
   hasEventTicketTypes,
@@ -57,7 +58,18 @@ export function useEventTicketTypeCheckout(params: {
         params.maxTicketsPerTransaction,
         (ticketCount) =>
           effectiveEventTicketTypeId !== null &&
-          getStoredFulfilmentSessionId(params.eventId, ticketCount, effectiveEventTicketTypeId) !== null
+          (getStoredFulfilmentSessionId(
+            params.eventId,
+            ticketCount,
+            effectiveEventTicketTypeId,
+            PaymentProvider.STRIPE
+          ) !== null ||
+            getStoredFulfilmentSessionId(
+              params.eventId,
+              ticketCount,
+              effectiveEventTicketTypeId,
+              PaymentProvider.PYNG
+            ) !== null)
       ),
     [effectiveVacancy, params.maxTicketsPerTransaction, params.eventId, effectiveEventTicketTypeId]
   );

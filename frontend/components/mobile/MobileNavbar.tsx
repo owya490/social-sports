@@ -1,12 +1,10 @@
 "use client";
 import { Tag } from "@/interfaces/TagTypes";
 import { getAllTags } from "@/services/src/tagService";
-import Image from "next/image";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SportshubHomeLink } from "../navbar/SportshubHomeLink";
 import ProfilePic from "../navbar/ProfilePic";
 import { useNavbarVisibility } from "@components/navbar/navbarVisibility";
-import Logo from "./../../public/images/BlackLogo.svg";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
 
@@ -49,9 +47,7 @@ export default function MobileNavbar() {
         role="navigation"
         aria-label="Mobile navigation"
       >
-        <Link href="/" aria-label="Go to dashboard" className="flex-shrink-0">
-          <Image src={Logo} alt="SPORTSHUB - Find and book social sports events" className="w-10 h-10" />
-        </Link>
+        <SportshubHomeLink imageClassName="h-10 w-10" />
 
         <div className="flex-1 min-w-0 mx-4">
           <MobileSearchBar openSearchInput={handleSearchExpanded} />

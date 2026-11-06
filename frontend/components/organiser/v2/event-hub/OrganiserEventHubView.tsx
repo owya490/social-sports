@@ -16,6 +16,11 @@ import { EventHubListing } from "@/components/organiser/v2/event-hub/EventHubLis
 import { EventHubNav } from "@/components/organiser/v2/event-hub/EventHubNav";
 import { EventHubSettings } from "@/components/organiser/v2/event-hub/EventHubSettings";
 import { EventHubSection } from "@/components/organiser/v2/event-hub/eventHubTypes";
+import {
+  loadRegistrationData,
+  mergeOrderTicketsByOrderId,
+  type RegistrationUpdateIssue,
+} from "@/components/organiser/v2/event-hub/registrationLiveUpdates";
 import { DASHBOARD_PATH } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { useUser } from "@/components/utility/UserContext";
 import {
@@ -24,12 +29,14 @@ import {
   EventData,
   EventId,
   EventMetadata,
+  OrderId,
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { eventServiceLogger, updateEventById } from "@/services/src/events/eventsService";
+import { subscribeToEventMetadata } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
@@ -47,12 +54,11 @@ export function OrganiserEventHubView() {
   const params = useParams<{ id: string }>();
   const eventId = params.id as EventId;
   const router = useRouter();
-  const { user } = useUser();
+  const { auth, user, userLoading } = useUser();
+  const authenticatedUserId = auth.currentUser?.uid;
   const {
     getEvent,
     getEventMetadata,
-    getOrders,
-    getTickets,
     invalidateEventForOrganiserHub,
   } = useEventsForOrganiserHub();
 
@@ -91,23 +97,28 @@ export function OrganiserEventHubView() {
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [orderTicketsMap, setOrderTicketsMap] = useState<Map<Order, Ticket[]>>(new Map());
+  const [registrationUpdateIssue, setRegistrationUpdateIssue] =
+    useState<RegistrationUpdateIssue>(null);
+  const loadedOrderIdsRef = useRef<Set<OrderId>>(new Set());
 
   useEffect(() => {
-    if (!user.userId) return;
+    if (userLoading) return;
+    if (!authenticatedUserId || authenticatedUserId !== user.userId) return;
 
     let isActive = true;
+    let unsubscribeMetadata: (() => void) | null = null;
+    loadedOrderIdsRef.current = new Set();
     hasAppliedPendingLandingRef.current = false;
+    setLoading(true);
     setSection("Details");
+    setRegistrationUpdateIssue(null);
 
     const fetchEvent = async () => {
       try {
-        const [event, nextEventMetadata] = await Promise.all([
-          getEvent(eventId),
-          getEventMetadata(eventId),
-        ]);
+        const event = await getEvent(eventId);
         if (!isActive) return;
 
-        if (event.organiserId !== user.userId) {
+        if (event.organiserId !== authenticatedUserId) {
           router.push(DASHBOARD_PATH);
           return;
         }
@@ -144,21 +155,54 @@ export function OrganiserEventHubView() {
             inventory.capacity
           )
         );
+        const nextEventMetadata = await getEventMetadata(eventId);
+        const { allOrders, orderTicketsMap: nextOrderTicketsMap } =
+          await loadRegistrationData(nextEventMetadata.orderIds);
+        if (!isActive) return;
 
         setEventMetadata(nextEventMetadata);
-        if (isActive) setLoading(false);
-
-        const allOrders = await getOrders(nextEventMetadata.orderIds);
-        const allTickets = await getTickets(allOrders.flatMap((order) => order.tickets));
-        const nextOrderTicketsMap = new Map<Order, Ticket[]>();
-        allOrders.forEach((order) => {
-          nextOrderTicketsMap.set(
-            order,
-            allTickets.filter((ticket) => ticket.orderId === order.orderId)
-          );
-        });
-        if (!isActive) return;
+        loadedOrderIdsRef.current = new Set(nextEventMetadata.orderIds);
         setOrderTicketsMap(nextOrderTicketsMap);
+
+        unsubscribeMetadata = subscribeToEventMetadata(
+          eventId,
+          (metadata) => {
+            if (!isActive) return;
+            setEventMetadata(metadata);
+            setRegistrationUpdateIssue((current) =>
+              current === "listener" ? null : current
+            );
+            const newOrderIds = metadata.orderIds.filter(
+              (orderId) => !loadedOrderIdsRef.current.has(orderId)
+            );
+            if (newOrderIds.length === 0) return;
+
+            newOrderIds.forEach((orderId) => loadedOrderIdsRef.current.add(orderId));
+            void loadRegistrationData(newOrderIds)
+              .then(({ orderTicketsMap: additions }) => {
+                if (!isActive) return;
+                setOrderTicketsMap((current) => {
+                  const currentOrderIds = new Set(
+                    Array.from(current.keys(), (order) => order.orderId)
+                  );
+                  const unseenAdditions = new Map(
+                    Array.from(additions).filter(([order]) => !currentOrderIds.has(order.orderId))
+                  );
+                  return mergeOrderTicketsByOrderId(current, unseenAdditions);
+                });
+              })
+              .catch((error) => {
+                if (!isActive) return;
+                eventServiceLogger.error(`Error loading new event registrations: ${error}`);
+                setRegistrationUpdateIssue((current) =>
+                  current === "listener" ? current : "sync"
+                );
+              });
+          },
+          () => {
+            if (isActive) setRegistrationUpdateIssue("listener");
+          }
+        );
 
         if (!hasAppliedPendingLandingRef.current) {
           hasAppliedPendingLandingRef.current = true;
@@ -187,8 +231,17 @@ export function OrganiserEventHubView() {
     void fetchEvent();
     return () => {
       isActive = false;
+      unsubscribeMetadata?.();
     };
-  }, [eventId, getEvent, getEventMetadata, getOrders, getTickets, router, user.userId]);
+  }, [
+    authenticatedUserId,
+    eventId,
+    getEvent,
+    getEventMetadata,
+    router,
+    user.userId,
+    userLoading,
+  ]);
 
   const handleTogglePause = useCallback(async () => {
     const next = !eventPaused;
@@ -232,7 +285,7 @@ export function OrganiserEventHubView() {
           pauseUpdating={pauseUpdating}
         />
 
-        <EventHubNav current={section} onChange={handleSectionChange} />
+        <EventHubNav current={section} onChange={handleSectionChange} disabled={loading} />
       </div>
 
       <div
@@ -308,7 +361,9 @@ export function OrganiserEventHubView() {
               setEventVacancy(inventory.vacancy);
               setEventPrice(inventory.price);
             }}
+            onRegistrationAppended={(orderId) => loadedOrderIdsRef.current.add(orderId)}
             setOrderTicketsMap={setOrderTicketsMap}
+            registrationUpdateIssue={registrationUpdateIssue}
           />
         )}
 

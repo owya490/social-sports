@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { InvertedHighlightButton } from "../elements/HighlightButton";
 import FulfilmentEntityStepper from "./FulfilmentEntityStepper";
-import TimeoutWarningModal from "./TimeoutWarningModal";
 
 interface FulfilmentEntityPageProps {
   children: ReactNode;
@@ -21,6 +20,8 @@ interface FulfilmentEntityPageProps {
   isSaving?: boolean;
   nextDisabledMessage?: string;
   fulfilmentSessionId: FulfilmentSessionId;
+  /** From md up, stepper, content, and prev/next stay inside the viewport. Below md, the step content scrolls. */
+  fitScreen?: boolean;
 }
 
 const FulfilmentEntityPage = ({
@@ -34,10 +35,10 @@ const FulfilmentEntityPage = ({
   isSaving = false,
   nextDisabledMessage,
   fulfilmentSessionId,
+  fitScreen = false,
 }: FulfilmentEntityPageProps) => {
   const router = useRouter();
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
-  const [showTimeoutWarning, setShowTimeoutWarning] = useState(false);
 
   // Mobile tooltip state (for disabled button clicks)
   const [showMobileTooltip, setShowMobileTooltip] = useState<"prev" | "next" | null>(null);
@@ -75,29 +76,16 @@ const FulfilmentEntityPage = ({
     return `${mm}:${ss}`;
   }, [remainingMs]);
 
-  // Handle timeout redirect and warning
   useEffect(() => {
-    if (remainingMs === null) return;
+    if (remainingMs === null || remainingMs > 0) return;
 
-    // Show warning when 30 seconds remain (and haven't extended session)
-    if (remainingMs <= 30 * 1000 && remainingMs > 0 && !showTimeoutWarning) {
-      setShowTimeoutWarning(true);
-    }
+    // Small delay to ensure the timer shows 00:00 before redirecting
+    const timeoutId = setTimeout(() => {
+      router.push("/timeout");
+    }, 100);
 
-    // Redirect when time is up
-    if (remainingMs <= 0) {
-      // Small delay to ensure the timer shows 00:00 before redirecting
-      const timeoutId = setTimeout(async () => {
-        router.push("/timeout");
-      }, 100);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [remainingMs, router, showTimeoutWarning]);
-
-  const hideTimeoutWarningModal = () => {
-    setShowTimeoutWarning(false);
-  };
+    return () => clearTimeout(timeoutId);
+  }, [remainingMs, router]);
 
   // Get tooltip messages based on disabled reasons
   const getPrevTooltipMessage = () => {
@@ -130,16 +118,30 @@ const FulfilmentEntityPage = ({
   };
 
   return (
-    <div className="relative min-h-screen bg-surface">
-      <div className="w-full flex justify-center">
-        <div className="mt-6 mb-2 screen-width-primary">
+    <div
+      className={
+        fitScreen
+          ? "relative flex h-[calc(100dvh-var(--navbar-height)-var(--footer-height))] flex-col overflow-hidden bg-surface"
+          : "relative min-h-screen bg-surface"
+      }
+    >
+      <div className="flex w-full shrink-0 justify-center">
+        <div className={`${fitScreen ? "mb-2 mt-4" : "mb-2 mt-6"} screen-width-primary`}>
           <FulfilmentEntityStepper fulfilmentSessionInfo={fulfilmentSessionInfo} />
         </div>
       </div>
-      <div className="w-full">{children}</div>
+      <div
+        className={
+          fitScreen ? "flex min-h-0 w-full flex-1 flex-col overflow-y-auto md:overflow-hidden" : "w-full"
+        }
+      >
+        {children}
+      </div>
 
       {/* Navigation buttons positioned to match form width */}
-      <div className="w-full flex justify-center pointer-events-none z-50 pb-20 pt-8">
+      <div
+        className={`pointer-events-none z-50 flex w-full justify-center ${fitScreen ? "shrink-0 px-4 pb-4 pt-3" : "pb-20 pt-8"}`}
+      >
         <div className="screen-width-primary md:px-32">
           <div className="flex items-center">
             <div className="pointer-events-auto relative">
@@ -283,11 +285,6 @@ const FulfilmentEntityPage = ({
           </div>
         </div>
       </div>
-      <TimeoutWarningModal
-        isOpen={showTimeoutWarning}
-        remainingSeconds={Math.max(0, Math.floor((remainingMs || 0) / 1000))}
-        hideModal={hideTimeoutWarningModal}
-      />
     </div>
   );
 };

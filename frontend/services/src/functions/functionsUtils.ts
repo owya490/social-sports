@@ -1,6 +1,7 @@
 import { ErrorResponse } from "@/interfaces/cloudFunctions/java/ErrorResponse";
 import { AuthenticationError } from "@/interfaces/exceptions/AuthenticationError";
 import { AuthorizationError } from "@/interfaces/exceptions/AuthorizationError";
+import { ConflictError } from "@/interfaces/exceptions/ConflictError";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
 import { EndpointType, UnifiedRequest, UnifiedResponse } from "@/interfaces/FunctionsTypes";
 import { Logger } from "@/observability/logger";
@@ -74,6 +75,9 @@ export async function executeGlobalAppControllerFunction<S, T>(
     }
     if (rawResponse.status === 403) {
       throw new AuthorizationError(errorMessage);
+    }
+    if (rawResponse.status === 409) {
+      throw new ConflictError(errorMessage);
     }
 
     throw new Error(errorMessage);

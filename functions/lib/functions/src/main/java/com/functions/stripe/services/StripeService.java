@@ -6,6 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.stripe.exceptions.CheckoutDateTimeException;
+import com.functions.fulfilment.exceptions.FulfilmentSnapshotChangedException;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
+import com.functions.global.exceptions.NotFoundException;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.stripe.models.requests.CreateStripeCheckoutSessionRequest;
 import com.functions.stripe.models.responses.CreateStripeCheckoutSessionResponse;
@@ -47,7 +50,7 @@ public class StripeService {
      */
     public static CreateStripeCheckoutSessionResponse getStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
-            String endFulfilmentEntityId, String eventTicketTypeId) {
+            String endFulfilmentEntityId, String eventTicketTypeId, FulfilmentInitialisationScope scope) {
 
         String newSuccessUrl = successUrl.orElse(
                 UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
@@ -73,7 +76,7 @@ public class StripeService {
                 CaptureMethod.AUTOMATIC,
                 eventTicketTypeId);
 
-        return getStripeCheckoutFromEventId(request);
+        return getStripeCheckoutFromEventId(request, scope);
     }
 
     /**
@@ -97,7 +100,7 @@ public class StripeService {
      */
     public static CreateStripeCheckoutSessionResponse getDelayedStripeCheckoutUrl(String eventId, boolean isPrivate, Integer numTickets,
             Optional<String> successUrl, Optional<String> cancelUrl, String fulfilmentSessionId,
-            String endFulfilmentEntityId, String eventTicketTypeId) {
+            String endFulfilmentEntityId, String eventTicketTypeId, FulfilmentInitialisationScope scope) {
 
         String newSuccessUrl = successUrl.orElse(
                 UrlUtils.getUrlWithCurrentEnvironment(String.format("/event/success/%s", eventId))
@@ -123,12 +126,13 @@ public class StripeService {
                 CaptureMethod.MANUAL,
                 eventTicketTypeId);
 
-        return getStripeCheckoutFromEventId(request);
+        return getStripeCheckoutFromEventId(request, scope);
     }
 
-    public static CreateStripeCheckoutSessionResponse getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request) {
+    public static CreateStripeCheckoutSessionResponse getStripeCheckoutFromEventId(CreateStripeCheckoutSessionRequest request,
+            FulfilmentInitialisationScope scope) {
         try {
-            CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request);
+            CreateStripeCheckoutSessionResponse response = CheckoutService.createStripeCheckoutSession(request, scope);
 
             if (response == null || response.url() == null) {
                 logger.error("Received null or invalid response from CheckoutService for event ID: {}",
@@ -139,6 +143,9 @@ public class StripeService {
             logger.info("Successfully retrieved Stripe checkout URL for event ID: {}", request.eventId());
 
             return response;
+        } catch (FulfilmentSnapshotChangedException e) {
+            logger.warn("Cannot checkout for event {}: booking details changed", request.eventId());
+            throw e;
         } catch (CheckoutDateTimeException e) {
             // We don't need to log error and alert for this error because this
             // time based error is out of our direct control.
@@ -154,6 +161,10 @@ public class StripeService {
             logger.warn("Cannot checkout for event {}: vacancy based error: {}", request.eventId(), e);
             throw e;
         } catch (Exception e) {
+            if (scope instanceof FulfilmentInitialisationScope.PartnerPublic
+                    && (e instanceof NotFoundException || e instanceof IllegalArgumentException)) {
+                throw (RuntimeException) e;
+            }
             logger.error("Failed to create Stripe checkout session for event ID {}: {}", request.eventId(),
                     e.getMessage());
             throw new RuntimeException("Failed to create Stripe checkout session", e);

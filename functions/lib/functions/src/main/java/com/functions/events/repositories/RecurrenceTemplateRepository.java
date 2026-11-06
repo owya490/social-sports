@@ -22,27 +22,26 @@ public class RecurrenceTemplateRepository {
 
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId) {
-        Optional<RecurrenceTemplate> maybeRecurrenceTemplate;
-        // 1. Try Active Private Recurrence Templates
-
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, true);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
+        for (boolean isActive : List.of(true, false)) {
+            for (boolean isPrivate : List.of(true, false)) {
+                DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(
+                        recurrenceTemplateId, isActive, isPrivate);
+                try {
+                    DocumentSnapshot snapshot = recurrenceTemplateDocRef.get().get();
+                    if (snapshot.exists()) {
+                        return Optional.ofNullable(snapshot.toObject(RecurrenceTemplate.class));
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Interrupted while loading recurrence template "
+                            + recurrenceTemplateId, e);
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("Failed to load recurrence template "
+                            + recurrenceTemplateId, e);
+                }
+            }
         }
-
-        // 2. Try Active Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, false);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        // 3. Try InActive Private Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, true);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        // 4. Try InActive Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false);
-        return maybeRecurrenceTemplate;
+        return Optional.empty();
     }
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplateInTransaction(
@@ -56,19 +55,6 @@ public class RecurrenceTemplateRepository {
                     return Optional.ofNullable(snapshot.toObject(RecurrenceTemplate.class));
                 }
             }
-        }
-        return Optional.empty();
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate) {
-        DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(recurrenceTemplateId, isActive, isPrivate);
-        try {
-            DocumentSnapshot maybeSnapshot = recurrenceTemplateDocRef.get().get();
-            if (maybeSnapshot.exists()) {
-                return Optional.ofNullable(maybeSnapshot.toObject(RecurrenceTemplate.class));
-            }
-        } catch (InterruptedException | ExecutionException ignored) {
-            // No op, no retries for now
         }
         return Optional.empty();
     }

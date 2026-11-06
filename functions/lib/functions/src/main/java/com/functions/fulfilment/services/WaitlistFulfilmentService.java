@@ -11,8 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
-import com.functions.events.repositories.EventsRepository;
+import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.services.EventTicketTypeService;
 import com.functions.fulfilment.models.FulfilmentSessionService;
+import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
@@ -28,17 +30,13 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
 
     private static final Logger logger = LoggerFactory.getLogger(WaitlistFulfilmentService.class);
 
-    public WaitlistFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, String eventId,
-            Integer numTickets, String eventTicketTypeId) throws Exception {
+    public WaitlistFulfilmentSession initFulfilmentSession(String fulfilmentSessionId, EventData eventData,
+            Integer numTickets, String eventTicketTypeId, FulfilmentInitialisationScope scope) throws Exception {
+        String eventId = eventData.getEventId();
         logger.info("Initialising waitlist fulfilment session {} for event ID: {} with numTickets: {}",
                 fulfilmentSessionId, eventId, numTickets);
         try {
-            Optional<EventData> maybeEventData = EventsRepository.getEventById(eventId);
-            if (maybeEventData.isEmpty()) {
-                logger.error("Failed to find event data for event ID: {}", eventId);
-                throw new Exception("Failed to find event data for event ID: " + eventId);
-            }
-            EventData eventData = maybeEventData.get();
+            ResolvedEventTicketType ticketType = EventTicketTypeService.resolveById(eventData, eventTicketTypeId);
 
             if (!Boolean.TRUE.equals(eventData.getWaitlistEnabled())) {
                 logger.error("Event is not open for waitlist: {}", eventId);
@@ -80,7 +78,8 @@ public class WaitlistFulfilmentService implements FulfilmentSessionService<Waitl
                     .fulfilmentEntityMap(entityMap)
                     .fulfilmentEntityIds(entityOrder)
                     .numTickets(numTickets)
-                    .eventTicketTypeId(eventTicketTypeId)
+                    .eventTicketTypeId(ticketType.getId())
+                    .price(ticketType.getPrice())
                     .build();
         } catch (Exception e) {
             logger.error("Failed to initialise waitlist fulfilment session: {}", e.getMessage());

@@ -55,6 +55,9 @@ export function EventDetails(props: EventDetailsProps) {
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
               bookingApprovalEnabled={eventData.bookingApprovalEnabled}
               ticketCheckout={ticketCheckout}
+              eventName={eventData.name}
+              organiser={eventData.organiser}
+              supportedPaymentProviders={eventData.supportedPaymentProviders}
             />
           </div>
 
@@ -88,6 +91,9 @@ export function EventDetails(props: EventDetailsProps) {
               maxTicketsPerTransaction={eventData.maxTicketsPerTransaction}
               bookingApprovalEnabled={eventData.bookingApprovalEnabled}
               ticketCheckout={ticketCheckout}
+              eventName={eventData.name}
+              organiser={eventData.organiser}
+              supportedPaymentProviders={eventData.supportedPaymentProviders}
             />
           </div>
         </div>

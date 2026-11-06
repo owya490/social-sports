@@ -11,6 +11,7 @@ public class EventMetadata {
     private Integer completeTicketCount;
     private List<String> completedStripeCheckoutSessionIds;
     private List<String> completedStripePaymentIntentIds;
+    private List<String> completedFulfilmentSessionIds;
     private String organiserId;
     private List<String> orderIds;
 }

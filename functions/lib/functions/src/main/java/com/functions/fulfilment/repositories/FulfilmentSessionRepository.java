@@ -1,14 +1,21 @@
 package com.functions.fulfilment.repositories;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionStatus;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
+import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
+import com.functions.fulfilment.payment.PaymentStatus;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.functions.utils.JavaUtils.objectMapper;
@@ -17,10 +24,14 @@ public class FulfilmentSessionRepository {
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSessionRepository.class);
 
     public static String createFulfilmentSession(String fulfilmentSessionId,
-                                                 FulfilmentSession fulfilmentSession) throws Exception {
+                                                 FulfilmentSession fulfilmentSession, Optional<Transaction> transaction) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(fulfilmentSessionId);
-            sessionDocRef.create(fulfilmentSession).get();
+            if (transaction.isPresent()) {
+                transaction.get().create(sessionDocRef, fulfilmentSession);
+            } else {
+                sessionDocRef.create(fulfilmentSession).get();
+            }
             return sessionDocRef.getId();
         } catch (Exception e) {
             logger.error("Failed to create fulfilment session for eventId: {}",
@@ -113,11 +124,80 @@ public class FulfilmentSessionRepository {
         }
     }
 
+    public static void updatePurchaser(String sessionId, String name, String email) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("purchaserName", name);
+            updates.put("purchaserEmail", email);
+            sessionDocRef.update(updates).get();
+        } catch (Exception e) {
+            logger.error("Failed to update purchaser for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to update purchaser for sessionId: " + sessionId, e);
+        }
+    }
+
+    /**
+     * Records a terminal Pyng outcome after the session has been published.
+     * Crystallising the session stops a later poll from publishing it again.
+     */
+    public static void updatePyngSettlement(String sessionId, PyngMetadata pyngMetadata,
+            FulfilmentSessionStatus status) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
+                    new TypeReference<Map<String, Object>>() {
+                    });
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("pyngMetadata", metadataMap);
+            updates.put("status", status.name());
+            updates.put("isFulfilmentSessionCrystalised", true);
+            sessionDocRef.update(updates).get();
+        } catch (Exception e) {
+            logger.error("Failed to record Pyng settlement for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to record Pyng settlement for sessionId: " + sessionId, e);
+        }
+    }
+
+    public static void updatePyngMetadata(String sessionId, PyngMetadata pyngMetadata) throws Exception {
+        try {
+            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
+                    new TypeReference<Map<String, Object>>() {
+                    });
+            sessionDocRef.update("pyngMetadata", metadataMap).get();
+        } catch (Exception e) {
+            logger.error("Failed to update pyngMetadata for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to update pyngMetadata for sessionId: " + sessionId, e);
+        }
+    }
+
     /**
      * Deletes a fulfilment session (convenience method without transaction)
      */
     public static void deleteFulfilmentSession(String sessionId) throws Exception {
         deleteFulfilmentSession(sessionId, Optional.empty());
+    }
+
+    /**
+     * PYNG_CHECKOUT sessions whose hosted checkout is still PENDING.
+     */
+    public static List<String> listPendingPyngCheckoutSessionIds() throws Exception {
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            Query query = db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
+                    .whereEqualTo("type", FulfilmentSessionType.PYNG_CHECKOUT.name())
+                    .whereEqualTo("pyngMetadata.status", PaymentStatus.PENDING.name());
+            QuerySnapshot snapshots = query.get().get();
+            List<String> ids = new ArrayList<>();
+            for (QueryDocumentSnapshot doc : snapshots.getDocuments()) {
+                ids.add(doc.getId());
+            }
+            return ids;
+        } catch (Exception e) {
+            logger.error("Failed to list pending Pyng checkout fulfilment sessions", e);
+            throw new Exception("Failed to list pending Pyng checkout fulfilment sessions", e);
+        }
     }
 
     public static List<String> listFulfilmentSessionIdsOlderThan(Timestamp cutoff)

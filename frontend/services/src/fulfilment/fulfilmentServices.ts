@@ -9,12 +9,18 @@ import {
   GetFulfilmentEntityInfoResponse,
   GetFulfilmentSessionInfoRequest,
   GetFulfilmentSessionInfoResponse,
+  PyngPaymentStatus,
+  RefreshPyngCheckoutRequest,
+  RefreshPyngCheckoutResponse,
+  UpdateFulfilmentPurchaserRequest,
+  UpdateFulfilmentPurchaserResponse,
   GetNextFulfilmentEntityRequest,
   GetNextFulfilmentEntityResponse,
   GetPrevFulfilmentEntityRequest,
   GetPrevFulfilmentEntityResponse,
   InitCheckoutFulfilmentSessionRequest,
   InitCheckoutFulfilmentSessionResponse,
+  PaymentProvider,
 } from "@/interfaces/FulfilmentTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { NotFoundError } from "@/interfaces/exceptions/NotFoundError";
@@ -56,7 +62,7 @@ export const fulfilmentServiceLogger = new Logger("fulfilmentServiceLogger");
  *
  * Before creating a new session, checks if there's an existing valid session in localStorage (within 20 minutes).
  * If found and still valid on the backend, returns the existing session instead of creating a new one.
- * Sessions are keyed by eventId, numTickets, and eventTicketTypeId to ensure proper context isolation.
+ * Sessions are keyed by eventId, numTickets, eventTicketTypeId, and paymentProvider.
  */
 export async function initFulfilmentSession(
   fulfilmentSessionType: FulfilmentSessionDataType
@@ -64,10 +70,15 @@ export async function initFulfilmentSession(
   try {
     switch (fulfilmentSessionType.type) {
       case FulfilmentSessionType.CHECKOUT: {
-        const { eventId, numTickets, eventTicketTypeId } = fulfilmentSessionType;
+        const { eventId, numTickets, eventTicketTypeId, paymentProvider } = fulfilmentSessionType;
 
-        // Check for existing session in localStorage specific to this event, ticket count, and type
-        const existingSessionId = getStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
+        // Check for existing session in localStorage specific to this event, ticket count, type, and provider
+        const existingSessionId = getStoredFulfilmentSessionId(
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
 
         if (existingSessionId) {
           fulfilmentServiceLogger.info(
@@ -89,16 +100,27 @@ export async function initFulfilmentSession(
             fulfilmentServiceLogger.warn(
               `initFulfilmentSession: Existing session ${existingSessionId} is invalid or expired on backend, creating new session: ${error}`
             );
-            clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId);
+            clearStoredFulfilmentSessionId(eventId, numTickets, eventTicketTypeId, paymentProvider);
             // Session is invalid, continue to create a new one
           }
         }
 
         // No valid existing session, create a new one
-        const response = await initCheckoutFulfilmentSession(eventId, numTickets, eventTicketTypeId);
+        const response = await initCheckoutFulfilmentSession(
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
 
         // Store the new session ID in localStorage with event and ticket context
-        storeFulfilmentSessionId(response.fulfilmentSessionId, eventId, numTickets, eventTicketTypeId);
+        storeFulfilmentSessionId(
+          response.fulfilmentSessionId,
+          eventId,
+          numTickets,
+          eventTicketTypeId,
+          paymentProvider
+        );
 
         return response;
       }
@@ -122,7 +144,8 @@ export async function initFulfilmentSession(
 async function initCheckoutFulfilmentSession(
   eventId: EventId,
   numTickets: number,
-  eventTicketTypeId: EventTicketTypeId
+  eventTicketTypeId: EventTicketTypeId,
+  paymentProvider: PaymentProvider
 ): Promise<InitCheckoutFulfilmentSessionResponse> {
   fulfilmentServiceLogger.info(
     `initCheckoutFulfilmentSessionNew: Initializing fulfilment session for event ID: ${eventId}`
@@ -135,6 +158,7 @@ async function initCheckoutFulfilmentSession(
       eventId,
       numTickets,
       eventTicketTypeId,
+      paymentProvider,
     });
     return response;
   } catch (error) {
@@ -164,6 +188,7 @@ async function initWaitlistFulfilmentSession(
       eventId,
       numTickets,
       eventTicketTypeId,
+      paymentProvider: PaymentProvider.STRIPE,
     });
     return response;
   } catch (error) {
@@ -340,4 +365,31 @@ export async function getFulfilmentSessionInfo(
     fulfilmentServiceLogger.error(`getFulfilmentSessionInfo: Failed to fetch fulfilment session info: ${error}`);
     throw error;
   }
+}
+
+export async function updateFulfilmentPurchaser(
+  fulfilmentSessionId: FulfilmentSessionId,
+  fulfilmentEntityId: FulfilmentEntityId,
+  name: string,
+  email: string
+): Promise<UpdateFulfilmentPurchaserResponse> {
+  const request: UpdateFulfilmentPurchaserRequest = {
+    fulfilmentSessionId,
+    fulfilmentEntityId,
+    name,
+    email,
+  };
+  return await executeGlobalAppControllerFunction<UpdateFulfilmentPurchaserRequest, UpdateFulfilmentPurchaserResponse>(
+    EndpointType.UPDATE_FULFILMENT_PURCHASER,
+    request
+  );
+}
+
+export async function refreshPyngCheckout(fulfilmentSessionId: FulfilmentSessionId): Promise<PyngPaymentStatus> {
+  const request: RefreshPyngCheckoutRequest = { fulfilmentSessionId };
+  const response = await executeGlobalAppControllerFunction<RefreshPyngCheckoutRequest, RefreshPyngCheckoutResponse>(
+    EndpointType.REFRESH_PYNG_CHECKOUT,
+    request
+  );
+  return response.paymentStatus;
 }

@@ -7,9 +7,9 @@ const platforms = [
     name: "SPORTSHUB",
     logo: null,
     logoClassName: "",
-    percentage: 2.7,
+    percentage: 2.65,
     fixedFee: 0.3,
-    feeLabel: "2.7% + 30¢",
+    feeLabel: "2.65% + 30¢",
     yearlySubscription: 0,
     highlight: true,
   },
@@ -47,6 +47,11 @@ const platforms = [
 
 function calcFee(percentage: number, fixedFee: number, ticketPrice: number) {
   return ticketPrice * (percentage / 100) + fixedFee;
+}
+
+// Rates such as 2.65% of $10 land just under a half-cent in binary and would display one cent low.
+function formatDollars(amount: number): string {
+  return (Math.round(amount * 100 + 1e-8) / 100).toFixed(2);
 }
 
 function calcYearlyFees(percentage: number, fixedFee: number, ticketPrice: number, ticketsPerYear: number) {
@@ -148,7 +153,7 @@ function CardCarousel({ sportshub, sportshubYearly }: { sportshub: (typeof platf
                 <div key={price} className="flex justify-between text-sm">
                   <span className="text-gray-400">${price} ticket</span>
                   <span className="font-semibold text-green-400">
-                    ${calcFee(sportshub.percentage, sportshub.fixedFee, price).toFixed(2)} fee
+                    ${formatDollars(calcFee(sportshub.percentage, sportshub.fixedFee, price))} fee
                   </span>
                 </div>
               ))}
@@ -206,7 +211,7 @@ function CardCarousel({ sportshub, sportshubYearly }: { sportshub: (typeof platf
                         <div key={price} className="flex justify-between text-sm">
                           <span className="text-gray-400">${price} ticket</span>
                           <span className="text-gray-700">
-                            ${fee.toFixed(2)} <span className="text-gray-400 text-xs">(+${extra.toFixed(2)})</span>
+                            ${formatDollars(fee)} <span className="text-gray-400 text-xs">(+${formatDollars(extra)})</span>
                           </span>
                         </div>
                       );
@@ -321,7 +326,7 @@ export default function PricingComparisonSection() {
                     return (
                       <td key={p.name} className={`py-5 px-6 text-center ${p.highlight ? "bg-black" : ""}`}>
                         <span className={`text-sm font-semibold ${p.highlight ? "text-white" : "text-gray-700"}`}>
-                          ${fee.toFixed(2)}
+                          ${formatDollars(fee)}
                         </span>
                         {!p.highlight && savings > 0 && (
                           <span className="block text-xs text-gray-400 mt-0.5">+${savings.toFixed(2)} more</span>
@@ -406,7 +411,7 @@ export default function PricingComparisonSection() {
 
         {/* Bottom note */}
         <p className="text-center text-gray-400 text-xs mt-8">
-          Pricing calculated as of March 2026. Card Processing Fees may apply.
+          Pricing calculated as of October 2026. Card Processing Fees may apply.
         </p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { customLinkEventOptionName } from "@/components/organiser/v2/custom-links/customLinkDestinations";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import { CustomEventLink, CustomEventLinkType, EMPTY_CUSTOM_EVENT_LINK } from "@/interfaces/CustomLinkTypes";
 import { EventData } from "@/interfaces/EventTypes";
@@ -97,10 +98,12 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
   const destinationOptions = (link: CustomEventLink): DestinationOption[] => {
     const base: DestinationOption[] =
       link.type === "event"
-        ? activeEvents.map((event) => ({ id: event.eventId, name: event.name }))
+        ? activeEvents.map((event) => ({ id: event.eventId, name: customLinkEventOptionName(event) }))
         : activeRecurringTemplates.map((template) => ({
             id: template.recurrenceTemplateId,
-            name: template.eventData.name,
+            name: template.eventData.isPrivate
+              ? `${template.eventData.name} · Private`
+              : template.eventData.name,
           }));
 
     const referenceId = resolveReferenceId(link);

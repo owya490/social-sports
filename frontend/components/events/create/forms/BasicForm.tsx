@@ -675,7 +675,7 @@ export function BasicInformation({
                         </label>
                         <p className="text-sm mb-5 mt-2">
                           Application Fees include Stripe card surcharges. Selecting yes will mean your customers will
-                          be charged the fees ontop of the ticket price, shown as a Card Surcharge fee.
+                          be charged the fees ontop of the ticket price, shown as a Stripe Platform Fee.
                         </p>
                         <div className="mt-4">
                           <Select

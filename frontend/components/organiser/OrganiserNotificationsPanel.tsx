@@ -1,54 +1,131 @@
 "use client";
 
+import { EventHubInitials } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
+import { useUser } from "@/components/utility/UserContext";
+import { Logger } from "@/observability/logger";
+import {
+  BookingApprovalNotification,
+  fetchBookingApprovalNotifications,
+} from "@/services/src/organiser/bookingApprovalNotifications";
+import { BellIcon, TicketIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import Skeleton from "react-loading-skeleton";
 
-const COMING_SOON_ITEMS = [
-  {
-    date: "Soon",
-    title: "Event updates",
-    description: "Booking activity, capacity changes, and event reminders in one place.",
-  },
-  {
-    date: "Soon",
-    title: "Attendee activity",
-    description: "See when people join, cancel, or need your approval.",
-  },
-  {
-    date: "Soon",
-    title: "Organiser alerts",
-    description: "Payments, Stripe status, and important account notices.",
-  },
-] as const;
+const logger = new Logger("organiserNotificationsLogger");
 
-type OrganiserNotificationsPanelProps = {
-  open: boolean;
-  onClose: () => void;
+type OrganiserNotificationsContextValue = {
+  openNotifications: () => void;
+  count: number;
 };
 
-export function OrganiserNotificationsPanel({ open, onClose }: OrganiserNotificationsPanelProps) {
-  return (
-    <EventHubPanel open={open} onClose={onClose} title="Notifications">
-      <div className="space-y-5">
-        <p className="font-sans text-sm text-foreground-muted">
-          Coming soon — your organiser notification timeline will live here.
-        </p>
+const OrganiserNotificationsContext = createContext<OrganiserNotificationsContextValue | null>(null);
 
-        <ol className="ms-3 flex flex-col border-l border-border">
-          {COMING_SOON_ITEMS.map((item) => (
-            <li key={item.title} className="relative pb-6 pl-6 last:pb-0">
-              <span
-                aria-hidden
-                className="absolute top-1 -left-1.5 h-3 w-3 rounded-full border-2 border-border bg-background"
-              />
-              <time className="mb-1 block font-sans text-xs font-medium text-foreground-muted">
-                {item.date}
-              </time>
-              <p className="font-sans text-sm font-medium text-foreground">{item.title}</p>
-              <p className="mt-0.5 font-sans text-sm text-foreground-muted">{item.description}</p>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </EventHubPanel>
+function formatPurchasedDate(seconds: number): string {
+  return new Intl.DateTimeFormat("en-AU", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(seconds * 1000));
+}
+
+export function OrganiserNotificationsProvider({ children }: { children: ReactNode }) {
+  const { user } = useUser();
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<BookingApprovalNotification[] | null>(null);
+
+  useEffect(() => {
+    if (user.userId === "") {
+      return;
+    }
+
+    let active = true;
+    fetchBookingApprovalNotifications(user.userId)
+      .then((notifications) => {
+        if (active) setItems(notifications);
+      })
+      .catch((error) => {
+        logger.error("fetchBookingApprovalNotifications() " + error);
+        if (active) setItems([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [user.userId]);
+
+  const loading = user.userId !== "" && items === null;
+  const notifications = items ?? [];
+
+  return (
+    <OrganiserNotificationsContext.Provider
+      value={{ openNotifications: () => setOpen(true), count: notifications.length }}
+    >
+      {children}
+      <EventHubPanel open={open} onClose={() => setOpen(false)} title="Notifications">
+        {loading ? (
+          <Skeleton height={44} className="rounded-lg" />
+        ) : notifications.length === 0 ? (
+          <div>
+            <p className="font-sans text-sm font-medium text-foreground">No notifications</p>
+            <p className="mt-0.5 font-sans text-sm text-foreground-muted">All quiet on the pitch.</p>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {notifications.map((item) => (
+              <li key={item.orderId}>
+                <Link
+                  href={`/organiser/v2/event/${item.eventId}`}
+                  onClick={() => setOpen(false)}
+                  className="flex items-start gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+                >
+                  <EventHubInitials name={item.purchaserName} />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-sans text-sm leading-snug">
+                      <span className="font-semibold text-foreground">{item.purchaserName}</span>
+                      <span className="text-foreground-muted"> is waiting for approval</span>
+                    </p>
+                    <p className="mt-0.5 flex min-w-0 items-center gap-1 font-sans text-sm text-foreground-secondary">
+                      <TicketIcon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                      <span className="truncate">{item.eventName}</span>
+                    </p>
+                  </div>
+                  <time
+                    dateTime={new Date(item.purchasedAtSeconds * 1000).toISOString()}
+                    className="shrink-0 pt-0.5 font-sans text-xs text-foreground-muted"
+                  >
+                    {formatPurchasedDate(item.purchasedAtSeconds)}
+                  </time>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </EventHubPanel>
+    </OrganiserNotificationsContext.Provider>
+  );
+}
+
+export function OrganiserNotificationBell() {
+  const notifications = useContext(OrganiserNotificationsContext);
+  if (!notifications) {
+    return null;
+  }
+
+  const { openNotifications, count } = notifications;
+
+  return (
+    <button
+      type="button"
+      onClick={openNotifications}
+      className="relative ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-foreground-muted transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+      aria-label={count > 0 ? `Notifications, ${count} waiting` : "Notifications"}
+    >
+      <BellIcon className="h-5 w-5 stroke-[1.5]" aria-hidden />
+      {count > 0 ? (
+        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" aria-hidden />
+      ) : null}
+    </button>
   );
 }

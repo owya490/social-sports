@@ -11,6 +11,15 @@ export function isBookingMaintenanceActive(): boolean {
   return BOOKING_MAINTENANCE_ENABLED;
 }
 
+/** Organisers whose paid events can offer Pay with PYNG. This overrides supportedPaymentProviders. */
+export const PAY_WITH_PYNG_ORGANISER_IDS: readonly string[] = [
+  "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
+];
+
+export function isPayWithPyngEnabled(organiserId: string | null | undefined): boolean {
+  return typeof organiserId === "string" && PAY_WITH_PYNG_ORGANISER_IDS.includes(organiserId);
+}
+
 /** Organisers who see the Hub v2 promo banner on the v1 dashboard. */
 export const ORGANISER_HUB_V2_BANNER_USER_IDS: readonly string[] = [
   "98PJNSoCmNU5zslxa1wIdZ3mPdf2", // sydgrassvolleyball

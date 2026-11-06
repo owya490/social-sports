@@ -10,6 +10,7 @@ import com.functions.events.models.EventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.responses.GetEventByIdResponse;
 import com.functions.events.repositories.EventsRepository;
+import com.functions.global.exceptions.NotFoundException;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
@@ -33,39 +34,24 @@ public class GetEventByIdHandler implements Handler<GetEventByIdRequest, GetEven
 
     @Override
     public GetEventByIdResponse handle(GetEventByIdRequest request, AuthContext authContext) {
-        String eventId = request.eventId();
-        if (eventId == null || eventId.isBlank()) {
-            logger.warn("GetEventById rejected: eventId is null or blank");
+        if (request == null || request.eventId() == null || request.eventId().isBlank()) {
             throw new IllegalArgumentException("eventId is required and must be non-empty");
         }
 
+        String eventId = request.eventId();
         logger.info("Handling get event by ID request for eventId: {}", eventId);
 
-        try {
-            Optional<EventData> eventOptional = EventsRepository.getEventById(eventId);
-            
-            if (eventOptional.isEmpty()) {
-                logger.warn("Event not found: {}", eventId);
-                throw new RuntimeException("Event not found: " + eventId);
-            }
-
-            EventData event = eventOptional.get();
-
-            if (event.getIsActive() == null || !event.getIsActive()) {
-                logger.warn("Event is not active: {}", eventId);
-                throw new RuntimeException("Event is not active: " + eventId);
-            }
-
-            if (event.getIsPrivate() == null || event.getIsPrivate()) {
-                logger.warn("Event is private: {}", request.eventId());
-                throw new RuntimeException("Event is private: " + request.eventId());
-            }
-
-            logger.info("Successfully retrieved event: {}", eventId);
-            return new GetEventByIdResponse(event);
-        } catch (RuntimeException e) {
-            logger.error("Failed to get event by ID: {}", eventId, e);
-            throw e;
+        EventData event = find(eventId)
+                .orElseThrow(() -> new NotFoundException("Event not found: " + eventId));
+        if (!Boolean.TRUE.equals(event.getIsActive()) || !Boolean.FALSE.equals(event.getIsPrivate())) {
+            throw new IllegalStateException("Event at active public path has inconsistent status: " + eventId);
         }
+
+        logger.info("Successfully retrieved event: {}", eventId);
+        return new GetEventByIdResponse(event);
+    }
+
+    protected Optional<EventData> find(String eventId) {
+        return EventsRepository.getActivePublicEventById(eventId);
     }
 }
