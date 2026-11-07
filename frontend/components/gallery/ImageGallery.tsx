@@ -2,6 +2,7 @@
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { ImageType } from "@/interfaces/ImageTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import {
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
@@ -72,6 +73,7 @@ export const ImageGallery = ({ user }: ImageGalleryProps) => {
         const downloadUrl = await uploadEventImage(user.userId, fileToUpload);
         setImageUrls((prev) => [downloadUrl, ...prev]);
       }
+      trackEvent(AnalyticsEvent.ORGANISER_GALLERY_UPLOAD, { image_type: type });
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("Failed to upload image. Please try again.");

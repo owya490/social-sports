@@ -15,7 +15,10 @@ import { CollectionHubEvents } from "@/components/organiser/v2/collection-hub/Co
 import { CollectionHubNav } from "@/components/organiser/v2/collection-hub/CollectionHubNav";
 import { CollectionHubSettings } from "@/components/organiser/v2/collection-hub/CollectionHubSettings";
 import { CollectionHubSection } from "@/components/organiser/v2/collection-hub/collectionHubTypes";
+import { useTrackScreen } from "@/components/analytics/useTrackScreen";
 import { useUser } from "@/components/utility/UserContext";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
+import { tabScreenTemplate } from "@/services/src/analytics/pageTemplates";
 import { EMPTY_EVENT_COLLECTION, EventCollection, EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { RecurrenceTemplate, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
@@ -49,6 +52,7 @@ export default function OrganiserCollectionHubV2Page() {
 
   const [section, setSection] = useState<CollectionHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
+  useTrackScreen(tabScreenTemplate("/organiser/v2/event/event-collection/[id]", section), "organiser");
   const [loading, setLoading] = useState(true);
   const [collection, setCollection] = useState<EventCollection>(EMPTY_EVENT_COLLECTION);
   const [events, setEvents] = useState<EventData[]>([]);
@@ -133,6 +137,8 @@ export default function OrganiserCollectionHubV2Page() {
 
   const persistCollection = async (data: Partial<EventCollection>) => {
     await updateEventCollection(collectionId, collection.isPrivate, data);
+    const field = Object.keys(data)[0] ?? "details";
+    trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_UPDATE, { field });
     setCollection((prev) => ({ ...prev, ...data }));
   };
 
@@ -167,6 +173,7 @@ export default function OrganiserCollectionHubV2Page() {
         eventIds,
         recurringEventTemplateIds: templateIds,
       });
+      trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_ITEM_CHANGE, { action: "save_selection" });
 
       const updatedEvents = allOrganiserEvents.filter((event) => eventIds.includes(event.eventId));
       const updatedTemplates = allOrganiserTemplates.filter((template) =>
@@ -243,6 +250,7 @@ export default function OrganiserCollectionHubV2Page() {
               setPrivacyUpdating(true);
               try {
                 await updateEventCollectionAccessModifier(collectionId, user.userId, nextPrivate);
+                trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_VISIBILITY_CHANGE, { is_private: nextPrivate });
                 setCollection((prev) => ({ ...prev, isPrivate: nextPrivate }));
               } catch (error) {
                 logger.error(`Failed to toggle privacy: ${error}`);
@@ -268,6 +276,7 @@ export default function OrganiserCollectionHubV2Page() {
             onRemoveEvent={async (eventId) => {
               try {
                 await removeEventFromCollection(collectionId, eventId, collection.isPrivate);
+                trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_ITEM_CHANGE, { item_type: "event", action: "remove" });
                 setEvents((prev) => prev.filter((event) => event.eventId !== eventId));
                 setCollection((prev) => ({
                   ...prev,
@@ -281,6 +290,10 @@ export default function OrganiserCollectionHubV2Page() {
             onRemoveTemplate={async (templateId) => {
               try {
                 await removeRecurringTemplateFromCollection(collectionId, templateId, collection.isPrivate);
+                trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_ITEM_CHANGE, {
+                  item_type: "recurring_template",
+                  action: "remove",
+                });
                 setTemplates((prev) => prev.filter((template) => template.recurrenceTemplateId !== templateId));
                 setCollection((prev) => ({
                   ...prev,
@@ -324,6 +337,7 @@ export default function OrganiserCollectionHubV2Page() {
               setDeleteLoading(true);
               try {
                 await deleteEventCollection(collectionId, user.userId, collection.isPrivate);
+                trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_DELETE);
                 router.push("/organiser/v2/event/event-collection");
               } catch (error) {
                 logger.error(`Failed to delete collection: ${error}`);

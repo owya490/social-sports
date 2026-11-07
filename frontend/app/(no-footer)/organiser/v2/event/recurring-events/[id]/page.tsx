@@ -16,7 +16,10 @@ import { RecurringHubPastEvents } from "@/components/organiser/v2/recurring-hub/
 import { RecurringHubRecurrence } from "@/components/organiser/v2/recurring-hub/RecurringHubRecurrence";
 import { RecurringHubSettings } from "@/components/organiser/v2/recurring-hub/RecurringHubSettings";
 import { RecurringHubSection } from "@/components/organiser/v2/recurring-hub/recurringHubTypes";
+import { useTrackScreen } from "@/components/analytics/useTrackScreen";
 import { useUser } from "@/components/utility/UserContext";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
+import { tabScreenTemplate } from "@/services/src/analytics/pageTemplates";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
@@ -59,6 +62,7 @@ export default function OrganiserRecurringHubV2Page() {
 
   const [section, setSection] = useState<RecurringHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
+  useTrackScreen(tabScreenTemplate("/organiser/v2/event/recurring-events/[id]", section), "organiser");
   const [loading, setLoading] = useState(true);
   const [updatingRecurrenceData, setUpdatingRecurrenceData] = useState(false);
 
@@ -186,6 +190,7 @@ export default function OrganiserRecurringHubV2Page() {
     setSaveNotice(null);
     try {
       await updateRecurrenceTemplateRecurrenceData(recurrenceTemplateId, newRecurrenceData);
+      trackEvent(AnalyticsEvent.ORGANISER_RECURRING_TEMPLATE_UPDATE, { field: "recurrence" });
       setOriginalRecurrenceData(JSON.parse(JSON.stringify(newRecurrenceData)));
       setFrequency(newRecurrenceData.frequency);
       try {
@@ -272,10 +277,17 @@ export default function OrganiserRecurringHubV2Page() {
               if (!success) {
                 throw new Error("Failed to update ticket types");
               }
+              trackEvent(AnalyticsEvent.ORGANISER_RECURRING_TEMPLATE_UPDATE, { field: "ticket_types" });
             }}
             mode="template"
             updateData={async (id, data) => {
               await updateRecurrenceTemplateEventData(id as unknown as RecurrenceTemplateId, data);
+              const fields = Object.keys(data);
+              const imageChange =
+                fields.length > 0 && fields.every((field) => field === "image" || field === "thumbnail");
+              trackEvent(AnalyticsEvent.ORGANISER_RECURRING_TEMPLATE_UPDATE, {
+                field: imageChange ? "images" : fields[0] ?? "details",
+              });
               if (data.name !== undefined) setEventName(data.name);
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);

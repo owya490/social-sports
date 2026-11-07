@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/components/utility/UserContext";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { UserData } from "@/interfaces/UserTypes";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
 import { hasCompletedStripeConnectSetup } from "@/utilities/onboardingUtils";
@@ -107,10 +108,12 @@ function SetupCheckbox({
   checked,
   label,
   href,
+  item,
 }: {
   checked: boolean;
   label: string;
   href: string;
+  item: string;
 }) {
   return (
     <div className="flex items-center gap-3 min-h-[2.5rem]">
@@ -129,6 +132,7 @@ function SetupCheckbox({
       ) : (
         <Link
           href={href}
+          onClick={() => trackEvent(AnalyticsEvent.ORGANISER_CHECKLIST_CLICK, { item })}
           className="text-sm font-sans text-foreground hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
         >
           {label}
@@ -216,7 +220,7 @@ export function DashboardSetupSection({ hasEvents, loading = false }: DashboardS
             <ul className="space-y-1">
               {items.map((item) => (
                 <li key={item.id}>
-                  <SetupCheckbox checked={item.complete} label={item.label} href={item.href} />
+                  <SetupCheckbox checked={item.complete} label={item.label} href={item.href} item={item.id} />
                 </li>
               ))}
             </ul>

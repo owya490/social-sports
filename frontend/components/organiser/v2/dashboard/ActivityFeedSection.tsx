@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { ActivityFeedItem } from "@/services/src/organiser/organiserDashboardMetricsService";
 import { OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { DASHBOARD_CHART_ROW_HEIGHT } from "@/components/organiser/v2/dashboard/TicketSalesChart";
@@ -46,6 +47,9 @@ function ActivityRow({
   return (
     <Link
       href={`/organiser/v2/event/${item.eventId}`}
+      onClick={() =>
+        trackEvent(AnalyticsEvent.ORGANISER_EVENT_CARD_OPEN, { event_id: item.eventId, source: "activity" })
+      }
       className="group grid min-w-0 grid-cols-[2.75rem_0.75rem_1fr] gap-x-2 rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
     >
       <time
