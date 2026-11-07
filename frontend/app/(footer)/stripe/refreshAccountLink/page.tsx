@@ -1,6 +1,7 @@
 "use client";
 import Loading from "@/components/loading/Loading";
 import { useUser } from "@/components/utility/UserContext";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -19,6 +20,7 @@ export default function RefreshAccountLink() {
     const returnUrl = getUrlWithCurrentHostname("/organiser/v2/dashboard");
     const refreshUrl = getRefreshAccountLinkUrl();
     getStripeStandardAccountLink(user.userId, returnUrl, refreshUrl).then((link) => {
+      trackEvent(AnalyticsEvent.ORGANISER_STRIPE_SETUP_RETURN, { status: "refresh" });
       router.push(link);
     });
   }, []);

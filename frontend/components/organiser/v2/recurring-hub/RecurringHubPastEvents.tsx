@@ -1,6 +1,7 @@
 "use client";
 
 import { EventId } from "@/interfaces/EventTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { ArrowTopRightOnSquareIcon, CalendarDaysIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { EventHubEmpty, EventHubStage } from "@/components/organiser/v2/event-hub/EventHubStage";
@@ -55,6 +56,9 @@ export function RecurringHubPastEvents({ pastEvents }: RecurringHubPastEventsPro
               <div className="flex items-center gap-2 pl-12 sm:pl-0">
                 <Link
                   href={`/organiser/v2/event/${eventId}`}
+                  onClick={() =>
+                    trackEvent(AnalyticsEvent.ORGANISER_EVENT_CARD_OPEN, { event_id: eventId, source: "recurring" })
+                  }
                   className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                 >
                   Organiser

@@ -1,6 +1,7 @@
 "use client";
 
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { FloppyDiskIcon } from "@sidekickicons/react/24/solid";
 import Link from "next/link";
@@ -34,6 +35,7 @@ export function FormEditorHeader({
           {previewHref ? (
             <Link
               href={previewHref}
+              onClick={() => trackEvent(AnalyticsEvent.ORGANISER_FORM_PREVIEW)}
               className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-sm font-medium text-foreground font-sans hover:bg-surface-hover transition-colors focus:outline-none"
             >
               <EyeIcon className="h-4 w-4" aria-hidden />

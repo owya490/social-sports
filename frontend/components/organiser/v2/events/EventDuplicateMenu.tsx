@@ -9,6 +9,7 @@ import {
 import { EventHubPrimaryButton } from "@/components/organiser/v2/event-hub/EventHubStage";
 import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { createEvent } from "@/services/src/events/eventsService";
 import { buildDuplicatedNewEventData } from "@/services/src/events/eventsUtils/duplicateEventUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
@@ -61,6 +62,11 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
         })
       );
       bustOrganiserEventsCache();
+      trackEvent(AnalyticsEvent.ORGANISER_EVENT_CREATE, {
+        event_id: newEventId,
+        sport: event.sport,
+        source: "duplicate",
+      });
       router.push(welcomeAwareEventHref(pathname, newEventId));
     } catch (error) {
       setDuplicating(false);
