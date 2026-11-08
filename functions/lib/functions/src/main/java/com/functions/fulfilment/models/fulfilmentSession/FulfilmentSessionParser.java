@@ -52,6 +52,7 @@ final class FulfilmentSessionParser {
         session.setStatus(status == null ? null : FulfilmentSessionStatus.valueOf(status));
         session.setPurchaserEmail(text(root, "purchaserEmail"));
         session.setPurchaserName(text(root, "purchaserName"));
+        session.setPaymentProvider(FulfilmentSession.readPaymentProvider(text(root, "paymentProvider")));
         JsonNode crystalised = root.get("isFulfilmentSessionCrystalised");
         if (crystalised != null && crystalised.isBoolean()) {
             session.setIsFulfilmentSessionCrystalised(crystalised.booleanValue());

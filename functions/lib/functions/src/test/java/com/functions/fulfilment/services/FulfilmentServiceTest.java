@@ -230,6 +230,7 @@ public class FulfilmentServiceTest {
                     assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
                     assertEquals(forms ? FulfilmentEntityType.FORMS
                             : approval ? FulfilmentEntityType.DELAYED_STRIPE : FulfilmentEntityType.STRIPE, firstEntity(saved));
+                    assertEquals(PaymentProvider.STRIPE, saved.getPaymentProvider());
                     assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
                     var snapshot = new FulfilmentInitialisationScope.BookingSnapshot("General Admission", 1350,
                             forms ? "form-1" : null);
@@ -285,6 +286,7 @@ public class FulfilmentServiceTest {
             FulfilmentSession saved = persisted.get();
             assertSame(event, saved.getEventData());
             assertEquals(FulfilmentEntityType.WAITLIST, firstEntity(saved));
+            assertNull(saved.getPaymentProvider());
             assertEquals(saved.getFulfilmentEntityIds().get(0), result.firstFulfilmentEntityId());
             assertTrue(saved.getFulfilmentEntityMap().get(result.firstFulfilmentEntityId()).onStartHook().isEmpty());
             sessions.verify(() -> FulfilmentSessionRepository.createFulfilmentSession(

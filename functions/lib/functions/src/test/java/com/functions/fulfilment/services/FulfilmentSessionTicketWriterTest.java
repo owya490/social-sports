@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.Test;
 
 import com.functions.events.models.EventMetadata;
-import com.functions.events.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 
 public class FulfilmentSessionTicketWriterTest {
@@ -24,15 +23,6 @@ public class FulfilmentSessionTicketWriterTest {
 
         assertEquals(List.of("session-1"), metadata.getCompletedFulfilmentSessionIds());
         assertEquals(List.of("cs_existing"), metadata.getCompletedStripeCheckoutSessionIds());
-    }
-
-    @Test
-    public void paymentProviderFollowsTheCheckoutThatCreatedTheSession() throws Exception {
-        assertEquals(PaymentProvider.STRIPE, FulfilmentSessionTicketWriter.paymentProvider(session("CHECKOUT")));
-        assertEquals(PaymentProvider.STRIPE,
-                FulfilmentSessionTicketWriter.paymentProvider(session("BOOKING_APPROVAL")));
-        assertEquals(PaymentProvider.PYNG, FulfilmentSessionTicketWriter.paymentProvider(session("PYNG_CHECKOUT")));
-        assertNull(FulfilmentSessionTicketWriter.paymentProvider(session("WAITLIST")));
     }
 
     @Test
