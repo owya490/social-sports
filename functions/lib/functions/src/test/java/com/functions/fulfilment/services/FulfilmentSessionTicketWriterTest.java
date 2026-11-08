@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.functions.events.models.EventMetadata;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 
 public class FulfilmentSessionTicketWriterTest {
@@ -27,8 +28,20 @@ public class FulfilmentSessionTicketWriterTest {
 
     @Test
     public void endEntityIdFindsTheEndStep() throws Exception {
-        assertEquals("end-1", FulfilmentSessionTicketWriter.endEntityId(session("CHECKOUT", true)));
-        assertNull(FulfilmentSessionTicketWriter.endEntityId(session("CHECKOUT", false)));
+        assertEquals("end-1", FulfilmentSessionTicketWriter.endEntityId(session(true)));
+        assertNull(FulfilmentSessionTicketWriter.endEntityId(session(false)));
+    }
+
+    @Test
+    public void paymentProviderFollowsStripeAndPyngSessionTypes() throws Exception {
+        assertEquals(PaymentProvider.STRIPE, FulfilmentSessionTicketWriter.paymentProvider(session("CHECKOUT")));
+        assertEquals(PaymentProvider.STRIPE, FulfilmentSessionTicketWriter.paymentProvider(session("BOOKING_APPROVAL")));
+        assertEquals(PaymentProvider.PYNG, FulfilmentSessionTicketWriter.paymentProvider(session("PYNG_CHECKOUT")));
+        assertNull(FulfilmentSessionTicketWriter.paymentProvider(session("WAITLIST")));
+    }
+
+    private static FulfilmentSession session(boolean includeEnd) throws Exception {
+        return session("CHECKOUT", includeEnd);
     }
 
     private static FulfilmentSession session(String type) throws Exception {

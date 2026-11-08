@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
-import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.DelayedStripeFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
@@ -69,7 +68,6 @@ public abstract class FulfilmentSession {
     private FulfilmentSessionStatus status;
     private String purchaserEmail;
     private String purchaserName;
-    private PaymentProvider paymentProvider;
 
     private static final Logger logger = LoggerFactory.getLogger(FulfilmentSession.class);
 
@@ -175,7 +173,6 @@ public abstract class FulfilmentSession {
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
-                        .paymentProvider(readPaymentProvider(snapshot.getString("paymentProvider")))
                         .build();
             case BOOKING_APPROVAL:
                 return BookingApprovalFulfilmentSession.builder()
@@ -192,7 +189,6 @@ public abstract class FulfilmentSession {
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
-                        .paymentProvider(readPaymentProvider(snapshot.getString("paymentProvider")))
                         .build();
             case WAITLIST:
                 return WaitlistFulfilmentSession.builder()
@@ -208,7 +204,6 @@ public abstract class FulfilmentSession {
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
-                        .paymentProvider(readPaymentProvider(snapshot.getString("paymentProvider")))
                         .build();
             case PYNG_CHECKOUT:
                 PyngMetadata pyngMetadata = null;
@@ -231,7 +226,6 @@ public abstract class FulfilmentSession {
                         .purchaserEmail(purchaserEmail)
                         .purchaserName(purchaserName)
                         .isFulfilmentSessionCrystalised(isFulfilmentSessionCrystalised)
-                        .paymentProvider(readPaymentProvider(snapshot.getString("paymentProvider")))
                         .build();
             default:
                 throw new IllegalArgumentException(
@@ -253,9 +247,5 @@ public abstract class FulfilmentSession {
 
     private static FulfilmentSessionStatus status(String value) {
         return value == null || value.isBlank() ? null : FulfilmentSessionStatus.valueOf(value);
-    }
-
-    static PaymentProvider readPaymentProvider(String value) {
-        return value == null || value.isBlank() ? null : PaymentProvider.valueOf(value);
     }
 }
