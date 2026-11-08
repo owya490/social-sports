@@ -15,7 +15,10 @@ import {
   mergeInventoryIntoEventData,
 } from "../events/eventsUtils/eventTicketTypesUtils";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
+import { isArchivedRecurrenceTemplatePath } from "./recurringEventsConstants";
 import { findRecurrenceTemplateDoc } from "./recurringEventsUtils";
+
+export type RecurrenceTemplateListScope = "current" | "archived";
 
 export const recurringEventsServiceLogger = new Logger("recurringEventsServiceLogger");
 
@@ -56,8 +59,11 @@ export async function createRecurrenceTemplate(
   return [response.eventId, response.recurrenceTemplateId];
 }
 
-export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<RecurrenceTemplate[]> {
-  recurringEventsServiceLogger.info(`Getting organiser recurrence templates, organiserId=${userId}`);
+export async function getOrganiserRecurrenceTemplates(
+  userId: UserId,
+  scope: RecurrenceTemplateListScope = "current"
+): Promise<RecurrenceTemplate[]> {
+  recurringEventsServiceLogger.info(`Getting organiser recurrence templates, organiserId=${userId}, scope=${scope}`);
   try {
     const privateDoc = await getPrivateUserById(userId);
 
@@ -67,6 +73,10 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
     for (const recurrenceTemplateId of organiserEvents) {
       try {
         const recurrenceTemplate: RecurrenceTemplate = await getRecurrenceTemplate(recurrenceTemplateId);
+        const archived = recurrenceTemplate.archived === true;
+        if ((scope === "archived") !== archived) {
+          continue;
+        }
         recurrenceTemplateList.push(recurrenceTemplate);
       } catch {
         recurringEventsServiceLogger.warn(
@@ -80,11 +90,26 @@ export async function getOrganiserRecurrenceTemplates(userId: UserId): Promise<R
   }
 }
 
+export async function archiveRecurrenceTemplate(
+  recurrenceTemplateId: RecurrenceTemplateId
+): Promise<RecurrenceTemplateId> {
+  recurringEventsServiceLogger.info(`Archiving recurrence template ${recurrenceTemplateId}`);
+  const response = await executeGlobalAppControllerFunction<
+    { recurrenceTemplateId: RecurrenceTemplateId },
+    { recurrenceTemplateId: RecurrenceTemplateId }
+  >(EndpointType.ARCHIVE_RECURRENCE_TEMPLATE, { recurrenceTemplateId }, { attachAuth: true });
+  return response.recurrenceTemplateId;
+}
+
 export async function getRecurrenceTemplate(recurrenceTemplateId: RecurrenceTemplateId): Promise<RecurrenceTemplate> {
   recurringEventsServiceLogger.info(`Getting Recurrence Template by Id, id=${recurrenceTemplateId}`);
   try {
     const recurrenceTemplateDoc = await findRecurrenceTemplateDoc(recurrenceTemplateId);
-    const recurrenceTemplate = { ...recurrenceTemplateDoc.data(), recurrenceTemplateId } as RecurrenceTemplate;
+    const recurrenceTemplate = {
+      ...recurrenceTemplateDoc.data(),
+      recurrenceTemplateId,
+      archived: isArchivedRecurrenceTemplatePath(recurrenceTemplateDoc.ref.path),
+    } as RecurrenceTemplate;
     return {
       ...recurrenceTemplate,
       eventData: applyGeneralAdmissionInventoryFields(recurrenceTemplate.eventData),

@@ -9,11 +9,19 @@ export const RECURRING_EVENT_PATHS = [
   "RecurringEvents/Active/Private",
   "RecurringEvents/InActive/Public",
   "RecurringEvents/InActive/Private",
+  "RecurringEvents/Archived/Public",
+  "RecurringEvents/Archived/Private",
 ];
 
 export enum recurringEventsStatus {
   Active = "Active",
   Inactive = "InActive",
+  Archived = "Archived",
+}
+
+export function isArchivedRecurrenceTemplatePath(path: string): boolean {
+  const [root, status] = path.split("/");
+  return root === CollectionPaths.RecurrenceTemplates && status === recurringEventsStatus.Archived;
 }
 
 export interface FrequencyMetadata {

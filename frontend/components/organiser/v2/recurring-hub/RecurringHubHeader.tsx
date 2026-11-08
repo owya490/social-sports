@@ -2,7 +2,8 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { Frequency } from "@/interfaces/RecurringEventTypes";
+import { RecurringTemplateActionsMenu } from "@/components/organiser/v2/recurring-hub/RecurringTemplateActionsMenu";
+import { Frequency, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
 
@@ -37,6 +38,10 @@ type RecurringHubHeaderProps = {
   startDate: Timestamp;
   location: string;
   frequency: Frequency;
+  archived: boolean;
+  canArchive: boolean;
+  recurrenceTemplateId: RecurrenceTemplateId;
+  isPrivate: boolean;
 };
 
 export function RecurringHubHeader({
@@ -45,6 +50,10 @@ export function RecurringHubHeader({
   startDate,
   location,
   frequency,
+  archived,
+  canArchive,
+  recurrenceTemplateId,
+  isPrivate,
 }: RecurringHubHeaderProps) {
   const meta = loading
     ? ""
@@ -68,9 +77,23 @@ export function RecurringHubHeader({
           </div>
         </div>
 
-        <span className="inline-flex shrink-0 items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
-          Template
-        </span>
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="inline-flex items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
+            Template
+          </span>
+          {archived ? (
+            <span className="inline-flex items-center rounded-xl border border-border bg-surface-muted px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
+              Archived
+            </span>
+          ) : canArchive ? (
+            <RecurringTemplateActionsMenu
+              recurrenceTemplateId={recurrenceTemplateId}
+              templateName={name}
+              isPrivate={isPrivate}
+              disabled={loading}
+            />
+          ) : null}
+        </div>
       </div>
     </header>
   );

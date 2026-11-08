@@ -16,6 +16,10 @@ type RecurringTemplatesListProps = {
   /** True when the search field has a non-empty query. */
   hasActiveSearch: boolean;
   onClearControls: () => void;
+  sectionLabel?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  showCreateAction?: boolean;
 };
 
 export function RecurringTemplatesList({
@@ -24,9 +28,13 @@ export function RecurringTemplatesList({
   hasAnyTemplates,
   hasActiveSearch,
   onClearControls,
+  sectionLabel = "Recurring templates",
+  emptyTitle = "No recurring templates yet",
+  emptyDescription = "Create or edit an event and turn on recurrence to start a repeating schedule.",
+  showCreateAction = true,
 }: RecurringTemplatesListProps) {
   return (
-    <section aria-label="Recurring templates" className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pb-10">
+    <section aria-label={sectionLabel} className="px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto pb-10">
       {loading ? (
         <div className="rounded-xl border border-border bg-background overflow-hidden">
           <div className="divide-y divide-border">
@@ -54,15 +62,17 @@ export function RecurringTemplatesList({
           <EntityListEmptyState
             variant="empty"
             icon={ArrowPathIcon}
-            title="No recurring templates yet"
-            description="Create or edit an event and turn on recurrence to start a repeating schedule."
+            title={emptyTitle}
+            description={emptyDescription}
           >
-            <Link
-              href="/event/create"
-              className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-            >
-              Create event
-            </Link>
+            {showCreateAction ? (
+              <Link
+                href="/event/create"
+                className="inline-flex items-center justify-center rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-contrast font-sans hover:brightness-95 transition-[filter] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+              >
+                Create event
+              </Link>
+            ) : null}
           </EntityListEmptyState>
         )
       ) : (

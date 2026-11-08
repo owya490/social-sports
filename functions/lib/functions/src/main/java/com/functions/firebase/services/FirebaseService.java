@@ -30,6 +30,7 @@ public class FirebaseService {
         public static final String EVENTS = "Events";
         public static final String ACTIVE = "Active";
         public static final String INACTIVE = "InActive";
+        public static final String ARCHIVED = "Archived";
         public static final String PRIVATE = "Private";
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";

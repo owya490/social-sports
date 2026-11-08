@@ -5,6 +5,7 @@ import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
@@ -66,11 +67,18 @@ public class RecurringEventsService {
             newRecurrenceData = currentRecurrenceTemplate.getRecurrenceData().extractNewRecurrenceData();
         }
 
+        boolean archived = Boolean.TRUE.equals(currentRecurrenceTemplate.getArchived());
+        if (archived) {
+            newEventData.setIsActive(false);
+            newRecurrenceData.setRecurrenceEnabled(false);
+        }
+
         // Calculate all future recurrence Dates
         RecurrenceData recurrenceData = calculateRecurrenceData(newRecurrenceData, newEventData.getStartDate(), pastRecurrences, false);
         RecurrenceTemplate recurrenceTemplate = RecurrenceTemplate.builder()
                 .eventData(newEventData)
                 .recurrenceData(recurrenceData)
+                .archived(archived)
                 .build();
 
         // Place content in the firestore database
@@ -78,9 +86,10 @@ public class RecurringEventsService {
             String templateId = RecurrenceTemplateRepository.updateRecurrenceTemplate(recurrenceTemplateId, recurrenceTemplate);
             logger.info("Successfully updated Recurrence Template {} {}", recurrenceTemplateId, recurrenceTemplate);
 
-            // Check is recurrence is being reactivated
+            // Archived templates stay in RecurringEvents/Archived. The inactive-to-active
+            // move below would otherwise file a future schedule back under Active.
             boolean isRecurrenceActive = recurrenceTemplate.getEventData().getIsActive();
-            if (!isRecurrenceActive) {
+            if (!isRecurrenceActive && !archived) {
                 List<Timestamp> allRecurrences = recurrenceTemplate.getRecurrenceData().getAllRecurrences();
                 if (!allRecurrences.isEmpty()) {
                     Timestamp lastRecurrence = allRecurrences.get(allRecurrences.size() - 1);
@@ -97,6 +106,13 @@ public class RecurringEventsService {
             logger.error("Error when updating Recurrence Template {}", recurrenceTemplateId, e);
             return Optional.empty();
         }
+    }
+
+    public static String archiveRecurrenceTemplate(String recurrenceTemplateId) throws Exception {
+        String templateId = FirebaseService.createFirestoreTransaction(transaction ->
+                RecurrenceTemplateRepository.archiveRecurrenceTemplate(recurrenceTemplateId, transaction));
+        logger.info("Archived recurrence template {}", templateId);
+        return templateId;
     }
 
     private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, Timestamp startDate) {

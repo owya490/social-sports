@@ -1,15 +1,19 @@
 import { EventId, NewEventData } from "@/interfaces/EventTypes";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { Frequency, NewRecurrenceFormData, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
+import { UserId } from "@/interfaces/UserTypes";
 import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firestore";
 import { executeGlobalAppControllerFunction } from "../src/functions/functionsUtils";
 import {
+  archiveRecurrenceTemplate,
   createRecurrenceTemplate,
+  getOrganiserRecurrenceTemplates,
   updateRecurrenceTemplate,
   updateRecurrenceTemplateEventData,
   updateRecurrenceTemplateRecurrenceData,
 } from "../src/recurringEvents/recurringEventsService";
 import { findRecurrenceTemplateDoc } from "../src/recurringEvents/recurringEventsUtils";
+import { getPrivateUserById } from "../src/users/usersService";
 
 jest.mock("../src/functions/functionsUtils", () => ({
   executeGlobalAppControllerFunction: jest.fn(),
@@ -27,6 +31,7 @@ const executeGac = executeGlobalAppControllerFunction as jest.MockedFunction<
   typeof executeGlobalAppControllerFunction
 >;
 const findTemplate = findRecurrenceTemplateDoc as jest.MockedFunction<typeof findRecurrenceTemplateDoc>;
+const getPrivateUser = getPrivateUserById as jest.MockedFunction<typeof getPrivateUserById>;
 
 describe("recurringEventsService GAC calls", () => {
   const date = Timestamp.fromDate(new Date("2026-09-21T10:00:00.000Z"));
@@ -46,15 +51,17 @@ describe("recurringEventsService GAC calls", () => {
   beforeEach(() => {
     executeGac.mockReset();
     findTemplate.mockReset();
+    getPrivateUser.mockReset();
   });
 
-  const mockExistingTemplate = () => {
+  const mockExistingTemplate = (path = "RecurringEvents/Active/Public/template-1") => {
     findTemplate.mockResolvedValue({
+      ref: { path },
       data: () => ({
         eventData: { ...eventData, price: 10, capacity: 20, vacancy: 20 },
         recurrenceData: { ...recurrenceData, allRecurrences: [], pastRecurrences: {} },
       }),
-    } as QueryDocumentSnapshot<DocumentData, DocumentData>);
+    } as unknown as QueryDocumentSnapshot<DocumentData, DocumentData>);
   };
 
   it("creates a recurrence template through the authenticated GAC endpoint", async () => {
@@ -91,6 +98,53 @@ describe("recurringEventsService GAC calls", () => {
     await expect(
       updateRecurrenceTemplateEventData("template-1" as RecurrenceTemplateId, { paused: true })
     ).rejects.toThrow("Forbidden");
+  });
+
+  it("archives a recurrence template through the authenticated GAC endpoint", async () => {
+    executeGac.mockResolvedValue({ recurrenceTemplateId: "template-1" as RecurrenceTemplateId });
+
+    await expect(archiveRecurrenceTemplate("template-1" as RecurrenceTemplateId)).resolves.toBe("template-1");
+    expect(executeGac).toHaveBeenCalledWith(
+      EndpointType.ARCHIVE_RECURRENCE_TEMPLATE,
+      { recurrenceTemplateId: "template-1" },
+      { attachAuth: true }
+    );
+  });
+
+  it("splits organiser templates into the current schedule and the archived folder", async () => {
+    getPrivateUser.mockResolvedValue({
+      recurrenceTemplates: ["live-id", "archived-id"],
+    } as unknown as Awaited<ReturnType<typeof getPrivateUserById>>);
+    findTemplate.mockImplementation((id) => {
+      const archived = id === "archived-id";
+      return Promise.resolve({
+        ref: {
+          path: archived
+            ? "RecurringEvents/Archived/Private/archived-id"
+            : "RecurringEvents/Active/Public/live-id",
+        },
+        data: () => ({
+          eventData: {
+            ...eventData,
+            name: id,
+            price: 10,
+            capacity: 20,
+            vacancy: 20,
+            isPrivate: archived,
+          },
+          recurrenceData: { ...recurrenceData, allRecurrences: [], pastRecurrences: {} },
+        }),
+      } as unknown as QueryDocumentSnapshot<DocumentData, DocumentData>);
+    });
+
+    const current = await getOrganiserRecurrenceTemplates("organiser-1" as UserId);
+    const archived = await getOrganiserRecurrenceTemplates("organiser-1" as UserId, "archived");
+
+    expect(current.map((template) => template.recurrenceTemplateId)).toEqual(["live-id"]);
+    expect(current[0]?.archived).toBe(false);
+    expect(archived.map((template) => template.recurrenceTemplateId)).toEqual(["archived-id"]);
+    expect(archived[0]?.archived).toBe(true);
+    expect(archived[0]?.eventData.isPrivate).toBe(true);
   });
 
   it("propagates authenticated GAC failures from recurrence-data updates", async () => {

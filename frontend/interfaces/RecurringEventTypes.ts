@@ -35,6 +35,8 @@ export interface RecurrenceTemplate {
   recurrenceTemplateId: RecurrenceTemplateId;
   eventData: NewEventData;
   recurrenceData: RecurrenceData;
+  /** True when the template document lives under RecurringEvents/Archived. */
+  archived?: boolean;
 }
 
 export interface NewRecurrenceData extends RecurrenceData {}

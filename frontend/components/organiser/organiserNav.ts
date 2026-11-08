@@ -3,6 +3,7 @@ import {
   WELCOME_PATH,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import {
+  ArchiveBoxIcon,
   ArrowPathIcon,
   CalendarDaysIcon,
   CalendarIcon,
@@ -43,6 +44,13 @@ const EVENT_STATIC_ROUTES = new Set([
 
 const crumb = (label: string, href?: string, icon?: typeof Squares2X2Icon): OrganiserBreadcrumb =>
   href ? { label, href, icon } : { label, icon };
+
+export function isArchivedRecurringEventsPath(pathname: string) {
+  return (
+    pathname === "/organiser/v2/event/recurring-events/archived" ||
+    pathname.startsWith("/organiser/v2/event/recurring-events/archived/")
+  );
+}
 
 export const isEventDetailPage = (pathname: string) => {
   const match = pathname.match(/^\/organiser\/v2\/event\/([^/]+)/);
@@ -95,7 +103,18 @@ export const ORGANISER_MAIN_NAV: OrganiserNavItem[] = [
     label: "Recurring events",
     icon: ArrowPathIcon,
     keywords: ["series", "templates"],
-    isActive: (pathname) => pathname.startsWith("/organiser/v2/event/recurring-events"),
+    isActive: (pathname) =>
+      pathname.startsWith("/organiser/v2/event/recurring-events") &&
+      !isArchivedRecurringEventsPath(pathname),
+    children: [
+      {
+        href: "/organiser/v2/event/recurring-events/archived",
+        label: "Archived",
+        icon: ArchiveBoxIcon,
+        keywords: ["archive", "old templates"],
+        isActive: isArchivedRecurringEventsPath,
+      },
+    ],
   },
   {
     href: "/organiser/v2/event/event-collection",
@@ -214,6 +233,12 @@ export function resolveOrganiserBreadcrumbs(
   }
 
   if (pathname.startsWith("/organiser/v2/event/recurring-events")) {
+    if (isArchivedRecurringEventsPath(pathname)) {
+      return [
+        crumb("Recurring events", "/organiser/v2/event/recurring-events", ArrowPathIcon),
+        crumb("Archived", undefined, ArchiveBoxIcon),
+      ];
+    }
     const detail = pathname.match(/^\/organiser\/v2\/event\/recurring-events\/([^/]+)/);
     if (detail) {
       return [
