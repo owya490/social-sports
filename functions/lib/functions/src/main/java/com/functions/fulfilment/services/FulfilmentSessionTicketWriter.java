@@ -16,10 +16,12 @@ import com.functions.firebase.services.FirebaseService;
 import com.functions.forms.models.FormResponse;
 import com.functions.forms.repositories.FormsRepository;
 import com.functions.forms.services.FormsUtils;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.fulfilment.services.ProcessFulfilmentSessionService.RequestedTickets;
 import com.functions.stripe.services.EventTicketPurchaseService;
@@ -108,6 +110,9 @@ class FulfilmentSessionTicketWriter {
         }
 
         Map<String, FormResponse> tempFormResponses = readTempForms(session, transaction);
+        PaymentProvider paymentProvider = session.getType() == FulfilmentSessionType.PYNG_CHECKOUT
+                ? PaymentProvider.PYNG
+                : PaymentProvider.STRIPE;
         EventTicketPurchaseService.MintedPurchase minted =
                 EventTicketPurchaseService.fulfillCompletedEventTicketPurchase(
                         transaction,
@@ -124,7 +129,7 @@ class FulfilmentSessionTicketWriter {
                         null,
                         null,
                         null,
-                        session.getPaymentProvider());
+                        paymentProvider);
         if (minted == null) {
             throw new IllegalStateException(
                     "Fulfillment of event ticket purchase was unsuccessful. session=" + session.getId());

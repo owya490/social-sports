@@ -67,9 +67,6 @@ public final class FulfilmentInitialisationService {
         String sessionId = UUID.randomUUID().toString();
         FulfilmentSession session = type.getFulfilmentSessionService().initFulfilmentSession(
                 sessionId, eventData, numTickets, eventTicketTypeId, bookingScope);
-        if (type != FulfilmentSessionType.WAITLIST) {
-            session.setPaymentProvider(provider);
-        }
         String firstEntityId = session.getFulfilmentEntityIds().get(0);
 
         if (type == FulfilmentSessionType.WAITLIST && scope instanceof FulfilmentInitialisationScope.PartnerPublic) {

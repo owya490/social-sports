@@ -27,15 +27,11 @@ public class FulfilmentSessionTicketWriterTest {
 
     @Test
     public void endEntityIdFindsTheEndStep() throws Exception {
-        assertEquals("end-1", FulfilmentSessionTicketWriter.endEntityId(session("CHECKOUT", true)));
-        assertNull(FulfilmentSessionTicketWriter.endEntityId(session("CHECKOUT", false)));
+        assertEquals("end-1", FulfilmentSessionTicketWriter.endEntityId(session(true)));
+        assertNull(FulfilmentSessionTicketWriter.endEntityId(session(false)));
     }
 
-    private static FulfilmentSession session(String type) throws Exception {
-        return session(type, true);
-    }
-
-    private static FulfilmentSession session(String type, boolean includeEnd) throws Exception {
+    private static FulfilmentSession session(boolean includeEnd) throws Exception {
         String endEntity = includeEnd
                 ? """
                         , "end-1": { "type": "END" }
@@ -45,7 +41,7 @@ public class FulfilmentSessionTicketWriterTest {
         String json = """
                 {
                   "id": "session-1",
-                  "type": "%s",
+                  "type": "CHECKOUT",
                   "status": "COMPLETED",
                   "purchaserEmail": "ada@example.com",
                   "numTickets": 1,
@@ -62,7 +58,7 @@ public class FulfilmentSessionTicketWriterTest {
                     }%s
                   }
                 }
-                """.formatted(type, endId, endEntity);
+                """.formatted(endId, endEntity);
         return FulfilmentSession.fromJson(json);
     }
 }

@@ -5,7 +5,6 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentEntities.DetailsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
@@ -21,7 +20,6 @@ public class FulfilmentSessionTest {
                   "status": "COMPLETED",
                   "purchaserEmail": "ada@example.com",
                   "purchaserName": "Ada Lovelace",
-                  "paymentProvider": "STRIPE",
                   "numTickets": 2,
                   "price": 1500,
                   "eventTicketTypeId": "general",
@@ -45,7 +43,6 @@ public class FulfilmentSessionTest {
         assertEquals(FulfilmentSessionStatus.COMPLETED, session.getStatus());
         assertEquals("ada@example.com", session.getPurchaserEmail());
         assertEquals("Ada Lovelace", session.getPurchaserName());
-        assertEquals(PaymentProvider.STRIPE, session.getPaymentProvider());
         assertTrue(session instanceof CheckoutFulfilmentSession);
         CheckoutFulfilmentSession checkout = (CheckoutFulfilmentSession) session;
         assertEquals(Integer.valueOf(2), checkout.getNumTickets());
@@ -65,7 +62,6 @@ public class FulfilmentSessionTest {
                   "status": "COMPLETED",
                   "purchaserEmail": "ada@example.com",
                   "purchaserName": "Ada Lovelace",
-                  "paymentProvider": "PYNG",
                   "numTickets": 1,
                   "price": 3000,
                   "eventTicketTypeId": "general",
@@ -82,7 +78,6 @@ public class FulfilmentSessionTest {
 
         assertTrue(session instanceof PyngCheckoutFulfilmentSession);
         PyngCheckoutFulfilmentSession pyng = (PyngCheckoutFulfilmentSession) session;
-        assertEquals(PaymentProvider.PYNG, pyng.getPaymentProvider());
         assertEquals(Integer.valueOf(3000), pyng.getPrice());
         assertEquals("cs-1", pyng.getPyngMetadata().getCheckoutSessionId());
         assertTrue(session.getFulfilmentEntityMap().get("details-1") instanceof DetailsFulfilmentEntity);
