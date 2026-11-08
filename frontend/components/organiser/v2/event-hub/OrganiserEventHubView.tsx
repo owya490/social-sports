@@ -35,23 +35,17 @@ import {
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
-import {
-  getEventsMetadataByEventId,
-  subscribeToEventMetadata,
-} from "@/services/src/events/eventsMetadata/eventsMetadataService";
-import {
-  eventServiceLogger,
-  getEventById,
-  updateEventById,
-} from "@/services/src/events/eventsService";
+import { eventServiceLogger, updateEventById } from "@/services/src/events/eventsService";
+import { subscribeToEventMetadata } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
+import { bustOrganiserHubCache } from "@/services/src/organiser/organiserBust";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { clampMaxTicketsPerTransaction } from "@/services/src/events/eventsUtils/ticketLimits";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { Timestamp } from "firebase/firestore";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useEventsForOrganiserHub } from "./useEventsForOrganiserHub";
 
 /**
  * Shared event hub body — production route + welcome twin.
@@ -62,6 +56,11 @@ export function OrganiserEventHubView() {
   const router = useRouter();
   const { auth, user, userLoading } = useUser();
   const authenticatedUserId = auth.currentUser?.uid;
+  const {
+    getEvent,
+    getEventMetadata,
+    invalidateEventForOrganiserHub,
+  } = useEventsForOrganiserHub();
 
   const [section, setSection] = useState<EventHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
@@ -116,7 +115,7 @@ export function OrganiserEventHubView() {
 
     const fetchEvent = async () => {
       try {
-        const event = await getEventById(eventId);
+        const event = await getEvent(eventId);
         if (!isActive) return;
 
         if (event.organiserId !== authenticatedUserId) {
@@ -156,7 +155,7 @@ export function OrganiserEventHubView() {
             inventory.capacity
           )
         );
-        const nextEventMetadata = await getEventsMetadataByEventId(eventId);
+        const nextEventMetadata = await getEventMetadata(eventId);
         const { allOrders, orderTicketsMap: nextOrderTicketsMap } =
           await loadRegistrationData(nextEventMetadata.orderIds);
         if (!isActive) return;
@@ -237,6 +236,8 @@ export function OrganiserEventHubView() {
   }, [
     authenticatedUserId,
     eventId,
+    getEvent,
+    getEventMetadata,
     router,
     user.userId,
     userLoading,
@@ -248,15 +249,16 @@ export function OrganiserEventHubView() {
     setEventPaused(next);
     try {
       await updateEventById(eventId, { paused: next });
+      invalidateEventForOrganiserHub(eventId);
       bustEventsLocalStorageCache();
-      bustOrganiserEventsCache();
+      bustOrganiserHubCache();
     } catch (error) {
       setEventPaused(!next);
       eventServiceLogger.error(`Failed to toggle pause on event hub: ${error}`);
     } finally {
       setPauseUpdating(false);
     }
-  }, [eventId, eventPaused]);
+  }, [eventId, eventPaused, invalidateEventForOrganiserHub]);
 
   const handleSectionChange = (next: EventHubSection) => {
     if (next === section) return;
@@ -323,8 +325,9 @@ export function OrganiserEventHubView() {
             }}
             updateData={async (id, data) => {
               await updateEventById(id, data);
+              invalidateEventForOrganiserHub(id);
               bustEventsLocalStorageCache();
-              bustOrganiserEventsCache();
+              bustOrganiserHubCache();
               if (data.name !== undefined) setEventName(data.name);
               if (data.description !== undefined) setEventDescription(data.description);
               if (data.location !== undefined) setEventLocation(data.location);
@@ -346,6 +349,7 @@ export function OrganiserEventHubView() {
           <EventHubAttendees
             eventData={eventData}
             eventMetadata={eventMetadata}
+            setEventMetadata={setEventMetadata}
             eventId={eventId}
             orderTicketsMap={orderTicketsMap}
             setEventVacancy={setEventVacancy}
