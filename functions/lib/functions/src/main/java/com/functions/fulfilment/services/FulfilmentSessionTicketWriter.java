@@ -21,7 +21,6 @@ import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
-import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.fulfilment.services.ProcessFulfilmentSessionService.RequestedTickets;
 import com.functions.stripe.services.EventTicketPurchaseService;
@@ -110,9 +109,6 @@ class FulfilmentSessionTicketWriter {
         }
 
         Map<String, FormResponse> tempFormResponses = readTempForms(session, transaction);
-        PaymentProvider paymentProvider = session.getType() == FulfilmentSessionType.PYNG_CHECKOUT
-                ? PaymentProvider.PYNG
-                : PaymentProvider.STRIPE;
         EventTicketPurchaseService.MintedPurchase minted =
                 EventTicketPurchaseService.fulfillCompletedEventTicketPurchase(
                         transaction,
@@ -129,7 +125,7 @@ class FulfilmentSessionTicketWriter {
                         null,
                         null,
                         null,
-                        paymentProvider);
+                        paymentProvider(session));
         if (minted == null) {
             throw new IllegalStateException(
                     "Fulfillment of event ticket purchase was unsuccessful. session=" + session.getId());
@@ -148,6 +144,14 @@ class FulfilmentSessionTicketWriter {
         if (!sessionIds.contains(sessionId)) {
             sessionIds.add(sessionId);
         }
+    }
+
+    static PaymentProvider paymentProvider(FulfilmentSession session) {
+        return switch (session.getType()) {
+            case CHECKOUT, BOOKING_APPROVAL -> PaymentProvider.STRIPE;
+            case PYNG_CHECKOUT -> PaymentProvider.PYNG;
+            case WAITLIST -> null;
+        };
     }
 
     static String endEntityId(FulfilmentSession session) {
