@@ -16,6 +16,7 @@ import {
   buildAttendeeCsvData,
   buildAttendeeEmailList,
 } from "@/services/src/attendee/attendeeCsvUtils";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { addAttendee, setAttendeeTickets } from "@/services/src/attendee/attendeeService";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
@@ -301,6 +302,10 @@ function AttendeeEditTicketsPanel({
         eventTicketTypeId:
           tickets[0]?.eventTicketTypeId ?? resolveCheckoutTicketTypeId(eventData),
       });
+      trackEvent(AnalyticsEvent.ORGANISER_ATTENDEE_EDIT_TICKETS, {
+        event_id: eventId,
+        ticket_count: parseInt(newNumTickets, 10),
+      });
       const updatedOrder = await getOrderById(order.orderId);
       const updatedTickets = await getTicketsByIds(updatedOrder.tickets);
       setOrderTicketsMap((prev) => {
@@ -537,6 +542,7 @@ export function EventHubAttendees({
       const tickets = pendingMap.get(order) ?? [];
       if (response.success) {
         moveOrderFromPending(order, tickets, OrderAndTicketStatus.APPROVED);
+        trackEvent(AnalyticsEvent.ORGANISER_BOOKING_DECISION, { event_id: eventId, decision: "approve" });
         toast.success("Order approved", { id: toastId });
       } else {
         moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
@@ -561,6 +567,7 @@ export function EventHubAttendees({
       const tickets = pendingMap.get(order) ?? [];
       moveOrderFromPending(order, tickets, OrderAndTicketStatus.REJECTED);
       if (response.success) {
+        trackEvent(AnalyticsEvent.ORGANISER_BOOKING_DECISION, { event_id: eventId, decision: "decline" });
         toast.success("Order declined", { id: toastId });
       } else {
         toast(response.message || "Order was already declined.", { id: toastId, icon: "⚠️" });
@@ -618,6 +625,7 @@ export function EventHubAttendees({
         price: 0,
         eventTicketTypeId,
       });
+      trackEvent(AnalyticsEvent.ORGANISER_ATTENDEE_ADD, { event_id: eventId, ticket_count: ticketIds.length });
       const now = Timestamp.now();
       const newOrder: Order = {
         ...EMPTY_ORDER_DEFAULTS,
@@ -788,6 +796,7 @@ export function EventHubAttendees({
               data={approvedAttendeesCsvData}
               headers={ATTENDEE_CSV_HEADERS}
               filename={`Attendees_${eventId}.csv`}
+              onDownload={() => trackEvent(AnalyticsEvent.ORGANISER_ATTENDEE_EXPORT, { event_id: eventId })}
             />
           </div>
         </div>
@@ -825,6 +834,7 @@ export function EventHubAttendees({
         onChange={(id) => {
           setActiveTab(id as TabType);
           setExpandedOrderId(null);
+          trackEvent(AnalyticsEvent.ORGANISER_ATTENDEE_TAB, { event_id: eventId, tab: id });
         }}
         tabs={[
           { id: "approved", label: "Approved", count: approvedTicketCount },

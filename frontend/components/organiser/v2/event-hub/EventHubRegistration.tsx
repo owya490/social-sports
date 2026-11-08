@@ -11,6 +11,7 @@ import { Form, FormId, FormResponse, FormSection, FormSectionType } from "@/inte
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { getEventById, updateEventById } from "@/services/src/events/eventsService";
 import {
   getSortedEventTicketTypes,
@@ -276,6 +277,10 @@ export function EventHubRegistration({
           eventTicketTypes: nextTypes,
           ...(syncEventFormId ? { formId: selectedFormId } : {}),
         });
+        trackEvent(AnalyticsEvent.ORGANISER_EVENT_EDIT, {
+          event_id: eventId,
+          field: selectedFormId ? "form_attach" : "form_detach",
+        });
 
         const nextEventData: EventData = {
           ...eventData,
@@ -294,6 +299,10 @@ export function EventHubRegistration({
       }
 
       await updateEventById(eventId, { formId: selectedFormId });
+      trackEvent(AnalyticsEvent.ORGANISER_EVENT_EDIT, {
+        event_id: eventId,
+        field: selectedFormId ? "form_attach" : "form_detach",
+      });
       setEventData((prev) => (prev ? { ...prev, formId: selectedFormId } : prev));
 
       if (!selectedFormId) {
@@ -483,6 +492,9 @@ export function EventHubRegistration({
                 data={csvData}
                 headers={csvHeaders}
                 filename={`FormResponses_${eventId}${selectedTypeId ? `_${selectedTypeId}` : ""}.csv`}
+                onDownload={() =>
+                  trackEvent(AnalyticsEvent.ORGANISER_FORM_RESPONSE_EXPORT, { event_id: eventId, form_id: formId ?? "" })
+                }
                 className="!rounded-xl !bg-background !text-foreground border border-border hover:!bg-surface-hover !font-sans !font-medium px-3 py-2 focus-visible:!outline focus-visible:!outline-2 focus-visible:!outline-offset-2 focus-visible:!outline-focus focus-visible:!ring-0"
               />
             ) : null}
@@ -557,6 +569,7 @@ export function EventHubRegistration({
                 setAddError(null);
                 const savedId = await formResponderRef.current.save();
                 await submitManualFormResponse(formId, eventId, savedId);
+                trackEvent(AnalyticsEvent.ORGANISER_FORM_RESPONSE_ADD, { event_id: eventId, form_id: formId });
                 await fetchResponses();
                 setIsAddFormResponseDialogOpen(false);
               } catch (err: unknown) {

@@ -3,6 +3,7 @@
 import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent";
 import { FormMiniaturePreview } from "@/components/organiser/v2/forms/FormMiniaturePreview";
 import { Form } from "@/interfaces/FormTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -137,7 +138,10 @@ export function FormGalleryCard({ form }: FormGalleryCardProps) {
               <Link
                 href={previewHref}
                 className="flex-1 rounded-lg border border-border px-3 py-2 text-center text-xs font-medium text-foreground font-sans hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  trackEvent(AnalyticsEvent.ORGANISER_FORM_PREVIEW, { form_id: form.formId });
+                }}
               >
                 Preview
               </Link>

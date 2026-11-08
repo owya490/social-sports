@@ -1,3 +1,4 @@
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -58,6 +59,9 @@ export default function StripeSetup(props: {
             getUrlWithCurrentHostname("/organiser/v2/dashboard"),
             getRefreshAccountLinkUrl()
           );
+          if (link.startsWith("http")) {
+            trackEvent(AnalyticsEvent.ORGANISER_STRIPE_SETUP_START);
+          }
           router.push(link);
         }}
       >

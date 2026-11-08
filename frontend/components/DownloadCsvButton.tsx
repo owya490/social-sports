@@ -7,6 +7,7 @@ interface DownloadCsvButtonProps {
   filename: string;
   label?: string;
   className?: string;
+  onDownload?: () => void;
   /** Small muted control for organiser v2 toolbars. */
   compact?: boolean;
 }
@@ -17,6 +18,7 @@ const DownloadCsvButton = ({
   filename,
   label = "Download as CSV",
   className = "",
+  onDownload,
   compact = false,
 }: DownloadCsvButtonProps) => {
   const compactLabel = label === "Download as CSV" ? "CSV" : label;
@@ -25,6 +27,7 @@ const DownloadCsvButton = ({
       data={data}
       headers={headers}
       filename={filename}
+      onClick={onDownload}
       aria-label={compact ? "Export as CSV" : undefined}
       className={
         compact

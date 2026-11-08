@@ -4,6 +4,7 @@ import { GalleryHeader } from "@/components/organiser/v2/gallery/GalleryHeader";
 import { GalleryPanel } from "@/components/organiser/v2/gallery/GalleryPanel";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import {
   getUsersEventImagesUrls,
   getUsersEventThumbnailsUrls,
@@ -79,6 +80,7 @@ export default function OrganiserGalleryV2Page() {
         const downloadUrl = await uploadEventImage(user.userId, fileToUpload);
         setImageUrls((prev) => [downloadUrl, ...prev]);
       }
+      trackEvent(AnalyticsEvent.ORGANISER_GALLERY_UPLOAD, { image_type: type });
     } catch (uploadErr) {
       logger.error(`Failed to upload image: ${uploadErr}`);
       setUploadError("Could not upload that image. Try again.");

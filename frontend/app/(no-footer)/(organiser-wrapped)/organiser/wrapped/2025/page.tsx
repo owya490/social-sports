@@ -70,6 +70,7 @@ export default function WrappedPage() {
   return (
     <WrappedContent
       data={data}
+      trackViews
       className="-mt-[var(--navbar-height)]"
       headerElements={
         <>
