@@ -5,8 +5,8 @@ import java.util.Optional;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.functions.events.exceptions.RecurrenceTemplateNotFoundException;
 import com.functions.events.models.RecurrenceTemplate;
-import com.functions.events.models.requests.ArchiveRecurrenceTemplateRequest;
-import com.functions.events.models.responses.ArchiveRecurrenceTemplateResponse;
+import com.functions.events.models.requests.DeleteRecurrenceTemplateRequest;
+import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
 import com.functions.events.services.RecurringEventsService;
 import com.functions.global.models.AuthContext;
@@ -15,20 +15,20 @@ import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.services.EventAuthorizationService;
 import com.functions.utils.JavaUtils;
 
-public class ArchiveRecurrenceTemplateHandler
-        implements Handler<ArchiveRecurrenceTemplateRequest, ArchiveRecurrenceTemplateResponse> {
+public class DeleteRecurrenceTemplateHandler
+        implements Handler<DeleteRecurrenceTemplateRequest, DeleteRecurrenceTemplateResponse> {
 
     @Override
-    public ArchiveRecurrenceTemplateRequest parse(UnifiedRequest data) {
+    public DeleteRecurrenceTemplateRequest parse(UnifiedRequest data) {
         try {
-            return JavaUtils.objectMapper.treeToValue(data.data(), ArchiveRecurrenceTemplateRequest.class);
+            return JavaUtils.objectMapper.treeToValue(data.data(), DeleteRecurrenceTemplateRequest.class);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Failed to parse recurrence template request", e);
         }
     }
 
     @Override
-    public ArchiveRecurrenceTemplateResponse handle(ArchiveRecurrenceTemplateRequest request, AuthContext authContext)
+    public DeleteRecurrenceTemplateResponse handle(DeleteRecurrenceTemplateRequest request, AuthContext authContext)
             throws Exception {
         if (request == null || request.recurrenceTemplateId() == null || request.recurrenceTemplateId().isBlank()) {
             throw new IllegalArgumentException("recurrenceTemplateId is required");
@@ -38,17 +38,17 @@ public class ArchiveRecurrenceTemplateHandler
                 .orElseThrow(() -> new RecurrenceTemplateNotFoundException(request.recurrenceTemplateId()));
         EventAuthorizationService.requireMatchingUser(authContext.requireUid(),
                 existingTemplate.getEventData().getOrganiserId(),
-                "You are not allowed to archive this recurrence template");
+                "You are not allowed to delete this recurrence template");
 
-        archive(request.recurrenceTemplateId());
-        return new ArchiveRecurrenceTemplateResponse(request.recurrenceTemplateId());
+        delete(request.recurrenceTemplateId(), existingTemplate.getEventData().getOrganiserId());
+        return new DeleteRecurrenceTemplateResponse(request.recurrenceTemplateId());
     }
 
     protected Optional<RecurrenceTemplate> find(String recurrenceTemplateId) {
         return RecurrenceTemplateRepository.getRecurrenceTemplate(recurrenceTemplateId);
     }
 
-    protected void archive(String recurrenceTemplateId) throws Exception {
-        RecurringEventsService.archiveRecurrenceTemplate(recurrenceTemplateId);
+    protected void delete(String recurrenceTemplateId, String organiserId) throws Exception {
+        RecurringEventsService.deleteRecurrenceTemplate(recurrenceTemplateId, organiserId);
     }
 }

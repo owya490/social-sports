@@ -2,7 +2,7 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { RecurringTemplateActionsMenu } from "@/components/organiser/v2/recurring-hub/RecurringTemplateActionsMenu";
+import { RecurringTemplateDeleteButton } from "@/components/organiser/v2/recurring-hub/RecurringTemplateDeleteButton";
 import { Frequency, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
@@ -38,10 +38,8 @@ type RecurringHubHeaderProps = {
   startDate: Timestamp;
   location: string;
   frequency: Frequency;
-  archived: boolean;
-  canArchive: boolean;
+  canDelete: boolean;
   recurrenceTemplateId: RecurrenceTemplateId;
-  isPrivate: boolean;
 };
 
 export function RecurringHubHeader({
@@ -50,10 +48,8 @@ export function RecurringHubHeader({
   startDate,
   location,
   frequency,
-  archived,
-  canArchive,
+  canDelete,
   recurrenceTemplateId,
-  isPrivate,
 }: RecurringHubHeaderProps) {
   const meta = loading
     ? ""
@@ -81,15 +77,10 @@ export function RecurringHubHeader({
           <span className="inline-flex items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
             Template
           </span>
-          {archived ? (
-            <span className="inline-flex items-center rounded-xl border border-border bg-surface-muted px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
-              Archived
-            </span>
-          ) : canArchive ? (
-            <RecurringTemplateActionsMenu
+          {canDelete ? (
+            <RecurringTemplateDeleteButton
               recurrenceTemplateId={recurrenceTemplateId}
               templateName={name}
-              isPrivate={isPrivate}
               disabled={loading}
             />
           ) : null}

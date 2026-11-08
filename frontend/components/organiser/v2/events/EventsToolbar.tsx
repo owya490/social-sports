@@ -40,8 +40,6 @@ type EventsToolbarProps = {
   loading: boolean;
   /** When false, hides the Filters control (search / time / sort only). */
   showFilters?: boolean;
-  /** When false, hides All / Upcoming / Past. */
-  showTimeSegments?: boolean;
   filtersOpen?: boolean;
   onToggleFilters?: () => void;
   activeFilterCount?: number;
@@ -61,7 +59,6 @@ export function EventsToolbar({
   resultCount,
   loading,
   showFilters = true,
-  showTimeSegments = true,
   filtersOpen = false,
   onToggleFilters,
   activeFilterCount = 0,
@@ -123,33 +120,31 @@ export function EventsToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        {showTimeSegments ? (
-          <div
-            className="inline-flex rounded-xl border border-border bg-background p-1"
-            role="tablist"
-            aria-label="Filter by time"
-          >
-            {TIME_SEGMENTS.map((segment) => {
-              const active = timeSegment === segment.value;
-              return (
-                <button
-                  key={segment.value}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  onClick={() => onTimeSegmentChange(segment.value)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
-                    active
-                      ? "bg-foreground text-background"
-                      : "text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
-                  }`}
-                >
-                  {segment.label}
-                </button>
-              );
-            })}
-          </div>
-        ) : null}
+        <div
+          className="inline-flex rounded-xl border border-border bg-background p-1"
+          role="tablist"
+          aria-label="Filter by time"
+        >
+          {TIME_SEGMENTS.map((segment) => {
+            const active = timeSegment === segment.value;
+            return (
+              <button
+                key={segment.value}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => onTimeSegmentChange(segment.value)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium font-sans transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                  active
+                    ? "bg-foreground text-background"
+                    : "text-foreground-secondary hover:bg-surface-hover hover:text-foreground"
+                }`}
+              >
+                {segment.label}
+              </button>
+            );
+          })}
+        </div>
 
         <Listbox value={selectedSort} onChange={(option) => onSortChange(option.value)}>
           <div className="relative min-w-[9.5rem]">

@@ -26,7 +26,6 @@ type RecurringHubRecurrenceProps = {
   setNewRecurrenceData: (data: NewRecurrenceFormData) => void;
   submitNewRecurrenceData: () => void;
   isRecurrenceEnded: boolean;
-  archived?: boolean;
   capacity?: number;
 };
 
@@ -135,14 +134,13 @@ export function RecurringHubRecurrence({
   setNewRecurrenceData,
   submitNewRecurrenceData,
   isRecurrenceEnded,
-  archived = false,
   capacity,
 }: RecurringHubRecurrenceProps) {
   const [recurrenceDates, setRecurrenceDates] = useState<Timestamp[]>([]);
   const dirty = hasRecurrenceChanges(newRecurrenceData, originalRecurrenceData);
   const maxCreateDays =
     RecurringEventsFrequencyMetadata[newRecurrenceData.frequency].maxPriorDaysForEventCreation;
-  const recurrenceEnabled = !archived && newRecurrenceData.recurrenceEnabled;
+  const recurrenceEnabled = newRecurrenceData.recurrenceEnabled;
 
   useEffect(() => {
     setRecurrenceDates(calculateRecurrenceDates(newRecurrenceData, startDate));
@@ -182,14 +180,11 @@ export function RecurringHubRecurrence({
             <EventHubPreferenceRow
               title="Create future events"
               description={
-                archived
-                  ? "Archived templates stay in Archived and do not create new events."
-                  : isRecurrenceEnded
-                    ? "This series has ended. Turn on and review the upcoming dates before saving to restart it. Existing events stay unchanged."
-                    : "Turn off to stop automatic event creation. Changes take effect when you save the schedule. Existing events stay unchanged."
+                isRecurrenceEnded
+                  ? "This series has ended. Turn on and review the upcoming dates before saving to restart it. Existing events stay unchanged."
+                  : "Turn off to stop automatic event creation. Changes take effect when you save the schedule. Existing events stay unchanged."
               }
-              checked={archived ? false : newRecurrenceData.recurrenceEnabled}
-              disabled={archived}
+              checked={newRecurrenceData.recurrenceEnabled}
               onChange={(next) => setNewRecurrenceData({ ...newRecurrenceData, recurrenceEnabled: next })}
             />
 

@@ -68,4 +68,9 @@ public class EventCollectionsRepository {
       String eventId, Transaction transaction) {
     transaction.update(documentReference, "eventIds", FieldValue.arrayUnion(eventId));
   }
+
+  public static void removeRecurringTemplateId(DocumentReference documentReference,
+      String recurrenceTemplateId, Transaction transaction) {
+    transaction.update(documentReference, "recurringEventTemplateIds", FieldValue.arrayRemove(recurrenceTemplateId));
+  }
 }

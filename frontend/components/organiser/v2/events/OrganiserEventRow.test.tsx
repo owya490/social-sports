@@ -106,20 +106,4 @@ describe("Organiser event row status", () => {
     expect(markup).toContain(`${label} · Weekly`);
     expect(markup).not.toContain("Bookings paused");
   });
-
-  it("shows archived templates as public or private", () => {
-    const markup = renderToStaticMarkup(
-      <RecurringTemplateRow
-        template={{
-          ...EMPTY_RECURRENCE_TEMPLATE,
-          archived: true,
-          eventData: { ...event, isActive: false, isPrivate: false },
-        }}
-      />
-    );
-
-    expect(markup).toContain("Archived");
-    expect(markup).toContain("Public");
-    expect(markup).not.toContain("Private");
-  });
 });

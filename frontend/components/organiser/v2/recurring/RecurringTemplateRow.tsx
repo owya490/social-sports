@@ -33,13 +33,6 @@ function statusMeta(template: RecurrenceTemplate): {
   dotClass: string;
   ariaLabel: string;
 } {
-  if (template.archived) {
-    return {
-      label: "Archived",
-      dotClass: "bg-surface-muted border border-border",
-      ariaLabel: "Archived template",
-    };
-  }
   const ended = calculateRecurrenceEnded(template);
   if (ended) {
     return {
@@ -70,11 +63,6 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
   const { eventData, recurrenceData, recurrenceTemplateId } = template;
   const thumbnailSrc = eventData.thumbnail || eventData.image;
   const status = statusMeta(template);
-  const visibilityLabel = template.archived
-    ? [eventData.isPrivate ? "Private" : "Public"]
-    : eventData.isPrivate
-      ? ["Private"]
-      : [];
   const scheduleLine = `${frequencyLabel(recurrenceData.frequency)} · ${recurrenceData.recurrenceAmount} times · creates ${recurrenceData.createDaysBefore}d before`;
 
   return (
@@ -118,7 +106,7 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
             <MapPinIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
             {eventData.location}
           </p>
-          <EntityRowStatuses labels={visibilityLabel} />
+          <EntityRowStatuses labels={eventData.isPrivate ? ["Private"] : []} />
           <p className="text-xs text-foreground-muted font-sans truncate mt-1.5 flex items-center gap-1">
             <ArrowPathIcon className="inline h-3.5 w-3.5 shrink-0" aria-hidden />
             <span className="truncate">

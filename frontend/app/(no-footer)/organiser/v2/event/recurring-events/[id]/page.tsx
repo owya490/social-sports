@@ -86,7 +86,6 @@ export default function OrganiserRecurringHubV2Page() {
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] =
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [seriesState, setSeriesState] = useState({ isActive: false, statusAvailable: false });
-  const [archived, setArchived] = useState(false);
   const [organiserId, setOrganiserId] = useState("");
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
@@ -135,6 +134,7 @@ export default function OrganiserRecurringHubV2Page() {
         setEventBookingApprovalEnabled(eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(eventData.showAttendeesOnEventPage);
         setEventIsPrivate(eventData.isPrivate);
+        setOrganiserId(eventData.organiserId ?? "");
         setEventTicketTypes(eventData.eventTicketTypes);
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
@@ -144,18 +144,15 @@ export default function OrganiserRecurringHubV2Page() {
         );
 
         const formData = extractNewRecurrenceFormDataFromRecurrenceData(recurrenceData);
-        const schedule = template.archived ? { ...formData, recurrenceEnabled: false } : formData;
         setFrequency(recurrenceData.frequency);
-        setNewRecurrenceData(schedule);
-        setOriginalRecurrenceData(JSON.parse(JSON.stringify(schedule)));
+        setNewRecurrenceData(formData);
+        setOriginalRecurrenceData(JSON.parse(JSON.stringify(formData)));
         setPastEvents(recurrenceData.pastRecurrences || {});
 
         const ended = calculateRecurrenceEnded(template);
         setSeriesState({ isActive: eventData.isActive, statusAvailable: true });
-        setArchived(template.archived === true);
-        setOrganiserId(eventData.organiserId ?? "");
         setRecurrenceEnded(ended);
-        if (!template.archived && ended) {
+        if (ended) {
           setNewRecurrenceData({ ...formData, recurrenceEnabled: false });
         }
       } catch (error) {
@@ -197,7 +194,6 @@ export default function OrganiserRecurringHubV2Page() {
         const template = await getRecurrenceTemplate(recurrenceTemplateId);
         const ended = calculateRecurrenceEnded(template);
         setSeriesState({ isActive: template.eventData.isActive, statusAvailable: true });
-        setArchived(template.archived === true);
         setRecurrenceEnded(ended);
       } catch (error) {
         logger.error(`Schedule saved but failed to refresh series status for ${recurrenceTemplateId}: ${error}`);
@@ -230,10 +226,8 @@ export default function OrganiserRecurringHubV2Page() {
           startDate={eventStartDate}
           location={eventLocation}
           frequency={frequency}
-          archived={archived}
-          canArchive={!loading && !archived && (organiserId === "" || organiserId === user.userId)}
+          canDelete={!loading && organiserId === user.userId}
           recurrenceTemplateId={recurrenceTemplateId}
-          isPrivate={eventIsPrivate}
         />
         <RecurringHubNav current={section} onChange={handleSectionChange} />
       </div>
@@ -322,7 +316,6 @@ export default function OrganiserRecurringHubV2Page() {
             startDate={eventStartDate}
             submitNewRecurrenceData={submitNewRecurrenceData}
             isRecurrenceEnded={recurrenceEnded}
-            archived={archived}
             capacity={eventCapacity}
           />
         )}

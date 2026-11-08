@@ -6,9 +6,9 @@ import java.util.Map;
 import com.functions.attendee.handlers.AddAttendeeHandler;
 import com.functions.attendee.handlers.GetEventAttendeeNamesHandler;
 import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
-import com.functions.events.handlers.ArchiveRecurrenceTemplateHandler;
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.handlers.CreateRecurrenceTemplateHandler;
+import com.functions.events.handlers.DeleteRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
 import com.functions.events.handlers.GetPartnerEventsHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
@@ -46,7 +46,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.CREATE_EVENT, new CreateEventHandler());
         handlers.put(EndpointType.CREATE_RECURRENCE_TEMPLATE, new CreateRecurrenceTemplateHandler());
         handlers.put(EndpointType.UPDATE_RECURRENCE_TEMPLATE, new UpdateRecurrenceTemplateHandler());
-        handlers.put(EndpointType.ARCHIVE_RECURRENCE_TEMPLATE, new ArchiveRecurrenceTemplateHandler());
+        handlers.put(EndpointType.DELETE_RECURRENCE_TEMPLATE, new DeleteRecurrenceTemplateHandler());
         handlers.put(EndpointType.INIT_FULFILMENT_SESSION, new InitFulfilmentSessionHandler());
         handlers.put(EndpointType.INIT_PARTNER_FULFILMENT_SESSION, new InitPartnerFulfilmentSessionHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,

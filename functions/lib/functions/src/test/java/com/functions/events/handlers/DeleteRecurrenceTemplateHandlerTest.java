@@ -9,18 +9,18 @@ import org.junit.Test;
 import com.functions.events.exceptions.RecurrenceTemplateNotFoundException;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.RecurrenceTemplate;
-import com.functions.events.models.requests.ArchiveRecurrenceTemplateRequest;
-import com.functions.events.models.responses.ArchiveRecurrenceTemplateResponse;
+import com.functions.events.models.requests.DeleteRecurrenceTemplateRequest;
+import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
 import com.functions.global.exceptions.AuthorizationException;
 import com.functions.global.models.AuthContext;
 
-public class ArchiveRecurrenceTemplateHandlerTest {
+public class DeleteRecurrenceTemplateHandlerTest {
 
     @Test
-    public void archivesTemplateOwnedByAuthenticatedOrganiser() throws Exception {
-        ArchiveRecurrenceTemplateHandler handler = handlerWithTemplate("organiser-1");
+    public void deletesTemplateOwnedByAuthenticatedOrganiser() throws Exception {
+        DeleteRecurrenceTemplateHandler handler = handlerWithTemplate("organiser-1");
 
-        ArchiveRecurrenceTemplateResponse response = handler.handle(new ArchiveRecurrenceTemplateRequest("template-1"),
+        DeleteRecurrenceTemplateResponse response = handler.handle(new DeleteRecurrenceTemplateRequest("template-1"),
                 AuthContext.authenticated("organiser-1"));
 
         assertEquals("template-1", response.recurrenceTemplateId());
@@ -28,41 +28,41 @@ public class ArchiveRecurrenceTemplateHandlerTest {
 
     @Test(expected = AuthorizationException.class)
     public void authorizesAgainstStoredOrganiser() throws Exception {
-        handlerWithTemplate("organiser-1").handle(new ArchiveRecurrenceTemplateRequest("template-1"),
+        handlerWithTemplate("organiser-1").handle(new DeleteRecurrenceTemplateRequest("template-1"),
                 AuthContext.authenticated("organiser-2"));
     }
 
     @Test(expected = RecurrenceTemplateNotFoundException.class)
     public void reportsMissingTemplateExplicitly() throws Exception {
-        ArchiveRecurrenceTemplateHandler handler = new ArchiveRecurrenceTemplateHandler() {
+        DeleteRecurrenceTemplateHandler handler = new DeleteRecurrenceTemplateHandler() {
             @Override
             protected Optional<RecurrenceTemplate> find(String ignored) {
                 return Optional.empty();
             }
         };
 
-        handler.handle(new ArchiveRecurrenceTemplateRequest("missing"), AuthContext.authenticated("organiser-1"));
+        handler.handle(new DeleteRecurrenceTemplateRequest("missing"), AuthContext.authenticated("organiser-1"));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void requiresTemplateId() throws Exception {
-        handlerWithTemplate("organiser-1").handle(new ArchiveRecurrenceTemplateRequest("  "),
+        handlerWithTemplate("organiser-1").handle(new DeleteRecurrenceTemplateRequest("  "),
                 AuthContext.authenticated("organiser-1"));
     }
 
-    private ArchiveRecurrenceTemplateHandler handlerWithTemplate(String organiserId) {
+    private DeleteRecurrenceTemplateHandler handlerWithTemplate(String organiserId) {
         NewEventData storedEventData = new NewEventData();
         storedEventData.setOrganiserId(organiserId);
         RecurrenceTemplate template = RecurrenceTemplate.builder().eventData(storedEventData).build();
 
-        return new ArchiveRecurrenceTemplateHandler() {
+        return new DeleteRecurrenceTemplateHandler() {
             @Override
             protected Optional<RecurrenceTemplate> find(String ignored) {
                 return Optional.of(template);
             }
 
             @Override
-            protected void archive(String ignored) {
+            protected void delete(String ignoredTemplateId, String ignoredOrganiserId) {
             }
         };
     }
