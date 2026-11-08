@@ -5,11 +5,10 @@ import {
   EventTicketTypeFormValues,
 } from "@/components/organiser/event/settings/EventTicketTypeFormDialog";
 import { useUser } from "@/components/utility/UserContext";
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypeId, EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { updateEventById } from "@/services/src/events/eventsService";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import {
@@ -27,7 +26,6 @@ import { EventHubGhostButton, EventHubPrimaryButton } from "./EventHubStage";
 type EventHubTicketTypesEditorProps = {
   eventId: EventId;
   eventTicketTypes: EventTicketTypesMap | undefined;
-  orderTicketsMap: Map<Order, Ticket[]>;
   isActive: boolean;
   setEventTicketTypes: (types: EventTicketTypesMap | undefined) => void;
   /** When set (e.g. recurring templates), saves via this instead of updateEventById. */
@@ -39,13 +37,13 @@ type EventHubTicketTypesEditorProps = {
 export function EventHubTicketTypesEditor({
   eventId,
   eventTicketTypes,
-  orderTicketsMap,
   isActive,
   setEventTicketTypes,
   onPersistTicketTypes,
   hideFormSelector = true,
 }: EventHubTicketTypesEditorProps) {
   const { user } = useUser();
+  const { orderTicketsMap } = useEventOrderAndTickets(onPersistTicketTypes ? undefined : eventId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<EventTicketTypeId | null>(null);
   const [error, setError] = useState<string | null>(null);

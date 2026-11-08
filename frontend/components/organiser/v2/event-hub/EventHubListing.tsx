@@ -4,8 +4,6 @@ import { ImageForm } from "@/components/events/create/forms/ImageForm";
 import { useUser } from "@/components/utility/UserContext";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
 import { hasEventEndPassed, timestampToDateString, timestampToTimeOfDay } from "@/services/src/datetimeUtils";
 import {
   getSortedEventTicketTypes,
@@ -59,7 +57,6 @@ type EventHubListingProps = {
   isActive: boolean;
   isPrivate: boolean;
   eventTicketTypes?: EventTicketTypesMap;
-  orderTicketsMap?: Map<Order, Ticket[]>;
   setEventTicketTypes?: (types: EventTicketTypesMap | undefined) => void;
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Templates have no public `/event/[id]` page — hide share + glass URL. */
@@ -86,7 +83,6 @@ export function EventHubListing({
   isActive,
   isPrivate,
   eventTicketTypes,
-  orderTicketsMap,
   setEventTicketTypes,
   onPersistTicketTypes,
   mode = "event",
@@ -102,7 +98,7 @@ export function EventHubListing({
   const isTemplate = mode === "template";
   const ended = !isTemplate && hasEventEndPassed(eventEndDate);
   const canEditDetails = isActive && !ended;
-  const canManageTickets = Boolean(orderTicketsMap && setEventTicketTypes);
+  const canManageTickets = Boolean(setEventTicketTypes);
 
   const cover = eventImage || eventThumbnail;
   const hostName = [user.firstName, user.surname].filter(Boolean).join(" ") || user.username || "You";
@@ -418,7 +414,7 @@ export function EventHubListing({
         title="Ticket types"
         footer={<EventHubGhostButton onClick={() => setTicketsOpen(false)}>Close</EventHubGhostButton>}
       >
-        {ticketsOpen && orderTicketsMap && setEventTicketTypes ? (
+        {ticketsOpen && setEventTicketTypes ? (
           <div className="space-y-4">
             {canEditDetails ? (
               <p className="text-sm text-foreground-secondary font-sans">
@@ -428,7 +424,6 @@ export function EventHubListing({
             <EventHubTicketTypesEditor
               eventId={eventId}
               eventTicketTypes={eventTicketTypes}
-              orderTicketsMap={orderTicketsMap}
               isActive={canEditDetails}
               setEventTicketTypes={setEventTicketTypes}
               onPersistTicketTypes={onPersistTicketTypes}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventId } from "@/interfaces/EventTypes";
 import { Form, FormId, FormResponse, FormSection, FormSectionType, SectionId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
@@ -20,7 +21,6 @@ interface FormResponsesTableProps {
   formId: FormId;
   form: Form;
   eventId: EventId;
-  orderTicketsMap: Map<Order, Ticket[]>;
   showPurchaserColumn?: boolean;
   /** Flush workbench shell — no bordered card frame; Honest Clubhouse tokens */
   flush?: boolean;
@@ -294,10 +294,10 @@ export const FormResponsesTable = ({
   formId,
   form,
   eventId,
-  orderTicketsMap,
   showPurchaserColumn = true,
   flush = false,
 }: FormResponsesTableProps) => {
+  const { orderTicketsMap } = useEventOrderAndTickets(eventId);
   const [headersExpanded, setHeadersExpanded] = useState(false);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortColumn, setSortColumn] = useState<SortColumn>(() =>
