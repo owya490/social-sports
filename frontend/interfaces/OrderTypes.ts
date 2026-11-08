@@ -1,5 +1,6 @@
 import { Timestamp } from "firebase/firestore";
 import { OrderId, TicketId } from "./EventTypes";
+import { PaymentProvider } from "./FulfilmentTypes";
 
 export enum OrderAndTicketStatus {
   APPROVED = "APPROVED",
@@ -22,6 +23,7 @@ export interface Order {
   phone: string;
   tickets: TicketId[];
   stripePaymentIntentId: string;
+  paymentProvider?: PaymentProvider;
   status: OrderAndTicketStatus;
   type: OrderAndTicketType;
 }

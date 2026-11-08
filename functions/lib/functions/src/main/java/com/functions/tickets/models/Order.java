@@ -6,6 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
 
@@ -29,6 +30,7 @@ public class Order {
     private String phone;
     private List<String> tickets = new ArrayList<>(); // List of ticketIds
     private String stripePaymentIntentId;
+    private PaymentProvider paymentProvider;
     private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
     private OrderAndTicketType type = OrderAndTicketType.GENERAL;
 }

@@ -27,6 +27,7 @@ import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -452,7 +453,8 @@ public class WebhookService {
                         resolveApplicationFees(totalDetails),
                         resolveDiscounts(totalDetails),
                         paymentIntentId,
-                        captureMethod);
+                        captureMethod,
+                        PaymentProvider.STRIPE);
         if (minted == null) {
             return null;
         }

@@ -2,6 +2,7 @@ import { Timestamp } from "firebase/firestore";
 import { EventTicketTypeId } from "./EventTicketTypeTypes";
 import { EventId, OrderId, TicketId } from "./EventTypes";
 import { FormResponseId } from "./FormTypes";
+import { PaymentProvider } from "./FulfilmentTypes";
 import { OrderAndTicketStatus, OrderAndTicketType } from "./OrderTypes";
 
 export interface Ticket {
@@ -11,6 +12,7 @@ export interface Ticket {
   price: number;
   purchaseDate: Timestamp;
   status: OrderAndTicketStatus;
+  paymentProvider?: PaymentProvider;
   formResponseId: FormResponseId | null; // the absence of this means the ticket was purchased without a form response
   type: OrderAndTicketType;
   eventTicketTypeId?: EventTicketTypeId;
