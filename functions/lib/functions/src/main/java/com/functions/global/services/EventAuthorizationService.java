@@ -5,7 +5,13 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.global.exceptions.AuthorizationException;
 
 public final class EventAuthorizationService {
+    private static final String DATE_RANGE_ACCOUNT_ID = "ZzuRS5v8hhWonnp2qdIOZG8R7f12";
+
     private EventAuthorizationService() {
+    }
+
+    public static void requireDateRangeAccount(String uid) {
+        requireMatchingUser(uid, DATE_RANGE_ACCOUNT_ID, "You are not allowed to use this endpoint");
     }
 
     public static void requireOrganiserAccess(String uid, String eventId) {

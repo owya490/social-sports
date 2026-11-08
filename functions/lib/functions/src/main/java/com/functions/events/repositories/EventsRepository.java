@@ -13,6 +13,8 @@ import com.functions.events.models.EventMetadata;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
 import com.google.api.core.ApiFuture;
+import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
@@ -139,25 +141,8 @@ public class EventsRepository {
         logger.info("Querying active public events for organiser: {}", organiserId);
         
         try {
-            Firestore db = FirebaseService.getFirestore();
-            
-            Query query = db.collection(FirebaseService.CollectionPaths.EVENTS)
-                    .document(FirebaseService.CollectionPaths.ACTIVE)
-                    .collection(FirebaseService.CollectionPaths.PUBLIC)
-                    .whereEqualTo("organiserId", organiserId);
-            
-            QuerySnapshot querySnapshot = query.get().get();
-            List<EventData> events = new ArrayList<>();
-            
-            for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
-                EventData eventData = document.toObject(EventData.class);
-                if (eventData == null) {
-                    throw new IllegalStateException("Failed to map active public event: " + document.getId());
-                }
-                eventData.setEventId(document.getId());
-                events.add(eventData);
-            }
-            
+            Query query = activePublicEvents().whereEqualTo("organiserId", organiserId);
+            List<EventData> events = readActivePublicEvents(query);
             logger.info("Found {} active public events for organiser {}", events.size(), organiserId);
             return events;
         } catch (InterruptedException e) {
@@ -168,6 +153,63 @@ public class EventsRepository {
             logger.error("Failed to fetch events for organiser: {}", organiserId, e);
             throw new IllegalStateException("Failed to fetch events for organiser: " + organiserId, e);
         }
+    }
+
+    /**
+     * Events whose Firestore document was created in the inclusive range.
+     * Event documents do not store a created time. Archival copies an event into InActive,
+     * so an archived event's create time is the time it was moved.
+     */
+    public static List<EventData> getEventsCreatedBetween(Timestamp start, Timestamp end) {
+        logger.info("Reading events created from {} to {}", start, end);
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            List<EventData> events = new ArrayList<>();
+            for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
+                for (QueryDocumentSnapshot document : db.collection(path).get().get().getDocuments()) {
+                    Timestamp created = document.getCreateTime();
+                    if (created == null || created.compareTo(start) < 0 || created.compareTo(end) > 0) {
+                        continue;
+                    }
+                    EventData event = document.toObject(EventData.class);
+                    if (event == null) {
+                        throw new IllegalStateException("Failed to map event: " + document.getId());
+                    }
+                    event.setEventId(document.getId());
+                    events.add(event);
+                }
+            }
+            logger.info("Found {} events created from {} to {}", events.size(), start, end);
+            return events;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while reading events created in range", e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to read events created in range", e);
+        }
+    }
+
+    private static CollectionReference activePublicEvents() {
+        return FirebaseService.getFirestore()
+                .collection(FirebaseService.CollectionPaths.EVENTS)
+                .document(FirebaseService.CollectionPaths.ACTIVE)
+                .collection(FirebaseService.CollectionPaths.PUBLIC);
+    }
+
+    private static List<EventData> readActivePublicEvents(Query query)
+            throws InterruptedException, ExecutionException {
+        QuerySnapshot querySnapshot = query.get().get();
+        List<EventData> events = new ArrayList<>();
+
+        for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+            EventData eventData = document.toObject(EventData.class);
+            if (eventData == null) {
+                throw new IllegalStateException("Failed to map active public event: " + document.getId());
+            }
+            eventData.setEventId(document.getId());
+            events.add(eventData);
+        }
+        return events;
     }
 
     /**

@@ -10,12 +10,14 @@ import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
+import com.functions.global.models.requests.DateRangeRequest;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
 import com.functions.events.models.responses.GetEventByIdResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
+import com.functions.events.models.responses.GetEventsCreatedInRangeResponse;
 import com.functions.events.models.responses.CreateEventResponse;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
@@ -44,6 +46,7 @@ import com.functions.tickets.models.requests.get.GetOrderRequest;
 import com.functions.tickets.models.requests.get.GetOrdersByEventRequest;
 import com.functions.tickets.models.requests.get.GetTicketRequest;
 import com.functions.tickets.models.responses.BookingApprovalResponse;
+import com.functions.tickets.models.responses.GetSalesInRangeResponse;
 import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
@@ -100,6 +103,8 @@ public enum EndpointType {
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class, AuthLevel.PUBLIC),
     GET_PARTNER_EVENTS(GetPartnerEventsRequest.class, GetPartnerEventsResponse.class, AuthLevel.PARTNER),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class, AuthLevel.PUBLIC),
+    GET_EVENTS_CREATED_IN_RANGE(DateRangeRequest.class, GetEventsCreatedInRangeResponse.class, AuthLevel.AUTHENTICATED),
+    GET_SALES_IN_RANGE(DateRangeRequest.class, GetSalesInRangeResponse.class, AuthLevel.AUTHENTICATED),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class, AuthLevel.AUTHENTICATED),
     GET_TICKET(GetTicketRequest.class, Ticket.class, AuthLevel.AUTHENTICATED),
     GET_ORDERS_BY_EVENT(GetOrdersByEventRequest.class, GetOrdersByEventResponse.class, AuthLevel.AUTHENTICATED),

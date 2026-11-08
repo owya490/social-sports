@@ -3,6 +3,7 @@ package com.functions.tickets.repositories;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -11,10 +12,12 @@ import org.slf4j.LoggerFactory;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Ticket;
 import com.functions.utils.JavaUtils;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.QueryDocumentSnapshot;
+import com.google.cloud.firestore.QuerySnapshot;
 import com.google.cloud.firestore.Transaction;
 
 /**
@@ -72,6 +75,33 @@ public class TicketsRepository {
             getTicketById(ticketId, transaction).ifPresent(tickets::add);
         }
         return tickets;
+    }
+
+    public static List<Ticket> getTicketsPurchasedBetween(Timestamp start, Timestamp end) {
+        logger.info("Querying tickets purchased from {} to {}", start, end);
+        try {
+            QuerySnapshot snapshot = FirebaseService.getFirestore().collection(TICKETS_COLLECTION)
+                    .whereGreaterThanOrEqualTo("purchaseDate", start)
+                    .whereLessThanOrEqualTo("purchaseDate", end)
+                    .orderBy("purchaseDate")
+                    .get()
+                    .get();
+            List<Ticket> tickets = new ArrayList<>();
+            for (QueryDocumentSnapshot document : snapshot.getDocuments()) {
+                Ticket ticket = document.toObject(Ticket.class);
+                if (ticket == null) {
+                    throw new IllegalStateException("Failed to map ticket: " + document.getId());
+                }
+                ticket.setTicketId(document.getId());
+                tickets.add(ticket);
+            }
+            return tickets;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while querying tickets by purchaseDate", e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to query tickets by purchaseDate", e);
+        }
     }
 
     public static void updateTicket(String ticketId, Ticket ticket) {

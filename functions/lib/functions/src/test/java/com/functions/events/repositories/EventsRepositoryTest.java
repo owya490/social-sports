@@ -24,6 +24,7 @@ import com.functions.events.models.EventData;
 import com.functions.firebase.services.FirebaseService;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -225,5 +226,30 @@ public class EventsRepositoryTest {
 
         assertSame(archivedEvent, EventsRepository.getEventById("event-1", Optional.empty()).get());
         assertEquals("event-1", archivedEvent.getEventId());
+    }
+
+    @Test
+    public void createdEventsKeepsDocumentsWhoseCreateTimeIsInsideTheRange() {
+        Timestamp start = Timestamp.parseTimestamp("2026-11-01T00:00:00Z");
+        Timestamp end = Timestamp.parseTimestamp("2026-11-08T00:00:00Z");
+        QueryDocumentSnapshot created = mock(QueryDocumentSnapshot.class);
+        QueryDocumentSnapshot tooEarly = mock(QueryDocumentSnapshot.class);
+        EventData event = new EventData();
+        when(created.getCreateTime()).thenReturn(start);
+        when(created.getId()).thenReturn("event-1");
+        when(created.toObject(EventData.class)).thenReturn(event);
+        when(tooEarly.getCreateTime()).thenReturn(Timestamp.parseTimestamp("2026-10-01T00:00:00Z"));
+
+        for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
+            CollectionReference collection = mock(CollectionReference.class);
+            QuerySnapshot snapshot = mock(QuerySnapshot.class);
+            when(db.collection(path)).thenReturn(collection);
+            when(collection.get()).thenReturn(ApiFutures.immediateFuture(snapshot));
+            when(snapshot.getDocuments()).thenReturn(
+                    "Events/Active/Public".equals(path) ? List.of(created, tooEarly) : List.of());
+        }
+
+        assertEquals(List.of(event), EventsRepository.getEventsCreatedBetween(start, end));
+        assertEquals("event-1", event.getEventId());
     }
 }

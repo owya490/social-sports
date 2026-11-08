@@ -3,6 +3,7 @@ package com.functions.tickets.repositories;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.tickets.models.Order;
 import com.functions.utils.JavaUtils;
+import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldValue;
@@ -135,6 +137,33 @@ public class OrdersRepository {
         } catch (Exception e) {
             logger.error("Failed to query order by stripePaymentIntentId: {}", paymentIntentId, e);
             throw new RuntimeException("Failed to query order by stripePaymentIntentId: " + paymentIntentId, e);
+        }
+    }
+
+    public static List<Order> getOrdersPurchasedBetween(Timestamp start, Timestamp end) {
+        logger.info("Querying orders purchased from {} to {}", start, end);
+        try {
+            QuerySnapshot snapshot = FirebaseService.getFirestore().collection(ORDERS_COLLECTION)
+                    .whereGreaterThanOrEqualTo("datePurchased", start)
+                    .whereLessThanOrEqualTo("datePurchased", end)
+                    .orderBy("datePurchased")
+                    .get()
+                    .get();
+            List<Order> orders = new ArrayList<>();
+            for (QueryDocumentSnapshot document : snapshot.getDocuments()) {
+                Order order = document.toObject(Order.class);
+                if (order == null) {
+                    throw new IllegalStateException("Failed to map order: " + document.getId());
+                }
+                order.setOrderId(document.getId());
+                orders.add(order);
+            }
+            return orders;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while querying orders by datePurchased", e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to query orders by datePurchased", e);
         }
     }
 

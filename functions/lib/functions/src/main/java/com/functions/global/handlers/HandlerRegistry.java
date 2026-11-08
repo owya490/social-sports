@@ -9,6 +9,7 @@ import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.handlers.CreateRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
+import com.functions.events.handlers.GetEventsCreatedInRangeHandler;
 import com.functions.events.handlers.GetPartnerEventsHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.events.handlers.UpdateRecurrenceTemplateHandler;
@@ -26,6 +27,7 @@ import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseI
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
 import com.functions.tickets.handlers.GetOrderHandler;
+import com.functions.tickets.handlers.GetSalesInRangeHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
 import com.functions.tickets.handlers.GetTicketHandler;
 import com.functions.tickets.handlers.BookingApprovalHandler;
@@ -65,6 +67,8 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
         handlers.put(EndpointType.GET_PARTNER_EVENTS, new GetPartnerEventsHandler());
         handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
+        handlers.put(EndpointType.GET_EVENTS_CREATED_IN_RANGE, new GetEventsCreatedInRangeHandler());
+        handlers.put(EndpointType.GET_SALES_IN_RANGE, new GetSalesInRangeHandler());
         handlers.put(EndpointType.GET_ORDER, new GetOrderHandler());
         handlers.put(EndpointType.GET_TICKET, new GetTicketHandler());
         handlers.put(EndpointType.GET_ORDERS_BY_EVENT, new GetOrdersByEventHandler());
