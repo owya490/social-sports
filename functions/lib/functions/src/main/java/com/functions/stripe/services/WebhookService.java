@@ -20,6 +20,7 @@ import com.functions.utils.TimeUtils;
 import com.functions.events.models.Attendee;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
+import com.functions.events.models.PaymentProvider;
 import com.functions.events.models.Purchaser;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventsRepository;
@@ -452,7 +453,8 @@ public class WebhookService {
                         resolveApplicationFees(totalDetails),
                         resolveDiscounts(totalDetails),
                         paymentIntentId,
-                        captureMethod);
+                        captureMethod,
+                        PaymentProvider.STRIPE);
         if (minted == null) {
             return null;
         }

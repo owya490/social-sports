@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
+import com.functions.events.models.PaymentProvider;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.repositories.EventsRepository;
@@ -19,7 +20,10 @@ import com.functions.forms.services.FormsUtils;
 import com.functions.fulfilment.models.fulfilmentEntities.FormsFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
+import com.functions.fulfilment.models.fulfilmentSession.BookingApprovalFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.fulfilment.services.ProcessFulfilmentSessionService.RequestedTickets;
 import com.functions.stripe.services.EventTicketPurchaseService;
@@ -123,7 +127,8 @@ class FulfilmentSessionTicketWriter {
                         null,
                         null,
                         null,
-                        null);
+                        null,
+                        paymentProvider(session));
         if (minted == null) {
             throw new IllegalStateException(
                     "Fulfillment of event ticket purchase was unsuccessful. session=" + session.getId());
@@ -142,6 +147,20 @@ class FulfilmentSessionTicketWriter {
         if (!sessionIds.contains(sessionId)) {
             sessionIds.add(sessionId);
         }
+    }
+
+    /**
+     * Card checkout and booking approval are Stripe. Pyng checkout is Pyng.
+     * Waitlist registration is not a payment, so it stays unset.
+     */
+    static PaymentProvider paymentProvider(FulfilmentSession session) {
+        if (session instanceof PyngCheckoutFulfilmentSession) {
+            return PaymentProvider.PYNG;
+        }
+        if (session instanceof CheckoutFulfilmentSession || session instanceof BookingApprovalFulfilmentSession) {
+            return PaymentProvider.STRIPE;
+        }
+        return null;
     }
 
     static String endEntityId(FulfilmentSession session) {

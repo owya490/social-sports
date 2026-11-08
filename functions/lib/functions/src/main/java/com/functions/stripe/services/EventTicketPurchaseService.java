@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventMetadata;
+import com.functions.events.models.PaymentProvider;
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
@@ -131,6 +132,7 @@ public class EventTicketPurchaseService {
      * The caller writes that document once, after adding its own idempotency key.
      * A null fee, discount, phone, or payment intent is stored as zero or absent.
      * A null capture method is approved.
+     * paymentProvider is stored on the order and each ticket. A null provider is left unset.
      *
      * @return the purchase, or null when the event does not exist
      */
@@ -148,7 +150,8 @@ public class EventTicketPurchaseService {
             Long applicationFees,
             Long discounts,
             String paymentIntentId,
-            String captureMethod) throws Exception {
+            String captureMethod,
+            PaymentProvider paymentProvider) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
         String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
@@ -223,6 +226,7 @@ public class EventTicketPurchaseService {
             ticket.setPrice(unitPriceCents);
             ticket.setPurchaseDate(purchaseTime);
             ticket.setStatus(status);
+            ticket.setPaymentProvider(paymentProvider);
             ticket.setFormResponseId(formResponseId);
             EventTicketTypeService.stampTicket(ticket, ticketType);
 
@@ -241,6 +245,7 @@ public class EventTicketPurchaseService {
         order.setDiscounts(discountAmount);
         order.setTickets(ticketIds);
         order.setStripePaymentIntentId(paymentIntentId);
+        order.setPaymentProvider(paymentProvider);
         order.setStatus(status);
 
         transaction.set(orderRef, order);

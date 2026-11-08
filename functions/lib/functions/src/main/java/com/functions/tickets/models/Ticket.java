@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.functions.events.models.PaymentProvider;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.Timestamp;
 
@@ -25,6 +26,8 @@ public class Ticket {
     @JsonDeserialize(using = JavaUtils.TimestampDeserializer.class)
     private Timestamp purchaseDate;
     private OrderAndTicketStatus status = OrderAndTicketStatus.APPROVED;
+    @Nullable
+    private PaymentProvider paymentProvider;
     @Nullable
     private String formResponseId; // the absence of this means the ticket was purchased without a form response
     private OrderAndTicketType type = OrderAndTicketType.GENERAL;

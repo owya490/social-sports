@@ -9,6 +9,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.functions.events.models.EventMetadata;
+import com.functions.events.models.PaymentProvider;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 
 public class FulfilmentSessionTicketWriterTest {
@@ -26,12 +27,25 @@ public class FulfilmentSessionTicketWriterTest {
     }
 
     @Test
-    public void endEntityIdFindsTheEndStep() throws Exception {
-        assertEquals("end-1", FulfilmentSessionTicketWriter.endEntityId(session(true)));
-        assertNull(FulfilmentSessionTicketWriter.endEntityId(session(false)));
+    public void paymentProviderFollowsTheCheckoutThatCreatedTheSession() throws Exception {
+        assertEquals(PaymentProvider.STRIPE, FulfilmentSessionTicketWriter.paymentProvider(session("CHECKOUT")));
+        assertEquals(PaymentProvider.STRIPE,
+                FulfilmentSessionTicketWriter.paymentProvider(session("BOOKING_APPROVAL")));
+        assertEquals(PaymentProvider.PYNG, FulfilmentSessionTicketWriter.paymentProvider(session("PYNG_CHECKOUT")));
+        assertNull(FulfilmentSessionTicketWriter.paymentProvider(session("WAITLIST")));
     }
 
-    private static FulfilmentSession session(boolean includeEnd) throws Exception {
+    @Test
+    public void endEntityIdFindsTheEndStep() throws Exception {
+        assertEquals("end-1", FulfilmentSessionTicketWriter.endEntityId(session("CHECKOUT", true)));
+        assertNull(FulfilmentSessionTicketWriter.endEntityId(session("CHECKOUT", false)));
+    }
+
+    private static FulfilmentSession session(String type) throws Exception {
+        return session(type, true);
+    }
+
+    private static FulfilmentSession session(String type, boolean includeEnd) throws Exception {
         String endEntity = includeEnd
                 ? """
                         , "end-1": { "type": "END" }
@@ -41,7 +55,7 @@ public class FulfilmentSessionTicketWriterTest {
         String json = """
                 {
                   "id": "session-1",
-                  "type": "CHECKOUT",
+                  "type": "%s",
                   "status": "COMPLETED",
                   "purchaserEmail": "ada@example.com",
                   "numTickets": 1,
@@ -58,7 +72,7 @@ public class FulfilmentSessionTicketWriterTest {
                     }%s
                   }
                 }
-                """.formatted(endId, endEntity);
+                """.formatted(type, endId, endEntity);
         return FulfilmentSession.fromJson(json);
     }
 }

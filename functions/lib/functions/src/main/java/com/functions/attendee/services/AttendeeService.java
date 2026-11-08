@@ -154,6 +154,7 @@ public class AttendeeService {
                     ticket.setPurchaseDate(now);
                     ticket.setStatus(OrderAndTicketStatus.APPROVED);
                     ticket.setType(OrderAndTicketType.MANUAL);
+                    ticket.setPaymentProvider(order.getPaymentProvider());
                     EventTicketTypeService.stampTicket(ticket, ticketType);
 
                     String ticketId = TicketsRepository.createTicket(ticket, transaction);
