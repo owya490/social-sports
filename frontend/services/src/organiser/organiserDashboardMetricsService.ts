@@ -2,19 +2,21 @@ import { EventData, EventId, OrderId } from "@/interfaces/EventTypes";
 import { Order, OrderAndTicketStatus, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { UserId } from "@/interfaces/UserTypes";
-import { ORGANISER_EVENTS_REFRESH_MILLIS } from "@/services/src/organiser/organiserConstants";
-import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import {
-  getOrganiserEvents,
+  DASHBOARD_LOOKBACK_SECONDS,
+  ORGANISER_EVENTS_REFRESH_MILLIS,
+} from "@/services/src/organiser/organiserConstants";
+import {
   getOrganiserEventsCacheGeneration,
+  getOrganiserEventsStartingOnOrAfter,
   onOrganiserEventsCacheBust,
+  tryGetOrganiserEventsFromCache,
 } from "@/services/src/organiser/organiserEventsService";
-import { getOrdersByIds } from "@/services/src/tickets/orderService";
-import { getTicketsByIds } from "@/services/src/tickets/ticketService";
+import { filterEventsStartingOnOrAfter } from "@/services/src/organiser/organiserLookback";
+import { getOrdersByIdsIfPresent } from "@/services/src/tickets/orderService";
+import { getTicketsPurchasedOnOrAfter } from "@/services/src/tickets/ticketService";
 import { calculateNetSales } from "@/services/src/tickets/ticketUtils/ticketUtils";
 import { Timestamp } from "firebase/firestore";
-
-const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60;
 
 export type DailyTicketEventBreakdown = {
   eventId: EventId;
@@ -62,6 +64,7 @@ export type OrganiserDashboardMetrics = {
   salesByEvent30d: TopSalesEventSlice[];
   recentActivity: ActivityFeedItem[];
   events: EventData[];
+  hasAnyEvents: boolean;
 };
 
 function isApprovedTicket(ticket: Ticket): boolean {
@@ -294,31 +297,35 @@ export function tryGetCachedOrganiserDashboardMetrics(userId: UserId): Organiser
   return metricsCache.metrics;
 }
 
+async function loadDashboardEvents(
+  userId: UserId,
+  since: Timestamp
+): Promise<{ events: EventData[]; hasAnyEvents: boolean }> {
+  const cached = tryGetOrganiserEventsFromCache(userId);
+  if (cached) {
+    return {
+      events: filterEventsStartingOnOrAfter(cached, since),
+      hasAnyEvents: cached.length > 0,
+    };
+  }
+
+  const result = await getOrganiserEventsStartingOnOrAfter(userId, since);
+  return { events: result.events, hasAnyEvents: result.hasAnyOrganiserEvents };
+}
+
 async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserDashboardMetrics> {
-  const events = await getOrganiserEvents(userId);
-  const nowSeconds = Timestamp.now().seconds;
-  const thirtyDaysAgo = nowSeconds - THIRTY_DAYS_SECONDS;
+  const since = new Timestamp(Timestamp.now().seconds - DASHBOARD_LOOKBACK_SECONDS, 0);
+  const { events, hasAnyEvents } = await loadDashboardEvents(userId, since);
 
-  const metadataList = await Promise.all(events.map((event) => getEventsMetadataByEventId(event.eventId)));
+  const eventIds = events.map((event) => event.eventId);
+  const tickets = eventIds.length > 0 ? await getTicketsPurchasedOnOrAfter(eventIds, since) : [];
+  const approvedTickets = tickets.filter(isApprovedTicket);
 
-  const allOrderIds = new Set<string>();
-
-  metadataList.forEach((metadata) => {
-    metadata.orderIds.forEach((orderId) => allOrderIds.add(orderId));
-  });
-
-  const orders = allOrderIds.size > 0 ? await getOrdersByIds([...allOrderIds] as OrderId[]) : [];
+  const orderIds = [...new Set(approvedTickets.map((ticket) => ticket.orderId))] as OrderId[];
+  const orders = orderIds.length > 0 ? await getOrdersByIdsIfPresent(orderIds) : [];
   const approvedOrders = orders.filter(isApprovedOrder);
-  const allTickets =
-    approvedOrders.length > 0
-      ? await getTicketsByIds(approvedOrders.flatMap((order) => order.tickets))
-      : [];
 
-  const approvedTickets = allTickets.filter(isApprovedTicket);
-  const recentOrders = approvedOrders.filter((order) => order.datePurchased.seconds >= thirtyDaysAgo);
-  const recentTickets = approvedTickets.filter((ticket) => ticket.purchaseDate.seconds >= thirtyDaysAgo);
-
-  const recentOrderTicketsMap = buildOrderTicketsMap(recentOrders, recentTickets);
+  const recentOrderTicketsMap = buildOrderTicketsMap(approvedOrders, approvedTickets);
   const netSales30dCents = await calculateNetSales(recentOrderTicketsMap);
 
   const last10Events = [...events]
@@ -333,14 +340,15 @@ async function loadOrganiserDashboardMetrics(userId: UserId): Promise<OrganiserD
 
   return {
     netSales30dCents,
-    ticketsSold30d: recentTickets.length,
+    ticketsSold30d: approvedTickets.length,
     totalPageViews,
     conversionRate,
     weekTickets: buildWeekTicketBuckets(approvedTickets, events),
     monthTickets: buildMonthTicketBuckets(approvedTickets, events),
-    salesByEvent30d: buildSalesByEvent30d(recentTickets, events),
+    salesByEvent30d: buildSalesByEvent30d(approvedTickets, events),
     recentActivity: buildRecentActivity(approvedTickets, approvedOrders, events),
     events,
+    hasAnyEvents,
   };
 }
 

@@ -33,7 +33,7 @@
 &lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
 &lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>Configure registration settings&lt;/li>
-&lt;li>Set up payment options and coupons&lt;/li>
+&lt;li>Set up payment options and promo codes&lt;/li>
 &lt;li>Manage communication preferences&lt;/li>
 &lt;li>Update cancellation policies&lt;/li>
 &lt;/ul>
@@ -88,7 +88,7 @@ Recurring events allow you to automatically generate multiple instances of the s
 &lt;h3>Event Settings&lt;span class="hx:absolute hx:-mt-20" id="event-settings">&lt;/span>
 &lt;a href="#event-settings" class="subheading-anchor" aria-label="Permalink for this section">&lt;/a>&lt;/h3>&lt;ul>
 &lt;li>Configure registration settings for each occurrence&lt;/li>
-&lt;li>Set up payment options and coupons&lt;/li>
+&lt;li>Set up payment options and promo codes&lt;/li>
 &lt;li>Manage communication preferences&lt;/li>
 &lt;li>Update cancellation policies&lt;/li>
 &lt;/ul>

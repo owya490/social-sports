@@ -1,0 +1,42 @@
+{{- $downloadPath := "/downloads/sportshub-events-integration.zip" -}}
+{{- $downloadURL := printf "https://www.sportshub.net.au%s" $downloadPath -}}
+{{- $styles := resources.Get "css/partner-skill.css" | minify | fingerprint -}}
+{{- $script := resources.Get "js/partner-skill.js" | minify | fingerprint -}}
+<link rel="stylesheet" href="{{ $styles.RelPermalink }}" integrity="{{ $styles.Data.Integrity }}">
+<section class="partner-skill" aria-labelledby="partner-skill-title">
+  <h2 id="partner-skill-title">Integrate with your AI agent</h2>
+  <p>Give your coding assistant the setup instructions and complete API reference.</p>
+  <div class="partner-skill__actions">
+    <a class="partner-skill__button partner-skill__button--primary" href="{{ $downloadPath }}" download="sportshub-events-integration.zip">
+      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4"/></svg>
+      Download skill <span class="partner-skill__format">ZIP</span>
+    </a>
+    <button class="partner-skill__button" type="button" data-partner-prompt-open hidden>Get AI setup prompt</button>
+  </div>
+  <p class="partner-skill__note">Keep the extracted files together when sharing them with your assistant.</p>
+  <details id="partner-skill-prompt" class="partner-skill__fallback">
+    <summary>Get AI setup prompt</summary>
+    <div class="partner-skill__prompt-content">
+      <div class="partner-skill__prompt-header">
+        <h2 id="partner-skill-prompt-title">Set up your AI agent</h2>
+        <button class="partner-skill__close" type="button" data-partner-prompt-close aria-label="Close setup prompt" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <p id="partner-skill-prompt-description">Copy this prompt into the coding assistant you use for your website.</p>
+      <label class="partner-skill__label" for="partner-skill-prompt-text">Setup prompt</label>
+      <textarea id="partner-skill-prompt-text" class="partner-skill__prompt-text" readonly spellcheck="false">Help me integrate my website with SPORTSHUB.
+
+Download the integration skill from {{ $downloadURL }} and extract it. Read SKILL.md and references/api.md before making changes. If you cannot download or extract the package, ask me to upload the extracted files.
+
+If your tool supports skills, install this skill for this project using its supported method. Otherwise, use the files as integration guidance.
+
+Preserve my website's existing design and conventions. Ask me for my SPORTSHUB partner key and registered website origins if they have not been supplied. Use GET_PARTNER_EVENTS to load events and INIT_PARTNER_FULFILMENT_SESSION to obtain the booking URL. Do not run live booking tests without my approval.</textarea>
+      <div class="partner-skill__prompt-footer">
+        <button class="partner-skill__button partner-skill__button--primary" type="button" data-partner-prompt-copy hidden>Copy prompt</button>
+        <p class="partner-skill__status" role="status" aria-live="polite" data-partner-prompt-status></p>
+      </div>
+    </div>
+  </details>
+</section>
+<script src="{{ $script.RelPermalink }}" integrity="{{ $script.Data.Integrity }}" defer></script>

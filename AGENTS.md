@@ -6,7 +6,7 @@ AGENTS.md loaded
 
 - When working below a directory that contains an `AGENTS.md`, read it first.
 - Defer to existing patterns. Stop and ask before introducing a new architecture or diverging from nearby code.
-- Never push directly to `master`: every push to `master` deploys both development and production functions.
+- Never push directly to `master`: application changes on `master` deploy both development and production functions. The deployment workflow excludes changes confined to the weekly operations skill, reports and guide.
 - Never deploy Firebase or Google Cloud functions without explicit operator approval.
 - Never edit generated Hugo output under `frontend/public/blogs`, `frontend/public/docs`, `frontend/public/css`, `frontend/public/js`, or `frontend/public/tags`. Edit `sportshub-blogs-docs/` and run its integration script only when requested.
 - Do not expose or commit `.env*`, Firebase service-account files, API keys, or other credentials.
@@ -25,26 +25,36 @@ SPORTSHUB is a social-sports event discovery, booking, and organiser platform.
 | `sportshub-cli/` | TypeScript CLI for SPORTSHUB operational workflows |
 | `infrastructure/` | Infrastructure utilities |
 
-See @docs/ARCHITECTURE.md for boundaries and data flow.
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for boundaries and data flow.
+
+## Terminology
+
+- GAC: `GlobalAppController`, the central Java request dispatcher.
 
 ## Common Commands
 
-Run commands from the indicated directory. Tee long-running build output to `.tmp/<name>.log`.
+Set the tool's working directory to the path shown; do not prepend `cd`. Create
+the repository-root `.tmp/` when needed and tee long-running output there. From
+`frontend/`, `functions/`, or `sportshub-cli/`, use `../.tmp/<name>.log`; from
+`functions/lib/functions/`, use `../../../.tmp/<name>.log`.
 
-| Area | Command |
-| --- | --- |
-| Frontend install | `cd frontend && npm install` |
-| Frontend lint | `cd frontend && npm run lint` |
-| Frontend tests | `cd frontend && npm test -- --runInBand` |
-| Frontend single test | `cd frontend && npm test -- services/tests/eventsCrud.test.ts --runInBand` |
-| Frontend build | `cd frontend && npm run build` |
-| Python environment | `cd functions && python3.11 -m venv venv && venv/bin/pip install -r requirements.txt` |
-| Python tests | `cd functions && venv/bin/python -m unittest discover -s tests` |
-| Java verification | `cd functions/lib/functions && mvn clean verify` |
-| Java single test | `cd functions/lib/functions && mvn -Dtest=RecurringEventsServiceTest test` |
-| CLI build | `cd sportshub-cli && npm run build` |
+| Area | Working directory | Command |
+| --- | --- | --- |
+| Frontend install | `frontend/` | `npm install` |
+| Frontend lint | `frontend/` | `npm run lint` |
+| Frontend tests | `frontend/` | `npm test -- --runInBand` |
+| Frontend single test | `frontend/` | `npm test -- services/tests/eventsCrud.test.ts --runInBand` |
+| Frontend build | `frontend/` | `npm run build` |
+| Python environment | `functions/` | `python3.11 -m venv venv`, then `venv/bin/pip install -r requirements.txt` |
+| Python tests | `functions/` | `venv/bin/python -m unittest discover -s tests` |
+| Java verification | `functions/lib/functions/` | `mvn clean verify` |
+| Java single test | `functions/lib/functions/` | `mvn -Dtest=RecurringEventsServiceTest test` |
+| CLI build | `sportshub-cli/` | `npm run build` |
 
-The CI source of truth is `.github/workflows/branch_ci.yml`.
+`.github/workflows/branch_ci.yml` runs frontend lint, tests, build, Java
+verification, and focused Python event-archival tests. Run the documented Python
+suite or CLI build locally when changing those areas; branch CI only covers the
+event-archival Python tests and does not cover the CLI.
 
 ## Local Prerequisites
 
@@ -57,7 +67,9 @@ The CI source of truth is `.github/workflows/branch_ci.yml`.
 
 ## Conventions And Critical Patterns
 
-See @docs/PATTERNS.md. It is **MUST READ** before changing authentication, payments, function endpoints, Firestore transactions, or shared frontend/backend contracts.
+Read [docs/PATTERNS.md](docs/PATTERNS.md) before changing authentication,
+payments, function endpoints, Firestore transactions, or shared frontend/backend
+contracts.
 
 ## Code Comments
 
@@ -68,8 +80,12 @@ See @docs/PATTERNS.md. It is **MUST READ** before changing authentication, payme
 
 - Avoid `&`, `$()`/backticks, brace expansion, and `\(` in jq format strings in agent Bash calls.
 - Write temporary files to `.tmp/`, not `/tmp/`.
-- Use `rg` or `rg --files` for searches. Prefix shell commands with `rtk` when its filtering will not hide required output.
-- Always use `--repo owya490/social-sports` on mutating `gh` commands.
+- Use `rg` or `rg --files` for searches. When `rtk` is installed, prefix shell
+  commands with it unless filtering would hide required output.
+- Use `--repo owya490/social-sports` on mutating `gh` commands that accept it.
+  For `gh api` REST writes against this repo, use a
+  `repos/owya490/social-sports/...` endpoint. For GraphQL writes, verify the
+  target resource ID. `gh api` has no `--repo` flag.
 - Fetch current external-resource state before proposing an update. Obtain explicit approval before creating or changing PRs, issues, comments, gists, or other external artifacts.
 
 ## Branch And PR Rules

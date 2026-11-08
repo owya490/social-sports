@@ -1,6 +1,8 @@
 "use client";
 
 import { ReactNode } from "react";
+import { LockClosedIcon } from "@heroicons/react/24/outline";
+import type { SettingsAutosaveStatus } from "./useSettingsAutosave";
 
 /**
  * Continuous workbench primitives for event hub tab bodies (A+B).
@@ -14,6 +16,49 @@ type EventHubStageProps = {
 
 export function EventHubStage({ children, className = "" }: EventHubStageProps) {
   return <div className={`min-w-0 ${className}`}>{children}</div>;
+}
+
+export function EventHubSavingIndicator({
+  status,
+  onRetry,
+}: {
+  status: SettingsAutosaveStatus;
+  onRetry: () => void;
+}) {
+  const saving = status === "saving";
+  const failed = status === "error";
+
+  return (
+    <div
+      role={failed ? "alert" : "status"}
+      aria-live={failed ? "assertive" : "polite"}
+      aria-atomic="true"
+      className={`pointer-events-none fixed inset-x-0 bottom-[max(1.25rem,env(safe-area-inset-bottom))] z-50 flex justify-center px-4 transition-[transform,opacity] duration-200 sm:inset-x-auto sm:right-[max(1.5rem,env(safe-area-inset-right))] sm:justify-end sm:px-0 ${
+        status === "idle" ? "translate-y-2 opacity-0" : "translate-y-0 opacity-100"
+      }`}
+    >
+      {saving ? (
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-background/95 px-3.5 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur font-sans">
+          <span
+            className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none rounded-full border-2 border-foreground/20 border-t-foreground"
+            aria-hidden="true"
+          />
+          Saving changes…
+        </div>
+      ) : failed ? (
+        <div className="pointer-events-auto inline-flex items-center gap-3 rounded-full border border-danger/30 bg-background/95 px-3.5 py-2 text-xs font-medium text-danger shadow-lg backdrop-blur font-sans">
+          <span>Couldn’t save changes.</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-full border border-danger/30 px-2 py-0.5 text-xs font-semibold text-danger hover:bg-danger/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 type EventHubToolbarProps = {
@@ -155,7 +200,7 @@ export function EventHubPreferenceRow({
     <div className="flex items-start gap-4 py-4">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold text-foreground font-sans">{title}</p>
-        <p className="mt-1 text-xs text-foreground-muted font-sans leading-relaxed">{description}</p>
+        <p className="mt-1 text-xs text-foreground-secondary font-sans leading-relaxed">{description}</p>
       </div>
       <button
         type="button"
@@ -212,9 +257,11 @@ const SETTING_TILE_TONES: Record<
 type SettingTileProps = {
   title: string;
   description?: string;
+  descriptionId?: string;
   icon: ReactNode;
   checked: boolean;
   disabled?: boolean;
+  locked?: boolean;
   onChange: (next: boolean) => void;
   tone?: EventHubSettingTileTone;
   /** Label when checked (default On). */
@@ -226,9 +273,11 @@ type SettingTileProps = {
 export function EventHubSettingTile({
   title,
   description,
+  descriptionId,
   icon,
   checked,
   disabled,
+  locked = false,
   onChange,
   tone = "green",
   onLabel = "On",
@@ -236,6 +285,8 @@ export function EventHubSettingTile({
 }: SettingTileProps) {
   const status = checked ? onLabel : offLabel;
   const toneStyles = SETTING_TILE_TONES[tone];
+  const isDisabled = disabled || locked;
+  const active = checked && !locked;
 
   return (
     <button
@@ -243,45 +294,48 @@ export function EventHubSettingTile({
       role="switch"
       aria-checked={checked}
       aria-label={`${title}: ${status}`}
+      aria-describedby={descriptionId}
       title={description}
-      disabled={disabled}
+      disabled={isDisabled}
       onClick={() => onChange(!checked)}
-      className={`flex min-w-[7.5rem] flex-1 items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-[border-color,background-color,opacity] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-60 ${
-        checked
+      className={`flex min-w-[7.5rem] flex-1 items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-[border-color,background-color,opacity] duration-200 ease-out focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed ${locked ? "" : "disabled:opacity-60"} ${
+        active
           ? `bg-background ${toneStyles.onBorder}`
           : "border-border bg-surface text-foreground-muted"
-      } ${disabled ? "" : "hover:bg-surface-hover"}`}
+      } ${isDisabled ? "" : "hover:bg-surface-hover"}`}
     >
       <span
         aria-hidden
         className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors duration-200 ease-out ${
-          checked ? `${toneStyles.onWell} ${toneStyles.onIcon}` : "bg-surface-muted text-foreground-muted"
+          active ? `${toneStyles.onWell} ${toneStyles.onIcon}` : "bg-surface-muted text-foreground-muted"
         }`}
       >
         <span className="[&>svg]:h-3.5 [&>svg]:w-3.5">{icon}</span>
       </span>
       <span className="min-w-0">
         <span
-          className={`block truncate text-xs font-semibold font-sans leading-tight ${
-            checked ? "text-foreground" : "text-foreground-secondary"
+          className={`block text-xs font-semibold font-sans leading-tight ${
+            active ? "text-foreground" : "text-foreground-secondary"
           }`}
         >
           {title}
         </span>
-        <span
-          className={`mt-0.5 block text-xs font-sans leading-tight ${
-            checked ? "text-foreground-secondary" : "text-foreground-muted"
-          }`}
-        >
+        <span className="mt-0.5 block text-xs text-foreground-secondary font-sans leading-tight">
           {status}
         </span>
       </span>
+      {locked ? (
+        <span className="ml-auto inline-flex shrink-0 items-center gap-1 rounded-md bg-surface-muted px-2 py-1 text-xs font-medium text-foreground-secondary font-sans">
+          <LockClosedIcon className="h-3.5 w-3.5" aria-hidden />
+          Locked
+        </span>
+      ) : null}
     </button>
   );
 }
 
-export function EventHubSettingTileRow({ children }: { children: ReactNode }) {
-  return <div className="flex flex-wrap gap-2 pt-3 pb-1">{children}</div>;
+export function EventHubSettingTileRow({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`flex flex-wrap gap-2 pt-3 pb-1 ${className}`}>{children}</div>;
 }
 
 export function EventHubInitials({ name }: { name: string }) {

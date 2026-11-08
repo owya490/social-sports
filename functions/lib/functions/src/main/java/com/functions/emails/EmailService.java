@@ -25,10 +25,13 @@ import com.google.cloud.firestore.Firestore;
  */
 public class EmailService {
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private static final int MAX_PURCHASE_EMAIL_RETRIES = 3;
+    private static final long PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS = 1000;
 
     @FunctionalInterface
     interface PurchaseEmailSender {
-        boolean send(EmailTemplateType templateType, String email, Map<String, String> variables);
+        boolean send(String eventId, String visibility, String customerEmail, String fullName, String orderId)
+                throws Exception;
     }
 
     @FunctionalInterface
@@ -136,8 +139,7 @@ public class EmailService {
                 if (!sendPurchaseEmailCopyToOrganiser(
                         organiserEmail,
                         organiserId,
-                        variables,
-                        EmailClient::sendEmailWithLoopsWithRetries)) {
+                        variables)) {
                     logger.warn("Purchase email was sent to attendee {}, but organiser copy failed for orderId={}",
                             email, orderId);
                 }
@@ -156,6 +158,97 @@ public class EmailService {
                     orderId, email, e.getMessage(), e);
             return false;
         }
+    }
+
+    public static boolean sendPurchaseEmailWithRetries(
+            String eventId,
+            String visibility,
+            String customerEmail,
+            String fullName,
+            String orderId) {
+
+        return sendPurchaseEmailWithRetries(
+                eventId,
+                visibility,
+                customerEmail,
+                fullName,
+                orderId,
+                MAX_PURCHASE_EMAIL_RETRIES,
+                PURCHASE_EMAIL_INITIAL_RETRY_DELAY_MS,
+                EmailService::sendPurchaseEmail);
+    }
+
+    static boolean sendPurchaseEmailWithRetries(
+            String eventId,
+            String visibility,
+            String customerEmail,
+            String fullName,
+            String orderId,
+            int maxRetries,
+            long initialRetryDelayMs,
+            PurchaseEmailSender purchaseEmailSender) {
+
+        return retryBooleanOperation(
+                "send purchase email",
+                maxRetries,
+                initialRetryDelayMs,
+                true,
+                () -> purchaseEmailSender.send(eventId, visibility, customerEmail, fullName, orderId));
+    }
+
+    public static boolean retryBooleanOperation(
+            String operationName,
+            int maxRetries,
+            long initialDelayMs,
+            boolean exponentialBackoff,
+            RetryableBooleanOperation operation) {
+
+        for (int attempt = 0; attempt < maxRetries; attempt++) {
+            try {
+                if (operation.run()) {
+                    return true;
+                }
+
+                logger.warn("{} returned unsuccessful on attempt {}/{}",
+                        operationName, attempt + 1, maxRetries);
+            } catch (InterruptedException interruptedException) {
+                Thread.currentThread().interrupt();
+                logger.warn("{} interrupted on attempt {}/{}",
+                        operationName, attempt + 1, maxRetries);
+                return false;
+            } catch (Exception e) {
+                logger.warn("{} failed on attempt {}/{}: {}",
+                        operationName, attempt + 1, maxRetries, e.getMessage(), e);
+            }
+
+            if (attempt < maxRetries - 1) {
+                long delayMs = exponentialBackoff
+                        ? initialDelayMs * (1L << attempt)
+                        : initialDelayMs;
+                logger.info("Retrying {} in {}ms", operationName, delayMs);
+                if (!sleepBeforeRetry(delayMs, operationName)) {
+                    return false;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static boolean sleepBeforeRetry(long delayMs, String operationName) {
+        try {
+            Thread.sleep(delayMs);
+            return true;
+        } catch (InterruptedException interruptedException) {
+            Thread.currentThread().interrupt();
+            logger.warn("Interrupted while retrying {}", operationName);
+            return false;
+        }
+    }
+
+    @FunctionalInterface
+    public interface RetryableBooleanOperation {
+        boolean run() throws Exception;
     }
 
     private static DocumentSnapshot fetchRootDocument(Firestore db, String collectionPath, String documentId)
@@ -427,15 +520,15 @@ public class EmailService {
     private static boolean sendPurchaseEmailCopyToOrganiser(
             Optional<String> organiserEmail,
             String organiserId,
-            Map<String, String> variables,
-            PurchaseEmailSender emailSender) {
+            Map<String, String> variables) {
         if (organiserEmail.isEmpty()) {
             return true;
         }
 
         boolean organiserEmailSent;
         try {
-            organiserEmailSent = emailSender.send(EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
+            organiserEmailSent = EmailClient.sendEmailWithLoopsWithRetries(
+                    EmailTemplateType.PURCHASE, organiserEmail.get(), variables);
         } catch (Exception e) {
             logger.warn("Failed to send copy of purchase email to organiser {} at {}",
                     organiserId, organiserEmail.get(), e);

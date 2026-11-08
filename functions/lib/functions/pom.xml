@@ -14,9 +14,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <java.version>16</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <java.version>17</java.version>
   </properties>
 
   <dependencies>
@@ -24,6 +22,11 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-firestore</artifactId>
       <version>3.26.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.cloud</groupId>
+      <artifactId>google-cloud-pubsub</artifactId>
+      <version>1.132.2</version>
     </dependency>
     <dependency>
       <groupId>com.google.firebase</groupId>
@@ -53,11 +56,28 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>5.14.2</version>
+      <scope>test</scope>
+    </dependency>
     <!-- https://mvnrepository.com/artifact/com.google.cloud.functions/functions-framework-api -->
     <dependency>
       <groupId>com.google.cloud.functions</groupId>
       <artifactId>functions-framework-api</artifactId>
       <version>1.1.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-api</artifactId>
+      <version>2.3.0</version>
+    </dependency>
+    <dependency>
+      <groupId>io.cloudevents</groupId>
+      <artifactId>cloudevents-core</artifactId>
+      <version>2.3.0</version>
+      <scope>test</scope>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
     <dependency>
@@ -162,8 +182,7 @@
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-compiler-plugin</artifactId>
               <configuration>
-                  <source>16</source>
-                  <target>16</target>
+                  <release>${java.version}</release>
                   <annotationProcessorPaths>
                     <path>
                       <groupId>org.projectlombok</groupId>

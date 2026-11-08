@@ -1,5 +1,6 @@
 "use client";
 
+import CopyEmailsButton from "@/components/CopyEmailsButton";
 import DownloadCsvButton from "@/components/DownloadCsvButton";
 import Loading from "@/components/loading/Loading";
 import RemoveAttendeeDialog from "@/components/organiser/event/attendee/RemoveAttendeeDialog";
@@ -9,8 +10,13 @@ import { EventData, EventId, EventMetadata, OrderId } from "@/interfaces/EventTy
 import { Form, FormId, FormResponse, FormResponseId } from "@/interfaces/FormTypes";
 import { Order, OrderAndTicketType } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { ConflictError } from "@/interfaces/exceptions/ConflictError";
 import { Logger } from "@/observability/logger";
-import { ATTENDEE_CSV_HEADERS, buildAttendeeCsvData } from "@/services/src/attendee/attendeeCsvUtils";
+import {
+  ATTENDEE_CSV_HEADERS,
+  buildAttendeeCsvData,
+  buildAttendeeEmailList,
+} from "@/services/src/attendee/attendeeCsvUtils";
 import { getEventById, getPurchaserEmailHash } from "@/services/src/events/eventsService";
 import {
   getAttachedFormIdsForEvent,
@@ -41,6 +47,7 @@ import toast, { ErrorIcon, ToastBar, Toaster } from "react-hot-toast";
 import Skeleton from "react-loading-skeleton";
 import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventHubPanel } from "./EventHubPanel";
+import { EventHubTeams } from "./EventHubTeams";
 import {
   EventHubEmpty,
   EventHubFilters,
@@ -50,7 +57,8 @@ import {
   EventHubStage,
 } from "./EventHubStage";
 
-type TabType = "approved" | "pending" | "declined";
+type TabType = "approved" | "pending" | "declined" | "teams";
+const EMPTY_ORDER_MAP = new Map<Order, Ticket[]>();
 type DeepPanel = "formResponses" | "editTickets" | null;
 
 function countTicketsInOrderMap(
@@ -75,7 +83,6 @@ function countTicketsInOrderMap(
 
 type EventHubAttendeesProps = {
   eventMetadata: EventMetadata;
-  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
@@ -239,7 +246,6 @@ function AttendeeEditTicketsPanel({
   tickets,
   eventId,
   eventData,
-  setEventMetadata,
   setEventVacancy,
   onEventRefresh,
   onClose,
@@ -248,7 +254,6 @@ function AttendeeEditTicketsPanel({
   tickets: Ticket[];
   eventId: EventId;
   eventData: EventData;
-  setEventMetadata: Dispatch<SetStateAction<EventMetadata>>;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   onEventRefresh?: (event: EventData) => void;
   onClose: () => void;
@@ -281,10 +286,6 @@ function AttendeeEditTicketsPanel({
       } else {
         setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
       }
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount - numTickets + parseInt(newNumTickets, 10),
-      }));
       toast.success("Tickets updated");
       onClose();
     } catch (error) {
@@ -345,7 +346,6 @@ function AttendeeEditTicketsPanel({
 
 export function EventHubAttendees({
   eventMetadata,
-  setEventMetadata,
   eventId,
   eventData,
   setEventVacancy,
@@ -355,6 +355,7 @@ export function EventHubAttendees({
   const {
     loading,
     orderTicketsMap,
+    registrationUpdateIssue,
     approvedOrderTicketsMap: approvedMap,
     pendingOrderTicketsMap: pendingMap,
     rejectedOrderTicketsMap: declinedMap,
@@ -457,7 +458,10 @@ export function EventHubAttendees({
       }
     } catch (error) {
       logger.error(`Failed to approve order ${order.orderId}: ${error}`);
-      showFailureToastWithRefresh("Failed to approve order. Try again or contact SPORTSHUB support.", toastId);
+      showFailureToastWithRefresh(
+        error instanceof ConflictError ? error.message : "Failed to approve order. Try again or contact SPORTSHUB support.",
+        toastId
+      );
     }
   };
 
@@ -473,7 +477,10 @@ export function EventHubAttendees({
       }
     } catch (error) {
       logger.error(`Failed to decline order ${order.orderId}: ${error}`);
-      showFailureToastWithRefresh("Failed to decline order. Try again or contact SPORTSHUB support.", toastId);
+      showFailureToastWithRefresh(
+        error instanceof ConflictError ? error.message : "Failed to decline order. Try again or contact SPORTSHUB support.",
+        toastId
+      );
     }
   };
 
@@ -530,10 +537,6 @@ export function EventHubAttendees({
       } catch {
         setEventVacancy((prev) => Math.max(0, prev - qty));
       }
-      setEventMetadata((prev) => ({
-        ...prev,
-        completeTicketCount: prev.completeTicketCount + qty,
-      }));
       toast.success("Attendee added");
       closeAddPanel();
     } catch (error) {
@@ -575,7 +578,9 @@ export function EventHubAttendees({
       ? filteredApprovedMap
       : activeTab === "pending"
         ? filteredPendingMap
-        : filteredDeclinedMap;
+        : activeTab === "declined"
+          ? filteredDeclinedMap
+          : EMPTY_ORDER_MAP;
 
   const orders = useMemo(() => {
     return Array.from(activeMap.keys()).sort((a, b) => a.fullName.localeCompare(b.fullName));
@@ -627,6 +632,10 @@ export function EventHubAttendees({
     () => buildAttendeeCsvData(filteredApprovedMap),
     [filteredApprovedMap]
   );
+  const attendeeEmails = useMemo(
+    () => buildAttendeeEmailList(filteredApprovedMap),
+    [filteredApprovedMap]
+  );
 
   return (
     <EventHubStage>
@@ -655,12 +664,15 @@ export function EventHubAttendees({
               </span>
             ) : null}
           </p>
-          <DownloadCsvButton
-            compact
-            data={approvedAttendeesCsvData}
-            headers={ATTENDEE_CSV_HEADERS}
-            filename={`Attendees_${eventId}.csv`}
-          />
+          <div className="flex items-center gap-1.5">
+            <CopyEmailsButton compact emails={attendeeEmails} />
+            <DownloadCsvButton
+              compact
+              data={approvedAttendeesCsvData}
+              headers={ATTENDEE_CSV_HEADERS}
+              filename={`Attendees_${eventId}.csv`}
+            />
+          </div>
         </div>
         <div
           className="h-1 w-full rounded-full bg-surface-muted overflow-hidden"
@@ -677,6 +689,20 @@ export function EventHubAttendees({
         </div>
       </div>
 
+      {registrationUpdateIssue ? (
+        <div
+          className="mb-4 flex items-start gap-2 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-foreground-secondary font-sans"
+          role="status"
+        >
+          <ExclamationCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" aria-hidden />
+          <span>
+            {registrationUpdateIssue === "listener"
+              ? "Live registration updates are unavailable. Reload the page to reconnect."
+              : "A registration update could not be loaded. Reload the page to try again."}
+          </span>
+        </div>
+      ) : null}
+
       <EventHubFilters
         activeId={activeTab}
         onChange={(id) => {
@@ -687,9 +713,11 @@ export function EventHubAttendees({
           { id: "approved", label: "Approved", count: approvedTicketCount },
           { id: "pending", label: "Pending", count: pendingTicketCount },
           { id: "declined", label: "Declined", count: declinedTicketCount },
+          { id: "teams", label: "Teams" },
         ]}
         action={
-          <div className="flex items-center gap-2">
+          activeTab === "teams" ? undefined : (
+            <div className="flex items-center gap-2">
             {showListTypeFilter ? (
               <label className="relative inline-flex items-center">
                 <span className="sr-only">Filter by ticket type</span>
@@ -719,12 +747,22 @@ export function EventHubAttendees({
               <PlusIcon className="h-4 w-4" aria-hidden />
               Add attendee
             </EventHubPrimaryButton>
-          </div>
+            </div>
+          )
         }
       />
 
       <div className="pt-1">
-        {loading ? (
+        {activeTab === "teams" ? (
+          <div className="pt-3">
+            <EventHubTeams
+              key={eventId}
+              eventId={eventId}
+              eventName={eventData.name}
+              orderTicketsMap={orderTicketsMap}
+            />
+          </div>
+        ) : loading ? (
           <div className="space-y-0 divide-y divide-border">
             {[0, 1, 2].map((i) => (
               <div key={i} className="py-3">
@@ -752,10 +790,6 @@ export function EventHubAttendees({
               const tickets = activeMap.get(order) ?? [];
               const expanded = expandedOrderId === order.orderId;
               const detailId = `attendee-detail-${order.orderId}`;
-              const ticketLabel =
-                tickets.length > 0
-                  ? `${tickets.length} ticket${tickets.length === 1 ? "" : "s"}`
-                  : "";
               const ticketIds = tickets.length > 0 ? tickets.map((t) => t.ticketId) : order.tickets;
 
               return (
@@ -772,7 +806,7 @@ export function EventHubAttendees({
                     }
                   >
                     <EventHubInitials name={order.fullName || "Attendee"} />
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 self-start sm:self-auto">
                       <p className="text-sm font-semibold text-foreground font-sans truncate">
                         {order.fullName || "Attendee"}
                       </p>
@@ -785,21 +819,24 @@ export function EventHubAttendees({
                         {order.email || "—"}
                       </p>
                     </div>
-                    {ticketLabel ? (
-                      <span className="text-xs text-foreground-muted font-sans tabular-nums shrink-0 hidden sm:inline">
-                        {ticketLabel}
+                    <span className="flex shrink-0 flex-col items-end self-start sm:self-auto sm:flex-row sm:items-center sm:gap-3">
+                      {tickets.length > 0 ? (
+                        <span className="text-xs leading-5 text-foreground-secondary font-sans tabular-nums whitespace-nowrap sm:leading-4 sm:text-foreground-muted">
+                          <span className="font-semibold sm:font-normal">{tickets.length}</span>
+                          {tickets.length === 1 ? " ticket" : " tickets"}
+                        </span>
+                      ) : null}
+                      <span
+                        className={`text-xs font-medium font-sans shrink-0 rounded-full px-2 py-0.5 border ${
+                          activeTab === "approved"
+                            ? "border-border bg-surface text-foreground-secondary"
+                            : activeTab === "pending"
+                              ? "border-border bg-surface-muted text-foreground-secondary"
+                              : "border-border bg-surface text-foreground-muted"
+                        }`}
+                      >
+                        {statusLabel}
                       </span>
-                    ) : null}
-                    <span
-                      className={`text-xs font-medium font-sans shrink-0 rounded-full px-2 py-0.5 border ${
-                        activeTab === "approved"
-                          ? "border-border bg-surface text-foreground-secondary"
-                          : activeTab === "pending"
-                            ? "border-border bg-surface-muted text-foreground-secondary"
-                            : "border-border bg-surface text-foreground-muted"
-                      }`}
-                    >
-                      {statusLabel}
                     </span>
                     <ChevronDownIcon
                       className={`h-4 w-4 text-foreground-muted shrink-0 transition-transform duration-200 ease-out ${
@@ -871,7 +908,7 @@ export function EventHubAttendees({
                         </div>
                       ) : null}
 
-                      <div className="flex items-center gap-x-2 border-t border-border pt-2.5">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 border-t border-border pt-2.5">
                         <button
                           type="button"
                           onClick={() => {
@@ -884,27 +921,28 @@ export function EventHubAttendees({
                         </button>
                         {activeTab === "approved" ? (
                           <>
-                            <span className="shrink-0 text-xs text-foreground-muted select-none" aria-hidden>
-                              ·
+                            <span className="inline-flex shrink-0 items-center gap-x-2 whitespace-nowrap">
+                              <span className="text-xs text-foreground-muted select-none" aria-hidden>
+                                ·
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPanelOrder(order);
+                                  setDeepPanel("editTickets");
+                                }}
+                                className="text-xs font-medium text-foreground-secondary font-sans transition-colors hover:text-foreground"
+                              >
+                                Edit tickets
+                              </button>
                             </span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setPanelOrder(order);
-                                setDeepPanel("editTickets");
-                              }}
-                              className="shrink-0 text-xs font-medium text-foreground-secondary font-sans transition-colors hover:text-foreground"
-                            >
-                              Edit tickets
-                            </button>
-                            <span className="min-w-2 flex-1" aria-hidden />
                             <button
                               type="button"
                               onClick={() => {
                                 setRemoveOrder(order);
                                 setRemoveOpen(true);
                               }}
-                              className="shrink-0 text-xs font-medium text-danger font-sans transition-colors hover:underline"
+                              className="ml-auto shrink-0 text-xs font-medium text-danger font-sans transition-colors hover:underline"
                             >
                               Remove attendee
                             </button>
@@ -952,7 +990,6 @@ export function EventHubAttendees({
             tickets={panelTickets}
             eventId={eventId}
             eventData={eventData}
-            setEventMetadata={setEventMetadata}
             setEventVacancy={setEventVacancy}
             onEventRefresh={onEventRefresh}
             onClose={closeDeepPanel}
@@ -1076,7 +1113,6 @@ export function EventHubAttendees({
           }
           eventId={eventId}
           eventData={eventData}
-          setEventMetadata={setEventMetadata}
           setEventVacancy={setEventVacancy}
         />
       ) : null}

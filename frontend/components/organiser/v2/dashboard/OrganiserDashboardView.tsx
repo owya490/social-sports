@@ -30,6 +30,7 @@ const emptyMetrics: OrganiserDashboardMetrics = {
   salesByEvent30d: [],
   recentActivity: [],
   events: [],
+  hasAnyEvents: false,
 };
 
 /** Shared dashboard body — used by the real dashboard and the transient welcome route. */
@@ -130,7 +131,7 @@ export function OrganiserDashboardView() {
 
           <UpcomingEventsSection events={upcoming} loading={loading} variant="full" />
           <DashboardSetupSection
-            hasEvents={displayMetrics.events.length > 0}
+            hasEvents={displayMetrics.hasAnyEvents}
             loading={loading}
           />
         </div>

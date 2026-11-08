@@ -48,8 +48,8 @@ public class WrappedService {
     private static final double EVENTBRITE_FEE_PERCENTAGE = 0.0535;
     private static final long EVENTBRITE_FEE_PER_TICKET_CENTS = 119L;
 
-    // Sportshub fees: Stripe (1.75% + $0.30) + Sportshub (1.0% of sales)
-    private static final double STRIPE_FEE_PERCENTAGE = 0.0175;
+    // Sportshub fees: Stripe (1.65% + $0.30) + Sportshub (1.0% of sales)
+    private static final double STRIPE_FEE_PERCENTAGE = 0.0165;
     private static final long STRIPE_FEE_PER_TICKET_CENTS = 30L;
     private static final double SPORTSHUB_FEE_PERCENTAGE = 0.01;
 
@@ -458,7 +458,7 @@ public class WrappedService {
         long eventbriteFees = Math.round(totalSales * EVENTBRITE_FEE_PERCENTAGE) 
                 + (ticketsSold * EVENTBRITE_FEE_PER_TICKET_CENTS);
         
-        // Sportshub: Stripe (1.75% + $0.30/ticket) + Sportshub (1.0% of sales)
+        // Sportshub: Stripe (1.65% + $0.30/ticket) + Sportshub (1.0% of sales)
         long sportshubFees = Math.round(totalSales * STRIPE_FEE_PERCENTAGE) 
                 + (ticketsSold * STRIPE_FEE_PER_TICKET_CENTS) 
                 + Math.round(totalSales * SPORTSHUB_FEE_PERCENTAGE);

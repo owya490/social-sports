@@ -29,7 +29,10 @@ import {
 import { useEventOrderAndTickets } from "@/hooks/useEventOrderAndTickets";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
 import { OrderAndTicketStatus } from "@/interfaces/OrderTypes";
-import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata/eventsMetadataService";
+import {
+  getEventsMetadataByEventId,
+  subscribeToEventMetadata,
+} from "@/services/src/events/eventsMetadata/eventsMetadataService";
 import { eventServiceLogger, getEventById, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
@@ -46,7 +49,8 @@ export function OrganiserEventHubView() {
   const params = useParams<{ id: string }>();
   const eventId = params.id as EventId;
   const router = useRouter();
-  const { user } = useUser();
+  const { auth, user, userLoading } = useUser();
+  const authenticatedUserId = auth.currentUser?.uid;
 
   const [section, setSection] = useState<EventHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
@@ -82,24 +86,31 @@ export function OrganiserEventHubView() {
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
-  const { loading: ordersLoading, orders } = useEventOrderAndTickets(eventId);
+  const {
+    loading: ordersLoading,
+    orders,
+    appendUnseenOrders,
+    noteRegistrationListener,
+    clearRegistrationUpdateIssue,
+  } = useEventOrderAndTickets(eventId);
 
   useEffect(() => {
-    if (!user.userId) return;
+    if (userLoading) return;
+    if (!authenticatedUserId || authenticatedUserId !== user.userId) return;
 
     let isActive = true;
+    let unsubscribeMetadata: (() => void) | null = null;
     hasAppliedPendingLandingRef.current = false;
+    setLoading(true);
     setSection("Details");
+    clearRegistrationUpdateIssue();
 
     const fetchEvent = async () => {
       try {
-        const [event, nextEventMetadata] = await Promise.all([
-          getEventById(eventId),
-          getEventsMetadataByEventId(eventId),
-        ]);
+        const event = await getEventById(eventId);
         if (!isActive) return;
 
-        if (event.organiserId !== user.userId) {
+        if (event.organiserId !== authenticatedUserId) {
           router.push(DASHBOARD_PATH);
           return;
         }
@@ -136,8 +147,23 @@ export function OrganiserEventHubView() {
             inventory.capacity
           )
         );
+        const nextEventMetadata = await getEventsMetadataByEventId(eventId);
+        if (!isActive) return;
 
         setEventMetadata(nextEventMetadata);
+
+        unsubscribeMetadata = subscribeToEventMetadata(
+          eventId,
+          (metadata) => {
+            if (!isActive) return;
+            setEventMetadata(metadata);
+            noteRegistrationListener(false);
+            void appendUnseenOrders(metadata.orderIds);
+          },
+          () => {
+            if (isActive) noteRegistrationListener(true);
+          }
+        );
       } catch (error) {
         if (!isActive) return;
         eventServiceLogger.error(`Error fetching event for organiser v2 event hub: ${error}`);
@@ -150,8 +176,18 @@ export function OrganiserEventHubView() {
     void fetchEvent();
     return () => {
       isActive = false;
+      unsubscribeMetadata?.();
     };
-  }, [eventId, router, user.userId]);
+  }, [
+    appendUnseenOrders,
+    authenticatedUserId,
+    clearRegistrationUpdateIssue,
+    eventId,
+    noteRegistrationListener,
+    router,
+    user.userId,
+    userLoading,
+  ]);
 
   useEffect(() => {
     if (loading || ordersLoading || !eventData.eventId || hasAppliedPendingLandingRef.current) {
@@ -204,7 +240,7 @@ export function OrganiserEventHubView() {
           pauseUpdating={pauseUpdating}
         />
 
-        <EventHubNav current={section} onChange={handleSectionChange} />
+        <EventHubNav current={section} onChange={handleSectionChange} disabled={loading} />
       </div>
 
       <div
@@ -266,7 +302,6 @@ export function OrganiserEventHubView() {
           <EventHubAttendees
             eventData={eventData}
             eventMetadata={eventMetadata}
-            setEventMetadata={setEventMetadata}
             eventId={eventId}
             setEventVacancy={setEventVacancy}
             onEventRefresh={(event) => {

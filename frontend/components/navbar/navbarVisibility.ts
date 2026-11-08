@@ -4,6 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export const HIDDEN_NAVBAR_ROUTES = [
+  /^\/login$/,
+  /^\/register$/,
   /^\/organiser\/wrapped/, // Organiser wrapped page
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];

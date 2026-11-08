@@ -12,8 +12,11 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
 import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.stripe.exceptions.CheckoutVacancyException;
 import com.functions.tickets.models.Ticket;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.Transaction;
 
 /**
  * Resolves event ticket types for purchase, inventory, and admin flows.
@@ -89,6 +92,22 @@ public class EventTicketTypeService {
         return toResolved(ticketType, false);
     }
 
+    public static Optional<ResolvedEventTicketType> resolvePublicById(EventData event, String eventTicketTypeId) {
+        if (event == null || eventTicketTypeId == null || eventTicketTypeId.isBlank()
+                || event.getEventTicketTypes() == null) {
+            return Optional.empty();
+        }
+        EventTicketType ticketType = event.getEventTicketTypes().get(eventTicketTypeId);
+        // Inventory writes use the stored ID as one segment in a dotted field path.
+        if (ticketType == null || !eventTicketTypeId.equals(ticketType.getId())
+                || eventTicketTypeId.chars().anyMatch(character -> ".~*/[]".indexOf(character) >= 0)
+                || ticketType.getName() == null || ticketType.getName().isBlank()
+                || ticketType.getPrice() == null || ticketType.getPrice() < 0 || ticketType.getVacancy() == null) {
+            return Optional.empty();
+        }
+        return Optional.of(toResolved(ticketType, false));
+    }
+
     /**
      * Resolves the ticket type for reserved slots: General Admission by name, else first in map.
      */
@@ -128,6 +147,19 @@ public class EventTicketTypeService {
                     "Insufficient tickets for type %s (%s): %d available, %d requested",
                     type.getId(), type.getName(), vacancy, quantity));
         }
+    }
+
+    /**
+     * Holds seats for an in-progress checkout. Call this inside the transaction that read {@code type}.
+     */
+    public static void reserveVacancy(Transaction transaction, DocumentReference eventRef, String eventId,
+            ResolvedEventTicketType type, int quantity) throws CheckoutVacancyException {
+        validateAvailability(type, quantity);
+        int currentVacancy = type.getVacancy();
+        int newVacancy = currentVacancy - quantity;
+        EventTicketTypeRepository.setVacancy(transaction, eventRef, type, newVacancy);
+        logger.info("Reserved {} tickets for event {} type {} (vacancy: {} -> {})",
+                quantity, eventId, type.getId(), currentVacancy, newVacancy);
     }
 
     /**

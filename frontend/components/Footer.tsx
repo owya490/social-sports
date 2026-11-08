@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 
 // Routes where the footer should be hidden (as regex patterns)
 const HIDDEN_FOOTER_ROUTES = [
+  /^\/login$/,
+  /^\/register$/,
   /^\/organiser\/wrapped/, // Organiser wrapped page
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];

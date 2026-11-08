@@ -3,7 +3,12 @@ import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
-import { getTempUserData, migrateTempUserToActiveUser } from "@/services/src/auth/authService";
+import {
+  ensureActiveUserFromAuth,
+  getTempUserData,
+  migrateTempUserToActiveUser,
+} from "@/services/src/auth/authService";
+import { isSocialAuthUser } from "@/services/src/auth/socialAuthUtils";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
@@ -61,17 +66,28 @@ export default function UserContext({ children }: { children: any }) {
             const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
             setUser(userData);
           } catch {
-            try {
-              // The user is verified but their profile was never promoted out of
-              // TempUsers (e.g. they verified their email but never came back
-              // through the login form). Migrate them now so downstream features
-              // relying on Users/Active (e.g. Stripe onboarding) work correctly.
-              await migrateTempUserToActiveUser(uid as UserId);
-              const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-              setUser(userData);
-            } catch {
-              router.push("/error");
-              return;
+            if (isSocialAuthUser(userAuth)) {
+              try {
+                await ensureActiveUserFromAuth();
+                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+                setUser(userData);
+              } catch {
+                router.push("/error");
+                return;
+              }
+            } else {
+              try {
+                // The user is verified but their profile was never promoted out of
+                // TempUsers (e.g. they verified their email but never came back
+                // through the login form). Migrate them now so downstream features
+                // relying on Users/Active (e.g. Stripe onboarding) work correctly.
+                await migrateTempUserToActiveUser(uid as UserId);
+                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
+                setUser(userData);
+              } catch {
+                router.push("/error");
+                return;
+              }
             }
           }
         } finally {
@@ -102,8 +118,9 @@ export default function UserContext({ children }: { children: any }) {
           // user workflow
           const { uid } = auth.currentUser;
           try {
-            const userData = await getTempUserData(uid as UserId);
-            if (!userData) {
+            const tempUserData = await getTempUserData(uid as UserId);
+            // Verified users without staged signup data are already active (or social-provisioned).
+            if (!tempUserData) {
               router.push("/");
             }
           } catch {

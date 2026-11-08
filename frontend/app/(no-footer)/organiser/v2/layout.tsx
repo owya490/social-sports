@@ -1,14 +1,17 @@
 import type { Viewport } from "next";
 
 /**
- * Organiser v2 page canvas is Clubhouse Grey (`--color-surface` / #f7f7f7).
- * Match iOS Safari status-bar / toolbar chrome to that canvas so the notch
- * and bottom browser chrome look seamless with the hub.
+ * Organiser Hub only — translucent mobile browser chrome (notch + URL bar).
+ * Safari samples html/body background (set in OrganiserShell) behind the glass UI.
  */
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#f7f7f7",
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "rgba(247, 247, 247, 0)" },
+    { media: "(prefers-color-scheme: dark)", color: "rgba(0, 0, 0, 0)" },
+  ],
 };
 
 export default function OrganiserV2Layout({ children }: { children: React.ReactNode }) {

@@ -18,6 +18,8 @@ Read the root `AGENTS.md` first.
 - Reuse definitions from `interfaces/`; update backend contracts when request or response shapes change.
 - When updating Jest tests, follow nearby patterns and augment an existing test file when it cleanly covers the behavior.
 - Do not commit environment files or fabricate build credentials.
+- Next.js can rewrite the tracked `next-env.d.ts` during development. Inspect
+  its diff before staging and preserve any pre-existing change to it.
 
 ## Generated Content
 

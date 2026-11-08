@@ -32,6 +32,7 @@ import { getEventsMetadataByEventId } from "@/services/src/events/eventsMetadata
 import { getOrdersByIds } from "@/services/src/tickets/orderService";
 import { getTicketsByIds } from "@/services/src/tickets/ticketService";
 import {
+  appendUnseenEventOrders,
   buildEventOrderAndTicketsViews,
   getEventOrderAndTicketsSnapshot,
   resetEventOrderAndTicketsStoreForTests,
@@ -182,5 +183,55 @@ describe("event order and tickets cache", () => {
     expect(getEventsMetadataByEventId).toHaveBeenCalledTimes(1);
     expect(getEventOrderAndTicketsSnapshot(eventId).orders).toHaveLength(1);
     unsubscribeSecond();
+  });
+
+  it("loads only order ids the initial fetch has not already applied", async () => {
+    const approved = order({
+      orderId: "o-1" as OrderId,
+      status: OrderAndTicketStatus.APPROVED,
+      tickets: ["t-1" as TicketId],
+    });
+    const added = order({
+      orderId: "o-2" as OrderId,
+      status: OrderAndTicketStatus.PENDING,
+      tickets: ["t-2" as TicketId],
+    });
+    (getEventsMetadataByEventId as jest.Mock).mockResolvedValue({ orderIds: [approved.orderId] });
+    (getOrdersByIds as jest.Mock).mockImplementation((orderIds: OrderId[]) => {
+      if (orderIds.includes(added.orderId)) {
+        return Promise.resolve([added]);
+      }
+      return Promise.resolve([approved]);
+    });
+    (getTicketsByIds as jest.Mock).mockImplementation((ticketIds: TicketId[]) => {
+      if (ticketIds.includes("t-2" as TicketId)) {
+        return Promise.resolve([
+          ticket({
+            ticketId: "t-2" as TicketId,
+            orderId: added.orderId,
+            status: OrderAndTicketStatus.PENDING,
+          }),
+        ]);
+      }
+      return Promise.resolve([
+        ticket({
+          ticketId: "t-1" as TicketId,
+          orderId: approved.orderId,
+          status: OrderAndTicketStatus.APPROVED,
+        }),
+      ]);
+    });
+
+    const unsubscribe = subscribeToEventOrderAndTickets(eventId, jest.fn());
+    await waitUntilIdle(eventId);
+    await appendUnseenEventOrders(eventId, [approved.orderId, added.orderId]);
+
+    expect(getOrdersByIds).toHaveBeenCalledTimes(2);
+    expect(getOrdersByIds).toHaveBeenLastCalledWith([added.orderId]);
+    expect(getEventOrderAndTicketsSnapshot(eventId).orders.map((item) => item.orderId)).toEqual([
+      approved.orderId,
+      added.orderId,
+    ]);
+    unsubscribe();
   });
 });

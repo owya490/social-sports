@@ -42,6 +42,8 @@ export interface PrivateUserData {
   activeBookings: string[];
   stripeAccount: string | null;
   stripeAccountActive: boolean | null;
+  /** Organiser Pyng site id. */
+  pyngSiteId: string | null;
   organiserEvents: string[];
   recurrenceTemplates: RecurrenceTemplateId[];
   forms: FormId[];
@@ -106,6 +108,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
   recurrenceTemplates: [],
   stripeAccount: null,
   stripeAccountActive: null,
+  pyngSiteId: null,
   forms: [],
   sendOrganiserTicketEmails: false,
   privateEventCollections: [],

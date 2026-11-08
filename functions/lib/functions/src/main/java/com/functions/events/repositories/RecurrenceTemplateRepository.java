@@ -7,6 +7,7 @@ import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,51 +22,39 @@ public class RecurrenceTemplateRepository {
 
 
     public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId) {
-        return getRecurrenceTemplate(recurrenceTemplateId, null);
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, Transaction transaction) {
-        Optional<RecurrenceTemplate> maybeRecurrenceTemplate;
-        // 1. Try Active Private Recurrence Templates
-
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, true, transaction);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-
-        // 2. Try Active Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, true, false, transaction);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        // 3. Try InActive Private Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, true, transaction);
-        if (maybeRecurrenceTemplate.isPresent()) {
-            return maybeRecurrenceTemplate;
-        }
-        // 4. Try InActive Public Recurrence Templates
-        maybeRecurrenceTemplate = getRecurrenceTemplate(recurrenceTemplateId, false, false, transaction);
-        return maybeRecurrenceTemplate;
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate) {
-        return getRecurrenceTemplate(recurrenceTemplateId, isActive, isPrivate, null);
-    }
-
-    public static Optional<RecurrenceTemplate> getRecurrenceTemplate(String recurrenceTemplateId, boolean isActive, boolean isPrivate, Transaction transaction) {
-        DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(recurrenceTemplateId, isActive, isPrivate);
-        try {
-            DocumentSnapshot maybeSnapshot;
-            if (transaction == null) {
-                maybeSnapshot = recurrenceTemplateDocRef.get().get();
-            } else {
-                maybeSnapshot = transaction.get(recurrenceTemplateDocRef).get();
+        for (boolean isActive : List.of(true, false)) {
+            for (boolean isPrivate : List.of(true, false)) {
+                DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(
+                        recurrenceTemplateId, isActive, isPrivate);
+                try {
+                    DocumentSnapshot snapshot = recurrenceTemplateDocRef.get().get();
+                    if (snapshot.exists()) {
+                        return Optional.ofNullable(snapshot.toObject(RecurrenceTemplate.class));
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Interrupted while loading recurrence template "
+                            + recurrenceTemplateId, e);
+                } catch (ExecutionException e) {
+                    throw new IllegalStateException("Failed to load recurrence template "
+                            + recurrenceTemplateId, e);
+                }
             }
-            if (maybeSnapshot.exists()) {
-                return Optional.ofNullable(maybeSnapshot.toObject(RecurrenceTemplate.class));
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<RecurrenceTemplate> getRecurrenceTemplateInTransaction(
+            String recurrenceTemplateId, Transaction transaction) throws Exception {
+        for (boolean isActive : List.of(true, false)) {
+            for (boolean isPrivate : List.of(true, false)) {
+                DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(
+                        recurrenceTemplateId, isActive, isPrivate);
+                DocumentSnapshot snapshot = transaction.get(recurrenceTemplateDocRef).get();
+                if (snapshot.exists()) {
+                    return Optional.ofNullable(snapshot.toObject(RecurrenceTemplate.class));
+                }
             }
-        } catch (InterruptedException | ExecutionException ignored) {
-            // No op, no retries for now
         }
         return Optional.empty();
     }

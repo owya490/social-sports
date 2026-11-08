@@ -6,12 +6,15 @@ import { AddAttendeeRequest } from "@/services/src/attendee/attendeeService";
 import { useCallback, useSyncExternalStore } from "react";
 import {
   addEventAttendee,
+  appendUnseenEventOrders,
   approveEventOrder,
+  clearEventRegistrationUpdateIssue,
   getEventOrderAndTicketsSnapshot,
   getServerEventOrderAndTicketsSnapshot,
   refreshEventOrderAndTickets,
   rejectEventOrder,
   setEventAttendeeTickets,
+  setEventRegistrationListenerIssue,
   subscribeToEventOrderAndTickets,
 } from "./eventOrderAndTicketsStore";
 
@@ -76,6 +79,33 @@ export function useEventOrderAndTickets(eventId: EventId | null | undefined) {
     [eventId]
   );
 
+  const appendUnseenOrders = useCallback(
+    async (orderIds: readonly OrderId[]) => {
+      if (!eventId) {
+        return;
+      }
+      await appendUnseenEventOrders(eventId, orderIds);
+    },
+    [eventId]
+  );
+
+  const noteRegistrationListener = useCallback(
+    (failed: boolean) => {
+      if (!eventId) {
+        return;
+      }
+      setEventRegistrationListenerIssue(eventId, failed);
+    },
+    [eventId]
+  );
+
+  const clearRegistrationUpdateIssue = useCallback(() => {
+    if (!eventId) {
+      return;
+    }
+    clearEventRegistrationUpdateIssue(eventId);
+  }, [eventId]);
+
   return {
     ...snapshot,
     refresh,
@@ -83,5 +113,8 @@ export function useEventOrderAndTickets(eventId: EventId | null | undefined) {
     setAttendeeTickets,
     approveOrder,
     rejectOrder,
+    appendUnseenOrders,
+    noteRegistrationListener,
+    clearRegistrationUpdateIssue,
   };
 }

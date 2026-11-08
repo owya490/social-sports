@@ -5,5 +5,6 @@ package com.functions.global.models;
  */
 public enum AuthLevel {
     PUBLIC,
-    AUTHENTICATED
+    AUTHENTICATED,
+    PARTNER
 }

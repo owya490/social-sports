@@ -2,6 +2,7 @@ package com.functions.global.testutils;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +27,7 @@ public final class FakeHttpRequest implements HttpRequest {
         }
         FakeHttpRequest request = new FakeHttpRequest();
         for (int i = 0; i < nameValuePairs.length; i += 2) {
-            request.headers.put(nameValuePairs[i], List.of(nameValuePairs[i + 1]));
+            request.headers.computeIfAbsent(nameValuePairs[i], ignored -> new ArrayList<>()).add(nameValuePairs[i + 1]);
         }
         return request;
     }

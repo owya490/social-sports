@@ -7,15 +7,21 @@ import com.functions.attendee.handlers.AddAttendeeHandler;
 import com.functions.attendee.handlers.GetEventAttendeeNamesHandler;
 import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
+import com.functions.events.handlers.CreateRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
+import com.functions.events.handlers.GetPartnerEventsHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
+import com.functions.events.handlers.UpdateRecurrenceTemplateHandler;
 import com.functions.forms.handlers.SaveTempFormResponseHandler;
 import com.functions.fulfilment.handlers.CompleteFulfilmentSessionHandler;
+import com.functions.fulfilment.handlers.RefreshPyngCheckoutHandler;
+import com.functions.fulfilment.handlers.UpdateFulfilmentPurchaserHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentEntityInfoHandler;
 import com.functions.fulfilment.handlers.GetFulfilmentSessionInfoHandler;
 import com.functions.fulfilment.handlers.GetNextFulfilmentEntityHandler;
 import com.functions.fulfilment.handlers.GetPrevFulfilmentEntityHandler;
 import com.functions.fulfilment.handlers.InitFulfilmentSessionHandler;
+import com.functions.fulfilment.handlers.InitPartnerFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
@@ -37,7 +43,10 @@ public class HandlerRegistry {
     static {
         handlers.put(EndpointType.SAVE_TEMP_FORM_RESPONSE, new SaveTempFormResponseHandler());
         handlers.put(EndpointType.CREATE_EVENT, new CreateEventHandler());
+        handlers.put(EndpointType.CREATE_RECURRENCE_TEMPLATE, new CreateRecurrenceTemplateHandler());
+        handlers.put(EndpointType.UPDATE_RECURRENCE_TEMPLATE, new UpdateRecurrenceTemplateHandler());
         handlers.put(EndpointType.INIT_FULFILMENT_SESSION, new InitFulfilmentSessionHandler());
+        handlers.put(EndpointType.INIT_PARTNER_FULFILMENT_SESSION, new InitPartnerFulfilmentSessionHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
                 new UpdateFulfilmentEntityWithFormResponseIdHandler());
         handlers.put(EndpointType.GET_PREV_FULFILMENT_ENTITY, new GetPrevFulfilmentEntityHandler());
@@ -45,6 +54,8 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_FULFILMENT_SESSION_INFO, new GetFulfilmentSessionInfoHandler());
         handlers.put(EndpointType.GET_FULFILMENT_ENTITY_INFO, new GetFulfilmentEntityInfoHandler());
         handlers.put(EndpointType.COMPLETE_FULFILMENT_SESSION, new CompleteFulfilmentSessionHandler());
+        handlers.put(EndpointType.UPDATE_FULFILMENT_PURCHASER, new UpdateFulfilmentPurchaserHandler());
+        handlers.put(EndpointType.REFRESH_PYNG_CHECKOUT, new RefreshPyngCheckoutHandler());
         // Same handler, two auth levels: it branches on AuthContext.level().
         GetWrappedHandler getWrappedHandler = new GetWrappedHandler();
         handlers.put(EndpointType.GET_SPORTSHUB_WRAPPED, getWrappedHandler);
@@ -52,6 +63,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_WAITLIST_DATA,
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
+        handlers.put(EndpointType.GET_PARTNER_EVENTS, new GetPartnerEventsHandler());
         handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
         handlers.put(EndpointType.GET_ORDER, new GetOrderHandler());
         handlers.put(EndpointType.GET_TICKET, new GetTicketHandler());

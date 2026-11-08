@@ -61,6 +61,10 @@
     list-style: circle;
   }
 
+  html {
+    @apply bg-background;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
   }

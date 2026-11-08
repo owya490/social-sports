@@ -12,9 +12,13 @@ import { Timestamp } from "firebase/firestore";
 
 const logger = new Logger("eventOrderAndTicketsStore");
 
+/** Listener means the metadata watch died. Sync means a new registration failed to load. */
+export type RegistrationUpdateIssue = "listener" | "sync" | null;
+
 export type EventOrderAndTicketsSnapshot = {
   loading: boolean;
   error: Error | null;
+  registrationUpdateIssue: RegistrationUpdateIssue;
   orders: Order[];
   tickets: Ticket[];
   ordersMap: Map<OrderId, Order>;
@@ -30,6 +34,9 @@ type CacheEntry = {
   loading: boolean;
   loaded: boolean;
   error: Error | null;
+  registrationUpdateIssue: RegistrationUpdateIssue;
+  /** Order ids already applied or attempted, so the live metadata watch does not fetch them again. */
+  loadedOrderIds: Set<OrderId>;
   orders: Order[];
   tickets: Ticket[];
   fetchPromise: Promise<void> | null;
@@ -43,6 +50,7 @@ const cacheByEventId = new Map<string, CacheEntry>();
 export const EMPTY_EVENT_ORDER_AND_TICKETS_SNAPSHOT: EventOrderAndTicketsSnapshot = {
   loading: false,
   error: null,
+  registrationUpdateIssue: null,
   orders: [],
   tickets: [],
   ordersMap: new Map(),
@@ -113,12 +121,14 @@ export function buildEventOrderAndTicketsViews(
 function buildSnapshot(
   loading: boolean,
   error: Error | null,
+  registrationUpdateIssue: RegistrationUpdateIssue,
   orders: Order[],
   tickets: Ticket[]
 ): EventOrderAndTicketsSnapshot {
   return {
     loading,
     error,
+    registrationUpdateIssue,
     orders,
     tickets,
     ...buildEventOrderAndTicketsViews(orders, tickets),
@@ -137,19 +147,27 @@ function getOrCreateEntry(eventId: EventId): CacheEntry {
     loading: true,
     loaded: false,
     error: null,
+    registrationUpdateIssue: null,
+    loadedOrderIds: new Set(),
     orders: [],
     tickets: [],
     fetchPromise: null,
     requestId: 0,
     listeners: new Set(),
-    snapshot: buildSnapshot(true, null, [], []),
+    snapshot: buildSnapshot(true, null, null, [], []),
   };
   cacheByEventId.set(key, entry);
   return entry;
 }
 
 function notify(entry: CacheEntry): void {
-  entry.snapshot = buildSnapshot(entry.loading, entry.error, entry.orders, entry.tickets);
+  entry.snapshot = buildSnapshot(
+    entry.loading,
+    entry.error,
+    entry.registrationUpdateIssue,
+    entry.orders,
+    entry.tickets
+  );
   for (const listener of entry.listeners) {
     listener();
   }
@@ -172,14 +190,28 @@ export function getServerEventOrderAndTicketsSnapshot(): EventOrderAndTicketsSna
   return EMPTY_EVENT_ORDER_AND_TICKETS_SNAPSHOT;
 }
 
-async function loadEventOrdersAndTickets(eventId: EventId): Promise<{ orders: Order[]; tickets: Ticket[] }> {
+async function loadEventOrdersAndTickets(
+  eventId: EventId
+): Promise<{ orders: Order[]; tickets: Ticket[]; requestedOrderIds: OrderId[] }> {
   const metadata = await getEventsMetadataByEventId(eventId);
-  const orderIds = metadata.orderIds ?? [];
+  const requestedOrderIds = metadata.orderIds ?? [];
+  if (requestedOrderIds.length === 0) {
+    return { orders: [], tickets: [], requestedOrderIds };
+  }
+
+  const orders = await getOrdersByIds(requestedOrderIds);
+  const ticketIds = orders.flatMap((order) => order.tickets);
+  const tickets = ticketIds.length === 0 ? [] : await getTicketsByIds(ticketIds);
+  return { orders, tickets, requestedOrderIds };
+}
+
+async function loadOrdersAndTicketsByIds(
+  orderIds: readonly OrderId[]
+): Promise<{ orders: Order[]; tickets: Ticket[] }> {
   if (orderIds.length === 0) {
     return { orders: [], tickets: [] };
   }
-
-  const orders = await getOrdersByIds(orderIds);
+  const orders = await getOrdersByIds([...orderIds]);
   const ticketIds = orders.flatMap((order) => order.tickets);
   const tickets = ticketIds.length === 0 ? [] : await getTicketsByIds(ticketIds);
   return { orders, tickets };
@@ -196,14 +228,27 @@ function ensureFetched(eventId: EventId): void {
   entry.loading = true;
   entry.error = null;
   notify(entry);
+  const orderIdsAtStart = new Set(entry.orders.map((order) => order.orderId));
 
   entry.fetchPromise = loadEventOrdersAndTickets(eventId)
-    .then(({ orders, tickets }) => {
+    .then(({ orders, tickets, requestedOrderIds }) => {
       if (entry.requestId !== requestId) {
         return;
       }
-      entry.orders = orders;
-      entry.tickets = tickets;
+      const fetchedOrderIds = new Set(orders.map((order) => order.orderId));
+      const addedDuringFetch = entry.orders.filter(
+        (order) => !orderIdsAtStart.has(order.orderId) && !fetchedOrderIds.has(order.orderId)
+      );
+      const addedDuringFetchIds = new Set(addedDuringFetch.map((order) => order.orderId));
+      const addedTickets = entry.tickets.filter((ticket) => addedDuringFetchIds.has(ticket.orderId));
+      entry.orders = [...orders, ...addedDuringFetch];
+      entry.tickets = [...tickets, ...addedTickets];
+      for (const orderId of requestedOrderIds) {
+        entry.loadedOrderIds.add(orderId);
+      }
+      for (const order of addedDuringFetch) {
+        entry.loadedOrderIds.add(order.orderId);
+      }
       entry.loaded = true;
       entry.loading = false;
       entry.error = null;
@@ -247,10 +292,76 @@ export async function refreshEventOrderAndTickets(eventId: EventId): Promise<voi
   const entry = getOrCreateEntry(eventId);
   entry.loaded = false;
   entry.fetchPromise = null;
+  entry.loadedOrderIds.clear();
   ensureFetched(eventId);
   if (entry.fetchPromise) {
     await entry.fetchPromise;
   }
+}
+
+/**
+ * Loads order ids that arrived after the initial fetch. Ids already in the cache,
+ * including ones added locally, are left alone.
+ */
+export async function appendUnseenEventOrders(eventId: EventId, orderIds: readonly OrderId[]): Promise<void> {
+  const entry = getOrCreateEntry(eventId);
+  if (entry.fetchPromise) {
+    await entry.fetchPromise;
+  }
+
+  const unseen = orderIds.filter((orderId) => !entry.loadedOrderIds.has(orderId));
+  if (unseen.length === 0) {
+    return;
+  }
+
+  for (const orderId of unseen) {
+    entry.loadedOrderIds.add(orderId);
+  }
+
+  try {
+    const { orders, tickets } = await loadOrdersAndTicketsByIds(unseen);
+    const existingOrderIds = new Set(entry.orders.map((order) => order.orderId));
+    const additions = orders.filter((order) => !existingOrderIds.has(order.orderId));
+    if (additions.length === 0) {
+      return;
+    }
+    const additionIds = new Set(additions.map((order) => order.orderId));
+    setOrdersAndTickets(entry, [...entry.orders, ...additions], [
+      ...entry.tickets,
+      ...tickets.filter((ticket) => additionIds.has(ticket.orderId)),
+    ]);
+  } catch (error: unknown) {
+    const resolved = error instanceof Error ? error : new Error(String(error));
+    logger.error(`Failed to load new registrations for event ${eventId}: ${resolved}`);
+    if (entry.registrationUpdateIssue !== "listener") {
+      entry.registrationUpdateIssue = "sync";
+      notify(entry);
+    }
+  }
+}
+
+/** A successful metadata event clears a dead listener. A sync failure is left in place. */
+export function setEventRegistrationListenerIssue(eventId: EventId, failed: boolean): void {
+  const entry = getOrCreateEntry(eventId);
+  const next: RegistrationUpdateIssue = failed
+    ? "listener"
+    : entry.registrationUpdateIssue === "listener"
+      ? null
+      : entry.registrationUpdateIssue;
+  if (next === entry.registrationUpdateIssue) {
+    return;
+  }
+  entry.registrationUpdateIssue = next;
+  notify(entry);
+}
+
+export function clearEventRegistrationUpdateIssue(eventId: EventId): void {
+  const entry = cacheByEventId.get(eventId as string);
+  if (!entry || entry.registrationUpdateIssue === null) {
+    return;
+  }
+  entry.registrationUpdateIssue = null;
+  notify(entry);
 }
 
 function requireEntry(eventId: EventId | null | undefined): CacheEntry {
@@ -317,6 +428,7 @@ export async function addEventAttendee(
   }));
 
   replaceOrderInCache(entry, order, tickets);
+  entry.loadedOrderIds.add(order.orderId);
   return { order, tickets };
 }
 

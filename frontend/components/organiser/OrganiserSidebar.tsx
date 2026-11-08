@@ -1,7 +1,7 @@
 "use client";
 
+import { SportshubHomeLink } from "@/components/navbar/SportshubHomeLink";
 import { OrganiserCommandSearch } from "@/components/organiser/OrganiserCommandSearch";
-import { OrganiserNotificationsPanel } from "@/components/organiser/OrganiserNotificationsPanel";
 import {
   isEventsNavGroupPath,
   ORGANISER_MAIN_NAV,
@@ -15,16 +15,11 @@ import {
   welcomeAwareHref,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { useUser } from "@/components/utility/UserContext";
-import Logo from "@/public/images/BlackLogo.svg";
 import { handleSignOut } from "@/services/src/auth/authService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
-import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsCache";
 import { DEFAULT_USER_PROFILE_PICTURE } from "@/services/src/users/usersConstants";
-import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { Menu, MenuButton, MenuItem, MenuItems, Transition } from "@headlessui/react";
 import {
   ArrowLeftStartOnRectangleIcon,
-  BellIcon,
   ChevronDownIcon,
   ChevronUpDownIcon,
   Cog6ToothIcon,
@@ -35,8 +30,8 @@ import {
 import { IconLayoutSidebar } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { Fragment, useCallback, useEffect, useState, type TransitionEvent } from "react";
 
 const SIDEBAR_COLLAPSED_KEY = "organiser-sidebar-collapsed";
 
@@ -193,14 +188,11 @@ function SidebarSearch({ collapsed, onOpen }: { collapsed?: boolean; onOpen: () 
 function UserAccountMenu({
   onNavigate,
   collapsed = false,
-  onOpenNotifications,
 }: {
   onNavigate?: () => void;
   collapsed?: boolean;
-  onOpenNotifications: () => void;
 }) {
   const { user, userLoading, setUser } = useUser();
-  const router = useRouter();
   const displayName = [user.firstName, user.surname].filter(Boolean).join(" ").trim() || user.username || "Organiser";
   const subtitle = user.isVerifiedOrganiser ? "Verified organiser" : "Organiser";
   const showProfilePhoto = hasCustomProfilePicture(user.profilePicture, userLoading);
@@ -209,14 +201,12 @@ function UserAccountMenu({
     onNavigate?.();
     try {
       await handleSignOut(setUser);
-      bustEventsLocalStorageCache();
-      bustUserLocalStorageCache();
-      bustOrganiserEventsCache();
-      router.push("/");
-      router.refresh();
+      // Full-page navigation avoids a router.push + refresh race that can leave
+      // the organiser shell mounted after sign-out on the first click.
+      window.location.assign("/");
     } catch (error) {
       console.error("Error during logout:", error);
-      location.reload();
+      window.location.assign("/");
     }
   };
 
@@ -261,20 +251,6 @@ function UserAccountMenu({
           <div className="my-1 border-t border-border" role="separator" aria-hidden />
           <MenuItem>
             {({ focus }) => (
-              <button
-                type="button"
-                onClick={onOpenNotifications}
-                className={`${
-                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
-                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
-              >
-                <BellIcon className="h-4 w-4 shrink-0 stroke-[1.5]" aria-hidden />
-                Notifications
-              </button>
-            )}
-          </MenuItem>
-          <MenuItem>
-            {({ focus }) => (
               <Link
                 href="/"
                 onClick={onNavigate}
@@ -314,7 +290,6 @@ function SidebarContent({
   onToggleCollapse,
   showCollapseToggle = false,
   onOpenSearch,
-  onOpenNotifications,
 }: {
   pathname: string;
   onNavigate?: () => void;
@@ -322,14 +297,13 @@ function SidebarContent({
   onToggleCollapse?: () => void;
   showCollapseToggle?: boolean;
   onOpenSearch: () => void;
-  onOpenNotifications: () => void;
 }) {
   return (
     <div className={`flex h-full flex-col py-3 transition-[padding] duration-200 ${collapsed ? "px-1.5" : "px-2.5"}`}>
       <div className={collapsed ? "flex justify-center pb-3" : "pb-2"}>
         {!collapsed ? (
           <div className="flex items-center gap-1.5">
-            <Image src={Logo} alt="" className="h-8 w-auto shrink-0" priority />
+            <SportshubHomeLink onClick={onNavigate} priority />
             <p className="font-sans text-md font-semibold leading-tight text-foreground">
               ORGANISER HUB
               <sup className="ml-0.5 align-super text-[0.55em] font-semibold tracking-wide text-foreground-muted">
@@ -338,9 +312,7 @@ function SidebarContent({
             </p>
           </div>
         ) : (
-          <div className="shrink-0 rounded-xl p-1.5" aria-hidden>
-            <Image src={Logo} alt="" className="h-7 w-auto" priority />
-          </div>
+          <SportshubHomeLink onClick={onNavigate} priority className="p-1.5" imageClassName="h-7 w-auto" />
         )}
       </div>
 
@@ -415,11 +387,7 @@ function SidebarContent({
           )}
         </div>
         <div className={`mt-1 border-t border-border pt-2 ${collapsed ? "mx-1.5" : "mx-0.5"}`}>
-          <UserAccountMenu
-            onNavigate={onNavigate}
-            collapsed={collapsed}
-            onOpenNotifications={onOpenNotifications}
-          />
+          <UserAccountMenu onNavigate={onNavigate} collapsed={collapsed} />
         </div>
       </div>
     </div>
@@ -435,12 +403,9 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
-
-  const openNotifications = useCallback(() => {
-    onMobileOpenChange(false);
-    setNotificationsOpen(true);
-  }, [onMobileOpenChange]);
+  /** Keep mounted through the close animation, then remove so Safari stops sampling the white drawer. */
+  const [mobileDrawerMounted, setMobileDrawerMounted] = useState(false);
+  const [mobileDrawerShown, setMobileDrawerShown] = useState(false);
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((prev) => {
@@ -450,6 +415,21 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
       return next;
     });
   }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      setMobileDrawerShown(false);
+      return;
+    }
+    setMobileDrawerMounted(true);
+    const frame = requestAnimationFrame(() => setMobileDrawerShown(true));
+    return () => cancelAnimationFrame(frame);
+  }, [mobileOpen]);
+
+  const handleMobileDrawerTransitionEnd = (event: TransitionEvent<HTMLElement>) => {
+    if (event.propertyName !== "transform" || mobileOpen) return;
+    setMobileDrawerMounted(false);
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
@@ -505,30 +485,25 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
 
   return (
     <>
-      {mobileOpen && (
-        <button
-          type="button"
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          aria-label="Close menu"
-          onClick={() => onMobileOpenChange(false)}
-        />
-      )}
-
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] border-r border-border bg-background transition-transform duration-300 ease-out lg:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-        aria-label="Organiser sidebar"
-        aria-hidden={!mobileOpen}
-        data-tour="organiser-sidebar"
-      >
-        <SidebarContent
-          pathname={pathname}
-          onNavigate={() => onMobileOpenChange(false)}
-          onOpenSearch={() => setSearchOpen(true)}
-          onOpenNotifications={openNotifications}
-        />
-      </aside>
+      {mobileDrawerMounted ? (
+        <aside
+          className={`fixed inset-y-0 left-0 z-50 w-[min(100%,var(--organiser-sidebar-width-expanded))] bg-transparent transition-transform duration-300 ease-out lg:hidden ${
+            mobileDrawerShown ? "translate-x-0" : "-translate-x-full"
+          }`}
+          aria-label="Organiser sidebar"
+          aria-hidden={!mobileOpen}
+          data-tour="organiser-sidebar"
+          onTransitionEnd={handleMobileDrawerTransitionEnd}
+        >
+          <div className="mb-[env(safe-area-inset-bottom)] mt-[env(safe-area-inset-top)] flex h-[calc(100%-env(safe-area-inset-top)-env(safe-area-inset-bottom))] flex-col border-r border-border bg-background">
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={() => onMobileOpenChange(false)}
+              onOpenSearch={() => setSearchOpen(true)}
+            />
+          </div>
+        </aside>
+      ) : null}
 
       <aside
         className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:flex lg:w-[var(--organiser-sidebar-width)] lg:flex-col lg:border-r lg:border-border lg:bg-background lg:transition-[width] lg:duration-200"
@@ -542,12 +517,10 @@ export default function OrganiserSidebar({ mobileOpen, onMobileOpenChange }: Org
           onToggleCollapse={toggleCollapsed}
           showCollapseToggle
           onOpenSearch={() => setSearchOpen(true)}
-          onOpenNotifications={openNotifications}
         />
       </aside>
 
       <OrganiserCommandSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <OrganiserNotificationsPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
     </>
   );
 }

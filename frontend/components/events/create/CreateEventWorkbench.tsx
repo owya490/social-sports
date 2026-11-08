@@ -20,10 +20,9 @@ import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Frequency, NewRecurrenceFormData } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
-import { Logger } from "@/observability/logger";
 import { addCalendarDaysToYmd, dateAndTimeInLocalToDate } from "@/services/src/datetimeUtils";
 import { getThumbnailUrlsBySport } from "@/services/src/images/imageService";
-import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
+import { initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS } from "@/services/src/stripe/stripeConstants";
 import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { centsToDollars, dollarsToCents } from "@/utilities/priceUtils";
@@ -47,9 +46,7 @@ export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(
   MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100
 ).toFixed(2)}`;
 
-const logger = new Logger("CreateEventWorkbench");
-
-const LOCATION_COORDINATES_ERROR_MESSAGE = "Failed to get location coordinates. Please select a location again.";
+const LOCATION_SELECTION_ERROR_MESSAGE = "Please select a location from the suggestions.";
 
 const validatePrice = (amount: number): string | null => {
   if (amount > 0 && amount < MIN_PRICE_AMOUNT_FOR_STRIPE_CHECKOUT_CENTS / 100) {
@@ -87,6 +84,24 @@ function formatClock(time: string): string {
   return `${adjusted.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${period}`;
 }
 
+function hasDescriptionContent(description: string): boolean {
+  return (
+    description
+      .replace(/&(?:nbsp|#160|#xA0);/gi, " ")
+      .replace(/<[^>]*>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim().length > 0
+  );
+}
+
+function RequiredIndicator(): JSX.Element {
+  return (
+    <span className="ml-0.5 text-danger" aria-hidden>
+      *
+    </span>
+  );
+}
+
 function OptionCell({
   icon,
   label,
@@ -96,8 +111,8 @@ function OptionCell({
   className = "",
 }: {
   icon: ReactNode;
-  label: string;
-  children: ReactNode;
+  label: ReactNode;
+  children?: ReactNode;
   onClick?: () => void;
   supporting?: string;
   className?: string;
@@ -113,7 +128,9 @@ function OptionCell({
           <span className="block text-xs text-foreground-muted font-sans leading-snug mt-0.5">{supporting}</span>
         ) : null}
       </span>
-      <span className="shrink-0 flex items-center gap-1 text-xs text-foreground-secondary font-sans">{children}</span>
+      {children ? (
+        <span className="shrink-0 flex items-center gap-1 text-xs text-foreground-secondary font-sans">{children}</span>
+      ) : null}
     </>
   );
 
@@ -334,28 +351,26 @@ export function CreateEventWorkbench({
 
   useEffect(() => {
     if (isLoaded && locationInputRef.current && !autocompleteRef.current) {
-      autocompleteRef.current = initializeAutocomplete(locationInputRef, async () => {
+      autocompleteRef.current = initializeAutocomplete(locationInputRef, () => {
         if (!autocompleteRef.current) return;
         const place = autocompleteRef.current.getPlace();
-        if (place.name && place.formatted_address) {
-          const fullAddress = `${place.name}, ${place.formatted_address}`;
-          setLocationDraft(fullAddress);
-          setSelectionMade(true);
-          // Drop any previous coordinates until the new place resolves.
-          updateField({ location: fullAddress, lat: 0, lng: 0 });
-          try {
-            const { lat, lng } = await getLocationCoordinates(fullAddress);
-            updateField({ lat, lng });
-            setLocationWarning(null);
-            locationInputRef.current?.setCustomValidity("");
-          } catch (error) {
-            logger.error(`Failed to get location coordinates: ${error}`);
-            updateField({ lat: 0, lng: 0 });
-            setSelectionMade(false);
-            setLocationWarning(LOCATION_COORDINATES_ERROR_MESSAGE);
-            locationInputRef.current?.setCustomValidity(LOCATION_COORDINATES_ERROR_MESSAGE);
-          }
+        if (!place.place_id || !place.name || !place.formatted_address || !place.geometry?.location) {
+          updateField({ location: "", lat: 0, lng: 0 });
+          setSelectionMade(false);
+          setLocationWarning(LOCATION_SELECTION_ERROR_MESSAGE);
+          locationInputRef.current?.setCustomValidity(LOCATION_SELECTION_ERROR_MESSAGE);
+          return;
         }
+        const fullAddress = `${place.name}, ${place.formatted_address}`;
+        setLocationDraft(fullAddress);
+        setSelectionMade(true);
+        updateField({
+          location: fullAddress,
+          lat: place.geometry.location.lat(),
+          lng: place.geometry.location.lng(),
+        });
+        setLocationWarning(null);
+        locationInputRef.current?.setCustomValidity("");
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- init autocomplete once maps load
@@ -391,7 +406,7 @@ export function CreateEventWorkbench({
 
     const hasNameError = data.name.trim() === "";
     const hasCapacityError = !data.capacity || data.capacity < 1;
-    const hasLocationMissing = !selectionMade && locationDraft.trim() === "";
+    const hasLocationMissing = !selectionMade;
     const hasLocationError = locationWarning !== null;
     setHasError(
       hasDateError || hasPriceError || hasLocationMissing || hasLocationError || hasNameError || hasCapacityError
@@ -406,7 +421,6 @@ export function CreateEventWorkbench({
     customAmount,
     isFreeEvent,
     selectionMade,
-    locationDraft,
     locationWarning,
     setHasError,
   ]);
@@ -433,9 +447,9 @@ export function CreateEventWorkbench({
     ? formatFrequency(data.newRecurrenceData.frequency)
     : "Off";
   const acceptPaymentsLabel = isFreeEvent ? "Accept bookings" : "Accept payments";
+  const hasDescription = hasDescriptionContent(data.description);
 
-  const canCreate =
-    data.name.trim() !== "" && locationWarning === null && (selectionMade || locationDraft.trim() !== "");
+  const canCreate = data.name.trim() !== "" && locationWarning === null && selectionMade;
 
   const closePanel = () => setPanel(null);
 
@@ -452,26 +466,23 @@ export function CreateEventWorkbench({
   const togglePaymentsActive = () => {
     const next = !data.paymentsActive;
     handlePaymentsActiveChange(next);
-    if (next) {
-      setPanel("payments");
-    } else if (panel === "payments") {
-      closePanel();
-    }
+    if (next) setPanel("payments");
   };
 
   const toggleRecurring = () => {
     const next = !data.newRecurrenceData.recurrenceEnabled;
     if (next) {
       recurrenceWasEnabledRef.current = false;
-      updateField({
-        newRecurrenceData: { ...data.newRecurrenceData, recurrenceEnabled: true },
-      });
-      setRecurrenceOpen(true);
-    } else {
-      updateField({
-        newRecurrenceData: { ...data.newRecurrenceData, recurrenceEnabled: false },
-      });
     }
+    updateField({
+      newRecurrenceData: { ...data.newRecurrenceData, recurrenceEnabled: next },
+    });
+    if (next) setRecurrenceOpen(true);
+  };
+
+  const openRecurrencePanel = () => {
+    recurrenceWasEnabledRef.current = data.newRecurrenceData.recurrenceEnabled;
+    setRecurrenceOpen(true);
   };
 
   return (
@@ -604,8 +615,8 @@ export function CreateEventWorkbench({
 
           <div className="min-w-0 space-y-2.5">
             <div>
-              <label htmlFor="create-event-name" className="sr-only">
-                Event name
+              <label htmlFor="create-event-name" className="block text-xs font-medium text-foreground-muted font-sans mb-1">
+                Event name <RequiredIndicator />
               </label>
               <input
                 id="create-event-name"
@@ -623,7 +634,9 @@ export function CreateEventWorkbench({
                 <ShortDateBadge date={data.startDate} />
                 <div className="grid min-w-0 flex-1 grid-cols-[0.625rem_1fr] gap-x-2.5">
                   <div aria-hidden />
-                  <p className="text-xs font-medium text-foreground-muted mb-0.5">Start</p>
+                  <p className="text-xs font-medium text-foreground-muted mb-0.5">
+                    Start <RequiredIndicator />
+                  </p>
 
                   <div className="relative flex items-center justify-center self-stretch" aria-hidden>
                     <span className="relative z-10 h-2.5 w-2.5 shrink-0 rounded-full border-2 border-foreground bg-foreground" />
@@ -663,7 +676,9 @@ export function CreateEventWorkbench({
                   <div className="flex justify-center self-stretch" aria-hidden>
                     <span className="w-px h-full min-h-[1rem] bg-border" />
                   </div>
-                  <p className="text-xs font-medium text-foreground-muted mb-0.5 self-end">End</p>
+                  <p className="text-xs font-medium text-foreground-muted mb-0.5 self-end">
+                    End <RequiredIndicator />
+                  </p>
 
                   <div className="flex items-center justify-center" aria-hidden>
                     <span className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-foreground-muted bg-background" />
@@ -715,10 +730,11 @@ export function CreateEventWorkbench({
                 <MapPinIcon className="h-4 w-4 shrink-0 text-foreground-muted mt-0.5" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <label htmlFor="create-event-location" className="block text-xs font-medium text-foreground cursor-text">
-                    {locationDraft ? "Location" : "Add Event Location"}
+                    {locationDraft ? "Location" : "Add Event Location"} <RequiredIndicator />
                   </label>
                   <input
                     id="create-event-location"
+                    required
                     ref={locationInputRef}
                     value={locationDraft}
                     onChange={(e) => {
@@ -726,52 +742,37 @@ export function CreateEventWorkbench({
                       setLocationDraft(next);
                       setSelectionMade(false);
                       setLocationWarning(null);
-                      locationInputRef.current?.setCustomValidity("");
-                      if (next.trim() === "") {
-                        updateField({ location: "", lat: 0, lng: 0 });
-                      } else {
-                        // Typing invalidates any previously resolved coordinates.
-                        updateField({ lat: 0, lng: 0 });
-                      }
+                      locationInputRef.current?.setCustomValidity(LOCATION_SELECTION_ERROR_MESSAGE);
+                      updateField({ location: "", lat: 0, lng: 0 });
                     }}
                     onBlur={() => {
-                      const trimmed = locationDraft.trim();
-                      if (trimmed === "") {
-                        updateField({ location: "", lat: 0, lng: 0 });
-                        setLocationWarning(null);
-                        locationInputRef.current?.setCustomValidity("");
-                        return;
-                      }
                       if (!selectionMade) {
-                        updateField({ location: trimmed });
-                      }
-                      if (locationWarning) {
-                        locationInputRef.current?.setCustomValidity(locationWarning);
-                      } else {
-                        locationInputRef.current?.setCustomValidity("");
+                        setLocationWarning(locationDraft.trim() ? LOCATION_SELECTION_ERROR_MESSAGE : null);
+                        locationInputRef.current?.setCustomValidity(LOCATION_SELECTION_ERROR_MESSAGE);
                       }
                     }}
-                    placeholder={isLoaded ? "Search a location or paste an address" : "Loading maps…"}
+                    placeholder={isLoaded ? "Search and select a location" : "Loading maps…"}
                     disabled={!isLoaded && !loadError}
                     className="w-full bg-transparent border-0 p-0 mt-1 text-base md:text-xs text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 focus:outline-none focus:ring-0 focus-visible:outline-none focus-visible:ring-0"
                     aria-label="Event location"
                     aria-invalid={locationWarning !== null}
+                    aria-describedby={locationWarning ? "create-event-location-error" : undefined}
                   />
                 </div>
               </div>
-              {locationWarning ? <p className="text-xs text-danger font-sans px-2.5 pb-2">{locationWarning}</p> : null}
+              {locationWarning ? (
+                <p id="create-event-location-error" className="text-xs text-danger font-sans px-2.5 pb-2">
+                  {locationWarning}
+                </p>
+              ) : null}
             </div>
 
-            <button
-              type="button"
+            <OptionCell
+              icon={<DocumentTextIcon className="h-4 w-4" />}
+              label="Description"
+              supporting={hasDescription ? "Description added" : "No description yet"}
               onClick={() => setPanel("description")}
-              className="flex w-full min-h-[2.75rem] items-center gap-2.5 rounded-xl border border-border bg-background px-2.5 py-2 text-left transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
-            >
-              <DocumentTextIcon className="h-4 w-4 shrink-0 text-foreground-muted" aria-hidden />
-              <span className="min-w-0 flex-1 text-xs font-medium text-foreground">
-                {data.description ? "Description" : "Add Description"}
-              </span>
-            </button>
+            />
 
             <div>
               <h2 className="text-xs font-medium text-foreground-muted mb-1.5 px-0.5">Event Options</h2>
@@ -814,7 +815,11 @@ export function CreateEventWorkbench({
 
                   <OptionCell
                     icon={<UserGroupIcon className="h-4 w-4" />}
-                    label="Capacity"
+                    label={
+                      <>
+                        Capacity <RequiredIndicator />
+                      </>
+                    }
                     onClick={() => capacityInputRef.current?.focus()}
                     className="cursor-text"
                   >
@@ -843,7 +848,7 @@ export function CreateEventWorkbench({
                   <OptionCell
                     icon={<CreditCardIcon className="h-4 w-4" />}
                     label={acceptPaymentsLabel}
-                    onClick={togglePaymentsActive}
+                    onClick={() => setPanel("payments")}
                   >
                     <ClubhouseSwitch
                       checked={data.paymentsActive}
@@ -858,26 +863,25 @@ export function CreateEventWorkbench({
                 <OptionCell
                   icon={<ArrowPathIcon className="h-4 w-4" />}
                   label="Recurring"
-                  onClick={toggleRecurring}
+                  onClick={openRecurrencePanel}
                 >
-                  <ClubhouseSwitch
-                    checked={data.newRecurrenceData.recurrenceEnabled}
-                    onChange={toggleRecurring}
-                    label="Recurring"
-                  />
                   {data.newRecurrenceData.recurrenceEnabled ? (
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        recurrenceWasEnabledRef.current = true;
-                        setRecurrenceOpen(true);
+                        openRecurrencePanel();
                       }}
                       className="text-xs font-medium text-foreground-secondary hover:text-foreground underline-offset-2 hover:underline"
                     >
                       {recurrenceLabel}
                     </button>
                   ) : null}
+                  <ClubhouseSwitch
+                    checked={data.newRecurrenceData.recurrenceEnabled}
+                    onChange={toggleRecurring}
+                    label="Recurring"
+                  />
                 </OptionCell>
               </div>
             </div>

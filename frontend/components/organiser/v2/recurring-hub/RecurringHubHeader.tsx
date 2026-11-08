@@ -3,7 +3,6 @@
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import { Frequency } from "@/interfaces/RecurringEventTypes";
-import { PauseCircleIcon, PlayCircleIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
 
@@ -38,10 +37,6 @@ type RecurringHubHeaderProps = {
   startDate: Timestamp;
   location: string;
   frequency: Frequency;
-  paused: boolean;
-  isActive: boolean;
-  onTogglePause: () => void;
-  pauseUpdating?: boolean;
 };
 
 export function RecurringHubHeader({
@@ -50,10 +45,6 @@ export function RecurringHubHeader({
   startDate,
   location,
   frequency,
-  paused,
-  isActive,
-  onTogglePause,
-  pauseUpdating = false,
 }: RecurringHubHeaderProps) {
   const meta = loading
     ? ""
@@ -77,24 +68,9 @@ export function RecurringHubHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-0.5 shrink-0">
-          <span className="inline-flex items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
-            Template
-          </span>
-          <button
-            type="button"
-            onClick={onTogglePause}
-            disabled={loading || pauseUpdating || !isActive}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground-muted font-sans hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded-lg px-1.5 py-1"
-          >
-            {paused ? (
-              <PlayCircleIcon className="h-3.5 w-3.5" aria-hidden />
-            ) : (
-              <PauseCircleIcon className="h-3.5 w-3.5" aria-hidden />
-            )}
-            <span className="hidden sm:inline">{paused ? "Resume" : "Pause"}</span>
-          </button>
-        </div>
+        <span className="inline-flex shrink-0 items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
+          Template
+        </span>
       </div>
     </header>
   );
