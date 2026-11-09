@@ -226,4 +226,35 @@ public class EventsRepositoryTest {
         assertSame(archivedEvent, EventsRepository.getEventById("event-1", Optional.empty()).get());
         assertEquals("event-1", archivedEvent.getEventId());
     }
+
+    @Test
+    public void findEventDocumentReturnsInactivePrivateWhenEarlierCopiesAreMissing() throws Exception {
+        DocumentReference inactivePublicRef = mock(DocumentReference.class);
+        DocumentSnapshot inactivePublicSnapshot = mock(DocumentSnapshot.class);
+        DocumentReference inactivePrivateRef = mock(DocumentReference.class);
+        DocumentSnapshot inactivePrivateSnapshot = mock(DocumentSnapshot.class);
+        when(db.document("Events/Active/Public/event-1")).thenReturn(eventRef);
+        when(db.document("Events/Active/Private/event-1")).thenReturn(privateEventRef);
+        when(db.document("Events/InActive/Public/event-1")).thenReturn(inactivePublicRef);
+        when(db.document("Events/InActive/Private/event-1")).thenReturn(inactivePrivateRef);
+        when(inactivePublicRef.get()).thenReturn(ApiFutures.immediateFuture(inactivePublicSnapshot));
+        when(inactivePrivateRef.get()).thenReturn(ApiFutures.immediateFuture(inactivePrivateSnapshot));
+        when(inactivePrivateSnapshot.exists()).thenReturn(true);
+
+        assertSame(inactivePrivateSnapshot, EventsRepository.findEventDocument("event-1").get());
+    }
+
+    @Test
+    public void findEventDocumentIsEmptyWhenNoCopyExists() throws Exception {
+        DocumentReference inactivePublicRef = mock(DocumentReference.class);
+        DocumentReference inactivePrivateRef = mock(DocumentReference.class);
+        when(db.document("Events/Active/Public/event-1")).thenReturn(eventRef);
+        when(db.document("Events/Active/Private/event-1")).thenReturn(privateEventRef);
+        when(db.document("Events/InActive/Public/event-1")).thenReturn(inactivePublicRef);
+        when(db.document("Events/InActive/Private/event-1")).thenReturn(inactivePrivateRef);
+        when(inactivePublicRef.get()).thenReturn(ApiFutures.immediateFuture(mock(DocumentSnapshot.class)));
+        when(inactivePrivateRef.get()).thenReturn(ApiFutures.immediateFuture(mock(DocumentSnapshot.class)));
+
+        assertFalse(EventsRepository.findEventDocument("event-1").isPresent());
+    }
 }

@@ -988,43 +988,12 @@ public class WebhookService {
                 return false;
             }
 
-            Firestore db = FirebaseService.getFirestore();
-            DocumentReference privateEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.ACTIVE)
-                    .collection(CollectionPaths.PRIVATE)
-                    .document(eventId);
-            DocumentReference publicEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.ACTIVE)
-                    .collection(CollectionPaths.PUBLIC)
-                    .document(eventId);
-            DocumentReference inactivePrivateEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.INACTIVE)
-                    .collection(CollectionPaths.PRIVATE)
-                    .document(eventId);
-            DocumentReference inactivePublicEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.INACTIVE)
-                    .collection(CollectionPaths.PUBLIC)
-                    .document(eventId);
-            List<DocumentSnapshot> eventSnapshots = db.getAll(
-                    privateEventRef, publicEventRef, inactivePrivateEventRef, inactivePublicEventRef).get();
-            DocumentSnapshot privateEvent = eventSnapshots.get(0);
-            DocumentSnapshot publicEvent = eventSnapshots.get(1);
-            DocumentSnapshot inactivePrivateEvent = eventSnapshots.get(2);
-            DocumentSnapshot inactivePublicEvent = eventSnapshots.get(3);
-
-            DocumentSnapshot eventSnapshot;
-            if (privateEvent.exists()) {
-                eventSnapshot = privateEvent;
-            } else if (publicEvent.exists()) {
-                eventSnapshot = publicEvent;
-            } else if (inactivePrivateEvent.exists()) {
-                eventSnapshot = inactivePrivateEvent;
-            } else if (inactivePublicEvent.exists()) {
-                eventSnapshot = inactivePublicEvent;
-            } else {
+            Optional<DocumentSnapshot> maybeEvent = EventsRepository.findEventDocument(eventId);
+            if (maybeEvent.isEmpty()) {
                 logger.error("Event {} not found in Active or InActive Private or Public collections", eventId);
                 return false;
             }
+            DocumentSnapshot eventSnapshot = maybeEvent.get();
             String organiserId = eventSnapshot.getString("organiserId");
 
             PaymentIntentCancellationTransactionResult transactionResult =
