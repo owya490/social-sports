@@ -36,13 +36,9 @@ public class ExplainErrorAlertService {
 
     public void process(ParsedErrorLog parsed) {
         String fingerprint = ErrorAlertFingerprint.of(parsed);
-        if (dedupStore.smsFor(fingerprint).isPresent()) {
-            logger.info("Skipping error alert; fingerprint already paged fingerprint={}", fingerprint);
-            return;
-        }
-        Optional<Reservation> claim = dedupStore.reserve();
+        Optional<Reservation> claim = dedupStore.reserve(fingerprint);
         if (claim.isEmpty()) {
-            logger.info("Skipping error alert; notification budget is active fingerprint={}", fingerprint);
+            logger.info("Skipping error alert; incident cap, burst limit, or daily budget fingerprint={}", fingerprint);
             return;
         }
 

@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
@@ -90,20 +91,106 @@ public class ErrorAlertDedupRepositoryTest {
 
     @Test
     public void complete_advancesSmsSavedAtAlongsideLastSentAt() {
-        Timestamp original = Timestamp.ofTimeSecondsAndNanos(NOW.getEpochSecond(), 0);
-        state.put("fp1", new LinkedHashMap<>(Map.of(
-                "sms", "Email service returned 503.",
-                "smsSavedAt", original)));
         ErrorAlertDedupRepository daySix = repository(NOW.plus(Duration.ofDays(6)));
-        Reservation reservation = daySix.reserve().orElseThrow();
+        Reservation reservation = daySix.reserve("fp1").orElseThrow();
+        daySix.rememberSms("fp1", "Email service returned 503.");
+        Timestamp original = (Timestamp) state.get("fp1").get("smsSavedAt");
         daySix.complete(reservation, "fp1");
 
         Timestamp moved = (Timestamp) state.get("fp1").get("smsSavedAt");
-        assertTrue(moved.getSeconds() > original.getSeconds());
+        assertTrue(moved.getSeconds() >= original.getSeconds());
+        assertEquals(1L, ((Number) state.get("fp1").get("sentCount")).longValue());
         assertNotNull(state.get("_global").get("lastSentAt"));
         assertEquals("Email service returned 503.",
                 repository(NOW.plus(Duration.ofDays(8))).smsFor("fp1").orElseThrow());
         assertTrue(repository(NOW.plus(Duration.ofDays(14))).smsFor("fp1").isEmpty());
+    }
+
+    @Test
+    public void reserve_stopsAtThreeForOneErrorAndLeavesAnotherOpen() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        for (int sent = 0; sent < ErrorAlertDedupRepository.INCIDENT_LIMIT; sent++) {
+            Reservation reservation = repository.reserve("booking").orElseThrow();
+            repository.complete(reservation, "booking");
+        }
+        assertTrue(repository.reserve("booking").isEmpty());
+        assertTrue(repository.reserve("checkout").isEmpty());
+        ErrorAlertDedupRepository later = repository(
+                NOW.plus(ErrorAlertDedupRepository.DEDUP_WINDOW).plusSeconds(1));
+        assertTrue(later.reserve("booking").isEmpty());
+        assertTrue(later.reserve("checkout").isPresent());
+    }
+
+    @Test
+    public void reserve_stopsABurstOfDifferentErrorsFromUsingTheDailyBudget() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        for (int sent = 0; sent < ErrorAlertDedupRepository.BURST_LIMIT; sent++) {
+            String fingerprint = "error-" + sent;
+            Reservation reservation = repository.reserve(fingerprint).orElseThrow();
+            repository.complete(reservation, fingerprint);
+        }
+        assertTrue(repository.reserve("error-extra").isEmpty());
+        ErrorAlertDedupRepository later = repository(
+                NOW.plus(ErrorAlertDedupRepository.DEDUP_WINDOW).plusSeconds(1));
+        assertTrue(later.reserve("error-extra").isPresent());
+    }
+
+    @Test
+    public void reserve_acksSameErrorWhileItsSendIsInFlight() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        assertTrue(repository.reserve("booking").isPresent());
+        assertTrue(repository.reserve("booking").isEmpty());
+        assertTrue(repository.reserve("checkout").isPresent());
+        assertEquals(2, ((List<?>) state.get("_global").get("pendingReservations")).size());
+    }
+
+    @Test
+    public void reserve_holdsDailyBudgetUntilTheSendFinishesOrIsReleased() {
+        List<Timestamp> sends = java.util.Collections.nCopies(19,
+                Timestamp.ofTimeSecondsAndNanos(NOW.minus(Duration.ofHours(2)).getEpochSecond(), 0));
+        state.put("_global", new LinkedHashMap<>(Map.of("recentSends", sends)));
+        ErrorAlertDedupRepository repository = repository(NOW);
+        Reservation held = repository.reserve("booking").orElseThrow();
+        assertTrue(repository.reserve("checkout").isEmpty());
+
+        repository.release(held);
+        Reservation replacement = repository.reserve("checkout").orElseThrow();
+        repository.complete(replacement, "checkout");
+        assertEquals(20, ((List<?>) state.get("_global").get("recentSends")).size());
+        assertTrue(repository.reserve("refund").isEmpty());
+    }
+
+    @Test
+    public void release_afterRememberSmsAllowsTheUnsentErrorToReserveAgain() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        Reservation reservation = repository.reserve("booking").orElseThrow();
+        repository.rememberSms("booking", "Booking cron failed.");
+        repository.release(reservation);
+
+        assertTrue(repository.smsFor("booking").isEmpty());
+        assertTrue(repository.reserve("booking").isPresent());
+    }
+
+    @Test
+    public void release_keepsSmsAfterATextWasAlreadySent() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        Reservation sent = repository.reserve("booking").orElseThrow();
+        repository.rememberSms("booking", "Booking cron failed.");
+        repository.complete(sent, "booking");
+        Reservation failed = repository.reserve("booking").orElseThrow();
+        repository.release(failed);
+
+        assertEquals("Booking cron failed.", repository.smsFor("booking").orElseThrow());
+        assertEquals(1L, ((Number) state.get("booking").get("sentCount")).longValue());
+    }
+
+    @Test
+    public void reserve_doesNotRepeatAnErrorThatAlreadyHasSmsAndNoCount() {
+        state.put("booking", new LinkedHashMap<>(Map.of(
+                "sms", "Booking cron failed.",
+                "smsSavedAt", Timestamp.ofTimeSecondsAndNanos(NOW.getEpochSecond(), 0))));
+        assertTrue(repository(NOW).reserve("booking").isEmpty());
+        assertTrue(repository(NOW).reserve("checkout").isPresent());
     }
 
     @Test
