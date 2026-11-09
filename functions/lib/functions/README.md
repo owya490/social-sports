@@ -68,14 +68,13 @@ unconfirmed; prompt instructions do not guarantee that generated claims are true
   `ParsedErrorLog` sanitizes evidence before truncation.
 - `ErrorAlertFingerprint` and the factual headline use the same normalized
   first line, so changing AI wording cannot change incident identity.
-- `ExplainErrorAlertService` coordinates reservations, optional interpretation
-  and publication. Facts are published even when AI is unavailable.
-- `ErrorAlertDedupRepository` reserves one global slot, fences completion/release
-  to the owner, and fails closed on errors. The global cooldown also suppresses
-  repeats of any individual error, so per-fingerprint state is unnecessary.
-- `CloudLoggingNearbyLogFetcher` reads one newest-first page of at most 100
-  entries, selects at most 30, and returns at most 8,000 characters in time order.
-  The summarizer retains a final prompt-size guard.
+- `ExplainErrorAlertService` claims, interprets and publishes. Facts are
+  published even when AI is unavailable. It never throws.
+- `AlertClaimRepository` claims, in one transaction, a fingerprint for six
+  hours, a twelve-minute global window and one of 15 pages in any 24 hours. These mirror the
+  policy's 600s notification limit and Google's 20 log-alert incidents a day,
+  which otherwise drop pages silently. A burst pages once, and a repeating
+  error pages at most every six hours.
 
 Both the sink filter and runtime policy exclude the exact Firebase
 callable GET rejection: `Invalid request, unable to process.`, the
@@ -87,16 +86,17 @@ not marker text inside application errors.
 
 The runtime uses application-default credentials and explicit `PROJECT_NAME`,
 without loading application Firebase credentials or PostHog. Its service
-account needs `roles/logging.viewer`, `roles/logging.logWriter`,
-`roles/datastore.user`, and `roles/aiplatform.user`.
+account needs `roles/logging.logWriter`, `roles/datastore.user`, and
+`roles/aiplatform.user`.
 
-Each error fingerprint can send at most three texts in seven days. A repeat of that error is acknowledged, including while its own send is in progress. At most three texts across any fingerprints go out in ten minutes, so a burst of distinct errors cannot use the whole day. A rolling 24-hour limit of 20 publications matches Monitoring's
-log-alert budget. A reservation counts toward both limits until its text is sent or the send is released. Publication failure releases the
-lease and escapes the handler. Completion failure escapes without releasing
-early. The deployment enables retries with a two-minute function timeout;
-events older than one hour are acknowledged without processing. Firestore and
-Logging do not share a transaction, so duplicate publication remains possible.
-The publisher uses a deterministic insert ID for source-event redelivery.
+The function is deployed without Pub/Sub retry and acknowledges every event,
+so a failure costs at most one SMS instead of a redelivery storm. A Firestore
+outage fails open: it pages the factual headline without dedup or Gemini, so
+identical headlines fold into one open Monitoring incident. A publication
+failure releases the claim. Firestore TTL on `ErrorAlertClaims.expireAt`
+deletes old claims; deletion can lag, so claims compare `expireAt` with now.
+To mute alerts, snooze the Monitoring policy with an end time instead of
+disabling it.
 
 ### Configuration and rollout
 
@@ -107,6 +107,12 @@ notifications are always disabled, including when applying a policy manually.
 Production preserves its current recipients and enabled/disabled state. The
 sink's enabled/disabled state is preserved. When the development sink is disabled,
 direct Pub/Sub test events can exercise the function without sending notifications.
+
+Environments provisioned before claim-based dedup need these one-off steps,
+because CI does not provision them: enable TTL with
+`gcloud firestore fields ttls update expireAt --collection-group=ErrorAlertClaims --enable-ttl --project=<project>`,
+delete the unused `ErrorAlertDedup` collection, and remove the runtime
+service account's `roles/logging.viewer` grant.
 
 CI requires an existing topic, sink and uniquely named AI policy. It never
 provisions APIs, grants IAM or discovers notification channels. The deployment
@@ -145,19 +151,19 @@ Validate in development first, then deploy/reconcile production and check a
 real log-to-notification path. Keep the existing raw-error alert policy as a
 fallback: function, sink and policy updates are not atomic, and CI stops on any
 failure. Development validation uses logs without sending SMS or email;
-notification delivery is a production-only check. Live model, IAM, Eventarc retry
+notification delivery is a production-only check. Live model, IAM, Eventarc delivery
 and SMS/email delivery are separate checks from the local suite.
 
 ### Local verification
 
 Run `mvn clean verify` and `python3 -m unittest discover -s tests -v` here.
-The five repository integration tests require a localhost Firestore emulator
+The repository integration tests require a localhost Firestore emulator
 via `FIRESTORE_EMULATOR_HOST`; they skip when it is absent. For example:
 
 ```bash
-FIRESTORE_EMULATOR_HOST=127.0.0.1:8787 mvn -Dtest=ErrorAlertDedupRepositoryIntegrationTest test
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8787 mvn -Dtest=AlertClaimRepositoryIntegrationTest test
 ```
 
-Those tests exercise real transactions for concurrent claims, cooldowns, lease
-expiry, ownership fencing, release/retry and the rolling daily budget. The
+Those tests exercise real transactions for concurrent claims, expired-claim
+reuse and release. The
 configuration tests use a fake `gcloud` executable and make no Cloud calls.

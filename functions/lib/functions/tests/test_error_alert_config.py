@@ -35,6 +35,8 @@ class ErrorAlertConfigTest(unittest.TestCase):
         self.assertIn('logName="projects/socialsportsprod/logs/sportshub-alert-sms"', link)
         self.assertEqual([self.channel], policy["notificationChannels"])
         self.assertTrue(policy["enabled"])
+        self.assertEqual({"period": "600s"}, policy["alertStrategy"]["notificationRateLimit"])
+        self.assertEqual("1800s", policy["alertStrategy"]["autoClose"])
 
     def test_policy_requires_explicit_project_scoped_recipients(self):
         for channels in [[], ["projects/socialsports-44162/notificationChannels/123"], ["not-a-channel"]]:
@@ -176,8 +178,9 @@ class ErrorAlertConfigTest(unittest.TestCase):
                 self.assertEqual(0, result.returncode, result.stdout + result.stderr)
                 self.assertEqual(1, len(calls))
                 self.assertEqual(["functions", "deploy", "explainErrorAlert"], calls[0][:3])
-                for flag in ["--gen2", "--no-allow-unauthenticated", "--retry"]:
+                for flag in ["--gen2", "--no-allow-unauthenticated", "--no-retry"]:
                     self.assertIn(flag, calls[0])
+                self.assertNotIn("--retry", calls[0])
                 for flag, value in [("--project", project), ("--trigger-topic", "error-log-alerts"),
                                     ("--timeout", "120s"), ("--max-instances", "2")]:
                     self.assertEqual(value, calls[0][calls[0].index(flag) + 1])

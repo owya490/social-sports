@@ -22,7 +22,7 @@ public class ErrorAlertSummarizerTest {
                 + "and then check the fulfillment logs for the matching payment intent in Cloud Logging next.";
         String overflow = first + " " + second + " Extra filler keeps going " + "word ".repeat(120);
         ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(
-                prompt -> Optional.of(overflow), parsed -> List.of());
+                prompt -> Optional.of(overflow));
 
         String body = summarizer.summarize(sampleLog()).orElseThrow();
         assertTrue(body.length() <= SmsText.MAX_CHARS);
@@ -34,20 +34,19 @@ public class ErrorAlertSummarizerTest {
 
     @Test
     public void buildPrompt_requiresSteCompleteSentencesAndUntrustedLogs() {
-        String prompt = ErrorAlertSummarizer.buildPrompt(sampleLog(), List.of());
+        String prompt = ErrorAlertSummarizer.buildPrompt(sampleLog());
         assertTrue(prompt.contains("ASD-STE100"));
         assertTrue(prompt.contains("complete sentences"));
         assertTrue(prompt.contains("255 UTF-8 bytes"));
         assertTrue(prompt.contains("what failed"));
         assertTrue(prompt.contains("untrusted evidence"));
-        assertTrue(prompt.contains("-----BEGIN UNTRUSTED NEARBY LOGS-----"));
         assertFalse(prompt.contains("defense in depth"));
     }
 
     @Test
     public void summarize_returnsNoInterpretationWhenAiIsEmptyOrBlank() {
         for (Optional<String> answer : List.of(Optional.<String>empty(), Optional.of(" "))) {
-            ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(prompt -> answer, parsed -> List.of());
+            ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(prompt -> answer);
 
             assertEquals(Optional.empty(), summarizer.summarize(sampleLog()));
         }
@@ -57,7 +56,7 @@ public class ErrorAlertSummarizerTest {
     public void summarize_returnsNoInterpretationWhenAiThrows() {
         ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(prompt -> {
             throw new IllegalStateException("Vertex unavailable");
-        }, parsed -> List.of());
+        });
 
         assertEquals(Optional.empty(),
                 summarizer.summarize(new ParsedErrorLog(
@@ -67,8 +66,7 @@ public class ErrorAlertSummarizerTest {
     @Test
     public void summarize_redactsBothEvidenceAndAiOutput() {
         RecordingLlm llm = new RecordingLlm(Optional.of("Failed for jane.doe@example.com token=sk_live_abc123XYZ"));
-        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(llm,
-                parsed -> List.of("INFO request for jane.doe@example.com token=sk_live_abc123XYZ"));
+        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(llm);
 
         String body = summarizer.summarize(new ParsedErrorLog(
                 "emailService",
@@ -85,11 +83,7 @@ public class ErrorAlertSummarizerTest {
     @Test
     public void summarize_preservesTraceAndHttpEvidenceWithoutInventingAnException() {
         RecordingLlm llm = new RecordingLlm(Optional.empty());
-        List<ParsedErrorLog> fetched = new ArrayList<>();
-        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(llm, parsed -> {
-            fetched.add(parsed);
-            return List.of("WARNING HTTP POST status=400", "ERROR Invalid request, unable to process.");
-        });
+        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(llm);
         ParsedErrorLog parsed = new ParsedErrorLog(
                 "send-email-on-create-event-v2", "Invalid request, unable to process.", "", "",
                 Instant.parse("2026-10-06T01:00:00Z"), "projects/p/traces/request", "POST", 400,
@@ -97,56 +91,15 @@ public class ErrorAlertSummarizerTest {
 
         assertEquals(Optional.empty(),
                 summarizer.summarize(parsed));
-        assertEquals(List.of(parsed), fetched);
         assertEquals(1, llm.prompts.size());
         String prompt = llm.prompts.get(0);
         assertTrue(prompt.contains("HTTP method: POST"));
         assertTrue(prompt.contains("HTTP status: 400"));
         assertTrue(prompt.contains("Exception: not present in supplied log"));
         assertTrue(prompt.contains("Top frame: not present in supplied log"));
-        assertTrue(prompt.contains("WARNING HTTP POST status=400"));
-        assertTrue(prompt.contains("ERROR Invalid request, unable to process."));
+        assertTrue(prompt.contains("Log: Invalid request, unable to process."));
         assertTrue(prompt.contains("-----BEGIN UNTRUSTED ERROR LOG-----"));
         assertTrue(prompt.contains("-----END UNTRUSTED ERROR LOG-----"));
-        assertTrue(prompt.contains("-----BEGIN UNTRUSTED NEARBY LOGS-----"));
-        assertTrue(prompt.contains("-----END UNTRUSTED NEARBY LOGS-----"));
-    }
-
-    @Test
-    public void summarize_stillIncludesTheErrorWhenNearbyFetchFails() {
-        RecordingLlm llm = new RecordingLlm(Optional.empty());
-        ErrorAlertSummarizer summarizer = new ErrorAlertSummarizer(llm, parsed -> {
-            throw new IllegalStateException("logging unavailable");
-        });
-
-        Optional<String> body = summarizer.summarize(sampleLog());
-
-        assertTrue(body.isEmpty());
-        assertTrue(llm.prompts.get(0).contains("Log: Failed to fulfill purchase"));
-        assertTrue(llm.prompts.get(0).contains("(none)"));
-    }
-
-    @Test
-    public void formatNearbyLogs_keepsTheLastThirty() {
-        List<String> lines = new ArrayList<>();
-        for (int i = 0; i < 40; i++) {
-            lines.add("INFO line-" + i);
-        }
-
-        String context = ErrorAlertSummarizer.formatNearbyLogs(lines);
-
-        assertTrue(context.startsWith("-----BEGIN UNTRUSTED NEARBY LOGS-----\nINFO line-10\n"));
-        assertTrue(context.contains("INFO line-39\n-----END UNTRUSTED NEARBY LOGS-----"));
-        assertFalse(context.contains("INFO line-9\n"));
-    }
-
-    @Test
-    public void formatNearbyLogs_dropsOldestLinesUntilWithinTheCharacterBudget() {
-        String context = ErrorAlertSummarizer.formatNearbyLogs(
-                List.of("x".repeat(5000), "y".repeat(5000), "z".repeat(5000)));
-
-        assertEquals("-----BEGIN UNTRUSTED NEARBY LOGS-----\n" + "z".repeat(5000)
-                + "\n-----END UNTRUSTED NEARBY LOGS-----", context);
     }
 
     private static ParsedErrorLog sampleLog() {
