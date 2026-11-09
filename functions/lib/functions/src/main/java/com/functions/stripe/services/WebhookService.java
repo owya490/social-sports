@@ -494,15 +494,12 @@ public class WebhookService {
             Transaction transaction,
             String eventId,
             boolean isPrivate,
+            boolean isActive,
             int ticketCount,
             String eventTicketTypeId) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
-        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
-        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS)
-                .document(CollectionPaths.ACTIVE)
-                .collection(privacyPath)
-                .document(eventId);
+        DocumentReference eventRef = eventDocument(db, isActive, isPrivate, eventId);
 
         DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
         if (!eventSnapshot.exists()) {
@@ -554,6 +551,7 @@ public class WebhookService {
             String eventId,
             String organiserId,
             boolean isPrivate,
+            boolean isActive,
             String orderId,
             List<String> ticketIds) throws Exception {
 
@@ -576,7 +574,7 @@ public class WebhookService {
         int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
         eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
-        restockTickets(transaction, eventId, isPrivate, tickets.size(),
+        restockTickets(transaction, eventId, isPrivate, isActive, tickets.size(),
                 resolveEventTicketTypeIdFromTickets(tickets));
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
@@ -996,24 +994,32 @@ public class WebhookService {
             }
 
             Firestore db = FirebaseService.getFirestore();
-            DocumentReference privateEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.ACTIVE)
-                    .collection(CollectionPaths.PRIVATE)
-                    .document(eventId);
-            DocumentReference publicEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.ACTIVE)
-                    .collection(CollectionPaths.PUBLIC)
-                    .document(eventId);
-            List<DocumentSnapshot> eventSnapshots = db.getAll(privateEventRef, publicEventRef).get();
-            DocumentSnapshot privateEvent = eventSnapshots.get(0);
-            DocumentSnapshot publicEvent = eventSnapshots.get(1);
-
-            if (!privateEvent.exists() && !publicEvent.exists()) {
-                logger.error("Event {} not found in either Private or Public collections", eventId);
+            // Ended events are copied to InActive and removed from Active, but a payment
+            // intent can still be canceled afterward.
+            List<DocumentSnapshot> eventSnapshots = db.getAll(
+                    eventDocument(db, true, true, eventId),
+                    eventDocument(db, true, false, eventId),
+                    eventDocument(db, false, true, eventId),
+                    eventDocument(db, false, false, eventId)).get();
+            DocumentSnapshot activePrivate = eventSnapshots.get(0);
+            DocumentSnapshot activePublic = eventSnapshots.get(1);
+            DocumentSnapshot inactivePrivate = eventSnapshots.get(2);
+            DocumentSnapshot inactivePublic = eventSnapshots.get(3);
+            Optional<PaymentIntentEventLocation> maybeLocation = locatePaymentIntentEvent(
+                    activePrivate.exists(),
+                    activePublic.exists(),
+                    inactivePrivate.exists(),
+                    inactivePublic.exists());
+            if (maybeLocation.isEmpty()) {
+                logger.error("Event {} not found in Active or InActive Private or Public collections", eventId);
                 return false;
             }
-            boolean isPrivate = privateEvent.exists();
-            DocumentSnapshot eventSnapshot = isPrivate ? privateEvent : publicEvent;
+            PaymentIntentEventLocation eventLocation = maybeLocation.get();
+            boolean isPrivate = eventLocation.isPrivate();
+            boolean isActive = eventLocation.isActive();
+            DocumentSnapshot eventSnapshot = isActive
+                    ? (isPrivate ? activePrivate : activePublic)
+                    : (isPrivate ? inactivePrivate : inactivePublic);
             String organiserId = eventSnapshot.getString("organiserId");
 
             PaymentIntentCancellationTransactionResult transactionResult =
@@ -1031,6 +1037,7 @@ public class WebhookService {
                                     eventId,
                                     organiserId,
                                     isPrivate,
+                                    isActive,
                                     orderId,
                                     ticketIds);
 
@@ -1087,6 +1094,40 @@ public class WebhookService {
                     paymentIntentId, e.getMessage(), e);
             return false;
         }
+    }
+
+    /**
+     * Prefers the active event. Daily archival copies ended events to InActive and deletes the active copy.
+     */
+    static Optional<PaymentIntentEventLocation> locatePaymentIntentEvent(
+            boolean activePrivateExists,
+            boolean activePublicExists,
+            boolean inactivePrivateExists,
+            boolean inactivePublicExists) {
+        if (activePrivateExists) {
+            return Optional.of(new PaymentIntentEventLocation(true, true));
+        }
+        if (activePublicExists) {
+            return Optional.of(new PaymentIntentEventLocation(false, true));
+        }
+        if (inactivePrivateExists) {
+            return Optional.of(new PaymentIntentEventLocation(true, false));
+        }
+        if (inactivePublicExists) {
+            return Optional.of(new PaymentIntentEventLocation(false, false));
+        }
+        return Optional.empty();
+    }
+
+    private static DocumentReference eventDocument(
+            Firestore db, boolean isActive, boolean isPrivate, String eventId) {
+        return db.collection(CollectionPaths.EVENTS)
+                .document(isActive ? CollectionPaths.ACTIVE : CollectionPaths.INACTIVE)
+                .collection(isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC)
+                .document(eventId);
+    }
+
+    static record PaymentIntentEventLocation(boolean isPrivate, boolean isActive) {
     }
 
     private static String formatEventTimestampOrEmpty(DocumentSnapshot eventSnapshot, String field) {
