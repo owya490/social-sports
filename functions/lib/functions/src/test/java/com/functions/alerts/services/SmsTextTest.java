@@ -24,7 +24,7 @@ public class SmsTextTest {
     }
 
     @Test
-    public void truncate_doesNotSentenceTrimLogBlobs() {
+    public void truncate_doesNotSentenceTrimNearbyStyleBlobs() {
         String nearby = "ERROR WebhookService.process failed after retry";
         assertEquals(nearby.substring(0, 25), SmsText.truncate(nearby, 25));
         assertEquals("sendEmailOnCreateEvent", SmsText.truncate("sendEmailOnCreateEvent", 100));
