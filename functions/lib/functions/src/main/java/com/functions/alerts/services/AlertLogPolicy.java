@@ -30,11 +30,11 @@ public final class AlertLogPolicy {
                 && "_on_call_handler".equals(entry.path("sourceLocation").path("function").asText(""));
     }
 
-    private static boolean isSummaryLog(String logName) {
+    public static boolean isSummaryLog(String logName) {
         return logName != null && (logName.equals(SUMMARY_LOG) || logName.endsWith("/logs/" + SUMMARY_LOG));
     }
 
-    private static boolean isExplainer(String functionName) {
+    public static boolean isExplainer(String functionName) {
         return functionName != null
                 && functionName.replace("-", "").replace("_", "").equalsIgnoreCase(EXPLAINER_FUNCTION);
     }
