@@ -29,7 +29,7 @@ RUNTIME_SA="$PROJECT_NUMBER-compute@developer.gserviceaccount.com"
 
 gcloud services enable pubsub.googleapis.com logging.googleapis.com aiplatform.googleapis.com \
     monitoring.googleapis.com firestore.googleapis.com --project="$PROJECT"
-for ROLE in roles/aiplatform.user roles/logging.viewer roles/logging.logWriter roles/datastore.user; do
+for ROLE in roles/aiplatform.user roles/logging.logWriter roles/datastore.user; do
     gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$RUNTIME_SA" \
         --role="$ROLE" --condition=None --quiet
 done
@@ -46,5 +46,7 @@ fi
 WRITER="$(gcloud logging sinks describe error-log-alerts-sink --project="$PROJECT" --format='value(writerIdentity)')"
 gcloud pubsub topics add-iam-policy-binding error-log-alerts --project="$PROJECT" \
     --member="$WRITER" --role=roles/pubsub.publisher
+gcloud firestore fields ttls update expireAt --collection-group=ErrorAlertClaims \
+    --enable-ttl --project="$PROJECT" --quiet
 python3 "$CONFIG" apply-policy "${POLICY_ARGS[@]}"
 echo "Provisioned error alerts in $PROJECT. Deploy explainErrorAlert separately."

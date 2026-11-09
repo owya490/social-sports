@@ -83,7 +83,7 @@ def managed_policy(project):
         "alertStrategy": {
             "notificationPrompts": ["OPENED"],
             "notificationRateLimit": {"period": "600s"},
-            "autoClose": "604800s",
+            "autoClose": "1800s",
         },
     }
 

@@ -2,15 +2,13 @@ package com.functions.alerts.controllers;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.Instant;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.functions.alerts.clients.CloudLoggingNearbyLogFetcher;
 import com.functions.alerts.clients.GcpLogAlertPublisher;
 import com.functions.alerts.clients.GeminiClient;
-import com.functions.alerts.repositories.ErrorAlertDedupRepository;
+import com.functions.alerts.repositories.AlertClaimRepository;
 import com.functions.alerts.services.CloudLogEntryParser;
 import com.functions.alerts.services.ErrorAlertSummarizer;
 import com.functions.alerts.services.ExplainErrorAlertService;
@@ -26,8 +24,9 @@ import io.cloudevents.CloudEvent;
 /**
  * Pub/Sub-triggered function that publishes error evidence and optional diagnostic context.
  *
- * <p>This function must never log at ERROR: the log sink that feeds it excludes this
- * function by name, and WARN keeps a mistake from paging in a loop.
+ * <p>This function must never log at ERROR or throw: the log sink that feeds it excludes this
+ * function by name, WARN keeps a mistake from paging in a loop, and acking every event keeps
+ * Pub/Sub from redelivering into a storm.
  */
 public class ExplainErrorAlertEndpoint implements CloudEventsFunction {
     private static final Logger logger = LoggerFactory.getLogger(ExplainErrorAlertEndpoint.class);
@@ -53,8 +52,8 @@ public class ExplainErrorAlertEndpoint implements CloudEventsFunction {
         logging.setWriteSynchronicity(com.google.cloud.logging.Synchronicity.SYNC);
         Firestore firestore = FirestoreOptions.newBuilder().setProjectId(project).build().getService();
         return new ExplainErrorAlertService(
-                new ErrorAlertDedupRepository(firestore),
-                new ErrorAlertSummarizer(new GeminiClient(project), new CloudLoggingNearbyLogFetcher(logging)),
+                new AlertClaimRepository(firestore),
+                new ErrorAlertSummarizer(new GeminiClient(project)),
                 new GcpLogAlertPublisher(logging, project));
     }
 
@@ -68,12 +67,11 @@ public class ExplainErrorAlertEndpoint implements CloudEventsFunction {
             logger.warn("explainErrorAlert received CloudEvent with no data");
             return;
         }
-        if (event.getTime() != null && event.getTime().toInstant().isBefore(Instant.now().minus(Duration.ofHours(1)))) {
-            logger.warn("Discarding expired error alert event id={}", event.getId());
-            return;
+        try {
+            String cloudEventJson = new String(event.getData().toBytes(), StandardCharsets.UTF_8);
+            service.processLogEntryJson(CloudLogEntryParser.extractLogEntryJson(cloudEventJson));
+        } catch (RuntimeException failure) {
+            logger.warn("Dropping error alert event id={} failure={}", event.getId(), failure.getClass().getSimpleName());
         }
-        String cloudEventJson = new String(event.getData().toBytes(), StandardCharsets.UTF_8);
-        String logEntryJson = CloudLogEntryParser.extractLogEntryJson(cloudEventJson);
-        service.processLogEntryJson(logEntryJson);
     }
 }
