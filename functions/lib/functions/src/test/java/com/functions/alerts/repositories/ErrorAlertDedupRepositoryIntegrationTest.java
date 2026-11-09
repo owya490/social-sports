@@ -166,6 +166,35 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     }
 
     @Test
+    public void reserve_concurrentDifferentErrorsCannotExceedTheDailyBudget() throws Exception {
+        var global = db.collection(ErrorAlertDedupRepository.COLLECTION).document("_global");
+        List<Timestamp> sends = java.util.Collections.nCopies(19,
+                Timestamp.ofTimeSecondsAndNanos(NOW.minus(Duration.ofHours(2)).getEpochSecond(), 0));
+        global.set(Map.of("recentSends", sends)).get();
+        var pool = Executors.newFixedThreadPool(2);
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<Optional<Reservation>>> attempts = new ArrayList<>();
+        try {
+            for (String fingerprint : List.of("booking", "checkout")) {
+                attempts.add(pool.submit(() -> {
+                    start.await();
+                    return repository.reserve(fingerprint);
+                }));
+            }
+            start.countDown();
+            int owned = 0;
+            for (Future<Optional<Reservation>> attempt : attempts) {
+                if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
+                    owned++;
+                }
+            }
+            assertEquals(1, owned);
+        } finally {
+            pool.shutdownNow();
+        }
+    }
+
+    @Test
     public void reserve_enforcesRollingDailyBudgetAndPrunesExpiredSends() throws Exception {
         var global = db.collection(ErrorAlertDedupRepository.COLLECTION).document("_global");
         List<Timestamp> sends = java.util.Collections.nCopies(20,

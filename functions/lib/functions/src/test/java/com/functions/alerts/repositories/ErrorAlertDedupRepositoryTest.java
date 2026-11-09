@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
@@ -122,6 +123,23 @@ public class ErrorAlertDedupRepositoryTest {
         assertTrue(repository.reserve("booking").isPresent());
         assertTrue(repository.reserve("booking").isEmpty());
         assertTrue(repository.reserve("checkout").isPresent());
+        assertEquals(2, ((List<?>) state.get("_global").get("pendingReservations")).size());
+    }
+
+    @Test
+    public void reserve_holdsDailyBudgetUntilTheSendFinishesOrIsReleased() {
+        List<Timestamp> sends = java.util.Collections.nCopies(19,
+                Timestamp.ofTimeSecondsAndNanos(NOW.minus(Duration.ofHours(2)).getEpochSecond(), 0));
+        state.put("_global", new LinkedHashMap<>(Map.of("recentSends", sends)));
+        ErrorAlertDedupRepository repository = repository(NOW);
+        Reservation held = repository.reserve("booking").orElseThrow();
+        assertTrue(repository.reserve("checkout").isEmpty());
+
+        repository.release(held);
+        Reservation replacement = repository.reserve("checkout").orElseThrow();
+        repository.complete(replacement, "checkout");
+        assertEquals(20, ((List<?>) state.get("_global").get("recentSends")).size());
+        assertTrue(repository.reserve("refund").isEmpty());
     }
 
     @Test

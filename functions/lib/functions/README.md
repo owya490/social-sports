@@ -91,7 +91,7 @@ account needs `roles/logging.viewer`, `roles/logging.logWriter`,
 `roles/datastore.user`, and `roles/aiplatform.user`.
 
 Each error fingerprint can send at most three texts in seven days. A repeat of that error is acknowledged, including while its own send is in progress, so a different error is not blocked and contention is not a failure. A rolling 24-hour limit of 20 publications matches Monitoring's
-log-alert budget. Publication failure releases the
+log-alert budget. A reservation counts toward that limit until its text is sent or the send is released. Publication failure releases the
 lease and escapes the handler. Completion failure escapes without releasing
 early. The deployment enables retries with a two-minute function timeout;
 events older than one hour are acknowledged without processing. Firestore and

@@ -29,6 +29,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     static final int DAILY_LIMIT = 20;
     static final String COLLECTION = "ErrorAlertDedup";
     static final String GLOBAL_SEND_DOCUMENT = "_global";
+    static final String PENDING_RESERVATIONS = "pendingReservations";
 
     private final Firestore db;
     private final DocumentReference global;
@@ -53,14 +54,17 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             DocumentSnapshot globalState = transaction.get(global).get();
             DocumentReference incident = fingerprintDoc(key);
             DocumentSnapshot incidentState = transaction.get(incident).get();
-            if (recentSends(globalState, now).size() >= DAILY_LIMIT || capped(incidentState, now)) {
+            if (dailyBudgetSpent(globalState, now) || capped(incidentState, now)) {
                 return Optional.empty();
             }
             if (recent(incidentState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
                 return Optional.empty();
             }
+            List<Map<String, Object>> pending = openReservations(globalState, now);
+            pending.add(Map.of("owner", reservation.owner(), "reservedAt", timestamp(now)));
             transaction.set(incident, Map.of("owner", reservation.owner(), "inFlightAt", timestamp(now)),
                     SetOptions.merge());
+            transaction.set(global, Map.of(PENDING_RESERVATIONS, pending), SetOptions.merge());
             return Optional.of(reservation);
         });
     }
@@ -78,6 +82,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             }
             List<Timestamp> sends = recentSends(globalState, now);
             sends.add(timestamp(now));
+            List<Map<String, Object>> pending = withoutOwner(openReservations(globalState, now), reservation);
             Timestamp opened = incidentState.getTimestamp("openedAt");
             Instant openedAt = opened == null ? null : opened.toDate().toInstant();
             if (openedAt == null || !openedAt.isAfter(now.minus(SMS_INCIDENT_WINDOW))) {
@@ -93,7 +98,9 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
                 incidentUpdate.put("smsSavedAt", timestamp(now));
             }
             transaction.set(incident, incidentUpdate, SetOptions.merge());
-            transaction.set(global, Map.of("lastSentAt", timestamp(now), "recentSends", sends), SetOptions.merge());
+            transaction.set(global, Map.of(
+                    "lastSentAt", timestamp(now), "recentSends", sends, PENDING_RESERVATIONS, pending),
+                    SetOptions.merge());
             return null;
         });
     }
@@ -103,12 +110,16 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
         if (reservation.fingerprint() == null || reservation.fingerprint().isBlank()) {
             return;
         }
+        Instant now = clock.instant();
         run(transaction -> {
+            DocumentSnapshot globalState = transaction.get(global).get();
             DocumentReference incident = fingerprintDoc(reservation.fingerprint());
             DocumentSnapshot incidentState = transaction.get(incident).get();
             if (owned(incidentState, reservation)) {
                 transaction.set(incident, Map.of("owner", FieldValue.delete(), "inFlightAt", FieldValue.delete()),
                         SetOptions.merge());
+                transaction.set(global, Map.of(PENDING_RESERVATIONS,
+                        withoutOwner(openReservations(globalState, now), reservation)), SetOptions.merge());
             }
             return null;
         });
@@ -203,6 +214,34 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     private static boolean recent(DocumentSnapshot state, String field, Instant now, Duration window) {
         Timestamp value = state.exists() ? state.getTimestamp(field) : null;
         return value != null && value.toDate().toInstant().isAfter(now.minus(window));
+    }
+
+    private static boolean dailyBudgetSpent(DocumentSnapshot state, Instant now) {
+        return recentSends(state, now).size() + openReservations(state, now).size() >= DAILY_LIMIT;
+    }
+
+    private static List<Map<String, Object>> openReservations(DocumentSnapshot state, Instant now) {
+        List<Map<String, Object>> open = new ArrayList<>();
+        Object values = state.exists() ? state.get(PENDING_RESERVATIONS) : null;
+        if (values instanceof List<?> list) {
+            for (Object value : list) {
+                if (!(value instanceof Map<?, ?> raw)) {
+                    continue;
+                }
+                Object reservedAt = raw.get("reservedAt");
+                Object owner = raw.get("owner");
+                if (owner instanceof String ownerId && reservedAt instanceof Timestamp time
+                        && time.toDate().toInstant().isAfter(now.minus(IN_FLIGHT_WINDOW))) {
+                    open.add(Map.of("owner", ownerId, "reservedAt", time));
+                }
+            }
+        }
+        return open;
+    }
+
+    private static List<Map<String, Object>> withoutOwner(List<Map<String, Object>> pending, Reservation reservation) {
+        pending.removeIf(entry -> reservation.owner().equals(entry.get("owner")));
+        return pending;
     }
 
     private static List<Timestamp> recentSends(DocumentSnapshot state, Instant now) {
