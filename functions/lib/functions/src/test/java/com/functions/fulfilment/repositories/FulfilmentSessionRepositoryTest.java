@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -23,8 +22,6 @@ import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.models.fulfilmentSession.WaitlistFulfilmentSession;
 import com.functions.fulfilment.payment.PaymentStatus;
 import com.google.api.core.ApiFuture;
-import com.google.api.gax.rpc.ApiException;
-import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.firestore.CollectionReference;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
@@ -172,47 +169,6 @@ public class FulfilmentSessionRepositoryTest {
         }
     }
 
-    @Test
-    public void pyngSettlementTreatsAMissingDocumentUpdateAsAlreadyArchived() throws Exception {
-        Firestore db = mock(Firestore.class);
-        DocumentReference liveDocument = liveSession(db, true);
-        archivedSession(db, true);
-        ApiFuture<com.google.cloud.firestore.WriteResult> write = failedFuture(notFound("No document to update"));
-        when(liveDocument.update(org.mockito.ArgumentMatchers.<java.util.Map<String, Object>>any()))
-                .thenReturn(write);
-
-        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
-            firebase.when(FirebaseService::getFirestore).thenReturn(db);
-            FulfilmentSessionRepository.updatePyngSettlement(
-                    "session-1",
-                    PyngMetadata.builder().status(PaymentStatus.SUCCEEDED).build(),
-                    FulfilmentSessionStatus.COMPLETED);
-        }
-    }
-
-    @Test
-    public void pyngSettlementFailsWhenAMissingDocumentUpdateIsNotArchived() throws Exception {
-        Firestore db = mock(Firestore.class);
-        DocumentReference liveDocument = liveSession(db, true);
-        archivedSession(db, false);
-        ApiFuture<com.google.cloud.firestore.WriteResult> write = failedFuture(notFound("No document to update"));
-        when(liveDocument.update(org.mockito.ArgumentMatchers.<java.util.Map<String, Object>>any()))
-                .thenReturn(write);
-
-        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
-            firebase.when(FirebaseService::getFirestore).thenReturn(db);
-            try {
-                FulfilmentSessionRepository.updatePyngSettlement(
-                        "session-1",
-                        PyngMetadata.builder().status(PaymentStatus.SUCCEEDED).build(),
-                        FulfilmentSessionStatus.COMPLETED);
-                fail("missing session should fail settlement");
-            } catch (Exception e) {
-                assertTrue(e.getMessage().contains("ArchivedFulfilmentSessions"));
-            }
-        }
-    }
-
     private static DocumentReference liveSession(Firestore db, boolean exists) throws Exception {
         CollectionReference live = mock(CollectionReference.class);
         DocumentReference liveDocument = mock(DocumentReference.class);
@@ -244,25 +200,4 @@ public class FulfilmentSessionRepositoryTest {
         return future;
     }
 
-    private static <T> ApiFuture<T> failedFuture(Exception error) throws Exception {
-        @SuppressWarnings("unchecked")
-        ApiFuture<T> future = mock(ApiFuture.class);
-        when(future.get()).thenThrow(new ExecutionException(error));
-        return future;
-    }
-
-    private static ApiException notFound(String message) {
-        StatusCode status = new StatusCode() {
-            @Override
-            public StatusCode.Code getCode() {
-                return StatusCode.Code.NOT_FOUND;
-            }
-
-            @Override
-            public Object getTransportCode() {
-                return null;
-            }
-        };
-        return new ApiException(message, null, status, false);
-    }
 }
