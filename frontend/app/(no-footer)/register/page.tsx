@@ -5,18 +5,26 @@ import AuthSplitLayout, {
   AUTH_SUBMIT_CLASS,
 } from "@/components/auth/AuthSplitLayout";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
-import { useUser } from "@/components/utility/UserContext";
-import { EmptyNewUserData, NewUserData, UserId } from "@/interfaces/UserTypes";
+import { useAuthPageNavigation } from "@/components/auth/useAuthPageNavigation";
+import { EmptyNewUserData, NewUserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { getAuthPageHref } from "@/services/src/auth/authNavigation";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
-import { getFullUserById } from "@/services/src/users/usersService";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState, useTransition } from "react";
+import React, { Suspense, useState } from "react";
 
 export default function Register() {
+  return (
+    <Suspense fallback={<p role="status" className="p-6 text-sm text-gray-500">Loading...</p>}>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
   const [userData, setUserData] = useState<NewUserData>(EmptyNewUserData);
   const router = useRouter();
   const logger = new Logger("registerLogger");
@@ -26,62 +34,59 @@ export default function Register() {
   const [showRegisterFailure, setShowRegisterFailure] = useState(false);
   const [showEmailSentAlert, setShowEmailSentAlert] = useState(false);
   const [error, setError] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [socialPending, setSocialPending] = useState(false);
-  const { setUser } = useUser();
+  const { returnTo, beginSignIn, completeSignIn } = useAuthPageNavigation();
 
-  const completeSocialSignIn = async (userId: UserId) => {
-    setUser(await getFullUserById(userId));
-    router.push("/?login=success");
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isPending || socialPending) return;
+    beginSignIn();
     setPasswordMismatch(false);
     setShowRegisterFailure(false);
     setShowEmailSentAlert(false);
 
-    startTransition(async () => {
-      if (userData.password !== repeatPassword) {
-        setPasswordMismatch(true);
-        setShowRegisterFailure(false);
-        return;
-      }
+    if (userData.password !== repeatPassword) {
+      setPasswordMismatch(true);
+      return;
+    }
 
-      try {
-        await handleEmailAndPasswordSignUp(userData);
-        setShowEmailSentAlert(true);
-      } catch (error: any) {
-        setShowRegisterFailure(true);
-        setPasswordMismatch(false);
+    setIsPending(true);
+    try {
+      await handleEmailAndPasswordSignUp(userData, returnTo);
+      setShowEmailSentAlert(true);
+    } catch (error) {
+      setShowRegisterFailure(true);
+      setPasswordMismatch(false);
 
-        if (error instanceof FirebaseError) {
-          switch (error.code) {
-            case "auth/email-already-in-use":
-              setError("This email is already in use.");
-              break;
-            case "auth/invalid-email":
-              setError("Invalid email address.");
-              break;
-            case "auth/weak-password":
-              setError("Password is too weak.");
-              break;
-            default:
-              setError("An unexpected error occurred.");
-          }
-        } else {
-          setError("An unexpected error occurred"); // Fallback error message
-          logger.error(error?.message || error);
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/email-already-in-use":
+            setError("This email is already in use.");
+            break;
+          case "auth/invalid-email":
+            setError("Invalid email address.");
+            break;
+          case "auth/weak-password":
+            setError("Password is too weak.");
+            break;
+          default:
+            setError("An unexpected error occurred.");
         }
-        console.error("Error:", error);
+      } else {
+        setError("An unexpected error occurred");
+        logger.error("Email registration failed", { error: error instanceof Error ? error.message : String(error) });
       }
-    });
+      console.error("Error:", error);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleAlertClose = () => {
     setShowRegisterFailure(false);
     if (error == "This email is already in use.") {
-      router.push("/login");
+      router.push(getAuthPageHref("/login", returnTo));
     }
   };
 
@@ -218,17 +223,20 @@ export default function Register() {
 
         <SocialAuthButtons
           disabled={isPending}
-          onPendingChange={setSocialPending}
+          onPendingChange={(pending) => {
+            if (pending) beginSignIn();
+            setSocialPending(pending);
+          }}
           onError={(message) => {
             setError(message);
             setShowRegisterFailure(true);
           }}
-          onSuccess={completeSocialSignIn}
+          onSuccess={completeSignIn}
         />
 
         <p className="mt-4 text-sm text-gray-500">
           Have an account?{" "}
-          <Link href="/login" className="font-semibold leading-6 text-core-text hover:underline">
+          <Link href={getAuthPageHref("/login", returnTo)} className="font-semibold leading-6 text-core-text hover:underline">
             Login here
           </Link>
         </p>

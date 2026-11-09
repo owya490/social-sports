@@ -5,53 +5,54 @@ import AuthSplitLayout, {
   AUTH_SUBMIT_CLASS,
 } from "@/components/auth/AuthSplitLayout";
 import SocialAuthButtons from "@/components/auth/SocialAuthButtons";
-import { useUser } from "@/components/utility/UserContext";
-import { UserId } from "@/interfaces/UserTypes";
+import { useAuthPageNavigation } from "@/components/auth/useAuthPageNavigation";
 import { Logger } from "@/observability/logger";
+import { getAuthPageHref } from "@/services/src/auth/authNavigation";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
-import { getFullUserById } from "@/services/src/users/usersService";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import React, { useState, useTransition } from "react";
+import React, { Suspense, useState } from "react";
 
 export default function Login() {
+  return (
+    <Suspense fallback={<p role="status" className="p-6 text-sm text-gray-500">Loading...</p>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [userData, setUserData] = useState({
     email: "",
     password: "",
   });
   const [errorMessage, setErrorMessage] = useState("");
   const [alertStatus, setAlertStatus] = useState(false);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
   const [socialPending, setSocialPending] = useState(false);
-  const router = useRouter();
-  const { setUser } = useUser();
+  const { returnTo, beginSignIn, completeSignIn } = useAuthPageNavigation();
   const logger = new Logger("loginLogger");
 
-  const completeSocialSignIn = async (userId: UserId) => {
-    setUser(await getFullUserById(userId));
-    router.push("/?login=success");
-  };
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isPending || socialPending) return;
+    beginSignIn();
     handleAlertClose();
-
-    startTransition(async () => {
-      try {
-        const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
-        if (userCreated !== null) {
-          setUser(await getFullUserById(userCreated));
-          router.push("/?login=success"); // Redirect only if user creation is successful
-        } else {
-          throw new Error("Could not find user");
-        }
-      } catch (error: any) {
-        logger.error("Error: ", error?.message || error);
-        if (error instanceof Error) setErrorMessage(error.message);
-        setAlertStatus(true);
+    setIsPending(true);
+    try {
+      const userId = await handleEmailAndPasswordSignIn(userData.email, userData.password, returnTo);
+      if (userId !== null) {
+        await completeSignIn(userId);
+      } else {
+        throw new Error("Could not find user");
       }
-    });
+    } catch (error) {
+      logger.error("Email sign-in failed", { error: error instanceof Error ? error.message : String(error) });
+      setErrorMessage(error instanceof Error ? error.message : "Sign-in failed. Please try again.");
+      setAlertStatus(true);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleAlertClose = () => {
@@ -109,7 +110,7 @@ export default function Login() {
               <label htmlFor="password" className={AUTH_LABEL_CLASS}>
                 Password
               </label>
-              <Link href="resetPassword" className="font-semibold text-sm text-gray-500 hover:underline">
+              <Link href={getAuthPageHref("/resetPassword", returnTo)} className="font-semibold text-sm text-gray-500 hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -140,17 +141,20 @@ export default function Login() {
 
         <SocialAuthButtons
           disabled={isPending}
-          onPendingChange={setSocialPending}
+          onPendingChange={(pending) => {
+            if (pending) beginSignIn();
+            setSocialPending(pending);
+          }}
           onError={(message) => {
             setErrorMessage(message);
             setAlertStatus(true);
           }}
-          onSuccess={completeSocialSignIn}
+          onSuccess={completeSignIn}
         />
 
         <p className="mt-4 text-sm text-gray-500">
           Not a member?{" "}
-          <Link href="/register" className="font-semibold leading-6 text-core-text hover:underline">
+          <Link href={getAuthPageHref("/register", returnTo)} className="font-semibold leading-6 text-core-text hover:underline">
             Register here
           </Link>
         </p>
