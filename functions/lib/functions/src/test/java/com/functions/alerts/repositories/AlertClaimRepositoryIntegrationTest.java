@@ -55,7 +55,7 @@ public class AlertClaimRepositoryIntegrationTest {
                 String fingerprint = "fp-" + (i % 3);
                 attempts.add(pool.submit(() -> {
                     start.await();
-                    return repository.claim(fingerprint);
+                    return repository.claim(fingerprint).isPresent();
                 }));
             }
             start.countDown();
@@ -73,14 +73,12 @@ public class AlertClaimRepositoryIntegrationTest {
 
     @Test
     public void claim_expiredDocumentsCanBeReclaimedAndReleaseFreesThem() {
-        assertTrue(repository(NOW).claim("fp-webhook"));
-        assertFalse(repository(NOW).claim("fp-webhook"));
+        assertTrue(repository(NOW).claim("fp-webhook").isPresent());
+        assertFalse(repository(NOW).claim("fp-webhook").isPresent());
 
         AlertClaimRepository later = repository(NOW.plus(AlertClaimRepository.FINGERPRINT_WINDOW).plusSeconds(1));
-        assertTrue(later.claim("fp-webhook"));
-
-        later.release("fp-webhook");
-        assertTrue(later.claim("fp-webhook"));
+        later.release(later.claim("fp-webhook").orElseThrow());
+        assertTrue(later.claim("fp-webhook").isPresent());
     }
 
     private AlertClaimRepository repository(Instant now) {

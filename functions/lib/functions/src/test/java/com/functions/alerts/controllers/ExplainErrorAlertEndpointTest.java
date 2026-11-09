@@ -100,12 +100,12 @@ public class ExplainErrorAlertEndpointTest {
     private static AlertClaimStore store() {
         return new AlertClaimStore() {
             @Override
-            public boolean claim(String fingerprint) {
-                return true;
+            public Optional<Claim> claim(String fingerprint) {
+                return Optional.of(new Claim(fingerprint, "2026-11-09"));
             }
 
             @Override
-            public void release(String fingerprint) {
+            public void release(Claim claim) {
             }
         };
     }

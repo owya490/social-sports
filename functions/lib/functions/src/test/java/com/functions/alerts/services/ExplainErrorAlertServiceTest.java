@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import com.functions.alerts.clients.AlertSummaryPublisher;
 import com.functions.alerts.clients.AlertClaimStore;
+import com.functions.alerts.clients.AlertClaimStore.Claim;
 import com.functions.alerts.models.ErrorAlertNotification;
 import com.functions.alerts.models.ParsedErrorLog;
 
@@ -24,7 +25,7 @@ public class ExplainErrorAlertServiceTest {
     @Before
     public void setUp() {
         store = mock(AlertClaimStore.class);
-        when(store.claim(any())).thenReturn(true);
+        when(store.claim(any())).thenAnswer(invocation -> Optional.of(new Claim(invocation.getArgument(0), "2026-11-09")));
         published = new ArrayList<>();
         service = service(published::add);
     }
@@ -58,7 +59,7 @@ public class ExplainErrorAlertServiceTest {
 
     @Test
     public void process_skipsRecentlyClaimedErrorsWithoutCallingAiOrPublisher() {
-        when(store.claim(any())).thenReturn(false);
+        when(store.claim(any())).thenReturn(Optional.empty());
         service = new ExplainErrorAlertService(store, new ErrorAlertSummarizer(prompt -> {
             throw new AssertionError("Claimed errors must not call the model");
         }), published::add);
@@ -90,7 +91,7 @@ public class ExplainErrorAlertServiceTest {
         service = service(notification -> { throw new IllegalStateException("Logging unavailable"); });
         doThrow(new IllegalStateException("Firestore unavailable")).when(store).release(any());
         service.process(sampleLog());
-        verify(store).release(ErrorAlertFingerprint.of(sampleLog()));
+        verify(store).release(new Claim(ErrorAlertFingerprint.of(sampleLog()), "2026-11-09"));
     }
 
     @Test

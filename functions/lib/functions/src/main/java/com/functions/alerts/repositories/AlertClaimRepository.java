@@ -5,6 +5,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.functions.alerts.clients.AlertClaimStore;
@@ -15,7 +16,6 @@ import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
-import com.google.cloud.firestore.SetOptions;
 import com.google.cloud.firestore.Transaction;
 
 /**
@@ -25,7 +25,11 @@ import com.google.cloud.firestore.Transaction;
  */
 public class AlertClaimRepository implements AlertClaimStore {
     public static final Duration FINGERPRINT_WINDOW = Duration.ofHours(6);
-    public static final Duration GLOBAL_WINDOW = Duration.ofMinutes(10);
+    /**
+     * Monitoring counts its 600s from publication, but the window starts at claim;
+     * the extra two minutes cover the 120s function timeout between them.
+     */
+    public static final Duration GLOBAL_WINDOW = Duration.ofMinutes(12);
     /** Below Google's 20 so its randomly timed daily reset cannot drop the last pages. */
     public static final long DAILY_LIMIT = 15;
     static final String COLLECTION = CollectionPaths.ERROR_ALERT_CLAIMS;
@@ -46,11 +50,12 @@ public class AlertClaimRepository implements AlertClaimStore {
     }
 
     @Override
-    public boolean claim(String fingerprint) {
+    public Optional<Claim> claim(String fingerprint) {
         Instant now = clock.instant();
+        Claim claim = new Claim(fingerprint, now.atZone(ZoneOffset.UTC).toLocalDate().toString());
         DocumentReference fingerprintDoc = fingerprintDoc(fingerprint);
         DocumentReference globalDoc = globalDoc();
-        DocumentReference dayDoc = dayDoc(now);
+        DocumentReference dayDoc = dayDoc(claim.day());
         return run(transaction -> {
             DocumentSnapshot fingerprintState = transaction.get(fingerprintDoc).get();
             DocumentSnapshot globalState = transaction.get(globalDoc).get();
@@ -58,26 +63,25 @@ public class AlertClaimRepository implements AlertClaimStore {
             Long sent = dayState.exists() ? dayState.getLong(COUNT) : null;
             if (active(fingerprintState, now) || active(globalState, now)
                     || (sent != null && sent >= DAILY_LIMIT)) {
-                return false;
+                return Optional.<Claim>empty();
             }
             transaction.set(fingerprintDoc, expiring(now, FINGERPRINT_WINDOW));
             transaction.set(globalDoc, expiring(now, GLOBAL_WINDOW));
             transaction.set(dayDoc, Map.of(COUNT, (sent == null ? 0 : sent) + 1,
                     EXPIRE_AT, timestamp(now.plus(Duration.ofDays(2)))));
-            return true;
+            return Optional.of(claim);
         });
     }
 
     @Override
-    public void release(String fingerprint) {
-        Instant now = clock.instant();
-        DocumentReference fingerprintDoc = fingerprintDoc(fingerprint);
+    public void release(Claim claim) {
+        DocumentReference fingerprintDoc = fingerprintDoc(claim.fingerprint());
         DocumentReference globalDoc = globalDoc();
-        DocumentReference dayDoc = dayDoc(now);
+        DocumentReference dayDoc = dayDoc(claim.day());
         run(transaction -> {
             transaction.delete(fingerprintDoc);
             transaction.delete(globalDoc);
-            transaction.set(dayDoc, Map.of(COUNT, FieldValue.increment(-1)), SetOptions.merge());
+            transaction.update(dayDoc, Map.of(COUNT, FieldValue.increment(-1)));
             return null;
         });
     }
@@ -90,8 +94,8 @@ public class AlertClaimRepository implements AlertClaimStore {
         return db.collection(COLLECTION).document("global");
     }
 
-    private DocumentReference dayDoc(Instant now) {
-        return db.collection(COLLECTION).document("day-" + now.atZone(ZoneOffset.UTC).toLocalDate());
+    private DocumentReference dayDoc(String day) {
+        return db.collection(COLLECTION).document("day-" + day);
     }
 
     private static boolean active(DocumentSnapshot state, Instant now) {

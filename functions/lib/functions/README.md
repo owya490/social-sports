@@ -71,7 +71,7 @@ unconfirmed; prompt instructions do not guarantee that generated claims are true
 - `ExplainErrorAlertService` claims, interprets and publishes. Facts are
   published even when AI is unavailable. It never throws.
 - `AlertClaimRepository` claims, in one transaction, a fingerprint for six
-  hours, a ten-minute global window and one of 15 daily pages. These mirror the
+  hours, a twelve-minute global window and one of 15 daily pages. These mirror the
   policy's 600s notification limit and Google's 20 log-alert incidents a day,
   which otherwise drop pages silently. A burst pages once, and a repeating
   error pages at most every six hours.
