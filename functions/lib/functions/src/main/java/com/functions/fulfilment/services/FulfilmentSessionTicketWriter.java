@@ -33,7 +33,7 @@ import com.google.cloud.firestore.Transaction;
 /**
  * Saves the result of a queued fulfilment session.
  * Completed sessions become tickets and an order. Expired sessions put that many tickets back on sale.
- * Both outcomes delete the fulfilment session in the same transaction.
+ * Both outcomes archive the fulfilment session in the same transaction.
  */
 class FulfilmentSessionTicketWriter {
 
@@ -61,7 +61,7 @@ class FulfilmentSessionTicketWriter {
             EventTicketTypeRepository.incrementVacancy(transaction, eventRef, ticketType, tickets.count());
             recordSessionOnEvent(transaction, eventId, session.getId());
             deleteTempFormResponses(session, transaction);
-            FulfilmentSessionRepository.deleteFulfilmentSession(session.getId(), Optional.of(transaction));
+            FulfilmentSessionRepository.archiveFulfilmentSession(session, transaction);
             return true;
         });
         return Boolean.TRUE.equals(refunded);
@@ -93,9 +93,9 @@ class FulfilmentSessionTicketWriter {
 
     /**
      * One completed queue message inside a single transaction. Idempotency is read first: a retry
-     * after commit finds the session recorded and the fulfilment session already deleted, so it must
+     * after commit finds the session recorded and the fulfilment session already archived, so it must
      * not read forms or write again. Temp forms are read next. Mint then reads the event and writes
-     * tickets, the order, and event metadata. Form copies, temp deletes, and the session delete are
+     * tickets, the order, and event metadata. Form copies, temp deletes, and the session archive are
      * the remaining writes.
      */
     private static String mintAndComplete(FulfilmentSession session, Transaction transaction) throws Exception {
@@ -132,7 +132,7 @@ class FulfilmentSessionTicketWriter {
         }
         prepareCompletedSessionMetadata(minted.eventMetadata(), session.getId());
         transaction.set(minted.eventMetadataRef(), minted.eventMetadata());
-        writeFormsAndDeleteSession(session, tempFormResponses, transaction);
+        writeFormsAndArchiveSession(session, tempFormResponses, transaction);
         return minted.orderId();
     }
 
@@ -202,7 +202,7 @@ class FulfilmentSessionTicketWriter {
         return tempFormResponses;
     }
 
-    private static void writeFormsAndDeleteSession(
+    private static void writeFormsAndArchiveSession(
             FulfilmentSession session,
             Map<String, FormResponse> tempFormResponses,
             Transaction transaction) throws Exception {
@@ -222,7 +222,7 @@ class FulfilmentSessionTicketWriter {
                 FormsUtils.copyTempFormResponseToSubmittedWithData(tempFormResponse, Optional.of(transaction));
             }
         }
-        FulfilmentSessionRepository.deleteFulfilmentSession(session.getId(), Optional.of(transaction));
+        FulfilmentSessionRepository.archiveFulfilmentSession(session, transaction);
     }
 
     private static String formKey(FormsFulfilmentEntity formsEntity) {

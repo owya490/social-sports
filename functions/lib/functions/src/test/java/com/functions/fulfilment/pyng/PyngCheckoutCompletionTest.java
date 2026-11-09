@@ -109,6 +109,18 @@ public class PyngCheckoutCompletionTest {
     }
 
     @Test
+    public void crystallisedSessionReturnsItsStatusWithoutPublishing() throws Exception {
+        PyngCheckoutFulfilmentSession session = session(PaymentStatus.SUCCEEDED, "Ada", "ada@example.com");
+        session.setStatus(FulfilmentSessionStatus.COMPLETED);
+        session.setIsFulfilmentSessionCrystalised(true);
+        stored.set(session);
+
+        assertEquals(PaymentStatus.SUCCEEDED, PyngCheckoutCompletion.refresh(SESSION_ID));
+
+        assertEquals(0, publishes.get());
+    }
+
+    @Test
     public void pendingDoesNotPublish() throws Exception {
         stored.set(session(PaymentStatus.PENDING, "Ada", "ada@example.com"));
         PyngService.client = clientReturning("Pending");

@@ -7,6 +7,8 @@ import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionStatus
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSessionType;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
@@ -45,6 +47,49 @@ public class FulfilmentSessionRepository {
         Firestore db = FirebaseService.getFirestore();
         return db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)
                 .document(sessionId);
+    }
+
+    private static DocumentReference getArchivedFulfilmentSessionDocRef(String sessionId) {
+        Firestore db = FirebaseService.getFirestore();
+        return db.collection(FirebaseService.CollectionPaths.ARCHIVED_FULFILMENT_SESSIONS_ROOT_PATH)
+                .document(sessionId);
+    }
+
+    /**
+     * Moves a processed session to the archive under the same id and removes the live document.
+     * set overwrites an existing archive document so a repeated write does not fail the ticket transaction.
+     */
+    public static void archiveFulfilmentSession(FulfilmentSession session, Transaction transaction)
+            throws Exception {
+        String sessionId = session.getId();
+        try {
+            transaction.set(getArchivedFulfilmentSessionDocRef(sessionId), session);
+            transaction.delete(getFulfilmentSessionDocRef(sessionId));
+        } catch (Exception e) {
+            logger.error("Failed to archive fulfilment session for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to archive fulfilment session for sessionId: " + sessionId, e);
+        }
+    }
+
+    /**
+     * Reads the live session, then the archive. A poll can arrive after the processor has moved it.
+     */
+    public static Optional<FulfilmentSession> getFulfilmentSessionOrArchived(String sessionId) throws Exception {
+        Optional<FulfilmentSession> live = getFulfilmentSession(sessionId, Optional.empty());
+        if (live.isPresent()) {
+            return live;
+        }
+        try {
+            DocumentSnapshot snapshot = getArchivedFulfilmentSessionDocRef(sessionId).get().get();
+            if (snapshot.exists()) {
+                return Optional.of(FulfilmentSession.fromFirestore(snapshot));
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            logger.error("Failed to retrieve archived fulfilment session for sessionId: {}", sessionId, e);
+            throw new Exception(
+                    "Failed to retrieve archived fulfilment session for sessionId: " + sessionId, e);
+        }
     }
 
     public static Optional<FulfilmentSession> getFulfilmentSession(String sessionId,
@@ -140,11 +185,19 @@ public class FulfilmentSessionRepository {
     /**
      * Records a terminal Pyng outcome after the session has been published.
      * Crystallising the session stops a later poll from publishing it again.
+     * A missing live document means the processor already archived that session.
      */
     public static void updatePyngSettlement(String sessionId, PyngMetadata pyngMetadata,
             FulfilmentSessionStatus status) throws Exception {
         try {
             DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+            DocumentSnapshot snapshot = sessionDocRef.get().get();
+            if (!snapshot.exists()) {
+                logger.info(
+                        "Pyng settlement for session {} skipped; the live session is already archived",
+                        sessionId);
+                return;
+            }
             Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
                     new TypeReference<Map<String, Object>>() {
                     });
@@ -154,9 +207,28 @@ public class FulfilmentSessionRepository {
             updates.put("isFulfilmentSessionCrystalised", true);
             sessionDocRef.update(updates).get();
         } catch (Exception e) {
+            if (isMissingDocument(e)) {
+                logger.info(
+                        "Pyng settlement for session {} skipped; the live session is already archived",
+                        sessionId);
+                return;
+            }
             logger.error("Failed to record Pyng settlement for sessionId: {}", sessionId, e);
             throw new Exception("Failed to record Pyng settlement for sessionId: " + sessionId, e);
         }
+    }
+
+    private static boolean isMissingDocument(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof ApiException apiException
+                    && apiException.getStatusCode() != null
+                    && apiException.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     public static void updatePyngMetadata(String sessionId, PyngMetadata pyngMetadata) throws Exception {
