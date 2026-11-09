@@ -86,34 +86,20 @@ public class EventsRepository {
         }
     }
 
-    /**
-     * Finds the event in Active or InActive, Public or Private.
-     * Search order is {@code EVENT_PATHS}: active public, active private, inactive public, inactive private.
-     */
-    public static Optional<DocumentSnapshot> findEventDocument(String eventId) throws Exception {
-        return findEventDocument(eventId, Optional.empty());
-    }
-
-    public static Optional<DocumentSnapshot> findEventDocument(String eventId, Optional<Transaction> transaction) throws Exception {
-        Firestore db = FirebaseService.getFirestore();
-        for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
-            DocumentReference docRef = db.document(path + "/" + eventId);
-            DocumentSnapshot snapshot = transaction.isPresent() ? transaction.get().get(docRef).get() : docRef.get().get();
-            if (snapshot.exists()) {
-                return Optional.of(snapshot);
-            }
-        }
-        return Optional.empty();
-    }
-
     private static DocumentSnapshot findEventDocumentSnapshot(String eventId, Optional<Transaction> transaction) throws Exception {
+        Firestore db = FirebaseService.getFirestore();
         try {
-            Optional<DocumentSnapshot> snapshot = findEventDocument(eventId, transaction);
-            if (snapshot.isEmpty()) {
-                logger.error("No event document found for eventId in any subcollection: {}", eventId);
-                throw new Exception("No event document found for eventId: " + eventId);
+            for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
+                DocumentReference docRef = db.document(path + "/" + eventId);
+                DocumentSnapshot maybeDocSnapshot = transaction.isPresent() ? transaction.get().get(docRef).get() : docRef.get().get();
+                if (maybeDocSnapshot.exists()) {
+                    return maybeDocSnapshot;
+                }
             }
-            return snapshot.get();
+
+            // If no document is found, log and throw an exception
+            logger.error("No event document found for eventId in any subcollection: {}", eventId);
+            throw new Exception("No event document found for eventId: " + eventId);
         } catch (Exception e) {
             logger.error("Error finding event document reference for ID: {}", eventId, e);
             throw new Exception("Could not find event document reference for ID: " + eventId, e);
@@ -287,8 +273,14 @@ public class EventsRepository {
     }
 
     private static DocumentReference findEventDocumentReference(String eventId, Transaction transaction) throws Exception {
-        return findEventDocument(eventId, Optional.of(transaction))
-                .map(DocumentSnapshot::getReference)
-                .orElseThrow(() -> new Exception("No event document found for eventId: " + eventId));
+        Firestore db = FirebaseService.getFirestore();
+        for (String path : FirebaseService.CollectionPaths.EVENT_PATHS) {
+            DocumentReference docRef = db.document(path + "/" + eventId);
+            DocumentSnapshot snapshot = transaction.get(docRef).get();
+            if (snapshot.exists()) {
+                return docRef;
+            }
+        }
+        throw new Exception("No event document found for eventId: " + eventId);
     }
 }
