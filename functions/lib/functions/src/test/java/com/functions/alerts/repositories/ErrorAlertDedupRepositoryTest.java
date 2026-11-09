@@ -143,6 +143,30 @@ public class ErrorAlertDedupRepositoryTest {
     }
 
     @Test
+    public void release_afterRememberSmsAllowsTheUnsentErrorToReserveAgain() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        Reservation reservation = repository.reserve("booking").orElseThrow();
+        repository.rememberSms("booking", "Booking cron failed.");
+        repository.release(reservation);
+
+        assertTrue(repository.smsFor("booking").isEmpty());
+        assertTrue(repository.reserve("booking").isPresent());
+    }
+
+    @Test
+    public void release_keepsSmsAfterATextWasAlreadySent() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        Reservation sent = repository.reserve("booking").orElseThrow();
+        repository.rememberSms("booking", "Booking cron failed.");
+        repository.complete(sent, "booking");
+        Reservation failed = repository.reserve("booking").orElseThrow();
+        repository.release(failed);
+
+        assertEquals("Booking cron failed.", repository.smsFor("booking").orElseThrow());
+        assertEquals(1L, ((Number) state.get("booking").get("sentCount")).longValue());
+    }
+
+    @Test
     public void reserve_doesNotRepeatAnErrorThatAlreadyHasSmsAndNoCount() {
         state.put("booking", new LinkedHashMap<>(Map.of(
                 "sms", "Booking cron failed.",

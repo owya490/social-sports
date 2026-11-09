@@ -22,6 +22,11 @@ import com.google.cloud.firestore.SetOptions;
 import com.google.cloud.firestore.Transaction;
 
 public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
+    /**
+     * Holds a same-error lease and a daily-budget slot. The function timeout is
+     * 2 minutes, so a live send finishes inside this window. A longer call would
+     * free the slot while that send was still running.
+     */
     public static final Duration IN_FLIGHT_WINDOW = Duration.ofMinutes(3);
     /** Matches Cloud Monitoring autoClose (604800s) so EXTRACT(sms) stays stable for one incident. */
     public static final Duration SMS_INCIDENT_WINDOW = Duration.ofDays(7);
@@ -116,8 +121,16 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             DocumentReference incident = fingerprintDoc(reservation.fingerprint());
             DocumentSnapshot incidentState = transaction.get(incident).get();
             if (owned(incidentState, reservation)) {
-                transaction.set(incident, Map.of("owner", FieldValue.delete(), "inFlightAt", FieldValue.delete()),
-                        SetOptions.merge());
+                Map<String, Object> cleared = new LinkedHashMap<>();
+                cleared.put("owner", FieldValue.delete());
+                cleared.put("inFlightAt", FieldValue.delete());
+                // sms without sentCount means the incident already paged. This attempt
+                // never published, so remove that pair and let the retry send.
+                if (incidentState.get("sentCount") == null) {
+                    cleared.put("sms", FieldValue.delete());
+                    cleared.put("smsSavedAt", FieldValue.delete());
+                }
+                transaction.set(incident, cleared, SetOptions.merge());
                 transaction.set(global, Map.of(PENDING_RESERVATIONS,
                         withoutOwner(openReservations(globalState, now), reservation)), SetOptions.merge());
             }
