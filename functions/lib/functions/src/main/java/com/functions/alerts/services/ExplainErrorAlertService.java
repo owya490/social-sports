@@ -68,7 +68,7 @@ public class ExplainErrorAlertService {
     }
 
     private String smsForPublish(String fingerprint, String headline, String interpretation) {
-        String sms = interpretation.isBlank() ? headline : SmsText.forSmsSubject(interpretation);
+        String sms = SmsText.forSmsSubject(interpretation.isBlank() ? headline : interpretation);
         dedupStore.rememberSms(fingerprint, sms);
         return sms;
     }
