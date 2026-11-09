@@ -3,7 +3,7 @@
 import { AnimatedSection } from "@/components/organiser/wrapped/AnimatedSection";
 import { CountUpNumber } from "@/components/organiser/wrapped/CountUpNumber";
 import { motion, useInView } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useRef } from "react";
 
 interface TotalSalesSectionProps {

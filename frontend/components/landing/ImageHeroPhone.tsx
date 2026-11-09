@@ -1,5 +1,5 @@
 import heroPhoneImage from "@/public/images/mocks/sportshub-iphone-web-mock.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import styles from "./ImageHero.module.css";
 
 export default function ImageHeroPhone() {
@@ -9,7 +9,7 @@ export default function ImageHeroPhone() {
         <div className={styles.heroIllustrationRootPhone}>
           <div className={styles.heroIllustrationPerspective}>
             <div className={styles.heroIllustrationBasePhone}>
-              <Image src={heroPhoneImage} alt="SportHub Platform Interface" fill priority />
+              <Image src={heroPhoneImage} alt="SportHub Platform Interface" fill priority sizes="100vw" />
             </div>
           </div>
         </div>

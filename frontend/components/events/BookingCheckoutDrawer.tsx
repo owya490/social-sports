@@ -6,7 +6,7 @@ import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { isPayWithPyngEnabled } from "@/services/featureFlags";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { OrganiserPill } from "./OrganiserPill";
 
 const PYNG_SIGNUP_URL = "https://pyng.com.au/customer-referral?referralCode=6YNCMZ";

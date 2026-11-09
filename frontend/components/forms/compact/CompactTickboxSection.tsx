@@ -1,7 +1,7 @@
 "use client";
 
 import { TickboxSection } from "@/interfaces/FormTypes";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 export function CompactTickboxSection({
   tickboxSection,

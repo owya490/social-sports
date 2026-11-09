@@ -1,6 +1,7 @@
 import { EventData } from "@/interfaces/EventTypes";
 import { NO_SPORT_CHOSEN_STRING } from "@/services/src/filterService";
-import Image, { StaticImageData } from "next/image";
+import Image from "@/components/elements/AppImage";
+import { StaticImageData } from "next/image";
 
 interface FilterIconProps {
   sportIdentifierString: string;

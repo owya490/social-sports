@@ -1,6 +1,6 @@
 import { TickboxSection } from "@/interfaces/FormTypes";
 import { Checkbox } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 export const TickboxSectionResponse = ({
   tickboxSection,

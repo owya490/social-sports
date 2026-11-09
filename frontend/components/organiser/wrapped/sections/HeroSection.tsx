@@ -2,7 +2,7 @@
 
 import { formatDate } from "@/services/src/wrapped/wrappedUtils";
 import { motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 interface HeroSectionProps {
   organiserName: string;

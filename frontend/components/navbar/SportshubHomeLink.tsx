@@ -1,5 +1,5 @@
 import Logo from "@/public/images/BlackLogo.svg";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 
 export function SportshubHomeLink({

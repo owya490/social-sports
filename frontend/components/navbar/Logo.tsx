@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import LogoImage from "./../../public/icons/Icon_black_square.png";
 

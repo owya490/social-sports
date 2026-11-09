@@ -36,7 +36,7 @@ import {
   writeTourSession,
   type TourStep,
 } from "@/components/organiser/v2/welcome/welcomeOnboarding";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 

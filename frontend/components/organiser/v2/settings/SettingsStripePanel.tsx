@@ -6,7 +6,7 @@ import { getRefreshAccountLinkUrl, isStripeAccountActive } from "@/services/src/
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import StripeLogo from "@/public/images/stripe-logo.svg";
 import { ArrowPathIcon, ArrowTopRightOnSquareIcon, CheckCircleIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { SportshubStripeIntegrationIcon } from "./SportshubStripeIntegrationIcon";

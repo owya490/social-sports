@@ -1,6 +1,6 @@
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 
 export function OrganiserPill({ organiser }: { organiser: PublicUserData }) {
