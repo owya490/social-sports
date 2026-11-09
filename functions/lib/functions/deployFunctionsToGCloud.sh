@@ -72,7 +72,7 @@ TRIGGER_ARGS=(--trigger-http --allow-unauthenticated)
 EXTRA_DEPLOY_ARGS=()
 if [ "$FUNCTION_NAME" == "explainErrorAlert" ]; then
     TRIGGER_ARGS=(--gen2 --trigger-topic "$ERROR_LOG_ALERTS_TOPIC" --no-allow-unauthenticated)
-    EXTRA_DEPLOY_ARGS=(--no-retry --timeout 120s --max-instances 2 --quiet)
+    EXTRA_DEPLOY_ARGS=(--retry --timeout 120s --max-instances 2 --quiet)
 else
     if [ "$ENVIRONMENT" == "dev" ]; then
         FUNCTIONS_KEY_SOURCE=../../functions_key_dev.json
