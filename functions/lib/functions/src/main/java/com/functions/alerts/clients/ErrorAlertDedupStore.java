@@ -38,8 +38,8 @@ public interface ErrorAlertDedupStore {
     Optional<String> smsFor(String fingerprint);
 
     /**
-     * Persist trimmed SMS for this fingerprint before the first successful
-     * publication. After expiry, overwrites with the new Gemini wording.
+     * Persist trimmed SMS after a successful publication. Incidents that already
+     * have this text and no send count stay quiet. After expiry, overwrites.
      */
     void rememberSms(String fingerprint, String sms);
 }

@@ -85,8 +85,8 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
         ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,
                 Clock.fixed(NOW.plus(ErrorAlertDedupRepository.DEDUP_WINDOW).plusSeconds(1), ZoneOffset.UTC));
         assertTrue(later.reserve("checkout").isPresent());
-        assertNotNull(db.collection(ErrorAlertDedupRepository.COLLECTION).document("_global").get().get()
-                .getTimestamp("lastSentAt"));
+        assertEquals(3, ((List<?>) db.collection(ErrorAlertDedupRepository.COLLECTION).document("_global").get().get()
+                .get("recentSends")).size());
         assertEquals(3L, db.collection(ErrorAlertDedupRepository.COLLECTION).document("booking").get().get()
                 .getLong("sentCount").longValue());
     }

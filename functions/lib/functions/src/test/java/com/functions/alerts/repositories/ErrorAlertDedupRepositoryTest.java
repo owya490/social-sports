@@ -100,7 +100,7 @@ public class ErrorAlertDedupRepositoryTest {
         Timestamp moved = (Timestamp) state.get("fp1").get("smsSavedAt");
         assertTrue(moved.getSeconds() >= original.getSeconds());
         assertEquals(1L, ((Number) state.get("fp1").get("sentCount")).longValue());
-        assertNotNull(state.get("_global").get("lastSentAt"));
+        assertEquals(1, ((List<?>) state.get("_global").get("recentSends")).size());
         assertEquals("Email service returned 503.",
                 repository(NOW.plus(Duration.ofDays(8))).smsFor("fp1").orElseThrow());
         assertTrue(repository(NOW.plus(Duration.ofDays(14))).smsFor("fp1").isEmpty());

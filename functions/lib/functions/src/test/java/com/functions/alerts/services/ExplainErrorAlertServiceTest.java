@@ -31,7 +31,6 @@ public class ExplainErrorAlertServiceTest {
     public void setUp() {
         store = mock(ErrorAlertDedupStore.class);
         when(store.reserve(any())).thenReturn(Optional.of(new Reservation("owner")));
-        when(store.smsFor(any())).thenReturn(Optional.empty());
         published = new ArrayList<>();
         service = service(published::add);
     }
@@ -137,6 +136,7 @@ public class ExplainErrorAlertServiceTest {
             assertEquals("Logging unavailable", expected.getMessage());
         }
         verify(store).release(any());
+        verify(store, never()).rememberSms(any(), any());
         verify(store, never()).complete(any(), any());
     }
 
@@ -156,7 +156,6 @@ public class ExplainErrorAlertServiceTest {
     public void process_keepsHeadlineAndFingerprintStableAcrossRequestUuids() {
         service.process(new ParsedErrorLog("stripeWebhook",
                 "[Webhook-aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa] Request rejected", "", ""));
-        when(store.smsFor(any())).thenReturn(Optional.empty());
         service.process(new ParsedErrorLog("stripeWebhook",
                 "[Webhook-bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb] Request rejected", "", ""));
         assertEquals(published.get(0).headline(), published.get(1).headline());
@@ -167,7 +166,6 @@ public class ExplainErrorAlertServiceTest {
     public void process_keepsFingerprintStableAcrossStackLineNumbers() {
         service.process(new ParsedErrorLog("globalAppController", "Request rejected", "RuntimeException",
                 "com.functions.stripe.services.WebhookService.process(WebhookService.java:1128)"));
-        when(store.smsFor(any())).thenReturn(Optional.empty());
         service.process(new ParsedErrorLog("globalAppController", "Request rejected", "RuntimeException",
                 "com.functions.stripe.services.WebhookService.process(WebhookService.java:1201)"));
         assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
@@ -177,7 +175,6 @@ public class ExplainErrorAlertServiceTest {
     public void process_separatesFunctionAndObservedExceptionInIncidentIdentity() {
         String message = "Organiser does not exist: organiserId=abc123";
         service.process(new ParsedErrorLog("send_email_on_purchase", message, "", ""));
-        when(store.smsFor(any())).thenReturn(Optional.empty());
         service.process(new ParsedErrorLog("other_function", message, "", ""));
         service.process(new ParsedErrorLog("send_email_on_purchase", message, "Error", ""));
 

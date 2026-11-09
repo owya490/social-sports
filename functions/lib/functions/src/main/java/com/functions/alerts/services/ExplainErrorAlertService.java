@@ -43,11 +43,12 @@ public class ExplainErrorAlertService {
         }
 
         Reservation reservation = claim.get();
+        String sms;
         try {
             String headline = SmsText.forHeadline(
                     parsed.functionName() + ": " + ErrorAlertFingerprint.normalizedFirstLine(parsed.message()));
             String interpretation = summarizer.summarize(parsed).orElse("");
-            String sms = smsForPublish(fingerprint, headline, interpretation);
+            sms = SmsText.forSmsSubject(interpretation.isBlank() ? headline : interpretation);
             summaryPublisher.publish(new ErrorAlertNotification(
                     fingerprint, headline, parsed, interpretation, sms));
         } catch (RuntimeException failure) {
@@ -58,14 +59,13 @@ public class ExplainErrorAlertService {
             }
             throw failure;
         }
-        // Publication has happened; failed completion must not release another delivery attempt early.
+        // Publication has happened. Remembering the text is secondary to the send count.
+        try {
+            dedupStore.rememberSms(fingerprint, sms);
+        } catch (RuntimeException failure) {
+            logger.warn("Could not remember alert text fingerprint={}", fingerprint, failure);
+        }
         dedupStore.complete(reservation, fingerprint);
         logger.info("Error alert published. function={} fingerprint={}", parsed.functionName(), fingerprint);
-    }
-
-    private String smsForPublish(String fingerprint, String headline, String interpretation) {
-        String sms = SmsText.forSmsSubject(interpretation.isBlank() ? headline : interpretation);
-        dedupStore.rememberSms(fingerprint, sms);
-        return sms;
     }
 }

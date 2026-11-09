@@ -124,7 +124,6 @@ public class ExplainErrorAlertEndpointTest {
     private static ErrorAlertDedupStore store() {
         ErrorAlertDedupStore store = mock(ErrorAlertDedupStore.class);
         when(store.reserve(any())).thenReturn(Optional.of(new ErrorAlertDedupStore.Reservation("owner")));
-        when(store.smsFor(any())).thenReturn(Optional.empty());
         return store;
     }
 }

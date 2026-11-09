@@ -28,7 +28,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
      * free the slot while that send was still running.
      */
     public static final Duration IN_FLIGHT_WINDOW = Duration.ofMinutes(3);
-    /** Matches Cloud Monitoring autoClose (604800s) so EXTRACT(sms) stays stable for one incident. */
+    /** How long one incident keeps its send count. Matches monitoring auto-close, 7 days. */
     public static final Duration SMS_INCIDENT_WINDOW = Duration.ofDays(7);
     /**
      * Stops a burst of distinct fingerprints from using the whole daily budget.
@@ -66,13 +66,14 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             DocumentSnapshot globalState = transaction.get(global).get();
             DocumentReference incident = fingerprintDoc(key);
             DocumentSnapshot incidentState = transaction.get(incident).get();
-            if (dailyBudgetSpent(globalState, now) || burstSpent(globalState, now) || capped(incidentState, now)) {
+            List<Timestamp> sends = recentSends(globalState, now);
+            List<Map<String, Object>> pending = openReservations(globalState, now);
+            if (dailyBudgetSpent(sends, pending) || burstSpent(sends, pending, now) || capped(incidentState, now)) {
                 return Optional.empty();
             }
             if (recent(incidentState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
                 return Optional.empty();
             }
-            List<Map<String, Object>> pending = openReservations(globalState, now);
             pending.add(Map.of("owner", reservation.owner(), "reservedAt", timestamp(now)));
             transaction.set(incident, Map.of("owner", reservation.owner(), "inFlightAt", timestamp(now)),
                     SetOptions.merge());
@@ -110,9 +111,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
                 incidentUpdate.put("smsSavedAt", timestamp(now));
             }
             transaction.set(incident, incidentUpdate, SetOptions.merge());
-            transaction.set(global, Map.of(
-                    "lastSentAt", timestamp(now), "recentSends", sends, PENDING_RESERVATIONS, pending),
-                    SetOptions.merge());
+            transaction.set(global, Map.of("recentSends", sends, PENDING_RESERVATIONS, pending), SetOptions.merge());
             return null;
         });
     }
@@ -236,18 +235,18 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
         return value != null && value.toDate().toInstant().isAfter(now.minus(window));
     }
 
-    private static boolean dailyBudgetSpent(DocumentSnapshot state, Instant now) {
-        return recentSends(state, now).size() + openReservations(state, now).size() >= DAILY_LIMIT;
+    private static boolean dailyBudgetSpent(List<Timestamp> sends, List<Map<String, Object>> pending) {
+        return sends.size() + pending.size() >= DAILY_LIMIT;
     }
 
-    private static boolean burstSpent(DocumentSnapshot state, Instant now) {
+    private static boolean burstSpent(List<Timestamp> sends, List<Map<String, Object>> pending, Instant now) {
         int recent = 0;
-        for (Timestamp sent : recentSends(state, now)) {
+        for (Timestamp sent : sends) {
             if (sent.toDate().toInstant().isAfter(now.minus(DEDUP_WINDOW))) {
                 recent++;
             }
         }
-        return recent + openReservations(state, now).size() >= BURST_LIMIT;
+        return recent + pending.size() >= BURST_LIMIT;
     }
 
     private static List<Map<String, Object>> openReservations(DocumentSnapshot state, Instant now) {
