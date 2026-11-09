@@ -67,6 +67,12 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
         Instant now = clock.instant();
         run(transaction -> {
             DocumentSnapshot globalState = transaction.get(global).get();
+            DocumentReference smsDoc = null;
+            DocumentSnapshot smsState = null;
+            if (fingerprint != null && !fingerprint.isBlank()) {
+                smsDoc = fingerprintDoc(fingerprint);
+                smsState = transaction.get(smsDoc).get();
+            }
             if (!owned(globalState, reservation)) {
                 throw new IllegalStateException("Error alert reservation is no longer owned");
             }
@@ -76,10 +82,8 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
                     "lastSentAt", timestamp(now), "owner", FieldValue.delete(), "inFlightAt", FieldValue.delete(),
                     "recentSends", sends);
             transaction.update(global, completed);
-            if (fingerprint != null && !fingerprint.isBlank()) {
-                DocumentReference smsDoc = fingerprintDoc(fingerprint);
-                DocumentSnapshot smsState = transaction.get(smsDoc).get();
-                String sms = smsState.exists() ? smsState.getString("sms") : null;
+            if (smsDoc != null && smsState.exists()) {
+                String sms = smsState.getString("sms");
                 if (sms != null && !sms.isBlank()) {
                     transaction.set(smsDoc, Map.of("smsSavedAt", timestamp(now)), SetOptions.merge());
                 }
