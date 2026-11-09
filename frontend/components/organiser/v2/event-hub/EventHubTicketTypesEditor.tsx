@@ -34,6 +34,7 @@ type EventHubTicketTypesEditorProps = {
   onPersistTicketTypes?: (nextTypes: EventTicketTypesMap) => Promise<void>;
   /** Hide form picker when forms are managed elsewhere (e.g. event hub Registration). */
   hideFormSelector?: boolean;
+  commitBlocked?: boolean;
 };
 
 export function EventHubTicketTypesEditor({
@@ -44,6 +45,7 @@ export function EventHubTicketTypesEditor({
   setEventTicketTypes,
   onPersistTicketTypes,
   hideFormSelector = true,
+  commitBlocked = false,
 }: EventHubTicketTypesEditorProps) {
   const { user } = useUser();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -59,6 +61,7 @@ export function EventHubTicketTypesEditor({
     nextTypes: EventTicketTypesMap,
     options?: { syncEventFormId?: boolean; formId?: FormId | null }
   ) => {
+    if (commitBlocked || saving) throw new Error("Wait for the current change to finish, then save again.");
     setError(null);
     setSaving(true);
     try {
@@ -81,6 +84,7 @@ export function EventHubTicketTypesEditor({
   };
 
   const handleSave = async (values: EventTicketTypeFormValues) => {
+    if (commitBlocked || saving) throw new Error("Wait for the current change to finish, then save again.");
     const price = values.priceDollars <= 0 ? 0 : dollarsToCents(values.priceDollars);
     const current = eventTicketTypes ?? {};
     const syncEventFormId = !hideFormSelector && values.name === GENERAL_TICKET_TYPE_NAME;
@@ -123,6 +127,7 @@ export function EventHubTicketTypesEditor({
   };
 
   const handleDelete = async (id: EventTicketTypeId) => {
+    if (commitBlocked || saving) return;
     if (!eventTicketTypes?.[id]) return;
     if (Object.keys(eventTicketTypes).length <= 1) {
       setError("Events must have at least one ticket type.");
@@ -217,8 +222,8 @@ export function EventHubTicketTypesEditor({
                   ) : null}
                   {isActive && canDelete ? (
                     <EventHubGhostButton
-                      onClick={() => void handleDelete(eventTicketTypeId)}
-                      disabled={saving}
+                      onClick={() => void handleDelete(eventTicketTypeId).catch(() => undefined)}
+                      disabled={saving || commitBlocked}
                       className="whitespace-nowrap"
                     >
                       <TrashIcon className="h-4 w-4 shrink-0" aria-hidden />
@@ -242,6 +247,7 @@ export function EventHubTicketTypesEditor({
         }}
         title={editingId ? "Edit Ticket Type" : "Add Ticket Type"}
         hideFormSelector={hideFormSelector}
+        commitBlocked={commitBlocked}
         initialValues={
           editingType
             ? {

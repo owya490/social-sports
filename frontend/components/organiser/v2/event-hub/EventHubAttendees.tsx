@@ -95,7 +95,7 @@ type EventHubAttendeesProps = {
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
   /** Refresh hub inventory after attendee mutations that reload the event. */
-  onEventRefresh?: (event: EventData) => void;
+  onEventRefresh?: () => Promise<void>;
   onRegistrationAppended: (orderId: OrderId) => void;
   orderTicketsMap: Map<Order, Ticket[]>;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
@@ -274,7 +274,7 @@ function AttendeeEditTicketsPanel({
   eventId: EventId;
   eventData: EventData;
   setEventVacancy: Dispatch<SetStateAction<number>>;
-  onEventRefresh?: (event: EventData) => void;
+  onEventRefresh?: () => Promise<void>;
   setOrderTicketsMap: Dispatch<SetStateAction<Map<Order, Ticket[]>>>;
   onClose: () => void;
 }) {
@@ -309,10 +309,10 @@ function AttendeeEditTicketsPanel({
         next.set(updatedOrder, updatedTickets);
         return next;
       });
-      const updatedEventData = await getEventById(eventId);
       if (onEventRefresh) {
-        onEventRefresh(updatedEventData);
+        await onEventRefresh();
       } else {
+        const updatedEventData = await getEventById(eventId);
         setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
       }
       toast.success("Tickets updated");
@@ -644,10 +644,10 @@ export function EventHubAttendees({
       );
       onRegistrationAppended(orderId as OrderId);
       try {
-        const updatedEventData = await getEventById(eventId);
         if (onEventRefresh) {
-          onEventRefresh(updatedEventData);
+          await onEventRefresh();
         } else {
+          const updatedEventData = await getEventById(eventId);
           setEventVacancy(resolveEventInventory(updatedEventData).vacancy);
         }
       } catch {

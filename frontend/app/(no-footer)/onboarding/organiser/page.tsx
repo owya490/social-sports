@@ -24,9 +24,8 @@ const PROCEED_WITHOUT_PAYMENT_SETUP_MESSAGE =
   "You haven\u2019t connected payouts for paid tickets yet. Free events still work — you\u2019ll only need this when you want to sell tickets or charge for sessions. You can finish anytime from your profile or organiser tools.\n\nContinue anyway?";
 
 export default function OrganiserOnboardingPage() {
-  const { user, userLoading, refreshUser } = useUser();
+  const { user, userLoading, refreshUser, auth } = useUser();
   const router = useRouter();
-  const [stripeLoading, setStripeLoading] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [continueBusy, setContinueBusy] = useState(false);
 
@@ -138,9 +137,9 @@ export default function OrganiserOnboardingPage() {
             <div className="mt-4">
               {!stripeReady ? (
                 <OnboardingStripeSetup
+                  key={`${user.userId}:${auth.currentUser?.uid ?? ""}`}
                   userId={user.userId}
-                  setLoading={setStripeLoading}
-                  userLoading={userLoading || stripeLoading}
+                  userLoading={userLoading}
                 />
               ) : (
                 <div className="rounded-xl border border-green-200 bg-green-50 p-5">

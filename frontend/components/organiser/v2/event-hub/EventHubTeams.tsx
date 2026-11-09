@@ -16,7 +16,7 @@ import {
   EventHubSavingIndicator,
   EventHubStage,
 } from "./EventHubStage";
-import type { SettingsAutosaveStatus } from "./useSettingsAutosave";
+import type { SettingsAutosaveStatus } from "../shared/useSettingsAutosave";
 import {
   EMPTY_TEAM_BOARD,
   TEAM_CSV_HEADERS,
