@@ -4,6 +4,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,10 +22,10 @@ import com.google.cloud.firestore.SetOptions;
 import com.google.cloud.firestore.Transaction;
 
 public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
-    public static final Duration DEDUP_WINDOW = Duration.ofMinutes(10);
     public static final Duration IN_FLIGHT_WINDOW = Duration.ofMinutes(3);
     /** Matches Cloud Monitoring autoClose (604800s) so EXTRACT(sms) stays stable for one incident. */
     public static final Duration SMS_INCIDENT_WINDOW = Duration.ofDays(7);
+    public static final int INCIDENT_LIMIT = 3;
     static final int DAILY_LIMIT = 20;
     static final String COLLECTION = "ErrorAlertDedup";
     static final String GLOBAL_SEND_DOCUMENT = "_global";
@@ -44,61 +45,70 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     }
 
     @Override
-    public Optional<Reservation> reserve() {
-        Reservation reservation = new Reservation(UUID.randomUUID().toString());
+    public Optional<Reservation> reserve(String fingerprint) {
+        String key = key(fingerprint);
+        Reservation reservation = new Reservation(UUID.randomUUID().toString(), key);
         Instant now = clock.instant();
         return run(transaction -> {
             DocumentSnapshot globalState = transaction.get(global).get();
-            if (recent(globalState, "lastSentAt", now, DEDUP_WINDOW)
-                    || recentSends(globalState, now).size() >= DAILY_LIMIT) {
+            DocumentReference incident = fingerprintDoc(key);
+            DocumentSnapshot incidentState = transaction.get(incident).get();
+            if (recentSends(globalState, now).size() >= DAILY_LIMIT || capped(incidentState, now)) {
                 return Optional.empty();
             }
-            if (recent(globalState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
-                throw new IllegalStateException("Error alert delivery already in progress");
+            if (recent(incidentState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
+                return Optional.empty();
             }
-            Map<String, Object> lease = Map.of("owner", reservation.owner(), "inFlightAt", timestamp(now));
-            transaction.set(global, lease, SetOptions.merge());
+            transaction.set(incident, Map.of("owner", reservation.owner(), "inFlightAt", timestamp(now)),
+                    SetOptions.merge());
             return Optional.of(reservation);
         });
     }
 
     @Override
     public void complete(Reservation reservation, String fingerprint) {
+        String key = key(fingerprint == null || fingerprint.isBlank() ? reservation.fingerprint() : fingerprint);
         Instant now = clock.instant();
         run(transaction -> {
             DocumentSnapshot globalState = transaction.get(global).get();
-            DocumentReference smsDoc = null;
-            DocumentSnapshot smsState = null;
-            if (fingerprint != null && !fingerprint.isBlank()) {
-                smsDoc = fingerprintDoc(fingerprint);
-                smsState = transaction.get(smsDoc).get();
-            }
-            if (!owned(globalState, reservation)) {
+            DocumentReference incident = fingerprintDoc(key);
+            DocumentSnapshot incidentState = transaction.get(incident).get();
+            if (!owned(incidentState, reservation)) {
                 throw new IllegalStateException("Error alert reservation is no longer owned");
             }
             List<Timestamp> sends = recentSends(globalState, now);
             sends.add(timestamp(now));
-            Map<String, Object> completed = Map.of(
-                    "lastSentAt", timestamp(now), "owner", FieldValue.delete(), "inFlightAt", FieldValue.delete(),
-                    "recentSends", sends);
-            transaction.update(global, completed);
-            if (smsDoc != null && smsState.exists()) {
-                String sms = smsState.getString("sms");
-                if (sms != null && !sms.isBlank()) {
-                    transaction.set(smsDoc, Map.of("smsSavedAt", timestamp(now)), SetOptions.merge());
-                }
+            Timestamp opened = incidentState.getTimestamp("openedAt");
+            Instant openedAt = opened == null ? null : opened.toDate().toInstant();
+            if (openedAt == null || !openedAt.isAfter(now.minus(SMS_INCIDENT_WINDOW))) {
+                openedAt = now;
             }
+            Map<String, Object> incidentUpdate = new LinkedHashMap<>();
+            incidentUpdate.put("owner", FieldValue.delete());
+            incidentUpdate.put("inFlightAt", FieldValue.delete());
+            incidentUpdate.put("sentCount", (long) recordedSends(incidentState, now) + 1);
+            incidentUpdate.put("openedAt", timestamp(openedAt));
+            String sms = incidentState.getString("sms");
+            if (sms != null && !sms.isBlank()) {
+                incidentUpdate.put("smsSavedAt", timestamp(now));
+            }
+            transaction.set(incident, incidentUpdate, SetOptions.merge());
+            transaction.set(global, Map.of("lastSentAt", timestamp(now), "recentSends", sends), SetOptions.merge());
             return null;
         });
     }
 
     @Override
     public void release(Reservation reservation) {
+        if (reservation.fingerprint() == null || reservation.fingerprint().isBlank()) {
+            return;
+        }
         run(transaction -> {
-            DocumentSnapshot globalState = transaction.get(global).get();
-            Map<String, Object> cleared = Map.of("owner", FieldValue.delete(), "inFlightAt", FieldValue.delete());
-            if (owned(globalState, reservation)) {
-                transaction.update(global, cleared);
+            DocumentReference incident = fingerprintDoc(reservation.fingerprint());
+            DocumentSnapshot incidentState = transaction.get(incident).get();
+            if (owned(incidentState, reservation)) {
+                transaction.set(incident, Map.of("owner", FieldValue.delete(), "inFlightAt", FieldValue.delete()),
+                        SetOptions.merge());
             }
             return null;
         });
@@ -153,6 +163,29 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
 
     private DocumentReference fingerprintDoc(String fingerprint) {
         return db.collection(COLLECTION).document(fingerprint);
+    }
+
+    private static String key(String fingerprint) {
+        return fingerprint == null || fingerprint.isBlank() ? "_unkeyed" : fingerprint;
+    }
+
+    private static boolean capped(DocumentSnapshot state, Instant now) {
+        if (recordedSends(state, now) >= INCIDENT_LIMIT) {
+            return true;
+        }
+        return state.exists() && state.get("sentCount") == null && smsActive(state, now);
+    }
+
+    private static int recordedSends(DocumentSnapshot state, Instant now) {
+        if (!state.exists()) {
+            return 0;
+        }
+        Timestamp opened = state.getTimestamp("openedAt");
+        if (opened != null && !opened.toDate().toInstant().isAfter(now.minus(SMS_INCIDENT_WINDOW))) {
+            return 0;
+        }
+        Object count = state.get("sentCount");
+        return count instanceof Number number ? number.intValue() : 0;
     }
 
     private static boolean smsActive(DocumentSnapshot state, Instant now) {

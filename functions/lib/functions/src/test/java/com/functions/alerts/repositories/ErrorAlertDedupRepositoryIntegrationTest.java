@@ -51,7 +51,7 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     }
 
     @Test
-    public void reserve_concurrentlyOwnsExactlyOneGlobalSlot() throws Exception {
+    public void reserve_concurrentlyOwnsExactlyOneSlotForTheSameError() throws Exception {
         var pool = Executors.newFixedThreadPool(4);
         CountDownLatch start = new CountDownLatch(1);
         List<Future<Optional<Reservation>>> attempts = new ArrayList<>();
@@ -59,69 +59,56 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
             for (int i = 0; i < 4; i++) {
                 attempts.add(pool.submit(() -> {
                     start.await();
-                    return repository.reserve();
+                    return repository.reserve("booking");
                 }));
             }
             start.countDown();
             int owned = 0;
-            int inFlight = 0;
             for (Future<Optional<Reservation>> attempt : attempts) {
-                try {
-                    if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
-                        owned++;
-                    }
-                } catch (Exception failure) {
-                    inFlight++;
-                    assertTrue(rootMessage(failure).contains("already in progress"));
+                if (attempt.get(25, TimeUnit.SECONDS).isPresent()) {
+                    owned++;
                 }
             }
             assertEquals(1, owned);
-            assertEquals(3, inFlight);
-            assertEquals(1, db.collection(ErrorAlertDedupRepository.COLLECTION).get().get().size());
         } finally {
             pool.shutdownNow();
         }
     }
 
     @Test
-    public void complete_appliesCooldownAndOnlyKeepsGlobalState() throws Exception {
-        repository.complete(repository.reserve().orElseThrow());
-        assertTrue(repository.reserve().isEmpty());
-        assertEquals(1, db.collection(ErrorAlertDedupRepository.COLLECTION).get().get().size());
+    public void complete_capsTheSameErrorAndLeavesAnotherErrorOpen() throws Exception {
+        for (int sent = 0; sent < ErrorAlertDedupRepository.INCIDENT_LIMIT; sent++) {
+            repository.complete(repository.reserve("booking").orElseThrow(), "booking");
+        }
+        assertTrue(repository.reserve("booking").isEmpty());
+        assertTrue(repository.reserve("checkout").isPresent());
         assertNotNull(db.collection(ErrorAlertDedupRepository.COLLECTION).document("_global").get().get()
                 .getTimestamp("lastSentAt"));
-        ErrorAlertDedupRepository later = new ErrorAlertDedupRepository(db,
-                Clock.fixed(NOW.plus(ErrorAlertDedupRepository.DEDUP_WINDOW).plusSeconds(1), ZoneOffset.UTC));
-        assertTrue(later.reserve().isPresent());
-        assertEquals(1, ((List<?>) db.collection(ErrorAlertDedupRepository.COLLECTION).document("_global")
-                .get().get().get("recentSends")).size());
+        assertEquals(3L, db.collection(ErrorAlertDedupRepository.COLLECTION).document("booking").get().get()
+                .getLong("sentCount").longValue());
     }
 
     @Test
     public void release_allowsRetryAndStaleOwnersCannotCompleteOrReleaseTheNewLease() throws Exception {
-        Reservation first = repository.reserve().orElseThrow();
+        Reservation first = repository.reserve("booking").orElseThrow();
         repository.release(first);
-        Reservation second = repository.reserve().orElseThrow();
+        Reservation second = repository.reserve("booking").orElseThrow();
         repository.release(first);
         try {
-            repository.complete(first);
+            repository.complete(first, "booking");
             fail("Stale completion must fail");
         } catch (IllegalStateException expected) {
             assertEquals(second.owner(), db.collection(ErrorAlertDedupRepository.COLLECTION)
-                    .document("_global").get().get().getString("owner"));
+                    .document("booking").get().get().getString("owner"));
         }
-        repository.complete(second);
+        repository.complete(second, "booking");
     }
 
     @Test
-    public void reserve_throwsWhileLeaseActiveSoRedeliveryDoesNotAck() {
-        repository.reserve().orElseThrow();
-        try {
-            repository.reserve();
-            fail("In-flight lease must throw so Pub/Sub redelivers");
-        } catch (IllegalStateException expected) {
-            assertTrue(expected.getMessage().contains("already in progress"));
-        }
+    public void reserve_acksSameErrorWhileItsSendIsInFlight() {
+        repository.reserve("booking").orElseThrow();
+        assertTrue(repository.reserve("booking").isEmpty());
+        assertTrue(repository.reserve("checkout").isPresent());
     }
 
     @Test
@@ -147,7 +134,6 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
     @Test
     public void smsFor_doesNotAdvanceActivity_completeDoes() throws Exception {
         repository.rememberSms("lookup", "Email service returned 503.");
-        repository.rememberSms("sent", "Email service returned 503.");
         Timestamp lookupSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("lookup").get().get()
                 .getTimestamp("smsSavedAt");
         ErrorAlertDedupRepository daySix = new ErrorAlertDedupRepository(db,
@@ -156,16 +142,17 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
         assertEquals(lookupSaved, db.collection(ErrorAlertDedupRepository.COLLECTION).document("lookup").get().get()
                 .getTimestamp("smsSavedAt"));
 
-        Reservation reservation = daySix.reserve().orElseThrow();
-        daySix.complete(reservation, "sent");
-        Timestamp sentSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("sent").get().get()
+        Reservation reservation = daySix.reserve("fresh").orElseThrow();
+        daySix.rememberSms("fresh", "Email service returned 503.");
+        daySix.complete(reservation, "fresh");
+        Timestamp sentSaved = db.collection(ErrorAlertDedupRepository.COLLECTION).document("fresh").get().get()
                 .getTimestamp("smsSavedAt");
         assertTrue(sentSaved.getSeconds() > lookupSaved.getSeconds());
 
         ErrorAlertDedupRepository dayEight = new ErrorAlertDedupRepository(db,
                 Clock.fixed(NOW.plus(Duration.ofDays(8)), ZoneOffset.UTC));
         assertTrue(dayEight.smsFor("lookup").isEmpty());
-        assertEquals("Email service returned 503.", dayEight.smsFor("sent").orElseThrow());
+        assertEquals("Email service returned 503.", dayEight.smsFor("fresh").orElseThrow());
     }
 
     @Test
@@ -190,13 +177,5 @@ public class ErrorAlertDedupRepositoryIntegrationTest {
         global.set(Map.of("recentSends", sends)).get();
         repository.complete(repository.reserve().orElseThrow());
         assertEquals(1, ((List<?>) global.get().get().get("recentSends")).size());
-    }
-
-    private static String rootMessage(Throwable failure) {
-        Throwable current = failure;
-        while (current.getCause() != null && current.getCause() != current) {
-            current = current.getCause();
-        }
-        return current.getMessage() == null ? "" : current.getMessage();
     }
 }

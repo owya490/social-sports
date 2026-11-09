@@ -3,14 +3,22 @@ package com.functions.alerts.clients;
 import java.util.Optional;
 
 public interface ErrorAlertDedupStore {
-    record Reservation(String owner) {
+    record Reservation(String owner, String fingerprint) {
+        public Reservation(String owner) {
+            this(owner, "");
+        }
     }
 
     /**
-     * Empty means cooldown or daily budget. Another in-progress delivery throws
-     * so Pub/Sub can redeliver. Infrastructure failures throw.
+     * Empty means this error has already sent its cap, a send for this same
+     * error is already in progress, or the daily budget is spent. A different
+     * error can still reserve. Contention does not throw. Infrastructure failures throw.
      */
-    Optional<Reservation> reserve();
+    Optional<Reservation> reserve(String fingerprint);
+
+    default Optional<Reservation> reserve() {
+        return reserve("");
+    }
 
     void complete(Reservation reservation, String fingerprint);
 
@@ -22,9 +30,9 @@ public interface ErrorAlertDedupStore {
 
     /**
      * Cached SMS for this fingerprint while the incident is still active
-     * ({@code smsSavedAt} within the 7-day autoClose window). Present means this
-     * error was already paged; do not reserve, interpret, or publish again.
-     * Lookup is read-only; activity advances from {@link #complete}.
+     * ({@code smsSavedAt} within the 7-day autoClose window). Lookup is
+     * read-only; activity advances from {@link #complete}. Sending stops in
+     * {@link #reserve(String)} once the incident count is reached.
      */
     Optional<String> smsFor(String fingerprint);
 

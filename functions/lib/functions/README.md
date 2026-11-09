@@ -90,9 +90,8 @@ without loading application Firebase credentials or PostHog. Its service
 account needs `roles/logging.viewer`, `roles/logging.logWriter`,
 `roles/datastore.user`, and `roles/aiplatform.user`.
 
-Successful publication starts the existing ten-minute global cooldown. A rolling 24-hour limit of 20 publications matches Monitoring's
-log-alert budget. An active three-minute lease is retryable; intentional
-cooldown/budget suppression is acknowledged. Publication failure releases the
+Each error fingerprint can send at most three texts in seven days. A repeat of that error is acknowledged, including while its own send is in progress, so a different error is not blocked and contention is not a failure. A rolling 24-hour limit of 20 publications matches Monitoring's
+log-alert budget. Publication failure releases the
 lease and escapes the handler. Completion failure escapes without releasing
 early. The deployment enables retries with a two-minute function timeout;
 events older than one hour are acknowledged without processing. Firestore and

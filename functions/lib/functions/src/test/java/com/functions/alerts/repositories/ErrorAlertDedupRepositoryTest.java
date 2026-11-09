@@ -90,20 +90,47 @@ public class ErrorAlertDedupRepositoryTest {
 
     @Test
     public void complete_advancesSmsSavedAtAlongsideLastSentAt() {
-        Timestamp original = Timestamp.ofTimeSecondsAndNanos(NOW.getEpochSecond(), 0);
-        state.put("fp1", new LinkedHashMap<>(Map.of(
-                "sms", "Email service returned 503.",
-                "smsSavedAt", original)));
         ErrorAlertDedupRepository daySix = repository(NOW.plus(Duration.ofDays(6)));
-        Reservation reservation = daySix.reserve().orElseThrow();
+        Reservation reservation = daySix.reserve("fp1").orElseThrow();
+        daySix.rememberSms("fp1", "Email service returned 503.");
+        Timestamp original = (Timestamp) state.get("fp1").get("smsSavedAt");
         daySix.complete(reservation, "fp1");
 
         Timestamp moved = (Timestamp) state.get("fp1").get("smsSavedAt");
-        assertTrue(moved.getSeconds() > original.getSeconds());
+        assertTrue(moved.getSeconds() >= original.getSeconds());
+        assertEquals(1L, ((Number) state.get("fp1").get("sentCount")).longValue());
         assertNotNull(state.get("_global").get("lastSentAt"));
         assertEquals("Email service returned 503.",
                 repository(NOW.plus(Duration.ofDays(8))).smsFor("fp1").orElseThrow());
         assertTrue(repository(NOW.plus(Duration.ofDays(14))).smsFor("fp1").isEmpty());
+    }
+
+    @Test
+    public void reserve_stopsAtThreeForOneErrorAndLeavesAnotherOpen() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        for (int sent = 0; sent < ErrorAlertDedupRepository.INCIDENT_LIMIT; sent++) {
+            Reservation reservation = repository.reserve("booking").orElseThrow();
+            repository.complete(reservation, "booking");
+        }
+        assertTrue(repository.reserve("booking").isEmpty());
+        assertTrue(repository.reserve("checkout").isPresent());
+    }
+
+    @Test
+    public void reserve_acksSameErrorWhileItsSendIsInFlight() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        assertTrue(repository.reserve("booking").isPresent());
+        assertTrue(repository.reserve("booking").isEmpty());
+        assertTrue(repository.reserve("checkout").isPresent());
+    }
+
+    @Test
+    public void reserve_doesNotRepeatAnErrorThatAlreadyHasSmsAndNoCount() {
+        state.put("booking", new LinkedHashMap<>(Map.of(
+                "sms", "Booking cron failed.",
+                "smsSavedAt", Timestamp.ofTimeSecondsAndNanos(NOW.getEpochSecond(), 0))));
+        assertTrue(repository(NOW).reserve("booking").isEmpty());
+        assertTrue(repository(NOW).reserve("checkout").isPresent());
     }
 
     @Test
