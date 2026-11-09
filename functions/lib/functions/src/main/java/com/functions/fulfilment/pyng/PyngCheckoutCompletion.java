@@ -114,9 +114,4 @@ public final class PyngCheckoutCompletion {
         }
         return maybeSession.get();
     }
-
-    static void reset() {
-        sessions = PyngCheckoutCompletion::loadStoredSession;
-        settlements = FulfilmentSessionRepository::updatePyngSettlement;
-    }
 }

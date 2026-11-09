@@ -52,7 +52,6 @@ public class PyngCheckoutCompletionTest {
     @After
     public void tearDown() {
         FulfilmentSessionPublisher.resetTransport();
-        PyngCheckoutCompletion.reset();
         PyngService.client = PyngCheckoutClient.http();
     }
 
