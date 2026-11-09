@@ -1,6 +1,8 @@
 package com.functions.fulfilment.repositories;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -136,14 +138,8 @@ public class FulfilmentSessionRepositoryTest {
     @Test
     public void pyngSettlementSkipsALiveSessionThatWasAlreadyArchived() throws Exception {
         Firestore db = mock(Firestore.class);
-        CollectionReference live = mock(CollectionReference.class);
-        DocumentReference liveDocument = mock(DocumentReference.class);
-        DocumentSnapshot snapshot = mock(DocumentSnapshot.class);
-        ApiFuture<DocumentSnapshot> read = futureOf(snapshot);
-        when(db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)).thenReturn(live);
-        when(live.document("session-1")).thenReturn(liveDocument);
-        when(liveDocument.get()).thenReturn(read);
-        when(snapshot.exists()).thenReturn(false);
+        DocumentReference liveDocument = liveSession(db, false);
+        archivedSession(db, true);
 
         try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
             firebase.when(FirebaseService::getFirestore).thenReturn(db);
@@ -157,17 +153,31 @@ public class FulfilmentSessionRepositoryTest {
     }
 
     @Test
+    public void pyngSettlementFailsWhenTheMissingLiveSessionIsNotArchived() throws Exception {
+        Firestore db = mock(Firestore.class);
+        liveSession(db, false);
+        archivedSession(db, false);
+
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+            firebase.when(FirebaseService::getFirestore).thenReturn(db);
+            try {
+                FulfilmentSessionRepository.updatePyngSettlement(
+                        "session-1",
+                        PyngMetadata.builder().status(PaymentStatus.SUCCEEDED).build(),
+                        FulfilmentSessionStatus.COMPLETED);
+                fail("missing session should fail settlement");
+            } catch (Exception e) {
+                assertTrue(e.getMessage().contains("ArchivedFulfilmentSessions"));
+            }
+        }
+    }
+
+    @Test
     public void pyngSettlementTreatsAMissingDocumentUpdateAsAlreadyArchived() throws Exception {
         Firestore db = mock(Firestore.class);
-        CollectionReference live = mock(CollectionReference.class);
-        DocumentReference liveDocument = mock(DocumentReference.class);
-        DocumentSnapshot snapshot = mock(DocumentSnapshot.class);
-        ApiFuture<DocumentSnapshot> read = futureOf(snapshot);
+        DocumentReference liveDocument = liveSession(db, true);
+        archivedSession(db, true);
         ApiFuture<com.google.cloud.firestore.WriteResult> write = failedFuture(notFound("No document to update"));
-        when(db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)).thenReturn(live);
-        when(live.document("session-1")).thenReturn(liveDocument);
-        when(liveDocument.get()).thenReturn(read);
-        when(snapshot.exists()).thenReturn(true);
         when(liveDocument.update(org.mockito.ArgumentMatchers.<java.util.Map<String, Object>>any()))
                 .thenReturn(write);
 
@@ -178,6 +188,53 @@ public class FulfilmentSessionRepositoryTest {
                     PyngMetadata.builder().status(PaymentStatus.SUCCEEDED).build(),
                     FulfilmentSessionStatus.COMPLETED);
         }
+    }
+
+    @Test
+    public void pyngSettlementFailsWhenAMissingDocumentUpdateIsNotArchived() throws Exception {
+        Firestore db = mock(Firestore.class);
+        DocumentReference liveDocument = liveSession(db, true);
+        archivedSession(db, false);
+        ApiFuture<com.google.cloud.firestore.WriteResult> write = failedFuture(notFound("No document to update"));
+        when(liveDocument.update(org.mockito.ArgumentMatchers.<java.util.Map<String, Object>>any()))
+                .thenReturn(write);
+
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+            firebase.when(FirebaseService::getFirestore).thenReturn(db);
+            try {
+                FulfilmentSessionRepository.updatePyngSettlement(
+                        "session-1",
+                        PyngMetadata.builder().status(PaymentStatus.SUCCEEDED).build(),
+                        FulfilmentSessionStatus.COMPLETED);
+                fail("missing session should fail settlement");
+            } catch (Exception e) {
+                assertTrue(e.getMessage().contains("ArchivedFulfilmentSessions"));
+            }
+        }
+    }
+
+    private static DocumentReference liveSession(Firestore db, boolean exists) throws Exception {
+        CollectionReference live = mock(CollectionReference.class);
+        DocumentReference liveDocument = mock(DocumentReference.class);
+        DocumentSnapshot snapshot = mock(DocumentSnapshot.class);
+        ApiFuture<DocumentSnapshot> read = futureOf(snapshot);
+        when(db.collection(FirebaseService.CollectionPaths.FULFILMENT_SESSIONS_ROOT_PATH)).thenReturn(live);
+        when(live.document("session-1")).thenReturn(liveDocument);
+        when(liveDocument.get()).thenReturn(read);
+        when(snapshot.exists()).thenReturn(exists);
+        return liveDocument;
+    }
+
+    private static void archivedSession(Firestore db, boolean exists) throws Exception {
+        CollectionReference archive = mock(CollectionReference.class);
+        DocumentReference archiveDocument = mock(DocumentReference.class);
+        DocumentSnapshot snapshot = mock(DocumentSnapshot.class);
+        ApiFuture<DocumentSnapshot> read = futureOf(snapshot);
+        when(db.collection(FirebaseService.CollectionPaths.ARCHIVED_FULFILMENT_SESSIONS_ROOT_PATH))
+                .thenReturn(archive);
+        when(archive.document("session-1")).thenReturn(archiveDocument);
+        when(archiveDocument.get()).thenReturn(read);
+        when(snapshot.exists()).thenReturn(exists);
     }
 
     private static ApiFuture<DocumentSnapshot> futureOf(DocumentSnapshot snapshot) throws Exception {

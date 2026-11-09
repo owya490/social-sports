@@ -185,19 +185,23 @@ public class FulfilmentSessionRepository {
     /**
      * Records a terminal Pyng outcome after the session has been published.
      * Crystallising the session stops a later poll from publishing it again.
-     * A missing live document means the processor already archived that session.
+     * A missing live document is skipped only when that session is in the archive.
      */
     public static void updatePyngSettlement(String sessionId, PyngMetadata pyngMetadata,
             FulfilmentSessionStatus status) throws Exception {
+        DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+        DocumentSnapshot snapshot;
         try {
-            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
-            DocumentSnapshot snapshot = sessionDocRef.get().get();
-            if (!snapshot.exists()) {
-                logger.info(
-                        "Pyng settlement for session {} skipped; the live session is already archived",
-                        sessionId);
-                return;
-            }
+            snapshot = sessionDocRef.get().get();
+        } catch (Exception e) {
+            logger.error("Failed to record Pyng settlement for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to record Pyng settlement for sessionId: " + sessionId, e);
+        }
+        if (!snapshot.exists()) {
+            acknowledgeMissingPyngSettlement(sessionId);
+            return;
+        }
+        try {
             Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
                     new TypeReference<Map<String, Object>>() {
                     });
@@ -208,14 +212,30 @@ public class FulfilmentSessionRepository {
             sessionDocRef.update(updates).get();
         } catch (Exception e) {
             if (isMissingDocument(e)) {
-                logger.info(
-                        "Pyng settlement for session {} skipped; the live session is already archived",
-                        sessionId);
+                acknowledgeMissingPyngSettlement(sessionId);
                 return;
             }
             logger.error("Failed to record Pyng settlement for sessionId: {}", sessionId, e);
             throw new Exception("Failed to record Pyng settlement for sessionId: " + sessionId, e);
         }
+    }
+
+    /**
+     * The live document is already gone. Skip when the processor archived it.
+     * A session missing from both collections is a failed settlement.
+     */
+    private static void acknowledgeMissingPyngSettlement(String sessionId) throws Exception {
+        DocumentSnapshot archived = getArchivedFulfilmentSessionDocRef(sessionId).get().get();
+        if (archived.exists()) {
+            logger.info(
+                    "Pyng settlement for session {} skipped; the live session is already archived",
+                    sessionId);
+            return;
+        }
+        String message = "Pyng settlement for session " + sessionId
+                + " failed; the session is missing from FulfilmentSessions and ArchivedFulfilmentSessions";
+        logger.error(message);
+        throw new Exception(message);
     }
 
     private static boolean isMissingDocument(Throwable error) {
