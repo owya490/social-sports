@@ -72,12 +72,15 @@ public class AlertClaimRepositoryIntegrationTest {
     }
 
     @Test
-    public void claim_expiredDocumentsCanBeReclaimedAndReleaseFreesThem() {
+    public void claim_expiredDocumentsCanBeReclaimedAndReleaseRefundsTheBudget() throws Exception {
         assertTrue(repository(NOW).claim("fp-webhook").isPresent());
         assertFalse(repository(NOW).claim("fp-webhook").isPresent());
 
-        AlertClaimRepository later = repository(NOW.plus(AlertClaimRepository.FINGERPRINT_WINDOW).plusSeconds(1));
+        AlertClaimRepository later = repository(
+                NOW.plus(AlertClaimRepository.FINGERPRINT_WINDOW).plusSeconds(1).plusNanos(123_456_789));
         later.release(later.claim("fp-webhook").orElseThrow());
+        assertEquals(1, ((List<?>) db.collection(AlertClaimRepository.COLLECTION).document("budget")
+                .get().get().get(AlertClaimRepository.SENT_AT)).size());
         assertTrue(later.claim("fp-webhook").isPresent());
     }
 

@@ -3,6 +3,7 @@ package com.functions.alerts.repositories;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,8 @@ public class AlertClaimRepository implements AlertClaimStore {
 
     @Override
     public Optional<Claim> claim(String fingerprint) {
-        Instant now = clock.instant();
+        // Firestore stores microseconds; release must find the exact stored send time.
+        Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         DocumentReference fingerprintDoc = fingerprintDoc(fingerprint);
         DocumentReference globalDoc = globalDoc();
         DocumentReference budgetDoc = budgetDoc();
