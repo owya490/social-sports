@@ -24,7 +24,7 @@ public class SmsTextTest {
     }
 
     @Test
-    public void truncate_doesNotSentenceTrimNearbyStyleBlobs() {
+    public void truncate_doesNotSentenceTrimLogBlobs() {
         String nearby = "ERROR WebhookService.process failed after retry";
         assertEquals(nearby.substring(0, 25), SmsText.truncate(nearby, 25));
         assertEquals("sendEmailOnCreateEvent", SmsText.truncate("sendEmailOnCreateEvent", 100));
@@ -49,6 +49,17 @@ public class SmsTextTest {
         assertTrue(result.length() <= SmsText.MAX_CHARS);
         assertTrue(result.length() > 255);
         assertFalse(result.endsWith("..."));
+    }
+
+    @Test
+    public void forSmsSubject_stripsCharactersThatCorruptTheSmsWrapper() {
+        String result = SmsText.forSmsSubject(
+                "The `expirependingbookingscron` function failed. Errors &gt; 0. [ALERT]");
+        assertEquals("The expirependingbookingscron function failed. Errors > 0. ALERT", result);
+        assertFalse(result.contains("`"));
+        assertFalse(result.contains("["));
+        assertFalse(result.contains("]"));
+        assertFalse(result.contains("¿"));
     }
 
     @Test

@@ -27,7 +27,24 @@ public final class SmsText {
      * Any complete sentence that fits the 255-byte budget is kept.
      */
     public static String forSmsSubject(String text) {
-        return trimToCompleteUtf8(text, MAX_UTF8_BYTES, true);
+        return trimToCompleteUtf8(plainSms(text), MAX_UTF8_BYTES, true);
+    }
+
+    /**
+     * Backticks and square brackets are not in the basic SMS alphabet. Carriers
+     * show a backtick as ¿ and brackets as Ä and Ñ, including Google's alert wrapper.
+     */
+    static String plainSms(String text) {
+        if (text == null) {
+            return null;
+        }
+        return text.replace("&gt;", ">")
+                .replace("&lt;", "<")
+                .replace("&amp;", "&")
+                .replace("`", "")
+                .replace("¿", "")
+                .replace("[", "")
+                .replace("]", "");
     }
 
     /**
