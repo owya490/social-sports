@@ -90,8 +90,8 @@ without loading application Firebase credentials or PostHog. Its service
 account needs `roles/logging.viewer`, `roles/logging.logWriter`,
 `roles/datastore.user`, and `roles/aiplatform.user`.
 
-Each error fingerprint can send at most three texts in seven days. A repeat of that error is acknowledged, including while its own send is in progress, so a different error is not blocked and contention is not a failure. A rolling 24-hour limit of 20 publications matches Monitoring's
-log-alert budget. A reservation counts toward that limit until its text is sent or the send is released. Publication failure releases the
+Each error fingerprint can send at most three texts in seven days. A repeat of that error is acknowledged, including while its own send is in progress. At most three texts across any fingerprints go out in ten minutes, so a burst of distinct errors cannot use the whole day. A rolling 24-hour limit of 20 publications matches Monitoring's
+log-alert budget. A reservation counts toward both limits until its text is sent or the send is released. Publication failure releases the
 lease and escapes the handler. Completion failure escapes without releasing
 early. The deployment enables retries with a two-minute function timeout;
 events older than one hour are acknowledged without processing. Firestore and

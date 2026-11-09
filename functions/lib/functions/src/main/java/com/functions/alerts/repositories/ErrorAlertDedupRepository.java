@@ -30,6 +30,13 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
     public static final Duration IN_FLIGHT_WINDOW = Duration.ofMinutes(3);
     /** Matches Cloud Monitoring autoClose (604800s) so EXTRACT(sms) stays stable for one incident. */
     public static final Duration SMS_INCIDENT_WINDOW = Duration.ofDays(7);
+    /**
+     * Stops a burst of distinct fingerprints from using the whole daily budget.
+     * A public route can log caller-controlled text at ERROR, and that text is
+     * part of the fingerprint.
+     */
+    public static final Duration DEDUP_WINDOW = Duration.ofMinutes(10);
+    public static final int BURST_LIMIT = 3;
     public static final int INCIDENT_LIMIT = 3;
     static final int DAILY_LIMIT = 20;
     static final String COLLECTION = "ErrorAlertDedup";
@@ -59,7 +66,7 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
             DocumentSnapshot globalState = transaction.get(global).get();
             DocumentReference incident = fingerprintDoc(key);
             DocumentSnapshot incidentState = transaction.get(incident).get();
-            if (dailyBudgetSpent(globalState, now) || capped(incidentState, now)) {
+            if (dailyBudgetSpent(globalState, now) || burstSpent(globalState, now) || capped(incidentState, now)) {
                 return Optional.empty();
             }
             if (recent(incidentState, "inFlightAt", now, IN_FLIGHT_WINDOW)) {
@@ -231,6 +238,16 @@ public class ErrorAlertDedupRepository implements ErrorAlertDedupStore {
 
     private static boolean dailyBudgetSpent(DocumentSnapshot state, Instant now) {
         return recentSends(state, now).size() + openReservations(state, now).size() >= DAILY_LIMIT;
+    }
+
+    private static boolean burstSpent(DocumentSnapshot state, Instant now) {
+        int recent = 0;
+        for (Timestamp sent : recentSends(state, now)) {
+            if (sent.toDate().toInstant().isAfter(now.minus(DEDUP_WINDOW))) {
+                recent++;
+            }
+        }
+        return recent + openReservations(state, now).size() >= BURST_LIMIT;
     }
 
     private static List<Map<String, Object>> openReservations(DocumentSnapshot state, Instant now) {

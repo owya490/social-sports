@@ -114,7 +114,25 @@ public class ErrorAlertDedupRepositoryTest {
             repository.complete(reservation, "booking");
         }
         assertTrue(repository.reserve("booking").isEmpty());
-        assertTrue(repository.reserve("checkout").isPresent());
+        assertTrue(repository.reserve("checkout").isEmpty());
+        ErrorAlertDedupRepository later = repository(
+                NOW.plus(ErrorAlertDedupRepository.DEDUP_WINDOW).plusSeconds(1));
+        assertTrue(later.reserve("booking").isEmpty());
+        assertTrue(later.reserve("checkout").isPresent());
+    }
+
+    @Test
+    public void reserve_stopsABurstOfDifferentErrorsFromUsingTheDailyBudget() {
+        ErrorAlertDedupRepository repository = repository(NOW);
+        for (int sent = 0; sent < ErrorAlertDedupRepository.BURST_LIMIT; sent++) {
+            String fingerprint = "error-" + sent;
+            Reservation reservation = repository.reserve(fingerprint).orElseThrow();
+            repository.complete(reservation, fingerprint);
+        }
+        assertTrue(repository.reserve("error-extra").isEmpty());
+        ErrorAlertDedupRepository later = repository(
+                NOW.plus(ErrorAlertDedupRepository.DEDUP_WINDOW).plusSeconds(1));
+        assertTrue(later.reserve("error-extra").isPresent());
     }
 
     @Test

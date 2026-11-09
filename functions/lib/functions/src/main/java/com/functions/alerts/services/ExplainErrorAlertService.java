@@ -38,7 +38,7 @@ public class ExplainErrorAlertService {
         String fingerprint = ErrorAlertFingerprint.of(parsed);
         Optional<Reservation> claim = dedupStore.reserve(fingerprint);
         if (claim.isEmpty()) {
-            logger.info("Skipping error alert; incident cap or daily budget fingerprint={}", fingerprint);
+            logger.info("Skipping error alert; incident cap, burst limit, or daily budget fingerprint={}", fingerprint);
             return;
         }
 

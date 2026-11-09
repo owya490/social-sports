@@ -11,8 +11,9 @@ public interface ErrorAlertDedupStore {
 
     /**
      * Empty means this error has already sent its cap, a send for this same
-     * error is already in progress, or the daily budget is spent. A different
-     * error can still reserve. Contention does not throw. Infrastructure failures throw.
+     * error is already in progress, the ten-minute burst limit is spent, or the
+     * daily budget is spent. A different error can still reserve inside that
+     * burst. Contention does not throw. Infrastructure failures throw.
      */
     Optional<Reservation> reserve(String fingerprint);
 
