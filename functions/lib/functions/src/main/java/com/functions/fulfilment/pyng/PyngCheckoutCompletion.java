@@ -19,6 +19,8 @@ import com.functions.fulfilment.services.FulfilmentSessionPublisher;
  * Pyng payment completion. A pending hosted checkout is polled from the
  * fulfilment page and from the minute cron. A terminal outcome is published
  * as the whole fulfilment session, then recorded so it is not published again.
+ * A later poll reads the live session, then the archive, because the processor
+ * may already have moved it.
  */
 public final class PyngCheckoutCompletion {
     private static final Logger logger = LoggerFactory.getLogger(PyngCheckoutCompletion.class);
@@ -105,16 +107,11 @@ public final class PyngCheckoutCompletion {
     }
 
     private static FulfilmentSession loadStoredSession(String sessionId) throws Exception {
-        Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSession(sessionId,
-                Optional.empty());
+        Optional<FulfilmentSession> maybeSession = FulfilmentSessionRepository.getFulfilmentSessionOrArchived(
+                sessionId);
         if (maybeSession.isEmpty()) {
             throw new IllegalArgumentException("Fulfilment session " + sessionId + " was not found");
         }
         return maybeSession.get();
-    }
-
-    static void reset() {
-        sessions = PyngCheckoutCompletion::loadStoredSession;
-        settlements = FulfilmentSessionRepository::updatePyngSettlement;
     }
 }
