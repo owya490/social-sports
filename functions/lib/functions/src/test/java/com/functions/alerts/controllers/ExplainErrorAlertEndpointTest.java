@@ -101,7 +101,7 @@ public class ExplainErrorAlertEndpointTest {
         return new AlertClaimStore() {
             @Override
             public Optional<Claim> claim(String fingerprint) {
-                return Optional.of(new Claim(fingerprint, "2026-11-09"));
+                return Optional.of(new Claim(fingerprint, java.time.Instant.now()));
             }
 
             @Override

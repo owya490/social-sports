@@ -18,6 +18,7 @@ import com.functions.alerts.models.ErrorAlertNotification;
 import com.functions.alerts.models.ParsedErrorLog;
 
 public class ExplainErrorAlertServiceTest {
+    private static final java.time.Instant CLAIMED_AT = java.time.Instant.parse("2026-11-09T04:00:00Z");
     private AlertClaimStore store;
     private List<ErrorAlertNotification> published;
     private ExplainErrorAlertService service;
@@ -25,7 +26,7 @@ public class ExplainErrorAlertServiceTest {
     @Before
     public void setUp() {
         store = mock(AlertClaimStore.class);
-        when(store.claim(any())).thenAnswer(invocation -> Optional.of(new Claim(invocation.getArgument(0), "2026-11-09")));
+        when(store.claim(any())).thenAnswer(invocation -> Optional.of(new Claim(invocation.getArgument(0), CLAIMED_AT)));
         published = new ArrayList<>();
         service = service(published::add);
     }
@@ -91,7 +92,7 @@ public class ExplainErrorAlertServiceTest {
         service = service(notification -> { throw new IllegalStateException("Logging unavailable"); });
         doThrow(new IllegalStateException("Firestore unavailable")).when(store).release(any());
         service.process(sampleLog());
-        verify(store).release(new Claim(ErrorAlertFingerprint.of(sampleLog()), "2026-11-09"));
+        verify(store).release(new Claim(ErrorAlertFingerprint.of(sampleLog()), CLAIMED_AT));
     }
 
     @Test

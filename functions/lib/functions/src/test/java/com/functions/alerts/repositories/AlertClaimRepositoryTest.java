@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Before;
@@ -52,15 +53,6 @@ public class AlertClaimRepositoryTest {
             state.put(idOf(invocation.getArgument(0)), new LinkedHashMap<>(invocation.<Map<String, Object>>getArgument(1)));
             return transaction;
         });
-        when(transaction.update(any(DocumentReference.class), any(Map.class))).thenAnswer(invocation -> {
-            transactionWrote = true;
-            Map<String, Object> fields = state.get(idOf(invocation.getArgument(0)));
-            if (fields == null) {
-                throw new IllegalStateException("NOT_FOUND: update on a missing document");
-            }
-            fields.put(AlertClaimRepository.COUNT, ((Long) fields.get(AlertClaimRepository.COUNT)) - 1);
-            return transaction;
-        });
         when(transaction.delete(any(DocumentReference.class))).thenAnswer(invocation -> {
             transactionWrote = true;
             state.remove(idOf(invocation.getArgument(0)));
@@ -98,37 +90,28 @@ public class AlertClaimRepositoryTest {
     }
 
     @Test
-    public void claim_stopsAtTheDailyBudgetAndStoresTtlExpiries() {
+    public void claim_enforcesARollingBudgetAcrossUtcMidnight() {
+        Instant start = Instant.parse("2026-11-09T21:00:00Z");
         for (int i = 0; i < AlertClaimRepository.DAILY_LIMIT; i++) {
-            assertTrue(repository(NOW.plus(AlertClaimRepository.GLOBAL_WINDOW.multipliedBy(i))).claim("fp-" + i).isPresent());
+            assertTrue(repository(start.plus(AlertClaimRepository.GLOBAL_WINDOW.multipliedBy(i))).claim("fp-" + i).isPresent());
         }
-        Instant later = NOW.plus(AlertClaimRepository.GLOBAL_WINDOW.multipliedBy(AlertClaimRepository.DAILY_LIMIT));
-        assertFalse(repository(later).claim("fp-over-budget").isPresent());
-        assertTrue(repository(NOW.plus(Duration.ofDays(1))).claim("fp-next-day").isPresent());
+        assertFalse(repository(Instant.parse("2026-11-10T03:00:00Z")).claim("fp-after-midnight").isPresent());
+        assertTrue(repository(start.plus(Duration.ofDays(1)).plusSeconds(1)).claim("fp-next-day").isPresent());
 
         Timestamp expireAt = (Timestamp) state.get("fingerprint-fp-0").get(AlertClaimRepository.EXPIRE_AT);
-        assertEquals(NOW.plus(AlertClaimRepository.FINGERPRINT_WINDOW).getEpochSecond(), expireAt.getSeconds());
+        assertEquals(start.plus(AlertClaimRepository.FINGERPRINT_WINDOW).getEpochSecond(), expireAt.getSeconds());
     }
 
     @Test
-    public void release_freesTheWindowsAndBudget() {
-        AlertClaimRepository repository = repository(NOW);
-        Claim claim = repository.claim("fp-webhook").orElseThrow();
+    public void release_freesTheWindowsAndRefundsOnlyItsOwnSend() {
+        assertTrue(repository(NOW).claim("fp-earlier").isPresent());
+        AlertClaimRepository later = repository(NOW.plus(AlertClaimRepository.GLOBAL_WINDOW).plusSeconds(1));
+        Claim claim = later.claim("fp-webhook").orElseThrow();
 
-        repository.release(claim);
+        later.release(claim);
 
-        assertTrue(repository.claim("fp-webhook").isPresent());
-        assertEquals(1L, state.get("day-2026-11-09").get(AlertClaimRepository.COUNT));
-    }
-
-    @Test
-    public void release_refundsTheDayThatWasChargedEvenAfterMidnight() {
-        Claim claim = repository(Instant.parse("2026-11-09T23:59:59Z")).claim("fp-webhook").orElseThrow();
-
-        repository(Instant.parse("2026-11-10T00:00:30Z")).release(claim);
-
-        assertEquals(0L, state.get("day-2026-11-09").get(AlertClaimRepository.COUNT));
-        assertFalse(state.containsKey("day-2026-11-10"));
+        assertEquals(1, ((List<?>) state.get("budget").get(AlertClaimRepository.SENT_AT)).size());
+        assertTrue(later.claim("fp-webhook").isPresent());
     }
 
     private AlertClaimRepository repository(Instant now) {
@@ -157,7 +140,7 @@ public class AlertClaimRepositoryTest {
         Map<String, Object> fields = state.get(id);
         when(snapshot.exists()).thenReturn(fields != null);
         if (fields != null) {
-            when(snapshot.getLong(anyString())).thenAnswer(invocation -> (Long) fields.get(invocation.getArgument(0)));
+            when(snapshot.get(anyString())).thenAnswer(invocation -> fields.get(invocation.getArgument(0)));
             when(snapshot.getTimestamp(anyString())).thenAnswer(invocation -> {
                 Object value = fields.get(invocation.getArgument(0));
                 return value instanceof Timestamp timestamp ? timestamp : null;

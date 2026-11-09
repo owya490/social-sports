@@ -3,7 +3,8 @@ package com.functions.alerts.repositories;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -14,7 +15,6 @@ import com.google.api.core.ApiFuture;
 import com.google.cloud.Timestamp;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.DocumentSnapshot;
-import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
@@ -30,12 +30,16 @@ public class AlertClaimRepository implements AlertClaimStore {
      * the extra two minutes cover the 120s function timeout between them.
      */
     public static final Duration GLOBAL_WINDOW = Duration.ofMinutes(12);
-    /** Below Google's 20 so its randomly timed daily reset cannot drop the last pages. */
-    public static final long DAILY_LIMIT = 15;
+    /**
+     * Rolling, and below Google's 20, because Monitoring's daily incident limit
+     * resets at a random time that a calendar-day counter could straddle.
+     */
+    public static final int DAILY_LIMIT = 15;
+    static final Duration BUDGET_WINDOW = Duration.ofDays(1);
     static final String COLLECTION = CollectionPaths.ERROR_ALERT_CLAIMS;
     /** Firestore TTL deletes expired claims; deletion can lag, so reads still compare against now. */
     static final String EXPIRE_AT = "expireAt";
-    static final String COUNT = "count";
+    static final String SENT_AT = "sentAt";
 
     private final Firestore db;
     private final Clock clock;
@@ -52,24 +56,21 @@ public class AlertClaimRepository implements AlertClaimStore {
     @Override
     public Optional<Claim> claim(String fingerprint) {
         Instant now = clock.instant();
-        Claim claim = new Claim(fingerprint, now.atZone(ZoneOffset.UTC).toLocalDate().toString());
         DocumentReference fingerprintDoc = fingerprintDoc(fingerprint);
         DocumentReference globalDoc = globalDoc();
-        DocumentReference dayDoc = dayDoc(claim.day());
+        DocumentReference budgetDoc = budgetDoc();
         return run(transaction -> {
             DocumentSnapshot fingerprintState = transaction.get(fingerprintDoc).get();
             DocumentSnapshot globalState = transaction.get(globalDoc).get();
-            DocumentSnapshot dayState = transaction.get(dayDoc).get();
-            Long sent = dayState.exists() ? dayState.getLong(COUNT) : null;
-            if (active(fingerprintState, now) || active(globalState, now)
-                    || (sent != null && sent >= DAILY_LIMIT)) {
+            List<Timestamp> sent = recentSends(transaction.get(budgetDoc).get(), now);
+            if (active(fingerprintState, now) || active(globalState, now) || sent.size() >= DAILY_LIMIT) {
                 return Optional.<Claim>empty();
             }
+            sent.add(timestamp(now));
             transaction.set(fingerprintDoc, expiring(now, FINGERPRINT_WINDOW));
             transaction.set(globalDoc, expiring(now, GLOBAL_WINDOW));
-            transaction.set(dayDoc, Map.of(COUNT, (sent == null ? 0 : sent) + 1,
-                    EXPIRE_AT, timestamp(now.plus(Duration.ofDays(2)))));
-            return Optional.of(claim);
+            transaction.set(budgetDoc, Map.of(SENT_AT, sent));
+            return Optional.of(new Claim(fingerprint, now));
         });
     }
 
@@ -77,11 +78,14 @@ public class AlertClaimRepository implements AlertClaimStore {
     public void release(Claim claim) {
         DocumentReference fingerprintDoc = fingerprintDoc(claim.fingerprint());
         DocumentReference globalDoc = globalDoc();
-        DocumentReference dayDoc = dayDoc(claim.day());
+        DocumentReference budgetDoc = budgetDoc();
+        Timestamp claimedAt = timestamp(claim.claimedAt());
         run(transaction -> {
+            List<Timestamp> sent = recentSends(transaction.get(budgetDoc).get(), clock.instant());
+            sent.remove(claimedAt);
             transaction.delete(fingerprintDoc);
             transaction.delete(globalDoc);
-            transaction.update(dayDoc, Map.of(COUNT, FieldValue.increment(-1)));
+            transaction.set(budgetDoc, Map.of(SENT_AT, sent));
             return null;
         });
     }
@@ -94,8 +98,21 @@ public class AlertClaimRepository implements AlertClaimStore {
         return db.collection(COLLECTION).document("global");
     }
 
-    private DocumentReference dayDoc(String day) {
-        return db.collection(COLLECTION).document("day-" + day);
+    private DocumentReference budgetDoc() {
+        return db.collection(COLLECTION).document("budget");
+    }
+
+    private static List<Timestamp> recentSends(DocumentSnapshot state, Instant now) {
+        List<Timestamp> sends = new ArrayList<>();
+        Object values = state.exists() ? state.get(SENT_AT) : null;
+        if (values instanceof List<?> list) {
+            for (Object value : list) {
+                if (value instanceof Timestamp time && time.toDate().toInstant().isAfter(now.minus(BUDGET_WINDOW))) {
+                    sends.add(time);
+                }
+            }
+        }
+        return sends;
     }
 
     private static boolean active(DocumentSnapshot state, Instant now) {
