@@ -33,7 +33,6 @@ public class ErrorAlertDedupRepositoryTest {
     private Transaction transaction;
     private Map<String, DocumentReference> docs;
     private Map<String, Map<String, Object>> state;
-    private boolean transactionWrote;
 
     @Before
     public void setUp() throws Exception {
@@ -42,29 +41,31 @@ public class ErrorAlertDedupRepositoryTest {
         transaction = mock(Transaction.class);
         docs = new LinkedHashMap<>();
         state = new LinkedHashMap<>();
+        boolean[] wrote = { false };
         when(db.collection(ErrorAlertDedupRepository.COLLECTION)).thenReturn(collection);
         when(collection.document(anyString())).thenAnswer(invocation -> doc(invocation.getArgument(0)));
         when(transaction.get(any(DocumentReference.class))).thenAnswer(invocation -> {
-            if (transactionWrote) {
-                throw new IllegalStateException("Firestore transactions require all reads to be executed before all writes");
+            if (wrote[0]) {
+                throw new IllegalArgumentException(
+                        "Firestore transactions require all reads to be executed before all writes.");
             }
             DocumentReference ref = invocation.getArgument(0);
             return ApiFutures.immediateFuture(snapshot(idOf(ref)));
         });
         when(transaction.set(any(DocumentReference.class), any(Map.class), any(SetOptions.class)))
                 .thenAnswer(invocation -> {
-                    transactionWrote = true;
+                    wrote[0] = true;
                     merge(idOf(invocation.getArgument(0)), invocation.getArgument(1));
                     return transaction;
                 });
         when(transaction.update(any(DocumentReference.class), any(Map.class))).thenAnswer(invocation -> {
-            transactionWrote = true;
+            wrote[0] = true;
             merge(idOf(invocation.getArgument(0)), invocation.getArgument(1));
             return transaction;
         });
         when(db.runTransaction(any(Transaction.Function.class))).thenAnswer(invocation -> {
+            wrote[0] = false;
             Transaction.Function<?> callback = invocation.getArgument(0);
-            transactionWrote = false;
             try {
                 return ApiFutures.immediateFuture(callback.updateCallback(transaction));
             } catch (Exception failure) {
