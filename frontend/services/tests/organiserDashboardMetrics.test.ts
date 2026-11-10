@@ -52,9 +52,6 @@ function eventWith(overrides: Partial<EventData> & { eventId: EventId; startDate
 
 function ticketWith(overrides: Partial<Ticket> & { ticketId: TicketId; eventId: EventId; orderId: OrderId }): Ticket {
   return {
-    ticketId: overrides.ticketId,
-    eventId: overrides.eventId,
-    orderId: overrides.orderId,
     price: 1000,
     purchaseDate: Timestamp.now(),
     status: OrderAndTicketStatus.APPROVED,
@@ -66,7 +63,6 @@ function ticketWith(overrides: Partial<Ticket> & { ticketId: TicketId; eventId: 
 
 function orderWith(overrides: Partial<Order> & { orderId: OrderId }): Order {
   return {
-    orderId: overrides.orderId,
     applicationFees: 0,
     datePurchased: Timestamp.now(),
     discounts: 0,

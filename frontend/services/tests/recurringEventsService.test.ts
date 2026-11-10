@@ -54,7 +54,7 @@ describe("recurringEventsService GAC calls", () => {
         eventData: { ...eventData, price: 10, capacity: 20, vacancy: 20 },
         recurrenceData: { ...recurrenceData, allRecurrences: [], pastRecurrences: {} },
       }),
-    } as QueryDocumentSnapshot<DocumentData, DocumentData>);
+    } as unknown as QueryDocumentSnapshot<DocumentData, DocumentData>);
   };
 
   it("creates a recurrence template through the authenticated GAC endpoint", async () => {

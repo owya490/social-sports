@@ -1,5 +1,5 @@
 import { ImageSection } from "@/components/gallery/ImageSection";
-import { EmptyUserData } from "@/interfaces/UserTypes";
+import { EmptyUserData, UserId } from "@/interfaces/UserTypes";
 import { uploadEventThumbnail } from "@/services/src/images/imageService";
 import { renderToStaticMarkup } from "react-dom/server";
 import { ImageForm } from "./ImageForm";
@@ -26,7 +26,7 @@ describe("ImageForm upload state", () => {
     const onUploadingChange = jest.fn((uploading: boolean) => { if (!uploading) finish(); });
     const updateField = jest.fn();
     renderToStaticMarkup(<ImageForm
-      user={EmptyUserData} image="original.jpg" thumbnail="original-thumb.jpg"
+      user={{ ...EmptyUserData, userId: "" as UserId }} image="original.jpg" thumbnail="original-thumb.jpg"
       eventImageUrls={[]} eventThumbnailsUrls={[]}
       setImageUrls={jest.fn()} setThumbnailUrls={jest.fn()}
       updateField={updateField} onUploadingChange={onUploadingChange}
