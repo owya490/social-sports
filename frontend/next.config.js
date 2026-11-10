@@ -58,7 +58,7 @@ const nextConfig = {
         pathname: "/v0/b/socialsports-44162.appspot.com/o/**",
       },
     ],
-    unoptimized: "false",
+    unoptimized: false,
     // Firebase download URLs are unique per upload, so optimised copies can be cached long-term. Without this,
     // the 4-hour default re-fetches from Firebase and re-bills a transformation for every image every 4 hours.
     minimumCacheTTL: 2678400,
