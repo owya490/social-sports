@@ -11,7 +11,7 @@ import {
   PencilSquareIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
@@ -104,6 +104,7 @@ export default function ProfilePic() {
                   alt="DP"
                   width={0}
                   height={0}
+                  sizes="40px"
                   className="object-cover h-10 w-10"
                 />
               </MenuButton>

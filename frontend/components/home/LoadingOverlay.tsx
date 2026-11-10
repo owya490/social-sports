@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useEffect } from "react";
 import Logo from "../../public/images/black-logo.png";
 import { sleep } from "../../utilities/sleepUtil";

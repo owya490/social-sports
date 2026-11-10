@@ -1,7 +1,7 @@
 "use client";
 
 import heroImage from "@/public/images/mocks/sportshub-mac-web-mock.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import styles from "./ImageHero.module.css";
 
 export default function ImageHero() {

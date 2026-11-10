@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useEffect, useState } from "react";
 
 const loadingPhrases = [

@@ -1,5 +1,5 @@
 import location from "@/public/images/location.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 export const LocationPanel = () => {
   return (

@@ -1,6 +1,6 @@
 import { DropdownSelectSection } from "@/interfaces/FormTypes";
 import { Option, Select } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 export const DropdownSelectSectionResponse = ({
   dropdownSelectSection,

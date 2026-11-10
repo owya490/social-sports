@@ -4,7 +4,7 @@ import { AnimatedSection } from "@/components/organiser/wrapped/AnimatedSection"
 import { EventId } from "@/interfaces/EventTypes";
 import { formatCurrency } from "@/services/src/wrapped/wrappedUtils";
 import { motion, useInView } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { useRef } from "react";
 
@@ -71,7 +71,13 @@ export function MostPopularEventSection({ mostPopularEvent }: MostPopularEventSe
             />
             <div className="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-white/20">
               <div className="aspect-video relative">
-                <Image src={mostPopularEvent.eventImage} alt={mostPopularEvent.name} fill className="object-cover" />
+                <Image
+                  src={mostPopularEvent.eventImage}
+                  alt={mostPopularEvent.name}
+                  fill
+                  sizes="(max-width: 479px) 100vw, 448px"
+                  className="object-cover"
+                />
               </div>
             </div>
           </motion.div>

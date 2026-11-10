@@ -2,7 +2,7 @@
 
 import { HighlightButton } from "@/components/elements/HighlightButton";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";

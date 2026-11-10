@@ -4,7 +4,7 @@ import { EmptyEventData, EventId } from "@/interfaces/EventTypes";
 import { FulfilmentSessionType } from "@/interfaces/FulfilmentTypes";
 import { getEventById } from "@/services/src/events/eventsService";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { ReactNode, Suspense, useEffect, useState } from "react";
