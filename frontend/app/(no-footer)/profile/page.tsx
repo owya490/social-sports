@@ -2,6 +2,7 @@
 
 import Loading from "@/components/loading/Loading";
 import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
+import { PasswordChangeModal } from "@/components/users/profile/PasswordChangeModal";
 import {
   ProfileBioEditor,
   ProfileField,
@@ -88,6 +89,7 @@ const Profile = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [usernameWarning, setUsernameWarning] = useState(false);
   const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
+  const [passwordChangeModalOpened, setPasswordChangeModalOpened] = useState(false);
   const [saveAttempted, setSaveAttempted] = useState(false);
 
   useEffect(() => {
@@ -360,6 +362,19 @@ const Profile = () => {
                   </button>
                 }
               />
+              <ProfileReadonlyField
+                label="Password"
+                value="••••••••"
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setPasswordChangeModalOpened(true)}
+                    className="text-xs font-semibold text-foreground font-sans hover:underline"
+                  >
+                    Change
+                  </button>
+                }
+              />
               <ProfileField
                 label="Private phone number"
                 htmlFor="profile-private-mobile"
@@ -443,6 +458,11 @@ const Profile = () => {
       <EmailChangeModal
         isOpen={emailChangeModalOpened}
         onClose={() => setEmailChangeModalOpened(false)}
+        currentEmail={user.contactInformation.email}
+      />
+      <PasswordChangeModal
+        isOpen={passwordChangeModalOpened}
+        onClose={() => setPasswordChangeModalOpened(false)}
         currentEmail={user.contactInformation.email}
       />
     </div>
