@@ -33,6 +33,8 @@ public class FirebaseService {
         public static final String PRIVATE = "Private";
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
+        public static final String USERNAMES = "Usernames";
+        public static final String METADATA = "Metadata";
         public static final String EVENTS_METADATA = "EventsMetadata";
         public static final String DELETED_EVENTS = "DeletedEvents";
         public static final String RECURRING_EVENTS = "RecurringEvents";

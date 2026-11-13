@@ -15,17 +15,19 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updateProfile,
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
-import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
-import { auth, db } from "../firebase";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
+import { auth } from "../firebase";
 import { bustOrganiserEventsCache } from "../organiser/organiserEventsCache";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { UserNotFoundError } from "../users/userErrors";
-import { createUser, deleteUser, getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
-import { mapSocialAuthError, userDataFromSocialProfile } from "./socialAuthUtils";
+import { mapSocialAuthError } from "./socialAuthUtils";
 
 const authServiceLogger = new Logger("authServiceLogger");
 
@@ -35,19 +37,12 @@ export async function handleEmailAndPasswordSignUp(data: NewUserData) {
   try {
     // Create a new user with email and password
     userCredential = await createUserWithEmailAndPassword(auth, data.contactInformation.email, data.password);
+    const displayName = data.firstName.trim() || "User";
+    await updateProfile(userCredential.user, { displayName });
     authServiceLogger.info("Firebase Auth Object Created", {
       email: data.contactInformation.email,
       userId: userCredential.user.uid,
     });
-    const { password: _password, ...userDataWithoutPassword } = data;
-    // Save user data temporarily in your database
-    const userId = userCredential.user.uid as UserId;
-    await saveTempUserData(userId, { ...userDataWithoutPassword, userId: userId });
-    authServiceLogger.info("Temp User Data Created", {
-      email: data.contactInformation.email,
-      userId: userCredential.user.uid,
-    });
-    // Send email verification
     await sendEmailVerification(userCredential.user, actionCodeSettings);
     authServiceLogger.info("Email Verification sent", {
       email: data.contactInformation.email,
@@ -89,26 +84,9 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
     } else {
       authServiceLogger.info("Email is verified. Proceeding with login.", { userId: userCredential.user.uid });
       const userId = userCredential.user.uid as UserId;
-
-      try {
-        await getPublicUserById(userId);
-
-        // Sync email from Firebase Auth to Firestore if needed
-        await syncEmailOnLogin(userId);
-
-        return userId; // User exists, sign-in successful
-      } catch (error: unknown) {
-        if (error instanceof UserNotFoundError) {
-          authServiceLogger.info("User not found in public users. Attempting to retrieve temporary user data.", {
-            userId: userCredential.user.uid,
-          });
-
-          await migrateTempUserToActiveUser(userId);
-          return userId; // User created and temporary data deleted successfully
-        } else {
-          throw error; // Re-throw if it's not a UserNotFoundError
-        }
-      }
+      await ensureProvisionedUser();
+      await syncEmailOnLogin(userId);
+      return userId;
     }
   } catch (error: unknown) {
     if (userCredential) {
@@ -139,74 +117,37 @@ export async function handleEmailAndPasswordSignIn(email: string, password: stri
   }
 }
 
-export async function saveTempUserData(userId: UserId, data: UserData) {
-  await setDoc(doc(db, "TempUsers", userId), data);
-}
+// Held open during a social popup so the auth listener does not provision
+// before Apple's one-time name is copied onto the Auth user.
+let socialNameReady: Promise<void> = Promise.resolve();
+let ensureProvisionedInFlight: Promise<void> | null = null;
 
-export async function getTempUserData(userId: UserId): Promise<UserData | null> {
-  try {
-    const docRef = doc(db, "TempUsers", userId); // Get a reference to the document
-    const docSnap = await getDoc(docRef); // Retrieve the document snapshot
-
-    if (docSnap.exists()) {
-      return docSnap.data() as UserData;
+/** Creates the Firestore profile once, after sign-in, when the public doc is missing. */
+export function ensureProvisionedUser(): Promise<void> {
+  if (ensureProvisionedInFlight) {
+    return ensureProvisionedInFlight;
+  }
+  ensureProvisionedInFlight = (async () => {
+    await socialNameReady;
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error("No authenticated user");
     }
-    return null;
-  } catch (error) {
-    authServiceLogger.error(`Error fetching user data for ID=${userId}: ${error}`);
-    return null;
-  }
-}
-
-async function deleteTempUserData(userId: UserId) {
-  await deleteDoc(doc(db, "TempUsers", userId));
-}
-
-/**
- * Promotes a verified user's staged record in TempUsers to Users/Active and
- * deletes the staged record. Rolls back the created user if migration fails.
- * @returns the migrated user data
- * @throws Error if no temp data exists or the migration fails
- */
-export async function migrateTempUserToActiveUser(userId: UserId): Promise<UserData> {
-  const userData = await getTempUserData(userId);
-
-  if (userData === null) {
-    authServiceLogger.error("Temporary user data not found after email verification.", { userId });
-    throw new Error("User data not found.");
-  }
-
-  try {
-    await createUser(userData, userId);
-    authServiceLogger.info("Temporary user data found and user created successfully.", { userId });
-
-    // Proceed with deletion of temporary user data
-    await deleteTempUserData(userId);
-    authServiceLogger.info("Temporary user data deleted after successful creation.", { userId });
-    return userData;
-  } catch {
-    authServiceLogger.error("Error during user creation. Attempting rollback.", { userId });
-
-    // Rollback only if user creation succeeded and temporary data deletion failed
     try {
-      await deleteUser(userId);
-      authServiceLogger.error("User creation rolled back successfully.", { userId });
-    } catch (rollbackError) {
-      const rollbackErrorMessage =
-        rollbackError instanceof Error ? rollbackError.message : "Unknown error during rollback";
-      authServiceLogger.error("Failed to roll back user creation:", {
-        error: rollbackErrorMessage,
-        userId,
-      });
+      // Live read. A cached profile must not hide a document that was never created.
+      await getPublicUserById(user.uid as UserId, true);
+      return;
+    } catch (error) {
+      if (!(error instanceof UserNotFoundError)) {
+        throw error;
+      }
     }
-
-    throw new Error("User creation failed, rolled back the changes.");
-  }
+    await executeGlobalAppControllerFunction(EndpointType.PROVISION_USER, {}, { attachAuth: true });
+  })().finally(() => {
+    ensureProvisionedInFlight = null;
+  });
+  return ensureProvisionedInFlight;
 }
-
-// Popup completion and UserContext's onAuthStateChanged can both try to provision
-// the Firestore profile at once; share one in-flight promise so we don't double-create.
-let ensureActiveUserInFlight: Promise<UserId> | null = null;
 
 export function handleGoogleSignIn(): Promise<UserId | null> {
   return signInWithSocialProvider(new GoogleAuthProvider());
@@ -227,12 +168,23 @@ export function handleFacebookSignIn(): Promise<UserId | null> {
 }
 
 async function signInWithSocialProvider(provider: AuthProvider): Promise<UserId | null> {
+  let releaseSocialName = () => {};
+  socialNameReady = new Promise((resolve) => {
+    releaseSocialName = resolve;
+  });
   try {
     const credential = await signInWithPopup(auth, provider);
-    const userId = await ensureActiveUserFromAuth(credential);
+    const displayName = resolveSocialDisplayName(credential);
+    if (displayName && !credential.user.displayName) {
+      await updateProfile(credential.user, { displayName });
+    }
+    releaseSocialName();
+    await ensureProvisionedUser();
+    const userId = credential.user.uid as UserId;
     authServiceLogger.info("Social sign-in succeeded", { userId, provider: provider.providerId });
     return userId;
   } catch (error) {
+    releaseSocialName();
     const message = mapSocialAuthError(error);
     if (message === null) {
       return null;
@@ -243,50 +195,6 @@ async function signInWithSocialProvider(provider: AuthProvider): Promise<UserId 
     });
     throw new Error(message);
   }
-}
-
-export async function ensureActiveUserFromAuth(credential?: UserCredential): Promise<UserId> {
-  if (ensureActiveUserInFlight) {
-    return ensureActiveUserInFlight;
-  }
-
-  ensureActiveUserInFlight = provisionActiveUserFromAuth(credential).finally(() => {
-    ensureActiveUserInFlight = null;
-  });
-  return await ensureActiveUserInFlight;
-}
-
-async function provisionActiveUserFromAuth(credential?: UserCredential): Promise<UserId> {
-  const user = credential?.user ?? auth.currentUser;
-  if (!user) {
-    throw new Error("No authenticated user");
-  }
-  if (!user.email) {
-    throw new Error("This sign-in method did not provide an email address.");
-  }
-
-  const userId = user.uid as UserId;
-  try {
-    await getPublicUserById(userId);
-    await syncEmailOnLogin(userId);
-    return userId;
-  } catch (error) {
-    if (!(error instanceof UserNotFoundError)) {
-      throw error;
-    }
-  }
-
-  await createUser(
-    userDataFromSocialProfile({
-      uid: user.uid,
-      email: user.email,
-      displayName: resolveSocialDisplayName(credential) ?? user.displayName,
-      photoURL: user.photoURL,
-    }),
-    userId
-  );
-  authServiceLogger.info("Created user from social sign-in", { userId });
-  return userId;
 }
 
 function resolveSocialDisplayName(credential?: UserCredential): string | null {

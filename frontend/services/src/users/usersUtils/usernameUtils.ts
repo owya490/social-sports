@@ -2,7 +2,6 @@ import { UserId } from "@/interfaces/UserTypes";
 import { isValidUsername, sanitizeUsernameInput } from "@/utilities/usernameValidationUtils";
 import { doc, runTransaction, Transaction } from "firebase/firestore";
 import { db } from "../../firebase";
-import { UsersServiceError } from "../userErrors";
 import { getPublicUserById, getUsernameMapping, updateUser } from "../usersService";
 
 export async function isUsernameExists(username: string, transaction?: Transaction): Promise<boolean> {
@@ -15,24 +14,6 @@ export async function isUsernameExists(username: string, transaction?: Transacti
   }
   console.log("Username exists!");
   return true;
-}
-
-export async function generateUsername(firstName: string): Promise<string> {
-  let username = firstName.toLowerCase().replaceAll(" ", "");
-  for (let i = 0; i < 100; i++) {
-    if (await isUsernameExists(username)) {
-      // username exists, append a random number
-      const randomNumber = randomIntFromInterval(0, 9);
-      username = `${username}${randomNumber}`;
-    } else {
-      // username doesn't exist, can be used.
-      return username;
-    }
-  }
-  throw new UsersServiceError(
-    username,
-    "We weren't able to generate a username, please try again or contact SPORTSHUB."
-  );
 }
 
 export async function updateUsername(userId: UserId, username: string) {
@@ -59,9 +40,4 @@ export async function updateUsername(userId: UserId, username: string) {
     transaction.delete(oldUsernameDocRef);
     return true;
   });
-}
-
-function randomIntFromInterval(min: number, max: number) {
-  // min and max included
-  return Math.floor(Math.random() * (max - min + 1) + min);
 }

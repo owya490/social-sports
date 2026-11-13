@@ -56,6 +56,7 @@ public class EndpointTypeAuthLevelTest {
         EXPECTED_AUTH_LEVELS.put(EndpointType.ADD_ATTENDEE, AuthLevel.AUTHENTICATED);
         EXPECTED_AUTH_LEVELS.put(EndpointType.SET_ATTENDEE_TICKETS, AuthLevel.AUTHENTICATED);
         EXPECTED_AUTH_LEVELS.put(EndpointType.BOOKING_APPROVAL, AuthLevel.AUTHENTICATED);
+        EXPECTED_AUTH_LEVELS.put(EndpointType.PROVISION_USER, AuthLevel.AUTHENTICATED);
     }
 
     @Test
