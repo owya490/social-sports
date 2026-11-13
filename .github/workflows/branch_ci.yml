@@ -53,3 +53,26 @@ jobs:
         run: cd frontend && npm test
       - name: java functions tests
         run: cd functions/lib/functions && mvn clean verify
+
+  reporting_testing:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: reporting
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: reporting/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - name: build
+        env:
+          FIREBASE_PROD_API_KEY: ci-placeholder
+          FIREBASE_PROD_AUTH_DOMAIN: ci.firebaseapp.com
+          FIREBASE_PROD_PROJECT_ID: ci-project
+          FIREBASE_PROD_APP_ID: ci-app
+        run: npm run build
