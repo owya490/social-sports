@@ -29,6 +29,7 @@ import com.functions.tickets.handlers.GetOrderHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
 import com.functions.tickets.handlers.GetTicketHandler;
 import com.functions.tickets.handlers.BookingApprovalHandler;
+import com.functions.users.handlers.ProvisionUserHandler;
 import com.functions.waitlist.handlers.UpdateFulfilmentEntityWithWaitlistDataHandler;
 import com.functions.wrapped.handlers.GetWrappedHandler;
 
@@ -72,6 +73,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.SET_ATTENDEE_TICKETS, new SetAttendeeTicketsHandler());
         handlers.put(EndpointType.GET_EVENT_ATTENDEE_NAMES, new GetEventAttendeeNamesHandler());
         handlers.put(EndpointType.BOOKING_APPROVAL, new BookingApprovalHandler());
+        handlers.put(EndpointType.PROVISION_USER, new ProvisionUserHandler());
     }
 
     /**

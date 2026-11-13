@@ -12,13 +12,10 @@ import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import {
   collection,
-  deleteDoc,
   deleteField,
   doc,
   getDoc,
   getDocs,
-  runTransaction,
-  setDoc,
   Timestamp,
   Transaction,
   updateDoc,
@@ -35,33 +32,8 @@ import {
   tryGetActivePublicUserDataFromLocalStorage,
   bustUserLocalStorageCache,
 } from "./usersUtils/getUsersUtils";
-import { generateUsername } from "./usersUtils/usernameUtils";
 
 export const userServiceLogger = new Logger("userServiceLogger");
-
-export async function createUser(data: UserData, userId: UserId): Promise<void> {
-  try {
-    userServiceLogger.info(`Creating new user: ${userId}`);
-
-    const uniqueUsername = await generateUsername(data.firstName);
-    // create the username mapping to optimistically "shotgun" that username
-    await createUsernameMapping(uniqueUsername, userId);
-    await setDoc(doc(db, "Users", "Active", "Public", userId), {
-      ...extractPublicUserData(data),
-      // cheekily inject the generated username and name tokens here.
-      username: uniqueUsername,
-      nameTokens: data.firstName.toLowerCase().split(" "),
-    } as PublicUserData);
-    await setDoc(doc(db, "Users", "Active", "Private", userId), {
-      ...extractPrivateUserData(data),
-      onboardingCompletedAt: null,
-    });
-    userServiceLogger.info(`User created successfully: ${userId}`);
-  } catch (error) {
-    userServiceLogger.error(`Error creating new user:, ${error}`);
-    throw new UsersServiceError(userId);
-  }
-}
 
 export async function getPublicUserById(
   userId: UserId,
@@ -154,9 +126,10 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
   try {
     const publicDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateDocRef = doc(db, "Users", "Active", "Private", userId);
-    const [publicDoc, privateDoc] = transaction
-      ? await Promise.all([transaction.get(publicDocRef), transaction.get(privateDocRef)])
-      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef)]);
+    const metadataDocRef = doc(db, "Users", "Active", "Metadata", userId);
+    const [publicDoc, privateDoc, metadataDoc] = transaction
+      ? await Promise.all([transaction.get(publicDocRef), transaction.get(privateDocRef), transaction.get(metadataDocRef)])
+      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef), getDoc(metadataDocRef)]);
 
     if (!publicDoc.exists() || publicDoc === undefined || !privateDoc.exists() || privateDoc === undefined) {
       throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
@@ -164,9 +137,10 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
 
     const publicUserData = publicDoc.data() as PublicUserData;
     const privateUserData = privateDoc.data() as PrivateUserData;
+    const metadata = metadataDoc.exists() ? metadataDoc.data() : {};
 
-    // Merge public and private data into one JSON object
-    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, userId };
+    // Onboarding stays on the private doc. Metadata currently only carries userId.
+    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, ...metadata, userId };
     return fullUserData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
@@ -216,28 +190,6 @@ export async function getAllPublicUsers(isActive?: boolean): Promise<PublicUserD
   }
 }
 
-// TODO: also remeber to delete from firebase auth
-export async function deleteUser(userId: UserId): Promise<void> {
-  userServiceLogger.info(`Delete user by ID:, ${userId}`);
-
-  if (userId === undefined) {
-    userServiceLogger.warn(`Provided userId is undefined: ${userId}`);
-    throw new UserNotFoundError(userId, "UserId is undefined");
-  }
-
-  try {
-    const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
-    const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
-
-    await deleteDoc(publicUserDocRef);
-    await deleteDoc(privateUserDocRef);
-    userServiceLogger.info(`User deleted successfully:", ${userId}`);
-  } catch (error) {
-    userServiceLogger.error(`Error deleting user with ID ${userId}:, ${error}`);
-    throw new UsersServiceError(userId);
-  }
-}
-
 export async function updateUser(userId: UserId, newData: Partial<UserData>, transaction?: Transaction): Promise<void> {
   userServiceLogger.info(`Update user by ID:, ${userId}`);
 
@@ -251,7 +203,6 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
     const publicUserDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
 
-    // Extract public & private user data
     const publicDataToUpdate = extractPublicUserData(newData);
     const privateDataToUpdate = extractPrivateUserData(newData);
 
@@ -263,7 +214,6 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
       return;
     }
 
-    // Update public & private user data
     if (transaction) {
       if (hasPublicUpdates) transaction.update(publicUserDocRef, publicDataToUpdate);
       if (hasPrivateUpdates) transaction.update(privateUserDocRef, privateDataToUpdate);
@@ -310,9 +260,7 @@ export async function clearOnboardingPersonaChoice(userId: UserId): Promise<void
   }
   try {
     const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
-    await updateDoc(privateUserDocRef, {
-      onboardingPersona: deleteField(),
-    });
+    await updateDoc(privateUserDocRef, { onboardingPersona: deleteField() });
     bustUserLocalStorageCache();
     userServiceLogger.info(`Cleared onboarding persona for re-choice: ${userId}`);
   } catch (error) {
@@ -403,30 +351,3 @@ export async function getUsernameMapping(
   }
 }
 
-export async function createUsernameMapping(username: string, userId: UserId): Promise<void> {
-  username = username.toLowerCase();
-  userServiceLogger.info(`Creating username mapping: ${username}`);
-  if (username === undefined || userId === undefined) {
-    userServiceLogger.warn(`Provided username/ userId is undefined: ${username} ${userId}`);
-    throw new UserNotFoundError(username, "UserId/ Username is undefined");
-  }
-  try {
-    await runTransaction(db, async (transaction) => {
-      const usernameDoc = await transaction.get(doc(db, "Usernames", username));
-      if (usernameDoc.exists()) {
-        // oh no, wth, the username doc should not exist, quick error out and don't overwrite it
-        userServiceLogger.error(
-          `Tried to set to a username document that already exists, failing fast.${username} ${userId}`
-        );
-        throw new UsersServiceError(username);
-      }
-      await transaction.set(doc(db, "Usernames", username), {
-        userId: userId,
-      } as UsernameMap);
-    });
-    userServiceLogger.info(`Username mapping for ${username} to ${userId} created successfully.`);
-  } catch (error) {
-    userServiceLogger.error(`Error creating username mapping ${username}: ${error}`);
-    throw new UsersServiceError(username);
-  }
-}

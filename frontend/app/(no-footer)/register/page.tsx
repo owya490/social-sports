@@ -124,13 +124,13 @@ export default function Register() {
 
         <form className="mt-5 space-y-3 group" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="first-name" className={AUTH_LABEL_CLASS}>
-              First Name
+            <label htmlFor="display-name" className={AUTH_LABEL_CLASS}>
+              Display name
             </label>
             <div className="mt-1">
               <input
-                id="first-name"
-                name="first-name"
+                id="display-name"
+                name="display-name"
                 type="text"
                 className={AUTH_INPUT_CLASS}
                 value={userData.firstName}

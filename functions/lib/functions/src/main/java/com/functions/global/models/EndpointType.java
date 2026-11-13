@@ -48,6 +48,8 @@ import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
+import com.functions.users.models.requests.ProvisionUserRequest;
+import com.functions.users.models.responses.ProvisionUserResponse;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
 import com.functions.wrapped.models.responses.GetWrappedResponse;
 
@@ -107,7 +109,8 @@ public enum EndpointType {
     SET_ATTENDEE_TICKETS(SetAttendeeTicketsRequest.class, SetAttendeeTicketsResponse.class, AuthLevel.AUTHENTICATED),
     GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class,
             AuthLevel.PUBLIC),
-    BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class, AuthLevel.AUTHENTICATED);
+    BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class, AuthLevel.AUTHENTICATED),
+    PROVISION_USER(ProvisionUserRequest.class, ProvisionUserResponse.class, AuthLevel.AUTHENTICATED);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;

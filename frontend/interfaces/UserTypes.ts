@@ -51,14 +51,19 @@ export interface PrivateUserData {
   privateEventCollections: EventCollectionId[];
   /** Host vs participant choice from onboarding (unset until chosen). */
   onboardingPersona?: OnboardingPersona | null;
-  /** Product onboarding finished (attendee welcome done, or organiser created first event). */
+  /** Product onboarding finished. Null means a new account still needs onboarding. */
   onboardingCompletedAt?: Timestamp | null;
-  /** Explicit Stripe Connect completion timestamp for onboarding/nudges (set when payments setup is verified). */
+  /** Explicit Stripe Connect completion timestamp for onboarding/nudges. */
   stripeConnectSetupCompletedAt?: Timestamp | null;
-  /** User skipped optional Stripe setup during organiser onboarding (still encouraged later). */
+  /** User skipped optional Stripe setup during organiser onboarding. */
   stripeConnectSetupSkippedAt?: Timestamp | null;
-  /** User chose to leave onboarding before finishing (stops funnel prompts). */
+  /** User chose to leave onboarding before finishing. */
   onboardingSkippedAt?: Timestamp | null;
+}
+
+/** Users/Active/Metadata/{userId}. Only the user id is stored for now. */
+export interface UserMetadata {
+  userId: string;
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
