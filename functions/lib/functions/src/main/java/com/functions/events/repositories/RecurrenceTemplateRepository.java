@@ -7,6 +7,7 @@ import com.google.cloud.firestore.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,6 +58,21 @@ public class RecurrenceTemplateRepository {
             }
         }
         return Optional.empty();
+    }
+
+    public static List<DocumentReference> findRecurrenceTemplateRefs(String recurrenceTemplateId, Transaction transaction) throws Exception {
+        List<DocumentReference> refs = new ArrayList<>();
+        for (boolean isActive : List.of(true, false)) {
+            for (boolean isPrivate : List.of(true, false)) {
+                DocumentReference recurrenceTemplateDocRef = getRecurrenceTemplateDocRef(
+                        recurrenceTemplateId, isActive, isPrivate);
+                DocumentSnapshot snapshot = transaction.get(recurrenceTemplateDocRef).get();
+                if (snapshot.exists()) {
+                    refs.add(recurrenceTemplateDocRef);
+                }
+            }
+        }
+        return refs;
     }
 
     public static String createRecurrenceTemplate(boolean isActive, boolean isPrivate, RecurrenceTemplate recurrenceTemplate) throws ExecutionException, InterruptedException {

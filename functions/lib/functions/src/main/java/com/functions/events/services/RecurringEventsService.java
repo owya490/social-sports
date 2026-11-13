@@ -1,14 +1,20 @@
 package com.functions.events.services;
 
+import com.functions.events.exceptions.RecurrenceTemplateNotFoundException;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.events.repositories.EventCollectionsRepository;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +27,10 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.ACTIVE;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.PRIVATE;
+import static com.functions.firebase.services.FirebaseService.CollectionPaths.USERS;
 
 public class RecurringEventsService {
     private static final Logger logger = LoggerFactory.getLogger(RecurringEventsService.class);
@@ -97,6 +107,36 @@ public class RecurringEventsService {
             logger.error("Error when updating Recurrence Template {}", recurrenceTemplateId, e);
             return Optional.empty();
         }
+    }
+
+    public static void deleteRecurrenceTemplate(String recurrenceTemplateId, String organiserId) throws Exception {
+        FirebaseService.createFirestoreTransaction(transaction -> {
+            // Reads first. A retried transaction must not write before these queries finish.
+            List<DocumentReference> templateRefs = RecurrenceTemplateRepository
+                    .findRecurrenceTemplateRefs(recurrenceTemplateId, transaction);
+            if (templateRefs.isEmpty()) {
+                throw new RecurrenceTemplateNotFoundException(recurrenceTemplateId);
+            }
+            List<DocumentReference> collections = EventCollectionsService
+                    .getEventCollectionDocumentsContainingRecurringTemplate(recurrenceTemplateId, transaction);
+            List<DocumentSnapshot> links = CustomEventLinksService
+                    .getEventLinkDocumentsPointedToRecurrence(organiserId, recurrenceTemplateId, transaction);
+
+            for (DocumentReference templateRef : templateRefs) {
+                transaction.delete(templateRef);
+            }
+            for (DocumentReference collection : collections) {
+                EventCollectionsRepository.removeRecurringTemplateId(collection, recurrenceTemplateId, transaction);
+            }
+            for (DocumentSnapshot link : links) {
+                transaction.delete(link.getReference());
+            }
+            DocumentReference userRef = FirebaseService.getFirestore()
+                    .collection(USERS).document(ACTIVE).collection(PRIVATE).document(organiserId);
+            transaction.update(userRef, "recurrenceTemplates", FieldValue.arrayRemove(recurrenceTemplateId));
+            return null;
+        });
+        logger.info("Deleted recurrence template {}", recurrenceTemplateId);
     }
 
     private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, Timestamp startDate) {

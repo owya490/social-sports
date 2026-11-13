@@ -11,8 +11,10 @@ import com.functions.events.models.requests.GetEventByIdRequest;
 import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
+import com.functions.events.models.requests.DeleteRecurrenceTemplateRequest;
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
+import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
 import com.functions.events.models.responses.GetEventByIdResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
@@ -72,6 +74,8 @@ public enum EndpointType {
     CREATE_RECURRENCE_TEMPLATE(CreateRecurrenceTemplateRequest.class, CreateRecurrenceTemplateResponse.class,
             AuthLevel.AUTHENTICATED),
     UPDATE_RECURRENCE_TEMPLATE(UpdateRecurrenceTemplateRequest.class, UpdateRecurrenceTemplateResponse.class,
+            AuthLevel.AUTHENTICATED),
+    DELETE_RECURRENCE_TEMPLATE(DeleteRecurrenceTemplateRequest.class, DeleteRecurrenceTemplateResponse.class,
             AuthLevel.AUTHENTICATED),
     INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.class, InitCheckoutFulfilmentSessionResponse.class,
             AuthLevel.PUBLIC),

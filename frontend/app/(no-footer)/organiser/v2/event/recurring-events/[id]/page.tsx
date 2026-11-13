@@ -86,6 +86,7 @@ export default function OrganiserRecurringHubV2Page() {
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] =
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
   const [seriesState, setSeriesState] = useState({ isActive: false, statusAvailable: false });
+  const [organiserId, setOrganiserId] = useState("");
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
   const [frequency, setFrequency] = useState<Frequency>(Frequency.WEEKLY);
@@ -133,6 +134,7 @@ export default function OrganiserRecurringHubV2Page() {
         setEventBookingApprovalEnabled(eventData.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(eventData.showAttendeesOnEventPage);
         setEventIsPrivate(eventData.isPrivate);
+        setOrganiserId(eventData.organiserId ?? "");
         setEventTicketTypes(eventData.eventTicketTypes);
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
@@ -224,6 +226,8 @@ export default function OrganiserRecurringHubV2Page() {
           startDate={eventStartDate}
           location={eventLocation}
           frequency={frequency}
+          canDelete={!loading && organiserId === user.userId}
+          recurrenceTemplateId={recurrenceTemplateId}
         />
         <RecurringHubNav current={section} onChange={handleSectionChange} />
       </div>
