@@ -1,5 +1,12 @@
 import { EndpointType } from "@/interfaces/FunctionsTypes";
-import { getAdditionalUserInfo, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
+import {
+  getAdditionalUserInfo,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile,
+  type UserCredential,
+} from "firebase/auth";
 
 import {
   ensureProvisionedUser,
@@ -160,8 +167,10 @@ describe("ensureProvisionedUser", () => {
   });
 
   it("waits for the social display name before reading the profile", async () => {
-    let releasePopup: (credential: unknown) => void = () => {};
-    const credential = { user: { uid: "user-1", displayName: "Alex", emailVerified: true } };
+    let releasePopup: (credential: UserCredential | PromiseLike<UserCredential>) => void = () => {};
+    const credential = {
+      user: { uid: "user-1", displayName: "Alex", emailVerified: true },
+    } as UserCredential;
     popupSignIn.mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -235,6 +244,7 @@ describe("sign-in provisioning", () => {
     const order: string[] = [];
     updateAuthProfile.mockImplementation(() => {
       order.push("profile");
+      return Promise.resolve();
     });
     getPublicUser.mockImplementation(() => {
       order.push("lookup");
