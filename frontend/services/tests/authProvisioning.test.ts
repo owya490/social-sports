@@ -1,6 +1,5 @@
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { getAdditionalUserInfo, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 
 import {
   ensureProvisionedUser,
@@ -9,6 +8,8 @@ import {
   handleGoogleSignIn,
 } from "../src/auth/authService";
 import { executeGlobalAppControllerFunction } from "../src/functions/functionsUtils";
+import { UserNotFoundError } from "../src/users/userErrors";
+import { getPublicUserById } from "../src/users/usersService";
 
 const mockAuthState: {
   currentUser: { uid: string; email?: string; emailVerified?: boolean; displayName?: string | null } | null;
@@ -27,6 +28,7 @@ jest.mock("../src/functions/functionsUtils", () => ({
 
 jest.mock("../src/users/usersService", () => ({
   getPrivateUserById: jest.fn(),
+  getPublicUserById: jest.fn(),
   updateUser: jest.fn(),
 }));
 
@@ -51,11 +53,6 @@ jest.mock("@/observability/logger", () => ({
   },
 }));
 
-jest.mock("firebase/firestore", () => ({
-  doc: jest.fn(() => ({ path: "public-user" })),
-  getDoc: jest.fn(),
-}));
-
 jest.mock("firebase/auth", () => ({
   createUserWithEmailAndPassword: jest.fn(),
   EmailAuthProvider: { credential: jest.fn() },
@@ -77,8 +74,7 @@ jest.mock("firebase/auth", () => ({
 }));
 
 const executeGac = executeGlobalAppControllerFunction as jest.MockedFunction<typeof executeGlobalAppControllerFunction>;
-const readDoc = getDoc as jest.MockedFunction<typeof getDoc>;
-const userDoc = doc as jest.MockedFunction<typeof doc>;
+const getPublicUser = getPublicUserById as jest.MockedFunction<typeof getPublicUserById>;
 const popupSignIn = signInWithPopup as jest.MockedFunction<typeof signInWithPopup>;
 const emailSignIn = signInWithEmailAndPassword as jest.MockedFunction<typeof signInWithEmailAndPassword>;
 const updateAuthProfile = updateProfile as jest.MockedFunction<typeof updateProfile>;
@@ -98,55 +94,69 @@ describe("ensureProvisionedUser", () => {
 
   it("does nothing when the public profile already exists", async () => {
     mockAuthState.currentUser = { uid: "user-1", emailVerified: true };
-    readDoc.mockResolvedValue({ exists: () => true } as never);
+    getPublicUser.mockResolvedValue({} as never);
 
     await ensureProvisionedUser();
 
-    expect(userDoc).toHaveBeenCalledWith({ name: "db" }, "Users", "Active", "Public", "user-1");
+    expect(getPublicUser).toHaveBeenCalledWith("user-1", true);
     expect(executeGac).not.toHaveBeenCalled();
   });
 
   it("asks the backend to provision a verified user who has no profile", async () => {
     mockAuthState.currentUser = { uid: "user-1", emailVerified: true };
-    readDoc.mockResolvedValue({ exists: () => false } as never);
+    getPublicUser.mockRejectedValue(new UserNotFoundError("user-1"));
 
     await ensureProvisionedUser();
 
     expect(executeGac).toHaveBeenCalledWith(EndpointType.PROVISION_USER, {}, { attachAuth: true });
   });
 
+  it("does not provision when the public profile lookup fails", async () => {
+    mockAuthState.currentUser = { uid: "user-1", emailVerified: true };
+    getPublicUser.mockRejectedValue(new Error("network down"));
+
+    await expect(ensureProvisionedUser()).rejects.toThrow("network down");
+    expect(executeGac).not.toHaveBeenCalled();
+  });
+
   it("shares one in-flight provision and allows a later retry", async () => {
     mockAuthState.currentUser = { uid: "user-1", emailVerified: true };
-    let resolveLookup: (snapshot: { exists: () => boolean }) => void = () => {};
-    readDoc.mockImplementation(
+    let settleLookup: (missing: boolean) => void = () => {};
+    getPublicUser.mockImplementation(
       () =>
-        new Promise((resolve) => {
-          resolveLookup = resolve;
-        }) as ReturnType<typeof getDoc>
+        new Promise((resolve, reject) => {
+          settleLookup = (missing) => {
+            if (missing) {
+              reject(new UserNotFoundError("user-1"));
+            } else {
+              resolve({} as never);
+            }
+          };
+        })
     );
 
     const first = ensureProvisionedUser();
     const second = ensureProvisionedUser();
     await flush();
-    expect(readDoc).toHaveBeenCalledTimes(1);
-    resolveLookup({ exists: () => false });
+    expect(getPublicUser).toHaveBeenCalledTimes(1);
+    settleLookup(true);
     await Promise.all([first, second]);
     expect(executeGac).toHaveBeenCalledTimes(1);
 
     executeGac.mockRejectedValueOnce(new Error("provision failed"));
-    readDoc.mockResolvedValue({ exists: () => false } as never);
+    getPublicUser.mockRejectedValueOnce(new UserNotFoundError("user-1"));
     await expect(ensureProvisionedUser()).rejects.toThrow("provision failed");
     expect(executeGac).toHaveBeenCalledTimes(2);
 
-    readDoc.mockResolvedValue({ exists: () => true } as never);
+    getPublicUser.mockResolvedValue({} as never);
     await ensureProvisionedUser();
     expect(executeGac).toHaveBeenCalledTimes(2);
-    expect(readDoc).toHaveBeenCalledTimes(3);
+    expect(getPublicUser).toHaveBeenCalledTimes(3);
   });
 
   it("rejects when nobody is signed in", async () => {
     await expect(ensureProvisionedUser()).rejects.toThrow("No authenticated user");
-    expect(readDoc).not.toHaveBeenCalled();
+    expect(getPublicUser).not.toHaveBeenCalled();
   });
 
   it("waits for the social display name before reading the profile", async () => {
@@ -158,7 +168,7 @@ describe("ensureProvisionedUser", () => {
           releasePopup = resolve;
         })
     );
-    readDoc.mockResolvedValue({ exists: () => false } as never);
+    getPublicUser.mockRejectedValue(new UserNotFoundError("user-1"));
     const signingIn = handleGoogleSignIn();
     try {
       await flush();
@@ -166,7 +176,7 @@ describe("ensureProvisionedUser", () => {
 
       const provisioning = ensureProvisionedUser();
       await flush();
-      expect(readDoc).not.toHaveBeenCalled();
+      expect(getPublicUser).not.toHaveBeenCalled();
 
       releasePopup(credential);
       await expect(signingIn).resolves.toBe("user-1");
@@ -183,7 +193,7 @@ describe("sign-in provisioning", () => {
     jest.clearAllMocks();
     mockAuthState.currentUser = null;
     executeGac.mockResolvedValue({ userId: "user-1" });
-    readDoc.mockResolvedValue({ exists: () => true } as never);
+    getPublicUser.mockResolvedValue({} as never);
   });
 
   it("provisions after a verified email sign-in", async () => {
@@ -200,7 +210,7 @@ describe("sign-in provisioning", () => {
       };
       return { user: mockAuthState.currentUser } as never;
     });
-    readDoc.mockResolvedValue({ exists: () => false } as never);
+    getPublicUser.mockRejectedValue(new UserNotFoundError("user-1"));
 
     await expect(handleEmailAndPasswordSignIn("ada@example.com", "secret")).resolves.toBe("user-1");
     expect(executeGac).toHaveBeenCalledWith(EndpointType.PROVISION_USER, {}, { attachAuth: true });
@@ -226,9 +236,9 @@ describe("sign-in provisioning", () => {
     updateAuthProfile.mockImplementation(() => {
       order.push("profile");
     });
-    readDoc.mockImplementation(() => {
+    getPublicUser.mockImplementation(() => {
       order.push("lookup");
-      return { exists: () => true } as never;
+      return Promise.resolve({} as never);
     });
     additionalUserInfo.mockReturnValue({
       profile: { name: { firstName: "Ada", lastName: "Lovelace" } },

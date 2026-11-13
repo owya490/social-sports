@@ -19,13 +19,13 @@ import {
   UserCredential,
   verifyBeforeUpdateEmail,
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { bustEventsLocalStorageCache } from "../events/eventsUtils/getEventsUtils";
 import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
 import { bustOrganiserEventsCache } from "../organiser/organiserEventsCache";
-import { getPrivateUserById, updateUser } from "../users/usersService";
+import { getPrivateUserById, getPublicUserById, updateUser } from "../users/usersService";
+import { UserNotFoundError } from "../users/userErrors";
 import { bustUserLocalStorageCache } from "../users/usersUtils/getUsersUtils";
 import { mapSocialAuthError } from "./socialAuthUtils";
 
@@ -133,9 +133,14 @@ export function ensureProvisionedUser(): Promise<void> {
     if (!user) {
       throw new Error("No authenticated user");
     }
-    const publicDoc = await getDoc(doc(db, "Users", "Active", "Public", user.uid));
-    if (publicDoc.exists()) {
+    try {
+      // Live read. A cached profile must not hide a document that was never created.
+      await getPublicUserById(user.uid as UserId, true);
       return;
+    } catch (error) {
+      if (!(error instanceof UserNotFoundError)) {
+        throw error;
+      }
     }
     await executeGlobalAppControllerFunction(EndpointType.PROVISION_USER, {}, { attachAuth: true });
   })().finally(() => {
