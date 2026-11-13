@@ -61,11 +61,6 @@ export interface PrivateUserData {
   onboardingSkippedAt?: Timestamp | null;
 }
 
-/** Users/Active/Metadata/{userId}. Only the user id is stored for now. */
-export interface UserMetadata {
-  userId: string;
-}
-
 export interface NewUserData extends PublicUserData, PrivateUserData {
   password: string;
 }

@@ -126,10 +126,9 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
   try {
     const publicDocRef = doc(db, "Users", "Active", "Public", userId);
     const privateDocRef = doc(db, "Users", "Active", "Private", userId);
-    const metadataDocRef = doc(db, "Users", "Active", "Metadata", userId);
-    const [publicDoc, privateDoc, metadataDoc] = transaction
-      ? await Promise.all([transaction.get(publicDocRef), transaction.get(privateDocRef), transaction.get(metadataDocRef)])
-      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef), getDoc(metadataDocRef)]);
+    const [publicDoc, privateDoc] = transaction
+      ? await Promise.all([transaction.get(publicDocRef), transaction.get(privateDocRef)])
+      : await Promise.all([getDoc(publicDocRef), getDoc(privateDocRef)]);
 
     if (!publicDoc.exists() || publicDoc === undefined || !privateDoc.exists() || privateDoc === undefined) {
       throw new UserNotFoundError(userId); // Or handle accordingly if you need to differentiate between empty and non-existent data
@@ -137,10 +136,9 @@ export async function getFullUserById(userId: UserId, transaction?: Transaction)
 
     const publicUserData = publicDoc.data() as PublicUserData;
     const privateUserData = privateDoc.data() as PrivateUserData;
-    const metadata = metadataDoc.exists() ? metadataDoc.data() : {};
 
-    // Onboarding stays on the private doc. Metadata currently only carries userId.
-    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, ...metadata, userId };
+    // Merge public and private data into one JSON object
+    const fullUserData = { ...EmptyUserData, ...publicUserData, ...privateUserData, userId };
     return fullUserData;
   } catch (error) {
     if (error instanceof UserNotFoundError) {
