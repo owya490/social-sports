@@ -21,9 +21,10 @@ service cloud.firestore {
 
     }
 
+    // The signed-in owner can read. Client writes are denied. The backend Admin SDK bypasses these rules.
     match /Users/{activeModifier}/Metadata/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
     }
 
     // Only organisers can write to their EventData fields. Everyone can read. Allow write if EventsData doesn't exist initially.
