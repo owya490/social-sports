@@ -1,10 +1,5 @@
-import Image from "@/components/elements/AppImage";
-import Logo from "./../../public/images/BlackLogo.svg";
+import { SportshubMark } from "@/components/elements/SportshubMark";
 
 export const LoadingSpinner = () => {
-  return (
-    <div className="animate-spin-slow">
-      <Image src={Logo} alt="Logo" width={50} height={50} className="w-12" />
-    </div>
-  );
+  return <SportshubMark animation="loading" label="Loading" className="w-12 text-core-text" />;
 };

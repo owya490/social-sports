@@ -303,7 +303,7 @@ function SidebarContent({
       <div className={collapsed ? "flex justify-center pb-3" : "pb-2"}>
         {!collapsed ? (
           <div className="flex items-center gap-1.5">
-            <SportshubHomeLink onClick={onNavigate} priority />
+            <SportshubHomeLink onClick={onNavigate} />
             <p className="font-sans text-md font-semibold leading-tight text-foreground">
               ORGANISER HUB
               <sup className="ml-0.5 align-super text-[0.55em] font-semibold tracking-wide text-foreground-muted">
@@ -312,7 +312,7 @@ function SidebarContent({
             </p>
           </div>
         ) : (
-          <SportshubHomeLink onClick={onNavigate} priority className="p-1.5" imageClassName="h-7 w-auto" />
+          <SportshubHomeLink onClick={onNavigate} className="p-1.5" imageClassName="h-7 w-auto" />
         )}
       </div>
 
