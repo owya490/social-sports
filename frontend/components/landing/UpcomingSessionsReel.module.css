@@ -1,0 +1,35 @@
+/* Two rows of live sessions drifting in opposite directions, paused while a visitor reaches for a card. */
+.reel {
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .track {
+    animation: drift var(--reel-duration, 60s) linear infinite;
+  }
+
+  .reverse {
+    animation-direction: reverse;
+  }
+
+  .reel:hover .track,
+  .reel:focus-within .track {
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reel {
+    overflow-x: auto;
+    mask-image: none;
+  }
+}
+
+@keyframes drift {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}

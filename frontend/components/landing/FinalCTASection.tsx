@@ -1,32 +1,94 @@
+import Image from "next/image";
 import Link from "next/link";
+import scroll from "./landingScroll.module.css";
+
+/** Basketball half-court markings framing the close: the page ends at centre court. */
+function CentreCourt() {
+  const line = { pathLength: 1, className: scroll.drawLine };
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 1200 700"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 h-full w-full"
+      style={{
+        filter: "url(#court-paint-night)",
+        maskImage: "radial-gradient(ellipse 42% 40% at 50% 50%, transparent 80%, #000 100%)",
+        WebkitMaskImage: "radial-gradient(ellipse 42% 40% at 50% 50%, transparent 80%, #000 100%)",
+      }}
+      fill="none"
+      stroke="rgba(255,246,228,0.5)"
+      strokeWidth="2"
+    >
+      <defs>
+        <filter id="court-paint-night" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" result="d" />
+          <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 -2.2 2.1" result="m" />
+          <feComposite in="d" in2="m" operator="in" />
+        </filter>
+      </defs>
+      <rect x="60" y="70" width="1080" height="560" rx="2" {...line} />
+      <path d="M600 70 V630" {...line} />
+      <circle cx="600" cy="350" r="250" {...line} />
+      <circle cx="600" cy="350" r="70" {...line} />
+      <path d="M60 255 H260 V445 H60" {...line} />
+      <path d="M1140 255 H940 V445 H1140" {...line} />
+      <path d="M60 100 H150 A250 250 0 0 1 150 600 H60" {...line} />
+      <path d="M1140 100 H1050 A250 250 0 0 0 1050 600 H1140" {...line} />
+    </svg>
+  );
+}
 
 export default function FinalCTASection() {
   return (
-    <div className="w-screen flex justify-center pt-12 pb-28 bg-gray-50">
-      <div className="screen-width-dashboard px-6 text-center">
-        <h3 className="text-4xl md:text-5xl font-bold text-core-text mb-6">Ready to transform your events?</h3>
-        <p className="text-xl font-light text-gray-600 mb-8 max-w-2xl mx-auto">
-          Join thousands of sports organizers already using SPORTSHUB to create memorable experiences and build thriving
-          communities.
+    <section aria-labelledby="final-cta-title" className="relative w-full overflow-clip bg-white py-36 text-white md:py-48">
+      <div aria-hidden className={`absolute inset-0 bg-[#0a0a0a] ${scroll.reveal}`}>
+        <div className={`absolute inset-0 ${scroll.revealInner}`}>
+        <Image
+          aria-hidden
+          src="/images/landing/court-floor-night.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-[50%_80%] brightness-[0.75] md:brightness-100"
+        />
+        <div
+          aria-hidden
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(60% 60% at 50% 50%, rgba(10,10,10,0.86), rgba(10,10,10,0.25) 92%)",
+          }}
+        />
+        <CentreCourt />
+        </div>
+      </div>
+      <div className={`relative mx-auto max-w-[1200px] px-6 text-center ${scroll.rise}`}>
+        <h2 id="final-cta-title" className="text-balance text-4xl font-bold tracking-[-0.03em] md:text-6xl">
+          Your next session starts here.
+        </h2>
+        <p className="mx-auto mt-5 max-w-xl text-pretty text-lg font-light text-white md:text-xl">
+          Join the clubs and organisers already using SPORTSHUB to fill their sessions and build thriving communities.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="mt-10 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
             href="/organiser/v2/dashboard"
-            className="inline-block bg-core-text text-white px-12 py-4 rounded-lg font-semibold text-lg hover:bg-gray-800 transition-colors duration-200"
+            className="rounded-xl bg-accent px-10 py-4 text-lg font-semibold text-accent-contrast transition-[filter] duration-200 hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
-            Start organizing today
+            Start organising today
           </Link>
           <Link
             href="/"
-            className="inline-block text-core-text px-12 py-4 rounded-lg font-semibold text-lg hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center gap-2"
+            className="group flex items-center justify-center gap-2 rounded-xl px-10 py-4 text-lg font-semibold text-white transition-colors duration-200 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
           >
             Explore events
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
-              <path d="M5.46967 11.4697C5.17678 11.7626 5.17678 12.2374 5.46967 12.5303C5.76256 12.8232 6.23744 12.8232 6.53033 12.5303L10.5303 8.53033C10.8207 8.23999 10.8236 7.77014 10.5368 7.47624L6.63419 3.47624C6.34492 3.17976 5.87009 3.17391 5.57361 3.46318C5.27713 3.75244 5.27128 4.22728 5.56054 4.52376L8.94583 7.99351L5.46967 11.4697Z" />
-            </svg>
+            <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+              →
+            </span>
           </Link>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

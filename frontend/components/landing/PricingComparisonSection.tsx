@@ -1,14 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useState } from "react";
+import { SPORTSHUB_FEE_PERCENTAGE, SPORTSHUB_FIXED_FEE_CENTS, sportshubFeeCents } from "./landingFees";
+import scroll from "./landingScroll.module.css";
 
 const platforms = [
   {
     name: "SPORTSHUB",
     logo: null,
     logoClassName: "",
-    percentage: 2.65,
-    fixedFee: 0.3,
+    percentage: SPORTSHUB_FEE_PERCENTAGE,
+    fixedFee: SPORTSHUB_FIXED_FEE_CENTS / 100,
     feeLabel: "2.65% + 30¢",
     yearlySubscription: 0,
     highlight: true,
@@ -46,6 +48,10 @@ const platforms = [
 ];
 
 function calcFee(percentage: number, fixedFee: number, ticketPrice: number) {
+  // SPORTSHUB checkout rounds its fee up to the cent per booking, so mirror that rather than the raw rate.
+  if (percentage === SPORTSHUB_FEE_PERCENTAGE && fixedFee * 100 === SPORTSHUB_FIXED_FEE_CENTS) {
+    return sportshubFeeCents(Math.round(ticketPrice * 100)) / 100;
+  }
   return ticketPrice * (percentage / 100) + fixedFee;
 }
 
@@ -58,13 +64,9 @@ function calcYearlyFees(percentage: number, fixedFee: number, ticketPrice: numbe
   return ticketsPerYear * calcFee(percentage, fixedFee, ticketPrice);
 }
 
-const examplePrices = [10];
 
-const EVENTS_PER_WEEK = 2;
 const ATTENDEES_PER_EVENT = 30;
 const WEEKS_PER_YEAR = 52;
-const YEARLY_TICKET_PRICE = 10;
-const TICKETS_PER_YEAR = EVENTS_PER_WEEK * ATTENDEES_PER_EVENT * WEEKS_PER_YEAR;
 
 function SportshubLogo() {
   return (
@@ -75,345 +77,250 @@ function SportshubLogo() {
   );
 }
 
-function CardCarousel({ sportshub, sportshubYearly }: { sportshub: (typeof platforms)[0]; sportshubYearly: number }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+const PRICE_OPTIONS = [10, 15, 20];
+const SESSION_OPTIONS = [1, 2, 3];
 
-  const getCards = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return [];
-    return Array.from(el.querySelectorAll("[data-card]")) as HTMLElement[];
-  }, []);
+function formatWhole(amount: number): string {
+  return Math.round(amount).toLocaleString("en-AU");
+}
 
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cards = Array.from(el.querySelectorAll("[data-card]")) as HTMLElement[];
-    if (cards.length === 0) return;
-
-    const containerRect = el.getBoundingClientRect();
-    const snapOffset = parseFloat(getComputedStyle(el).scrollPaddingInlineStart) || 0;
-    const targetX = containerRect.left + snapOffset;
-
-    let closest = 0;
-    let closestDist = Infinity;
-    cards.forEach((card, i) => {
-      const dist = Math.abs(card.getBoundingClientRect().left - targetX);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closest = i;
-      }
-    });
-    setActiveIndex(closest);
-  }, []);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.addEventListener("scroll", handleScroll, { passive: true });
-    return () => el.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
-
-  const scrollTo = (index: number) => {
-    const cards = getCards();
-    const el = scrollRef.current;
-    if (!cards[index] || !el) return;
-    const snapOffset = parseFloat(getComputedStyle(el).scrollPaddingInlineStart) || 0;
-    el.scrollTo({
-      left: cards[index].offsetLeft - snapOffset,
-      behavior: "smooth",
-    });
-  };
-
+function Segmented({
+  label,
+  options,
+  value,
+  onChange,
+  format,
+}: {
+  label: string;
+  options: number[];
+  value: number;
+  onChange: (value: number) => void;
+  format: (value: number) => string;
+}) {
   return (
-    <div>
-      <div
-        ref={scrollRef}
-        className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 pl-6 pr-6"
-        style={{
-          scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          scrollPaddingInlineStart: "24px",
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        <style>{`.scrollbar-hide::-webkit-scrollbar { display: none; }`}</style>
-
-        {/* Sportshub card */}
-        <div data-card className="snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[55%] lg:w-[45%]">
-          <div className="bg-black text-white rounded-2xl p-6 border-2 border-black h-full">
-            <div className="flex items-center justify-between mb-4">
-              <SportshubLogo />
-              <span className="text-xs bg-white text-black px-3 py-1 rounded-full font-semibold">CHEAPEST</span>
-            </div>
-            <p className="text-2xl font-bold mb-1">{sportshub.feeLabel}</p>
-            <p className="text-gray-400 text-xs mb-4">platform fee per ticket</p>
-            <div className="space-y-2 border-t border-gray-700 pt-4">
-              {examplePrices.map((price) => (
-                <div key={price} className="flex justify-between text-sm">
-                  <span className="text-gray-400">${price} ticket</span>
-                  <span className="font-semibold text-green-400">
-                    ${formatDollars(calcFee(sportshub.percentage, sportshub.fixedFee, price))} fee
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="border-t border-gray-700 mt-4 pt-4 space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-400">Yearly subscription</span>
-                <span className="font-semibold text-green-400">Free</span>
-              </div>
-              <div className="flex justify-between items-baseline">
-                <span className="text-gray-400 text-sm">Yearly savings</span>
-                <div className="text-right">
-                  <p className="text-xl font-bold text-green-400">
-                    ~
-                    {Math.round(
-                      platforms
-                        .filter((c) => !c.highlight)
-                        .reduce((sum, c) => {
-                          const cTotal =
-                            c.yearlySubscription +
-                            calcYearlyFees(c.percentage, c.fixedFee, YEARLY_TICKET_PRICE, TICKETS_PER_YEAR);
-                          return sum + (1 - sportshubYearly / cTotal) * 100;
-                        }, 0) / platforms.filter((c) => !c.highlight).length
-                    )}
-                    % cheaper
-                  </p>
-                  <p className="text-xs text-green-400/70">on average</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Competitor cards */}
-        {platforms
-          .filter((p) => !p.highlight)
-          .map((p) => {
-            const totalYearly =
-              p.yearlySubscription + calcYearlyFees(p.percentage, p.fixedFee, YEARLY_TICKET_PRICE, TICKETS_PER_YEAR);
-            const pctMore = Math.round((totalYearly / sportshubYearly - 1) * 100);
-            return (
-              <div key={p.name} data-card className="snap-start shrink-0 w-[85%] sm:w-[70%] md:w-[55%] lg:w-[45%]">
-                <div className="bg-white rounded-2xl p-6 border border-gray-200 h-full">
-                  <div className="flex items-center mb-4">
-                    <img src={p.logo!} alt={p.name} className="h-6 w-auto max-w-[140px] object-contain" />
-                  </div>
-                  <p className="text-2xl font-bold text-gray-800 mb-1">{p.feeLabel}</p>
-                  <p className="text-gray-400 text-xs mb-4">per ticket</p>
-                  <div className="space-y-2 border-t border-gray-100 pt-4">
-                    {examplePrices.map((price) => {
-                      const fee = calcFee(p.percentage, p.fixedFee, price);
-                      const sportshubFee = calcFee(sportshub.percentage, sportshub.fixedFee, price);
-                      const extra = fee - sportshubFee;
-                      return (
-                        <div key={price} className="flex justify-between text-sm">
-                          <span className="text-gray-400">${price} ticket</span>
-                          <span className="text-gray-700">
-                            ${formatDollars(fee)} <span className="text-gray-400 text-xs">(+${formatDollars(extra)})</span>
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="border-t border-gray-100 mt-4 pt-4 space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Yearly subscription</span>
-                      <span className="font-semibold text-gray-700">${p.yearlySubscription.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between items-baseline">
-                      <span className="text-gray-400 text-sm">vs SPORTSHUB</span>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-gray-800">
-                          ${totalYearly.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">{pctMore}% more expensive</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-
-        {/* Right padding spacer — ensures last card has breathing room */}
-        <div className="shrink-0 w-px" aria-hidden="true" />
-      </div>
-
-      {/* Dot indicators */}
-      <div className="flex justify-center gap-2 mt-4">
-        {platforms.map((p, i) => (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm text-gray-600">{label}</span>
+      <div role="radiogroup" aria-label={label} className="inline-flex rounded-xl bg-gray-100 p-0.5">
+        {options.map((option) => (
           <button
-            key={p.name}
-            onClick={() => scrollTo(i)}
-            className={`w-2 h-2 rounded-full transition-colors ${i === activeIndex ? "bg-black" : "bg-gray-300"}`}
-            aria-label={`Go to ${p.name}`}
-          />
+            key={option}
+            type="button"
+            role="radio"
+            aria-checked={value === option}
+            onClick={() => onChange(option)}
+            className={`min-w-[3rem] rounded-lg px-3 py-1.5 text-sm font-medium tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
+              value === option ? "bg-white text-black shadow-sm" : "text-gray-500"
+            }`}
+          >
+            {format(option)}
+          </button>
         ))}
       </div>
     </div>
   );
 }
 
-export default function PricingComparisonSection() {
-  const sportshub = platforms[0];
+type PricingRow = {
+  platform: (typeof platforms)[number];
+  yearly: number;
+  perTicket: number;
+};
 
-  const sportshubYearly =
-    sportshub.yearlySubscription +
-    calcYearlyFees(sportshub.percentage, sportshub.fixedFee, YEARLY_TICKET_PRICE, TICKETS_PER_YEAR);
+/** Phone and tablet view: one row per platform with a yearly-cost bar, driven by the shared toggles. */
+function CostRace({ rows, ticketPrice }: { rows: PricingRow[]; ticketPrice: number }) {
+  const maxYearly = Math.max(...rows.map((row) => row.yearly));
+  return (
+    <ul className="space-y-5">
+      {rows.map(({ platform, yearly, perTicket }) => (
+        <li key={platform.name}>
+          <div className="flex items-center justify-between gap-3">
+            {platform.highlight ? (
+              <span className="text-sm font-bold tracking-wider text-black">SPORTSHUB</span>
+            ) : (
+              <img src={platform.logo!} alt={platform.name} className="h-5 w-auto max-w-[120px] object-contain object-left" />
+            )}
+            <span className={`text-base tabular-nums ${platform.highlight ? "font-bold text-black" : "font-semibold text-gray-700"}`}>
+              ${formatWhole(yearly)}
+              <span className="text-xs font-medium text-gray-400">/yr</span>
+            </span>
+          </div>
+          <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-gray-100">
+            <div
+              className={`h-full rounded-full transition-[width] duration-500 ease-out ${platform.highlight ? "bg-black" : "bg-gray-400"}`}
+              style={{ width: `${Math.max(3, (yearly / maxYearly) * 100)}%` }}
+            />
+          </div>
+          <p className="mt-1.5 text-xs text-gray-500">
+            {platform.feeLabel} · ${formatDollars(perTicket)} on a ${ticketPrice} ticket ·{" "}
+            {platform.yearlySubscription === 0
+              ? "no subscription, players can cover fees"
+              : `$${platform.yearlySubscription.toLocaleString("en-AU")}/yr subscription`}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const SUBSCRIPTION_NOTES: Record<string, string> = {
+  Eventbrite: "Pro plan",
+  "Revolutionise Sport": "Large club plan",
+  Meetup: "Meetup Pro subscription",
+};
+
+/** Desktop view: the same numbers as the cost race, laid out side by side. */
+function ComparisonTable({ rows, ticketPrice }: { rows: PricingRow[]; ticketPrice: number }) {
+  const sportshub = rows[0];
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gray-200">
+      <table className="w-full">
+        <thead>
+          <tr className="border-b border-gray-200">
+            <th className="w-[200px] px-6 py-5" />
+            {rows.map(({ platform }) => (
+              <th key={platform.name} className={`px-6 py-5 ${platform.highlight ? "bg-black" : ""}`}>
+                {platform.highlight ? (
+                  <SportshubLogo />
+                ) : (
+                  <div className="flex justify-center">
+                    <img src={platform.logo!} alt={platform.name} className={platform.logoClassName} />
+                  </div>
+                )}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-b border-gray-100">
+            <td className="px-6 py-5 text-sm font-medium text-gray-500">Platform fee</td>
+            {rows.map(({ platform }) => (
+              <td
+                key={platform.name}
+                className={`px-6 py-5 text-center text-sm font-semibold ${platform.highlight ? "bg-black text-white" : "text-gray-700"}`}
+              >
+                {platform.feeLabel}
+                {platform.highlight && <span className="mt-0.5 block text-xs font-medium text-green-400">Players can cover it</span>}
+              </td>
+            ))}
+          </tr>
+          <tr className="border-b border-gray-100">
+            <td className="px-6 py-5 text-sm font-medium text-gray-500">Fee on a ${ticketPrice} ticket</td>
+            {rows.map(({ platform, perTicket }) => (
+              <td key={platform.name} className={`px-6 py-5 text-center ${platform.highlight ? "bg-black" : ""}`}>
+                <span className={`text-sm font-semibold tabular-nums ${platform.highlight ? "text-white" : "text-gray-700"}`}>
+                  ${formatDollars(perTicket)}
+                </span>
+                {platform.highlight ? (
+                  <span className="mt-0.5 block text-xs font-medium text-green-400">Lowest</span>
+                ) : (
+                  <span className="mt-0.5 block text-xs text-gray-400">
+                    +${formatDollars(perTicket - sportshub.perTicket)} more
+                  </span>
+                )}
+              </td>
+            ))}
+          </tr>
+          <tr className="border-b border-gray-100">
+            <td className="px-6 py-5 text-sm font-medium text-gray-500">Yearly subscription</td>
+            {rows.map(({ platform }) => (
+              <td key={platform.name} className={`px-6 py-5 text-center ${platform.highlight ? "bg-black" : ""}`}>
+                <span className={`text-sm font-semibold ${platform.highlight ? "text-white" : "text-gray-700"}`}>
+                  {platform.yearlySubscription === 0 ? "Free" : `$${platform.yearlySubscription.toLocaleString("en-AU")}/yr`}
+                </span>
+                <span className={`mt-0.5 block text-xs ${platform.highlight ? "font-medium text-green-400" : "text-gray-400"}`}>
+                  {platform.highlight ? "No subscription" : SUBSCRIPTION_NOTES[platform.name]}
+                </span>
+              </td>
+            ))}
+          </tr>
+          <tr className="border-t-2 border-gray-200">
+            <td className="px-6 py-6 text-sm font-semibold text-black">Total per year</td>
+            {rows.map(({ platform, yearly }) => (
+              <td key={platform.name} className={`px-6 py-6 text-center ${platform.highlight ? "bg-black" : ""}`}>
+                <span className={`text-lg font-bold tabular-nums ${platform.highlight ? "text-green-400" : "text-gray-800"}`}>
+                  ${formatWhole(yearly)}/yr
+                </span>
+                {!platform.highlight && (
+                  <span className="mt-1 block text-xs font-semibold text-gray-400">
+                    {Math.round((yearly / sportshub.yearly - 1) * 100)}% more expensive
+                  </span>
+                )}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default function PricingComparisonSection() {
+  const [ticketPrice, setTicketPrice] = useState(PRICE_OPTIONS[0]);
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(SESSION_OPTIONS[1]);
+  const ticketsPerYear = sessionsPerWeek * ATTENDEES_PER_EVENT * WEEKS_PER_YEAR;
+  const rows: PricingRow[] = platforms.map((platform) => ({
+    platform,
+    yearly:
+      platform.yearlySubscription + calcYearlyFees(platform.percentage, platform.fixedFee, ticketPrice, ticketsPerYear),
+    perTicket: calcFee(platform.percentage, platform.fixedFee, ticketPrice),
+  }));
+  const nextCheapest = Math.min(...rows.slice(1).map((row) => row.yearly));
 
   return (
-    <div className="w-screen flex justify-center py-24 bg-white">
+    <section aria-labelledby="pricing-title" className="flex w-full justify-center bg-white py-24">
       <div className="screen-width-dashboard px-6">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 text-xs font-medium mb-6 rounded-full">
-            <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-            PRICING
-          </div>
-          <h3 className="text-4xl md:text-5xl font-bold text-black mb-4 leading-tight">
+        <div className={`mb-12 text-center ${scroll.rise}`}>
+          <h2 id="pricing-title" className="mb-4 text-4xl font-bold leading-tight text-black md:text-5xl">
             The lowest fees in the market
-          </h3>
-          <p className="text-gray-500 font-light max-w-xl mx-auto text-lg">
-            More of your revenue stays where it belongs — in your pocket.
+          </h2>
+          <p className="mx-auto max-w-xl text-lg font-light text-gray-500">
+            More of your revenue stays where it belongs, in your pocket.
           </p>
         </div>
 
-        {/* Desktop table (xl and above) */}
-        <div className="hidden xl:block">
-          <div className="border border-gray-200 rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-5 px-6 text-sm font-medium text-gray-400 uppercase tracking-wider w-[200px]" />
-                  {platforms.map((p) => (
-                    <th key={p.name} className={`py-5 px-6 ${p.highlight ? "bg-black" : ""}`}>
-                      {p.highlight ? (
-                        <SportshubLogo />
-                      ) : (
-                        <div className="flex justify-center">
-                          <img src={p.logo!} alt={p.name} className={p.logoClassName} />
-                        </div>
-                      )}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {/* Fee structure row */}
-                <tr className="border-b border-gray-100">
-                  <td className="py-5 px-6 text-sm font-medium text-gray-500">Platform fee</td>
-                  {platforms.map((p) => (
-                    <td
-                      key={p.name}
-                      className={`py-5 px-6 text-center text-sm font-semibold ${
-                        p.highlight ? "bg-black text-white" : "text-gray-700"
-                      }`}
-                    >
-                      {p.feeLabel}
-                    </td>
-                  ))}
-                </tr>
+        <div className="mx-auto max-w-xl rounded-3xl border border-gray-200 bg-white p-5 sm:p-8 xl:max-w-none xl:border-0 xl:p-0">
+          <div className="xl:flex xl:items-end xl:justify-between xl:gap-10">
+            <div className="space-y-3 xl:order-2 xl:w-[360px]">
+              <Segmented
+                label="Ticket price"
+                options={PRICE_OPTIONS}
+                value={ticketPrice}
+                onChange={setTicketPrice}
+                format={(value) => `$${value}`}
+              />
+              <Segmented
+                label="Sessions a week"
+                options={SESSION_OPTIONS}
+                value={sessionsPerWeek}
+                onChange={setSessionsPerWeek}
+                format={(value) => `${value}`}
+              />
+            </div>
+            <div className="mt-7 border-t border-gray-100 pt-6 xl:order-1 xl:mt-0 xl:border-0 xl:pt-0" aria-live="polite">
+              <p className="text-sm text-gray-500">With {ATTENDEES_PER_EVENT} players a session, SPORTSHUB saves you</p>
+              <p className="mt-1 text-5xl font-bold tabular-nums tracking-tight text-black">
+                ${formatWhole(nextCheapest - rows[0].yearly)}
+                <span className="ml-1.5 text-lg font-medium tracking-normal text-gray-500">a year</span>
+              </p>
+              <p className="mt-1 text-xs text-gray-500">versus the next cheapest option, even if your club covers every fee.</p>
+            </div>
+          </div>
 
-                {/* $10 ticket fee row */}
-                <tr className="border-b border-gray-100">
-                  <td className="py-5 px-6 text-sm font-medium text-gray-500">Fee on $10 ticket</td>
-                  {platforms.map((p) => {
-                    const fee = calcFee(p.percentage, p.fixedFee, 10);
-                    const sportshubFee = calcFee(sportshub.percentage, sportshub.fixedFee, 10);
-                    const savings = fee - sportshubFee;
-                    return (
-                      <td key={p.name} className={`py-5 px-6 text-center ${p.highlight ? "bg-black" : ""}`}>
-                        <span className={`text-sm font-semibold ${p.highlight ? "text-white" : "text-gray-700"}`}>
-                          ${formatDollars(fee)}
-                        </span>
-                        {!p.highlight && savings > 0 && (
-                          <span className="block text-xs text-gray-400 mt-0.5">+${savings.toFixed(2)} more</span>
-                        )}
-                        {p.highlight && <span className="block text-xs text-green-400 mt-0.5 font-medium">Lowest</span>}
-                      </td>
-                    );
-                  })}
-                </tr>
-
-                {/* Yearly subscription row */}
-                <tr className="border-b border-gray-100">
-                  <td className="py-5 px-6 text-sm font-medium text-gray-500">Yearly subscription</td>
-                  {platforms.map((p) => (
-                    <td key={p.name} className={`py-5 px-6 text-center ${p.highlight ? "bg-black" : ""}`}>
-                      <span className={`text-sm font-semibold ${p.highlight ? "text-white" : "text-gray-700"}`}>
-                        {p.yearlySubscription === 0 ? "Free" : `$${p.yearlySubscription.toLocaleString()}/yr`}
-                      </span>
-                      {p.highlight && (
-                        <span className="block text-xs text-green-400 mt-0.5 font-medium">No subscription</span>
-                      )}
-                      {p.name === "Eventbrite" && <span className="block text-xs text-gray-400 mt-0.5">Pro plan</span>}
-                      {p.name === "Revolutionise Sport" && (
-                        <span className="block text-xs text-gray-400 mt-0.5">Large club plan</span>
-                      )}
-                      {p.name === "Meetup" && (
-                        <span className="block text-xs text-gray-400 mt-0.5">Meetup Pro subscription</span>
-                      )}
-                    </td>
-                  ))}
-                </tr>
-
-                {/* Yearly savings comparison row */}
-                <tr className="border-t-2 border-gray-200">
-                  <td className="py-6 px-6">
-                    <span className="text-sm font-semibold text-black block">Yearly savings</span>
-                    <span className="text-xs text-gray-400 block mt-0.5">
-                      {EVENTS_PER_WEEK} events/wk &times; {ATTENDEES_PER_EVENT} people &times; ${YEARLY_TICKET_PRICE}{" "}
-                      ticket
-                    </span>
-                  </td>
-                  {platforms.map((p) => {
-                    const totalYearly =
-                      p.yearlySubscription +
-                      calcYearlyFees(p.percentage, p.fixedFee, YEARLY_TICKET_PRICE, TICKETS_PER_YEAR);
-                    if (p.highlight) {
-                      const competitors = platforms.filter((c) => !c.highlight);
-                      const avgCheaper =
-                        competitors.reduce((sum, c) => {
-                          const cTotal =
-                            c.yearlySubscription +
-                            calcYearlyFees(c.percentage, c.fixedFee, YEARLY_TICKET_PRICE, TICKETS_PER_YEAR);
-                          return sum + (1 - totalYearly / cTotal) * 100;
-                        }, 0) / competitors.length;
-                      return (
-                        <td key={p.name} className="py-6 px-6 text-center bg-black">
-                          <span className="text-lg font-bold text-green-400">~{Math.round(avgCheaper)}% cheaper</span>
-                          <span className="block text-xs text-green-400/70 mt-1 font-semibold">on average</span>
-                        </td>
-                      );
-                    }
-                    const pctMore = Math.round((totalYearly / sportshubYearly - 1) * 100);
-                    return (
-                      <td key={p.name} className="py-6 px-6 text-center">
-                        <span className="text-lg font-bold text-gray-800">
-                          ${totalYearly.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}/yr
-                        </span>
-                        <span className="block text-xs text-gray-400 mt-1 font-semibold">{pctMore}% more expensive</span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              </tbody>
-            </table>
+          <div className="mt-7 xl:mt-10">
+            <div className="hidden xl:block">
+              <ComparisonTable rows={rows} ticketPrice={ticketPrice} />
+            </div>
+            <div className="xl:hidden">
+              <CostRace rows={rows} ticketPrice={ticketPrice} />
+            </div>
           </div>
         </div>
 
-        {/* Card carousel (lg and below) */}
-        <div className="xl:hidden">
-          <CardCarousel sportshub={sportshub} sportshubYearly={sportshubYearly} />
-        </div>
-
-        {/* Bottom note */}
-        <p className="text-center text-gray-400 text-xs mt-8">
-          Pricing calculated as of October 2026. Card Processing Fees may apply.
+        <p className="mt-8 text-center text-xs text-gray-400">
+          SPORTSHUB&apos;s fee includes Stripe card processing and can be passed on to players. Other platforms&apos;
+          pricing as of October 2026; their card processing fees may apply.
         </p>
       </div>
-    </div>
+    </section>
   );
 }

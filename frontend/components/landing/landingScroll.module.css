@@ -1,0 +1,174 @@
+/*
+ * Scroll-linked motion for the landing page: calm parallax, court lines that draw in, text that rises into
+ * place. Browsers without scroll timelines and visitors who prefer reduced motion get the static page, so
+ * nothing here may be needed to read the content.
+ */
+.progress {
+  display: none;
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .progress {
+      display: block;
+      position: fixed;
+      top: var(--navbar-height);
+      left: 0;
+      right: 0;
+      z-index: 40;
+      height: 2px;
+      background: var(--color-accent);
+      transform-origin: 0 50%;
+      pointer-events: none;
+      animation: grow linear both;
+      animation-timeline: scroll(root);
+    }
+
+    .rise {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 75%;
+    }
+
+    /* Side-by-side items rise one after another; each sets --i to its position. */
+    .riseStagger {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--i, 0) * 10%) cover calc(25% + var(--i, 0) * 10%);
+    }
+
+    /* Words in the statement line rise one after another; each sets --word to its index. */
+    .wordRise {
+      display: inline-block;
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry calc(var(--word, 0) * 6%) cover calc(30% + var(--word, 0) * 6%);
+    }
+
+    /* The hero composition starts tilted back in 3D and straightens to face the visitor as they scroll. */
+    .heroTilt {
+      transform-origin: 50% 0%;
+      animation: hero-tilt linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 80vh;
+    }
+
+    /* Stacked layouts put the composition below the copy, so it straightens over a longer stretch. */
+    @media (max-width: 1023px) {
+      .heroTilt {
+        animation-range: 0 115vh;
+      }
+    }
+
+    /* Hero layers drift at different speeds over the first screenful, so the court sits behind the UI. */
+    .parallaxBack {
+      animation: drift-back linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+
+    .parallaxFront {
+      animation: drift-front linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+
+    /* The closing card opens from an inset, rounded panel to full width as it scrolls into view. */
+    .reveal {
+      animation: reveal linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+
+    .revealInner {
+      animation: reveal-inner linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 100%;
+    }
+
+    /* Court markings draw themselves as they arrive; paths set pathLength="1". */
+    .drawLine {
+      stroke-dasharray: 1;
+      animation: draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 45%;
+    }
+
+  }
+}
+
+/* The hero's court lines draw once on load rather than with scroll, since the hero starts in view. */
+@media (prefers-reduced-motion: no-preference) {
+  .drawOnLoad {
+    stroke-dasharray: 1;
+    animation: draw 1600ms cubic-bezier(0.65, 0, 0.35, 1) 300ms both;
+  }
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0.15;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hero-tilt {
+  from {
+    transform: perspective(1800px) rotateX(36deg) rotateY(-16deg) rotateZ(7deg) scale(0.92);
+  }
+  to {
+    transform: perspective(1800px);
+  }
+}
+
+@keyframes reveal {
+  from {
+    clip-path: inset(10% 7% 6% 7% round 44px);
+  }
+  to {
+    clip-path: inset(0% 0% 0% 0% round 0px);
+  }
+}
+
+@keyframes reveal-inner {
+  from {
+    transform: scale(1.18);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes drift-back {
+  to {
+    transform: translateY(64px) scale(1.04);
+  }
+}
+
+@keyframes drift-front {
+  to {
+    transform: translateY(-48px);
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
