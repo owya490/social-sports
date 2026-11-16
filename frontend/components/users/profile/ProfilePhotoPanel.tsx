@@ -2,7 +2,7 @@
 
 import { UserData } from "@/interfaces/UserTypes";
 import { CameraIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { useState } from "react";
 import { ProfilePhotoSelectionModal } from "./ProfilePhotoSelectionModal";

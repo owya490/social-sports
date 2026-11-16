@@ -1,6 +1,6 @@
 import { MultipleChoiceSection } from "@/interfaces/FormTypes";
 import { Radio } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 export const MultipleChoiceSectionResponse = ({
   multipleChoiceSection,

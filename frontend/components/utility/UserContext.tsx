@@ -3,12 +3,7 @@ import { auth } from "@/services/src/firebase";
 import { createContext, useContext, useEffect, useState } from "react";
 import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
-import {
-  ensureActiveUserFromAuth,
-  getTempUserData,
-  migrateTempUserToActiveUser,
-} from "@/services/src/auth/authService";
-import { isSocialAuthUser } from "@/services/src/auth/socialAuthUtils";
+import { ensureProvisionedUser } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
 import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
@@ -53,43 +48,21 @@ export default function UserContext({ children }: { children: any }) {
 
   useEffect(() => {
     const unsubscriber = onAuthStateChanged(auth, async (userAuth) => {
-      //need this because on user creation, if the user hasn't changed browsers since register
-      // they might still have the firebase userobject, which after clicking the verify email,
-      // will satify both the above conditions and then skip the create user workflow due to this
-      // redirecting to dashboard, hence we need to do another check to see if they are in the create
-      // user workflow
       setUserLoading(true);
-      if (userAuth && auth.currentUser?.emailVerified) {
-        const { uid } = userAuth;
+      if (userAuth) {
         try {
-          try {
-            const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-            setUser(userData);
-          } catch {
-            if (isSocialAuthUser(userAuth)) {
-              try {
-                await ensureActiveUserFromAuth();
-                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-                setUser(userData);
-              } catch {
-                router.push("/error");
-                return;
-              }
-            } else {
-              try {
-                // The user is verified but their profile was never promoted out of
-                // TempUsers (e.g. they verified their email but never came back
-                // through the login form). Migrate them now so downstream features
-                // relying on Users/Active (e.g. Stripe onboarding) work correctly.
-                await migrateTempUserToActiveUser(uid as UserId);
-                const userData = await getFullUserByIdForUserContextWithRetries(uid as UserId);
-                setUser(userData);
-              } catch {
-                router.push("/error");
-                return;
-              }
-            }
-          }
+          await userAuth.reload();
+        } catch {
+          // Keep the cached user if Firebase cannot refresh the verified flag.
+        }
+      }
+      if (userAuth?.emailVerified) {
+        try {
+          await ensureProvisionedUser();
+          const userData = await getFullUserByIdForUserContextWithRetries(userAuth.uid as UserId);
+          setUser(userData);
+        } catch {
+          router.push("/error");
         } finally {
           setUserLoading(false);
         }
@@ -100,7 +73,7 @@ export default function UserContext({ children }: { children: any }) {
     return () => unsubscriber();
   }, []);
   useEffect(() => {
-    const checkAuthStatus = async () => {
+    const checkAuthStatus = () => {
       if (userLoading) return;
 
       if (protectedRoutes.some((prefix) => pathname.startsWith(prefix))) {
@@ -110,22 +83,8 @@ export default function UserContext({ children }: { children: any }) {
       }
 
       if (LoginRegisterRoutes.some((prefix) => pathname.startsWith(prefix))) {
-        if (auth.currentUser && auth.currentUser.emailVerified) {
-          //need this because on user creation, if the user hasn't changed browsers since register
-          // they might still have the firebase userobject, which after clicking the verify email,
-          // will satify both the above conditions and then skip the create user workflow due to this
-          // redirecting to dashboard, hence we need to do another check to see if they are in the create
-          // user workflow
-          const { uid } = auth.currentUser;
-          try {
-            const tempUserData = await getTempUserData(uid as UserId);
-            // Verified users without staged signup data are already active (or social-provisioned).
-            if (!tempUserData) {
-              router.push("/");
-            }
-          } catch {
-            router.push("/error");
-          }
+        if (auth.currentUser?.emailVerified) {
+          router.push("/");
         }
       }
     };

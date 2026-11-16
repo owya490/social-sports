@@ -13,7 +13,7 @@ import { getEventById } from "@/services/src/events/eventsService";
 import { updateFulfilmentPurchaser } from "@/services/src/fulfilment/fulfilmentServices";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 

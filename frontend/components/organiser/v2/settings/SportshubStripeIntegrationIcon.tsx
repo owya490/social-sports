@@ -1,6 +1,6 @@
 import SportshubLogo from "@/public/images/sportshub-mark.svg";
 import StripeIcon from "@/public/images/stripe-icon.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 type SportshubStripeIntegrationIconProps = {
   className?: string;

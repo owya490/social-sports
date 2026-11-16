@@ -5,7 +5,7 @@ import { EventData, EventId } from "@/interfaces/EventTypes";
 import { getLocationCoordinates, initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
 import { LinkIcon, MapPinIcon, StarIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
 import { EventHubDescriptionEditor } from "./EventHubDescriptionEditor";
 import { getEventDetailsChanges, type EventDetailsDraft } from "./eventDetailsDraft";

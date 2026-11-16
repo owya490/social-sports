@@ -26,7 +26,7 @@ import {
   USERNAME_VALIDATION_ERROR_MESSAGE,
 } from "@/utilities/usernameValidationUtils";
 import Tick from "@svgs/Verified_tick.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 const logger = new Logger("ProfileEditPage");

@@ -21,6 +21,12 @@ service cloud.firestore {
 
     }
 
+    // The signed-in owner can read. Client writes are denied. The backend Admin SDK bypasses these rules.
+    match /Users/{activeModifier}/Metadata/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
     // Only organisers can write to their EventData fields. Everyone can read. Allow write if EventsData doesn't exist initially.
     match /Events/{activeModifier}/{accessModifier}/{eventId} {
     	// GET
@@ -84,15 +90,7 @@ service cloud.firestore {
     	allow read, write: if true;
     }
 
-    // Everyone can read, and write to TempUser table.
-    match /TempUsers/{userId} {
-      //can read if same user
-      allow read, delete: if request.auth != null && request.auth.uid == userId;
-      //allow create
-      allow create: if request.auth != null;
-    }
-    
-		match /DeletedEvents/{eventId} {
+    match /DeletedEvents/{eventId} {
       // GET, UPDATE
       allow read, update: if request.auth != null && resource.data.organiserId == request.auth.uid;
       // CREATE

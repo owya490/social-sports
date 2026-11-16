@@ -10,7 +10,7 @@ import { welcomeAwareHref } from "@/components/organiser/v2/welcome/welcomeOnboa
 import Logo from "@/public/images/BlackLogo.svg";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { IconLayoutSidebar } from "@tabler/icons-react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 

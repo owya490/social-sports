@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import ChevronLeftButton from "../elements/ChevronLeftButton";
 import ChevronRightButton from "../elements/ChevronRightButton";

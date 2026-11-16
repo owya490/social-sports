@@ -33,6 +33,8 @@ public class FirebaseService {
         public static final String PRIVATE = "Private";
         public static final String PUBLIC = "Public";
         public static final String USERS = "Users";
+        public static final String USERNAMES = "Usernames";
+        public static final String METADATA = "Metadata";
         public static final String EVENTS_METADATA = "EventsMetadata";
         public static final String DELETED_EVENTS = "DeletedEvents";
         public static final String RECURRING_EVENTS = "RecurringEvents";
@@ -42,6 +44,7 @@ public class FirebaseService {
                 "Events/InActive/Public",
                 "Events/InActive/Private");
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
+        public static final String ARCHIVED_FULFILMENT_SESSIONS_ROOT_PATH = "ArchivedFulfilmentSessions";
         public static final String ERROR_ALERT_DEDUP = "ErrorAlertDedup";
         public static final String TICKETS = "Tickets";
         public static final String ORDERS = "Orders";

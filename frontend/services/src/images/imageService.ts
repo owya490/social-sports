@@ -155,10 +155,14 @@ export async function uploadUserImage(userID: string, path: string, file: File):
   return url;
 }
 
+// Every upload gets a unique path from generateImageId() and is never overwritten, so browsers
+// and shared caches can keep it indefinitely. Without this, Firebase serves
+// `private, max-age=0` and each view re-requests the image, costing storage bandwidth.
+export const IMAGE_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 async function uploadImage(imageRef: StorageReference, file: File): Promise<string> {
   try {
-    // Upload the file to Firebase Storage
-    await uploadBytes(imageRef, file);
+    await uploadBytes(imageRef, file, { cacheControl: IMAGE_CACHE_CONTROL });
 
     // Get the download URL of the uploaded file
     const url = await getDownloadURL(imageRef);

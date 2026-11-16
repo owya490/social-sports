@@ -5,8 +5,9 @@ import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { Timestamp } from "firebase/firestore";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import LoadingSkeletonEventCard from "../loading/LoadingSkeletonEventCard";
 import { UserInlineDisplay } from "../users/UserInlineDisplay";
 
@@ -35,29 +36,11 @@ type PreviewEventCardProps = EventCardBaseProps & {
 type EventCardProps = ClickableEventCardProps | PreviewEventCardProps;
 
 export default function EventCard(props: EventCardProps) {
-  const {
-    image,
-    thumbnail,
-    name,
-    organiser,
-    startTime,
-    location,
-    price,
-    loading,
-  } = props;
+  const { image, thumbnail, name, organiser, startTime, location, price, loading } = props;
 
   const [imageLoaded, setImageLoaded] = useState(false);
   const isCardClickable = props.isClickable !== false;
-
-  // Preload images for better performance
-  useEffect(() => {
-    const imageToLoad = thumbnail || image;
-    if (imageToLoad) {
-      const img = new window.Image();
-      img.onload = () => setImageLoaded(true);
-      img.src = imageToLoad;
-    }
-  }, [image, thumbnail]);
+  const cardImage = thumbnail || image;
 
   const cardContent = (
     <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
@@ -68,15 +51,26 @@ export default function EventCard(props: EventCardProps) {
       ) : (
         <>
           <div
-            className={`w-full ${imageLoaded ? "opacity-100" : "opacity-0"} transition-opacity duration-300`}
+            className={`relative w-full overflow-hidden ${
+              imageLoaded ? "opacity-100" : "opacity-0"
+            } transition-opacity duration-300`}
             style={{
-              backgroundImage: imageLoaded ? `url(${thumbnail || image})` : "none",
-              backgroundSize: "cover",
-              backgroundPosition: "center center",
               aspectRatio: "1/1",
               borderRadius: "1rem",
             }}
-          ></div>
+          >
+            {cardImage ? (
+              <Image
+                src={cardImage}
+                alt=""
+                fill
+                // Matches the home grid: 1 column on mobile, 2 at md, 3 at lg, 4 from xl.
+                sizes="(max-width: 767px) 100vw, (max-width: 1023px) 50vw, (max-width: 1279px) 33vw, 25vw"
+                className="object-cover object-center"
+                onLoad={() => setImageLoaded(true)}
+              />
+            ) : null}
+          </div>
           <div className="p-4">
             <div className="flex">
               <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>

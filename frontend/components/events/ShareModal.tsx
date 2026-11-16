@@ -3,7 +3,7 @@
 import { EventId } from "@/interfaces/EventTypes";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { Dialog, Transition, TransitionChild } from "@headlessui/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { Fragment, useEffect, useState } from "react";
 import email_icons from "../../public/images/email.png";
 import fb_icons from "../../public/images/fbfb.jpeg";

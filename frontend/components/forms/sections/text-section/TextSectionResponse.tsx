@@ -1,7 +1,7 @@
 "use client";
 import { TextSection } from "@/interfaces/FormTypes";
 import { Textarea } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
  
 export const TextSectionResponse = ({
