@@ -273,6 +273,7 @@ export function OrganiserEventHubView() {
         <EventHubHeader
           loading={loading}
           event={eventData}
+          orderTicketsMap={orderTicketsMap}
           eventId={eventId}
           name={eventName}
           startDate={eventStartDate}

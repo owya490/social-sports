@@ -52,7 +52,7 @@ const event: EventData = {
 
 describe("EventActionsMenu", () => {
   it("keeps delete beside duplicate in the event actions menu", () => {
-    const markup = renderToStaticMarkup(<EventActionsMenu event={event} />);
+    const markup = renderToStaticMarkup(<EventActionsMenu event={event} orderTicketsMap={new Map()} />);
 
     expect(markup).toContain('aria-label="Event actions"');
     expect(markup).toContain("Duplicate event");

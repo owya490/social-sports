@@ -1,6 +1,6 @@
 "use client";
 
-import { OrganiserDeleteConfirmDialog } from "@/components/organiser/v2/OrganiserDeleteConfirmDialog";
+import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventModal";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import {
   EventHubScheduleFields,
@@ -10,6 +10,8 @@ import { EventHubPrimaryButton } from "@/components/organiser/v2/event-hub/Event
 import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
 import { archiveAndDeleteEvent, createEvent } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
@@ -29,10 +31,11 @@ function copyTitle(eventName: string) {
 
 type EventActionsMenuProps = {
   event: EventData;
+  orderTicketsMap: Map<Order, Ticket[]>;
   disabled?: boolean;
 };
 
-export function EventActionsMenu({ event, disabled = false }: EventActionsMenuProps) {
+export function EventActionsMenu({ event, orderTicketsMap, disabled = false }: EventActionsMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, auth } = useUser();
@@ -40,11 +43,9 @@ export function EventActionsMenu({ event, disabled = false }: EventActionsMenuPr
   const [duplicating, setDuplicating] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [name, setName] = useState(copyTitle(event.name));
   const [schedule, setSchedule] = useState<EventHubScheduleValue | null>(null);
   const busy = duplicating || deleting;
-  const eventName = event.name.trim() || "this event";
 
   const closePanel = () => {
     if (busy) return;
@@ -54,7 +55,6 @@ export function EventActionsMenu({ event, disabled = false }: EventActionsMenuPr
   const closeDelete = () => {
     if (deleting) return;
     setDeleteOpen(false);
-    setDeleteError(null);
   };
 
   const openPanel = () => {
@@ -92,12 +92,12 @@ export function EventActionsMenu({ event, disabled = false }: EventActionsMenuPr
   const handleDelete = async () => {
     if (disabled || busy) return;
     setDeleting(true);
-    setDeleteError(null);
     try {
       await archiveAndDeleteEvent(event.eventId, user.userId, auth.currentUser?.email || "");
       await sendEmailOnDeleteEventV2(event.eventId);
       bustEventsLocalStorageCache();
       bustOrganiserEventsCache();
+      setDeleting(false);
       router.push("/organiser/v2/event/dashboard");
     } catch (error) {
       if (error === "Rate Limited") {
@@ -106,7 +106,6 @@ export function EventActionsMenu({ event, disabled = false }: EventActionsMenuPr
       }
       if (error === "Loops failed") {
         setDeleting(false);
-        setDeleteError("Could not delete this event. Try again.");
         logger.error("Loops failed");
         return;
       }
@@ -150,10 +149,7 @@ export function EventActionsMenu({ event, disabled = false }: EventActionsMenuPr
             {({ focus }) => (
               <button
                 type="button"
-                onClick={() => {
-                  setDeleteError(null);
-                  setDeleteOpen(true);
-                }}
+                onClick={() => setDeleteOpen(true)}
                 className={`${
                   focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
                 } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
@@ -202,14 +198,12 @@ export function EventActionsMenu({ event, disabled = false }: EventActionsMenuPr
         ) : null}
       </EventHubPanel>
 
-      <OrganiserDeleteConfirmDialog
-        open={deleteOpen}
-        title="Delete event"
-        subjectName={eventName}
-        detail="An email will be sent to each attendee notifying them. Please handle refunds immediately."
-        errorMessage={deleteError}
-        deleting={deleting}
-        confirmDisabled={disabled}
+      <DeleteEventModal
+        eventName={event.name}
+        eventStartDate={event.startDate}
+        orderTicketsMap={orderTicketsMap}
+        modalOpen={deleteOpen}
+        loading={deleting}
         onClose={closeDelete}
         onConfirm={() => {
           void handleDelete();
