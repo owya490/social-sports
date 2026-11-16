@@ -1,7 +1,7 @@
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { EventDuplicateMenu } from "./EventDuplicateMenu";
+import { EventActionsMenu } from "./EventActionsMenu";
 
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
@@ -50,9 +50,9 @@ const event: EventData = {
   name: "Friday social",
 };
 
-describe("EventDuplicateMenu", () => {
+describe("EventActionsMenu", () => {
   it("keeps delete beside duplicate in the event actions menu", () => {
-    const markup = renderToStaticMarkup(<EventDuplicateMenu event={event} />);
+    const markup = renderToStaticMarkup(<EventActionsMenu event={event} />);
 
     expect(markup).toContain('aria-label="Event actions"');
     expect(markup).toContain("Duplicate event");

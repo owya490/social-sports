@@ -21,18 +21,18 @@ import { DocumentDuplicateIcon, EllipsisHorizontalIcon, TrashIcon } from "@heroi
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-const logger = new Logger("EventDuplicateMenu");
+const logger = new Logger("EventActionsMenu");
 
 function copyTitle(eventName: string) {
   return `Copy of ${eventName.trim() || "event"}`;
 }
 
-type EventDuplicateMenuProps = {
+type EventActionsMenuProps = {
   event: EventData;
   disabled?: boolean;
 };
 
-export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMenuProps) {
+export function EventActionsMenu({ event, disabled = false }: EventActionsMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, auth } = useUser();

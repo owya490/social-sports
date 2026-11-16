@@ -2,7 +2,7 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { EventDuplicateMenu } from "@/components/organiser/v2/events/EventDuplicateMenu";
+import { EventActionsMenu } from "@/components/organiser/v2/events/EventActionsMenu";
 import { EventData, EventId } from "@/interfaces/EventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import {
@@ -90,7 +90,7 @@ export function EventHubHeader({
               <span>{paused ? "Resume" : "Pause"}</span>
             </button>
           </div>
-          <EventDuplicateMenu event={event} disabled={loading} />
+          <EventActionsMenu event={event} disabled={loading} />
         </div>
       </div>
     </header>
