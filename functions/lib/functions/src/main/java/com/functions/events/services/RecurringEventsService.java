@@ -1,14 +1,19 @@
 package com.functions.events.services;
 
+import com.functions.events.exceptions.RecurrenceTemplateNotFoundException;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.NewRecurrenceData;
 import com.functions.events.models.RecurrenceData;
 import com.functions.events.models.RecurrenceTemplate;
+import com.functions.events.repositories.EventCollectionsRepository;
 import com.functions.events.repositories.RecurrenceTemplateRepository;
+import com.functions.firebase.services.FirebaseService;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.TimeUtils;
 import com.google.cloud.Timestamp;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +102,39 @@ public class RecurringEventsService {
             logger.error("Error when updating Recurrence Template {}", recurrenceTemplateId, e);
             return Optional.empty();
         }
+    }
+
+    public static void deleteRecurrenceTemplate(String recurrenceTemplateId, String organiserId) throws Exception {
+        FirebaseService.createFirestoreTransaction(transaction -> {
+            // Reads first. A retried transaction must not write before these queries finish.
+            // The same template id can exist in more than one active/private location.
+            List<DocumentReference> templateRefs = RecurrenceTemplateRepository
+                    .findRecurrenceTemplateRefs(recurrenceTemplateId, transaction);
+            if (templateRefs.isEmpty()) {
+                throw new RecurrenceTemplateNotFoundException(recurrenceTemplateId);
+            }
+            // Collections store their own list of series ids.
+            List<DocumentReference> collections = EventCollectionsService
+                    .getEventCollectionDocumentsContainingRecurringTemplate(recurrenceTemplateId, transaction);
+            // Links are stored under the organiser and point at this template by id.
+            List<DocumentSnapshot> links = CustomEventLinksService
+                    .getEventLinkDocumentsPointedToRecurrence(organiserId, recurrenceTemplateId, transaction);
+
+            // Delete every copy of the template.
+            for (DocumentReference templateRef : templateRefs) {
+                transaction.delete(templateRef);
+            }
+            // Leave each collection in place and drop this series from its list.
+            for (DocumentReference collection : collections) {
+                EventCollectionsRepository.removeRecurringTemplateId(collection, recurrenceTemplateId, transaction);
+            }
+            // Leave each custom link in place and clear the fields that pointed at this series.
+            CustomEventLinksService.clearRecurrenceTemplateReference(links, transaction);
+            // Take the series off the organiser's private list.
+            Users.removeRecurrenceTemplate(organiserId, recurrenceTemplateId, transaction);
+            return null;
+        });
+        logger.info("Deleted recurrence template {}", recurrenceTemplateId);
     }
 
     private static RecurrenceData calculateRecurrenceDataForCreate(NewRecurrenceData newRecurrenceData, Timestamp startDate) {

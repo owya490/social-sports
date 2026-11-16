@@ -13,6 +13,7 @@ import com.functions.users.models.UserData;
 import com.functions.users.utils.UsersUtils;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Firestore;
 import com.google.cloud.firestore.Transaction;
 
@@ -42,6 +43,13 @@ public class Users {
 		Firestore db = FirebaseService.getFirestore();
 		db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE).collection(CollectionPaths.PRIVATE)
 				.document(userId).update(JavaUtils.toMap(newData));
+	}
+
+	public static void removeRecurrenceTemplate(String organiserId, String recurrenceTemplateId, Transaction transaction) {
+		Firestore db = FirebaseService.getFirestore();
+		DocumentReference userRef = db.collection(CollectionPaths.USERS).document(CollectionPaths.ACTIVE)
+				.collection(CollectionPaths.PRIVATE).document(organiserId);
+		transaction.update(userRef, "recurrenceTemplates", FieldValue.arrayRemove(recurrenceTemplateId));
 	}
 
 	public static UserData getUserDataById(String userId) throws Exception {
