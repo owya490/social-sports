@@ -1,9 +1,10 @@
 "use client";
 
+import { OrganiserDeleteConfirmDialog } from "@/components/organiser/v2/OrganiserDeleteConfirmDialog";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
 import { deleteRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -84,47 +85,19 @@ export function RecurringTemplateDeleteButton({
         </MenuItems>
       </Menu>
 
-      <Dialog open={confirmOpen} onClose={closeConfirm} className="relative z-[120]">
-        <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
-        <div className="fixed inset-0 flex items-center justify-center p-4">
-          <DialogPanel className="w-full max-w-sm rounded-xl border border-border bg-background p-5 shadow-lg">
-            <DialogTitle className="font-sans text-base font-semibold text-foreground">
-              Delete recurring event
-            </DialogTitle>
-            <p className="mt-2 text-sm text-foreground-secondary font-sans leading-relaxed">
-              You are about to delete <span className="font-semibold text-foreground">{name}</span>.
-            </p>
-            <p className="mt-2 text-sm text-foreground-secondary font-sans leading-relaxed">
-              All references to this Recurring event will be deleted. Existing events will not be modified.
-            </p>
-            {error ? (
-              <p className="mt-3 text-sm text-danger font-sans" role="alert">
-                Could not delete this template. Try again.
-              </p>
-            ) : null}
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={closeConfirm}
-                disabled={deleting}
-                className="rounded-xl px-3 py-2 text-sm font-medium text-foreground-secondary font-sans hover:bg-surface-hover hover:text-foreground disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void handleDelete();
-                }}
-                disabled={disabled || deleting}
-                className="rounded-xl bg-danger px-3 py-2 text-sm font-semibold text-white font-sans hover:brightness-95 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-              >
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
-            </div>
-          </DialogPanel>
-        </div>
-      </Dialog>
+      <OrganiserDeleteConfirmDialog
+        open={confirmOpen}
+        title="Delete recurring event"
+        subjectName={name}
+        detail="All references to this Recurring event will be deleted. Existing events will not be modified."
+        errorMessage={error ? "Could not delete this template. Try again." : null}
+        deleting={deleting}
+        confirmDisabled={disabled}
+        onClose={closeConfirm}
+        onConfirm={() => {
+          void handleDelete();
+        }}
+      />
     </>
   );
 }

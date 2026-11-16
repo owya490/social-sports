@@ -381,9 +381,6 @@ export function OrganiserEventHubView() {
 
         {section === "Settings" && (
           <EventHubSettings
-            orderTicketsMap={orderTicketsMap}
-            eventName={eventName}
-            eventStartDate={eventStartDate}
             eventId={eventId}
             paused={eventPaused}
             setPaused={setEventPaused}

@@ -1,21 +1,15 @@
 "use client";
 
-import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventModal";
 import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
-import { Order } from "@/interfaces/OrderTypes";
-import { Ticket } from "@/interfaces/TicketTypes";
-import { Logger } from "@/observability/logger";
-import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
-import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
+import { updateEventById } from "@/services/src/events/eventsService";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import {
   clampMaxTicketsPerTransaction,
   getOrganiserMaxTicketsPerTransactionLimit,
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
-import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { isFreeEvent } from "@/utilities/priceUtils";
@@ -25,9 +19,7 @@ import {
   QueueListIcon,
   TicketIcon,
 } from "@heroicons/react/24/outline";
-import { Timestamp } from "firebase/firestore";
-import { useRouter } from "next/navigation";
-import { ReactNode, useMemo, useState } from "react";
+import { ReactNode } from "react";
 import {
   EventHubPreferenceRow,
   EventHubSavingIndicator,
@@ -39,9 +31,6 @@ import { useSettingsAutosave } from "./useSettingsAutosave";
 
 type EventHubSettingsProps = {
   eventId: EventId;
-  orderTicketsMap: Map<Order, Ticket[]>;
-  eventName: string;
-  eventStartDate: Timestamp;
   paused: boolean;
   setPaused: (value: boolean) => void;
   paymentsActive: boolean;
@@ -87,9 +76,6 @@ function SettingsGroup({
 
 export function EventHubSettings({
   eventId,
-  orderTicketsMap,
-  eventName,
-  eventStartDate,
   paused,
   setPaused,
   paymentsActive,
@@ -111,11 +97,7 @@ export function EventHubSettings({
   eventCapacity,
   eventPrice,
 }: EventHubSettingsProps) {
-  const router = useRouter();
-  const { user, auth } = useUser();
-  const logger = useMemo(() => new Logger("EventHubSettings"), []);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const { user } = useUser();
   const { status: saveStatus, isSaving, run: runSave, retry: retrySave } = useSettingsAutosave();
 
   const maxTicketsAllowed = getOrganiserMaxTicketsPerTransactionLimit(eventCapacity);
@@ -155,26 +137,6 @@ export function EventHubSettings({
       () => setMaxTicketsPerTransaction(clamped),
       () => setMaxTicketsPerTransaction(previous)
     );
-  };
-
-  const onConfirm = async () => {
-    try {
-      setDeleteLoading(true);
-      await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
-      await sendEmailOnDeleteEventV2(eventId);
-      bustEventsLocalStorageCache();
-      bustOrganiserEventsCache();
-      setDeleteLoading(false);
-      router.push("/organiser/v2/event/dashboard");
-    } catch (error) {
-      if (error === "Rate Limited") {
-        router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
-      } else if (error == "Loops failed") {
-        logger.error("Loops failed");
-      } else {
-        router.push("/error");
-      }
-    }
   };
 
   return (
@@ -305,32 +267,7 @@ export function EventHubSettings({
             </label>
           </div>
         </SettingsGroup>
-
-        <SettingsGroup title="Danger zone">
-          <div className="py-4">
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              className="text-sm font-medium text-danger font-sans hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus rounded"
-            >
-              Delete event
-            </button>
-            <p className="mt-1.5 text-xs text-foreground-muted font-sans">
-              Permanently remove this event and notify attendees.
-            </p>
-          </div>
-        </SettingsGroup>
       </div>
-
-      <DeleteEventModal
-        eventName={eventName}
-        eventStartDate={eventStartDate}
-        orderTicketsMap={orderTicketsMap}
-        modalOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onConfirm={onConfirm}
-        loading={deleteLoading}
-      />
     </EventHubStage>
   );
 }

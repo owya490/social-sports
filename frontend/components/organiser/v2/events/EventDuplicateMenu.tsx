@@ -1,19 +1,23 @@
 "use client";
 
-import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
+import { OrganiserDeleteConfirmDialog } from "@/components/organiser/v2/OrganiserDeleteConfirmDialog";
 import { EventHubPanel } from "@/components/organiser/v2/event-hub/EventHubPanel";
 import {
   EventHubScheduleFields,
   type EventHubScheduleValue,
 } from "@/components/organiser/v2/event-hub/EventHubScheduleFields";
 import { EventHubPrimaryButton } from "@/components/organiser/v2/event-hub/EventHubStage";
+import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
+import { useUser } from "@/components/utility/UserContext";
 import { EventData } from "@/interfaces/EventTypes";
 import { Logger } from "@/observability/logger";
-import { createEvent } from "@/services/src/events/eventsService";
+import { archiveAndDeleteEvent, createEvent } from "@/services/src/events/eventsService";
+import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { buildDuplicatedNewEventData } from "@/services/src/events/eventsUtils/duplicateEventUtils";
+import { sendEmailOnDeleteEventV2 } from "@/services/src/loops/loopsService";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { DocumentDuplicateIcon, EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -31,14 +35,26 @@ type EventDuplicateMenuProps = {
 export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMenuProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { user, auth } = useUser();
   const [open, setOpen] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [name, setName] = useState(copyTitle(event.name));
   const [schedule, setSchedule] = useState<EventHubScheduleValue | null>(null);
+  const busy = duplicating || deleting;
+  const eventName = event.name.trim() || "this event";
 
   const closePanel = () => {
-    if (duplicating) return;
+    if (busy) return;
     setOpen(false);
+  };
+
+  const closeDelete = () => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setDeleteError(null);
   };
 
   const openPanel = () => {
@@ -49,7 +65,7 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
 
   const handleDuplicate = async () => {
     const nextName = name.trim();
-    if (disabled || duplicating || !schedule || schedule.hasBlockingWarning || !nextName) return;
+    if (disabled || busy || !schedule || schedule.hasBlockingWarning || !nextName) return;
     setDuplicating(true);
     try {
       const newEventId = await createEvent(
@@ -73,12 +89,38 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
     }
   };
 
+  const handleDelete = async () => {
+    if (disabled || busy) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await archiveAndDeleteEvent(event.eventId, user.userId, auth.currentUser?.email || "");
+      await sendEmailOnDeleteEventV2(event.eventId);
+      bustEventsLocalStorageCache();
+      bustOrganiserEventsCache();
+      router.push("/organiser/v2/event/dashboard");
+    } catch (error) {
+      if (error === "Rate Limited") {
+        router.push("/error/Delete_UPDATE_EVENT_RATELIMITED");
+        return;
+      }
+      if (error === "Loops failed") {
+        setDeleting(false);
+        setDeleteError("Could not delete this event. Try again.");
+        logger.error("Loops failed");
+        return;
+      }
+      logger.error(`Failed to delete event ${event.eventId}: ${error}`);
+      router.push("/error");
+    }
+  };
+
   return (
     <>
       <Menu as="div" className="relative shrink-0">
         <MenuButton
           type="button"
-          disabled={disabled || duplicating}
+          disabled={disabled || busy}
           aria-label="Event actions"
           className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-hover hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         >
@@ -104,6 +146,23 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
               </button>
             )}
           </MenuItem>
+          <MenuItem>
+            {({ focus }) => (
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteError(null);
+                  setDeleteOpen(true);
+                }}
+                className={`${
+                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
+              >
+                <TrashIcon className="h-4 w-4 shrink-0 text-danger" aria-hidden />
+                Delete event
+              </button>
+            )}
+          </MenuItem>
         </MenuItems>
       </Menu>
 
@@ -116,7 +175,7 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
             onClick={() => {
               void handleDuplicate();
             }}
-            disabled={disabled || duplicating || !name.trim() || !schedule || schedule.hasBlockingWarning}
+            disabled={disabled || busy || !name.trim() || !schedule || schedule.hasBlockingWarning}
           >
             {duplicating ? "Duplicating…" : "Duplicate"}
           </EventHubPrimaryButton>
@@ -142,6 +201,20 @@ export function EventDuplicateMenu({ event, disabled = false }: EventDuplicateMe
           </div>
         ) : null}
       </EventHubPanel>
+
+      <OrganiserDeleteConfirmDialog
+        open={deleteOpen}
+        title="Delete event"
+        subjectName={eventName}
+        detail="An email will be sent to each attendee notifying them. Please handle refunds immediately."
+        errorMessage={deleteError}
+        deleting={deleting}
+        confirmDisabled={disabled}
+        onClose={closeDelete}
+        onConfirm={() => {
+          void handleDelete();
+        }}
+      />
     </>
   );
 }
