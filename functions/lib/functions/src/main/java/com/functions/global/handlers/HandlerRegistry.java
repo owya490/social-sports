@@ -25,6 +25,7 @@ import com.functions.fulfilment.handlers.InitPartnerFulfilmentSessionHandler;
 import com.functions.fulfilment.handlers.UpdateFulfilmentEntityWithFormResponseIdHandler;
 import com.functions.global.models.EndpointType;
 import com.functions.global.models.Handler;
+import com.functions.stripe.handlers.StartStripePayoutOnboardingHandler;
 import com.functions.tickets.handlers.GetOrderHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
 import com.functions.tickets.handlers.GetTicketHandler;
@@ -74,6 +75,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.GET_EVENT_ATTENDEE_NAMES, new GetEventAttendeeNamesHandler());
         handlers.put(EndpointType.BOOKING_APPROVAL, new BookingApprovalHandler());
         handlers.put(EndpointType.PROVISION_USER, new ProvisionUserHandler());
+        handlers.put(EndpointType.START_STRIPE_PAYOUT_ONBOARDING, new StartStripePayoutOnboardingHandler());
     }
 
     /**

@@ -8,6 +8,7 @@ type OnboardingStepNavProps = {
   primaryType?: "button" | "submit";
   onPrimary?: () => void;
   disabled?: boolean;
+  primaryDisabled?: boolean;
   skip?: {
     busy?: boolean;
     onSkip: () => void;
@@ -21,6 +22,7 @@ export default function OnboardingStepNav({
   primaryType = "button",
   onPrimary,
   disabled = false,
+  primaryDisabled = false,
   skip,
 }: OnboardingStepNavProps) {
   return (
@@ -37,7 +39,7 @@ export default function OnboardingStepNav({
         <HighlightButton
           type={primaryType}
           className="bg-core-text text-white hover:bg-black disabled:opacity-50"
-          disabled={disabled}
+          disabled={disabled || primaryDisabled}
           onClick={onPrimary}
         >
           {primaryLabel}

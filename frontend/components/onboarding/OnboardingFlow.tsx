@@ -53,6 +53,7 @@ export default function OnboardingFlow() {
     setStep((current) => {
       if (current !== null) return current;
       if (user.onboardingPersona === "organiser") {
+        if (user.stripeAccount) return "profile";
         return readStoredStep() === "payouts" ? "payouts" : "profile";
       }
       if (user.onboardingPersona === "attendee") return "profile";
@@ -118,7 +119,12 @@ export default function OnboardingFlow() {
     <div className="flex min-h-dvh flex-col">
       <div className="m-auto flex w-full max-w-5xl flex-col items-center gap-6 px-5 py-8 lg:flex-row lg:items-center lg:justify-center lg:gap-16 lg:px-6">
         <div className="w-full shrink-0 lg:w-auto">
-          <OnboardingTimeline currentStep={step} revealed={revealed} allComplete={allComplete} />
+          <OnboardingTimeline
+            currentStep={step}
+            revealed={revealed}
+            allComplete={allComplete}
+            showPayouts={!user.stripeAccount}
+          />
         </div>
         <div className="w-full min-w-0 lg:flex-1">
           {step === "role" ? (
@@ -155,9 +161,9 @@ export default function OnboardingFlow() {
             <AttendeeOnboardingStep
               persona={persona}
               onBack={() => setStep("role")}
-              completeLabel={persona === "organiser" ? "Continue" : "Finish"}
+              completeLabel={persona === "organiser" && !user.stripeAccount ? "Continue" : "Finish"}
               onComplete={async () => {
-                if (persona === "organiser") {
+                if (persona === "organiser" && !user.stripeAccount) {
                   setStep("payouts");
                   return;
                 }

@@ -12,6 +12,8 @@ type OnboardingTimelineProps = {
   revealed: OnboardingTimelinePersona | null;
   /** Marks every visible step complete so the last step can fill in before leaving. */
   allComplete?: boolean;
+  /** Organisers who already have a Stripe account skip Getting Paid. */
+  showPayouts?: boolean;
 };
 
 const STEPS = [
@@ -35,10 +37,10 @@ function isStepVisible(id: StepId, profileShown: boolean, payoutsShown: boolean)
   return payoutsShown;
 }
 
-function useStaggeredSteps(revealed: OnboardingTimelinePersona | null) {
+function useStaggeredSteps(revealed: OnboardingTimelinePersona | null, showPayouts: boolean) {
   const [profileShown, setProfileShown] = useState(revealed != null);
-  const [payoutsShown, setPayoutsShown] = useState(revealed === "organiser");
-  const payoutsShownRef = useRef(revealed === "organiser");
+  const [payoutsShown, setPayoutsShown] = useState(revealed === "organiser" && showPayouts);
+  const payoutsShownRef = useRef(revealed === "organiser" && showPayouts);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -46,6 +48,11 @@ function useStaggeredSteps(revealed: OnboardingTimelinePersona | null) {
 
     if (revealed === "organiser") {
       setProfileShown(true);
+      if (!showPayouts) {
+        payoutsShownRef.current = false;
+        setPayoutsShown(false);
+        return;
+      }
       const timer = window.setTimeout(() => {
         payoutsShownRef.current = true;
         setPayoutsShown(true);
@@ -67,7 +74,7 @@ function useStaggeredSteps(revealed: OnboardingTimelinePersona | null) {
       setProfileShown(false);
     }, hadPayouts ? wait : 0);
     return () => window.clearTimeout(timer);
-  }, [revealed]);
+  }, [revealed, showPayouts]);
 
   return { profileShown, payoutsShown };
 }
@@ -148,8 +155,9 @@ export default function OnboardingTimeline({
   currentStep,
   revealed,
   allComplete = false,
+  showPayouts = true,
 }: OnboardingTimelineProps) {
-  const { profileShown, payoutsShown } = useStaggeredSteps(revealed);
+  const { profileShown, payoutsShown } = useStaggeredSteps(revealed, showPayouts);
   const visibility = STEPS.map((step) => isStepVisible(step.id, profileShown, payoutsShown));
   const visibleIds = STEPS.filter((_, index) => visibility[index]).map((step) => step.id);
   const currentIndex = allComplete ? visibleIds.length : Math.max(0, visibleIds.indexOf(currentStep));
