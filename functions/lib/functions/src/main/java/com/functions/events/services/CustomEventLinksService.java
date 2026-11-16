@@ -46,8 +46,7 @@ public class CustomEventLinksService {
       Transaction transaction) {
     Map<String, Object> clearedReference = Map.of(
         "referenceId", FieldValue.delete(),
-        "referenceName", FieldValue.delete(),
-        "eventReference", FieldValue.delete());
+        "referenceName", FieldValue.delete());
     for (DocumentSnapshot eventLinkDocument : eventLinkDocuments) {
       transaction.update(eventLinkDocument.getReference(), clearedReference);
     }

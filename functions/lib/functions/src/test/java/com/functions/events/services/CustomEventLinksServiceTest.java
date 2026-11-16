@@ -1,6 +1,7 @@
 package com.functions.events.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -20,7 +21,7 @@ import com.google.cloud.firestore.Transaction;
 
 public class CustomEventLinksServiceTest {
     @Test
-    public void clearRecurrenceTemplateReferenceKeepsTheLinkAndRemovesTheTemplatePointer() {
+    public void clearRecurrenceTemplateReferenceKeepsTheLinkAndItsEventButRemovesTheTemplatePointer() {
         DocumentSnapshot link = mock(DocumentSnapshot.class);
         DocumentReference linkRef = mock(DocumentReference.class);
         Transaction transaction = mock(Transaction.class);
@@ -32,10 +33,10 @@ public class CustomEventLinksServiceTest {
         ArgumentCaptor<Map<String, Object>> updates = ArgumentCaptor.forClass(Map.class);
         verify(transaction).update(org.mockito.ArgumentMatchers.eq(linkRef), updates.capture());
         Map<String, Object> cleared = updates.getValue();
-        assertEquals(3, cleared.size());
+        assertEquals(2, cleared.size());
         assertTrue(cleared.get("referenceId") instanceof FieldValue);
         assertTrue(cleared.get("referenceName") instanceof FieldValue);
-        assertTrue(cleared.get("eventReference") instanceof FieldValue);
+        assertFalse(cleared.containsKey("eventReference"));
         verifyNoInteractions(linkRef);
     }
 }
