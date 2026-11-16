@@ -71,6 +71,14 @@ Read [docs/PATTERNS.md](docs/PATTERNS.md) before changing authentication,
 payments, function endpoints, Firestore transactions, or shared frontend/backend
 contracts.
 
+## Project Context
+
+For Pyng organiser fee collection, read
+[docs/projects/pyng-platform-fees.md](docs/projects/pyng-platform-fees.md).
+It records agreed product rules, dated evidence, open questions and delivery
+status. Keep it current when related decisions or implementation change; retain
+the distinction between proposals, provider confirmations and shipped behavior.
+
 ## Code Comments
 
 - Write comments only for non-obvious current constraints, intent, or tradeoffs that help a future reader understand why the code is structured that way.
