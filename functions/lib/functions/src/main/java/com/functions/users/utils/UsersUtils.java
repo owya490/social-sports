@@ -47,6 +47,7 @@ public class UsersUtils {
 		privateUserData.setSendOrganiserTicketEmails(data.getSendOrganiserTicketEmails());
 		privateUserData.setForms(data.getForms());
 		privateUserData.setPrivateEventCollections(data.getPrivateEventCollections());
+		privateUserData.setIsOnboarding(data.getIsOnboarding());
 		privateUserData.setOnboardingPersona(data.getOnboardingPersona());
 		privateUserData.setOnboardingCompletedAt(data.getOnboardingCompletedAt());
 		privateUserData.setStripeConnectSetupCompletedAt(data.getStripeConnectSetupCompletedAt());

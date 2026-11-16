@@ -49,15 +49,17 @@ export interface PrivateUserData {
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
   privateEventCollections: EventCollectionId[];
-  /** Host vs participant choice from onboarding (unset until chosen). */
+  /** True until onboarding is finished. Missing means false, so legacy accounts stay out. */
+  isOnboarding?: boolean;
+  /** Kept for migration. New persona choices are stored on UserMetadata. */
   onboardingPersona?: OnboardingPersona | null;
-  /** Product onboarding finished. Null means a new account still needs onboarding. */
+  /** Kept for migration. Product onboarding now uses isOnboarding. */
   onboardingCompletedAt?: Timestamp | null;
-  /** Explicit Stripe Connect completion timestamp for onboarding/nudges. */
+  /** Kept for migration. */
   stripeConnectSetupCompletedAt?: Timestamp | null;
-  /** User skipped optional Stripe setup during organiser onboarding. */
+  /** Kept for migration. */
   stripeConnectSetupSkippedAt?: Timestamp | null;
-  /** User chose to leave onboarding before finishing. */
+  /** Kept for migration. */
   onboardingSkippedAt?: Timestamp | null;
 }
 
@@ -135,3 +137,11 @@ export interface UsernameMap {
 
 export const PUBLIC_USER_PATH = "Users/Active/Public";
 export const PRIVATE_USER_PATH = "Users/Active/Private";
+export const USER_METADATA_PATH = "Users/Active/Metadata";
+
+/** Users/Active/Metadata/{userId}. Client writes are denied; the backend owns this document. */
+export interface UserMetadata {
+  userId: string;
+  /** Host vs participant choice. Unset until selected during onboarding. */
+  onboardingPersona?: OnboardingPersona | null;
+}

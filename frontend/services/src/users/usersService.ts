@@ -12,7 +12,6 @@ import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import {
   collection,
-  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -237,7 +236,7 @@ export async function syncStripeConnectSetupCompletedIfNeeded(userId: UserId, us
 }
 
 export async function markProductOnboardingCompleted(userId: UserId): Promise<void> {
-  await updateUser(userId, { onboardingCompletedAt: Timestamp.now() });
+  await updateUser(userId, { isOnboarding: false, onboardingCompletedAt: Timestamp.now() });
   bustUserLocalStorageCache();
 }
 
@@ -245,26 +244,11 @@ export async function markProductOnboardingCompleted(userId: UserId): Promise<vo
 export async function skipProductOnboarding(userId: UserId): Promise<void> {
   const now = Timestamp.now();
   await updateUser(userId, {
+    isOnboarding: false,
     onboardingSkippedAt: now,
     onboardingCompletedAt: now,
   });
   bustUserLocalStorageCache();
-}
-
-/** Removes persona so the user can pick host vs attendee again from `/onboarding`. */
-export async function clearOnboardingPersonaChoice(userId: UserId): Promise<void> {
-  if (userId === undefined) {
-    throw new UserNotFoundError(userId, "UserId is undefined");
-  }
-  try {
-    const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
-    await updateDoc(privateUserDocRef, { onboardingPersona: deleteField() });
-    bustUserLocalStorageCache();
-    userServiceLogger.info(`Cleared onboarding persona for re-choice: ${userId}`);
-  } catch (error) {
-    userServiceLogger.error(`Error clearing onboarding persona for ${userId}: ${error}`);
-    throw new UsersServiceError(userId);
-  }
 }
 
 export async function getFullUserByIdForUserContextWithRetries(userId: UserId): Promise<UserData> {

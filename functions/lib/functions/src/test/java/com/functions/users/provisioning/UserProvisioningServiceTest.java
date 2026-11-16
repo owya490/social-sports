@@ -75,9 +75,12 @@ public class UserProvisioningServiceTest {
             assertEquals(List.of("alex", "smith"), harness.publicData.get("nameTokens"));
             assertEquals(false, harness.publicData.get("isSearchable"));
             assertEquals("ada@example.com", contactEmail(harness.privateData));
+            assertEquals(true, harness.privateData.get("isOnboarding"));
             assertTrue(harness.privateData.containsKey("onboardingCompletedAt"));
             assertNull(harness.privateData.get("onboardingCompletedAt"));
-            assertEquals(Map.of("userId", "uid-1"), harness.metadata);
+            assertEquals("uid-1", harness.metadata.get("userId"));
+            assertTrue(harness.metadata.containsKey("onboardingPersona"));
+            assertNull(harness.metadata.get("onboardingPersona"));
             assertEquals(List.of(
                     "read-public",
                     "read-private",

@@ -9,6 +9,7 @@ import {
 
 /** Writable via updateUser but omitted from EmptyPrivateUserData defaults (legacy grandfathering). */
 const ONBOARDING_PRIVATE_FIELD_KEYS = [
+  "isOnboarding",
   "onboardingPersona",
   "onboardingCompletedAt",
   "stripeConnectSetupCompletedAt",
