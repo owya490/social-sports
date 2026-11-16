@@ -28,7 +28,7 @@ import {
   QuestionMarkCircleIcon,
 } from "@heroicons/react/24/outline";
 import { IconLayoutSidebar } from "@tabler/icons-react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useCallback, useEffect, useState, type TransitionEvent } from "react";

@@ -52,6 +52,17 @@ public class SmsTextTest {
     }
 
     @Test
+    public void forSmsSubject_stripsCharactersThatCorruptTheSmsWrapper() {
+        String result = SmsText.forSmsSubject(
+                "The `expirependingbookingscron` function failed. Errors &gt; 0. [ALERT]");
+        assertEquals("The expirependingbookingscron function failed. Errors > 0. ALERT", result);
+        assertFalse(result.contains("`"));
+        assertFalse(result.contains("["));
+        assertFalse(result.contains("]"));
+        assertFalse(result.contains("¿"));
+    }
+
+    @Test
     public void forSmsSubject_capsUtf8BytesForMonitoringSubject() {
         String result = SmsText.forSmsSubject("é".repeat(200));
         assertTrue(result.getBytes(StandardCharsets.UTF_8).length <= SmsText.MAX_UTF8_BYTES);

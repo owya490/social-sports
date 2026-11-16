@@ -57,8 +57,9 @@ function AuthCtaPanel({
   body: string;
   backdrop: keyof typeof CTA_BACKDROPS;
 }) {
+  // Sticky bottom lets iOS Safari tint the URL bar from this panel.
   return (
-    <div className="relative flex min-h-40 shrink-0 overflow-hidden bg-black text-white md:sticky md:top-0 md:h-screen md:min-h-screen">
+    <div className="sticky bottom-0 flex min-h-40 shrink-0 overflow-hidden bg-black pb-[env(safe-area-inset-bottom)] text-white max-md:shadow-[0_100vh_0_100vh_#000] md:bottom-auto md:top-0 md:h-screen md:min-h-screen md:pb-0 md:shadow-none">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 hidden md:block"

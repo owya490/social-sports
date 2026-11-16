@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Logo from "./../../public/images/BlackLogo.svg";
 
 export const LoadingSpinner = () => {

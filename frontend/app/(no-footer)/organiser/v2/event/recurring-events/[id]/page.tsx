@@ -229,6 +229,7 @@ export default function OrganiserRecurringHubV2Page() {
           startDate={eventStartDate}
           location={eventLocation}
           frequency={frequency}
+          recurrenceTemplateId={recurrenceTemplateId}
         />
         <RecurringHubNav current={section} onChange={handleSectionChange} />
       </div>

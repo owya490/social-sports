@@ -2,7 +2,7 @@
 
 import { LOADING_BEATS } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useState } from "react";
 

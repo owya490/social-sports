@@ -47,6 +47,49 @@ public class FulfilmentSessionRepository {
                 .document(sessionId);
     }
 
+    private static DocumentReference getArchivedFulfilmentSessionDocRef(String sessionId) {
+        Firestore db = FirebaseService.getFirestore();
+        return db.collection(FirebaseService.CollectionPaths.ARCHIVED_FULFILMENT_SESSIONS_ROOT_PATH)
+                .document(sessionId);
+    }
+
+    /**
+     * Moves a processed session to the archive under the same id and removes the live document.
+     * set overwrites an existing archive document so a repeated write does not fail the ticket transaction.
+     */
+    public static void archiveFulfilmentSession(FulfilmentSession session, Transaction transaction)
+            throws Exception {
+        String sessionId = session.getId();
+        try {
+            transaction.set(getArchivedFulfilmentSessionDocRef(sessionId), session);
+            transaction.delete(getFulfilmentSessionDocRef(sessionId));
+        } catch (Exception e) {
+            logger.error("Failed to archive fulfilment session for sessionId: {}", sessionId, e);
+            throw new Exception("Failed to archive fulfilment session for sessionId: " + sessionId, e);
+        }
+    }
+
+    /**
+     * Reads the live session, then the archive. A poll can arrive after the processor has moved it.
+     */
+    public static Optional<FulfilmentSession> getFulfilmentSessionOrArchived(String sessionId) throws Exception {
+        Optional<FulfilmentSession> live = getFulfilmentSession(sessionId, Optional.empty());
+        if (live.isPresent()) {
+            return live;
+        }
+        try {
+            DocumentSnapshot snapshot = getArchivedFulfilmentSessionDocRef(sessionId).get().get();
+            if (snapshot.exists()) {
+                return Optional.of(FulfilmentSession.fromFirestore(snapshot));
+            }
+            return Optional.empty();
+        } catch (Exception e) {
+            logger.error("Failed to retrieve archived fulfilment session for sessionId: {}", sessionId, e);
+            throw new Exception(
+                    "Failed to retrieve archived fulfilment session for sessionId: " + sessionId, e);
+        }
+    }
+
     public static Optional<FulfilmentSession> getFulfilmentSession(String sessionId,
                                                                    Optional<Transaction> transaction) throws Exception {
         try {
@@ -143,8 +186,18 @@ public class FulfilmentSessionRepository {
      */
     public static void updatePyngSettlement(String sessionId, PyngMetadata pyngMetadata,
             FulfilmentSessionStatus status) throws Exception {
+        DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
+        if (!sessionDocRef.get().get().exists()) {
+            if (getArchivedFulfilmentSessionDocRef(sessionId).get().get().exists()) {
+                logger.info(
+                        "Pyng settlement for session {} skipped; the live session is already archived",
+                        sessionId);
+                return;
+            }
+            throw new Exception("Pyng settlement for session " + sessionId
+                    + " failed; the session is missing from FulfilmentSessions and ArchivedFulfilmentSessions");
+        }
         try {
-            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
             Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
                     new TypeReference<Map<String, Object>>() {
                     });

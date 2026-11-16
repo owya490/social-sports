@@ -1,5 +1,5 @@
 import { RecurringTemplateRow } from "@/components/organiser/v2/recurring/RecurringTemplateRow";
-import { EMPTY_EVENT_TICKET_TYPE } from "@/interfaces/EventTicketTypeTypes";
+import { EMPTY_EVENT_TICKET_TYPE, EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
 import { EMPTY_RECURRENCE_TEMPLATE } from "@/interfaces/RecurringEventTypes";
 import { Timestamp } from "firebase/firestore";
@@ -68,7 +68,7 @@ describe("Organiser event row status", () => {
         ...event,
         price: legacyPrice,
         paymentsActive: false,
-        eventTicketTypes: { general: { ...EMPTY_EVENT_TICKET_TYPE, price } },
+        eventTicketTypes: { ["general" as EventTicketTypeId]: { ...EMPTY_EVENT_TICKET_TYPE, price } },
       }} />
     );
 

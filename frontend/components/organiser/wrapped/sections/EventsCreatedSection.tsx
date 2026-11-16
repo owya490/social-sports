@@ -3,7 +3,7 @@
 import { AnimatedSection } from "@/components/organiser/wrapped/AnimatedSection";
 import { SPORTS_CONFIG } from "@/config/SportsConfig";
 import { motion, useInView } from "framer-motion";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useRef } from "react";
 
 interface EventsCreatedSectionProps {
@@ -44,7 +44,13 @@ function SportImage({
       }}
       className="w-28 h-28 md:w-36 md:h-36 lg:w-44 lg:h-44 rounded-2xl shadow-2xl overflow-hidden relative"
     >
-      <Image src={sport.defaultThumbnailUrl} alt={sport.name} fill className="object-cover" />
+      <Image
+        src={sport.defaultThumbnailUrl}
+        alt={sport.name}
+        fill
+        sizes="(max-width: 767px) 112px, (max-width: 1023px) 144px, 176px"
+        className="object-cover"
+      />
     </motion.div>
   );
 }

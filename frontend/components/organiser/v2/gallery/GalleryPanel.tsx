@@ -3,7 +3,7 @@
 import { ImageCropModal } from "@/components/gallery/ImageCropModal";
 import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 

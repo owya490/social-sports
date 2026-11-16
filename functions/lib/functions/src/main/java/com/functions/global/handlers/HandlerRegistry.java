@@ -8,6 +8,7 @@ import com.functions.attendee.handlers.GetEventAttendeeNamesHandler;
 import com.functions.attendee.handlers.SetAttendeeTicketsHandler;
 import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.handlers.CreateRecurrenceTemplateHandler;
+import com.functions.events.handlers.DeleteRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
 import com.functions.events.handlers.GetPartnerEventsHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
@@ -29,6 +30,7 @@ import com.functions.tickets.handlers.GetOrderHandler;
 import com.functions.tickets.handlers.GetOrdersByEventHandler;
 import com.functions.tickets.handlers.GetTicketHandler;
 import com.functions.tickets.handlers.BookingApprovalHandler;
+import com.functions.users.handlers.ProvisionUserHandler;
 import com.functions.waitlist.handlers.UpdateFulfilmentEntityWithWaitlistDataHandler;
 import com.functions.wrapped.handlers.GetWrappedHandler;
 
@@ -45,6 +47,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.CREATE_EVENT, new CreateEventHandler());
         handlers.put(EndpointType.CREATE_RECURRENCE_TEMPLATE, new CreateRecurrenceTemplateHandler());
         handlers.put(EndpointType.UPDATE_RECURRENCE_TEMPLATE, new UpdateRecurrenceTemplateHandler());
+        handlers.put(EndpointType.DELETE_RECURRENCE_TEMPLATE, new DeleteRecurrenceTemplateHandler());
         handlers.put(EndpointType.INIT_FULFILMENT_SESSION, new InitFulfilmentSessionHandler());
         handlers.put(EndpointType.INIT_PARTNER_FULFILMENT_SESSION, new InitPartnerFulfilmentSessionHandler());
         handlers.put(EndpointType.UPDATE_FULFILMENT_ENTITY_WITH_FORM_RESPONSE_ID,
@@ -72,6 +75,7 @@ public class HandlerRegistry {
         handlers.put(EndpointType.SET_ATTENDEE_TICKETS, new SetAttendeeTicketsHandler());
         handlers.put(EndpointType.GET_EVENT_ATTENDEE_NAMES, new GetEventAttendeeNamesHandler());
         handlers.put(EndpointType.BOOKING_APPROVAL, new BookingApprovalHandler());
+        handlers.put(EndpointType.PROVISION_USER, new ProvisionUserHandler());
     }
 
     /**

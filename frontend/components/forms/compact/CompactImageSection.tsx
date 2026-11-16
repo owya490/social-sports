@@ -3,7 +3,7 @@
 import { ImageSection } from "@/interfaces/FormTypes";
 import { ImageOrientation } from "@/interfaces/ImageTypes";
 import { determineOrientation } from "@/services/src/images/imageUtils";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useState } from "react";
 
 export function CompactImageSection({ imageSection }: { imageSection: ImageSection }) {

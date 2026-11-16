@@ -12,7 +12,7 @@ import { RichTextEditorContent } from "@/components/editor/RichTextEditorContent
 import { PublicUserData } from "@/interfaces/UserTypes";
 import { EnvelopeIcon, PhoneIcon } from "@heroicons/react/24/outline";
 import Tick from "@svgs/Verified_tick.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useState } from "react";
 
 type UserProfileHeaderProps = {

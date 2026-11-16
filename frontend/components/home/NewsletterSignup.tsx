@@ -1,5 +1,5 @@
 import { Input } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import VolleyballArt from "./../../public/images/volleyball-digging.png";
 
 export default function NewsletterSignup() {

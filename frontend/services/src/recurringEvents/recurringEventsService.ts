@@ -126,6 +126,17 @@ export async function updateRecurrenceTemplate(
   return response.recurrenceTemplateId;
 }
 
+export async function deleteRecurrenceTemplate(
+  recurrenceTemplateId: RecurrenceTemplateId
+): Promise<RecurrenceTemplateId> {
+  recurringEventsServiceLogger.info(`Deleting recurrence template ${recurrenceTemplateId}`);
+  const response = await executeGlobalAppControllerFunction<
+    { recurrenceTemplateId: RecurrenceTemplateId },
+    { recurrenceTemplateId: RecurrenceTemplateId }
+  >(EndpointType.DELETE_RECURRENCE_TEMPLATE, { recurrenceTemplateId }, { attachAuth: true });
+  return response.recurrenceTemplateId;
+}
+
 export async function updateRecurrenceTemplateEventData(
   recurrenceTemplateId: RecurrenceTemplateId,
   updatedData: Partial<NewEventData>

@@ -27,6 +27,7 @@ import com.functions.events.repositories.EventTicketTypeRepository;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.firebase.services.FirebaseService.CollectionPaths;
+import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.services.FulfilmentService;
 import com.functions.tickets.models.Order;
 import com.functions.tickets.models.OrderAndTicketStatus;
@@ -452,7 +453,8 @@ public class WebhookService {
                         resolveApplicationFees(totalDetails),
                         resolveDiscounts(totalDetails),
                         paymentIntentId,
-                        captureMethod);
+                        captureMethod,
+                        PaymentProvider.STRIPE);
         if (minted == null) {
             return null;
         }
@@ -490,17 +492,10 @@ public class WebhookService {
 
     private static void restockTickets(
             Transaction transaction,
+            DocumentReference eventRef,
             String eventId,
-            boolean isPrivate,
             int ticketCount,
             String eventTicketTypeId) throws Exception {
-
-        Firestore db = FirebaseService.getFirestore();
-        String privacyPath = isPrivate ? CollectionPaths.PRIVATE : CollectionPaths.PUBLIC;
-        DocumentReference eventRef = db.collection(CollectionPaths.EVENTS)
-                .document(CollectionPaths.ACTIVE)
-                .collection(privacyPath)
-                .document(eventId);
 
         DocumentSnapshot eventSnapshot = transaction.get(eventRef).get();
         if (!eventSnapshot.exists()) {
@@ -551,11 +546,11 @@ public class WebhookService {
             String paymentIntentId,
             String eventId,
             String organiserId,
-            boolean isPrivate,
             String orderId,
             List<String> ticketIds) throws Exception {
 
         Firestore db = FirebaseService.getFirestore();
+        DocumentReference eventRef = EventsRepository.getEventDocumentReferenceInTransaction(eventId, transaction);
         DocumentReference eventMetadataRef = db.collection(CollectionPaths.EVENTS_METADATA).document(eventId);
         EventMetadata eventMetadata = getOrInitializeEventMetadata(transaction, eventMetadataRef, organiserId);
         Order order = OrdersRepository.getOrderById(orderId, Optional.of(transaction))
@@ -574,7 +569,7 @@ public class WebhookService {
         int currentCount = eventMetadata.getCompleteTicketCount() != null ? eventMetadata.getCompleteTicketCount() : 0;
         eventMetadata.setCompleteTicketCount(Math.max(0, currentCount - canceledTicketCount));
 
-        restockTickets(transaction, eventId, isPrivate, tickets.size(),
+        restockTickets(transaction, eventRef, eventId, tickets.size(),
                 resolveEventTicketTypeIdFromTickets(tickets));
         updateTicketsStatusToRejected(transaction, ticketIds);
         updateOrderStatusToRejected(transaction, orderId);
@@ -993,26 +988,13 @@ public class WebhookService {
                 return false;
             }
 
-            Firestore db = FirebaseService.getFirestore();
-            DocumentReference privateEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.ACTIVE)
-                    .collection(CollectionPaths.PRIVATE)
-                    .document(eventId);
-            DocumentReference publicEventRef = db.collection(CollectionPaths.EVENTS)
-                    .document(CollectionPaths.ACTIVE)
-                    .collection(CollectionPaths.PUBLIC)
-                    .document(eventId);
-            List<DocumentSnapshot> eventSnapshots = db.getAll(privateEventRef, publicEventRef).get();
-            DocumentSnapshot privateEvent = eventSnapshots.get(0);
-            DocumentSnapshot publicEvent = eventSnapshots.get(1);
-
-            if (!privateEvent.exists() && !publicEvent.exists()) {
-                logger.error("Event {} not found in either Private or Public collections", eventId);
+            Optional<EventData> maybeEvent = EventsRepository.getEventById(eventId);
+            if (maybeEvent.isEmpty()) {
+                logger.error("Event {} not found in Active or InActive Private or Public collections", eventId);
                 return false;
             }
-            boolean isPrivate = privateEvent.exists();
-            DocumentSnapshot eventSnapshot = isPrivate ? privateEvent : publicEvent;
-            String organiserId = eventSnapshot.getString("organiserId");
+            EventData event = maybeEvent.get();
+            String organiserId = event.getOrganiserId();
 
             PaymentIntentCancellationTransactionResult transactionResult =
                     FirebaseService.createFirestoreTransaction(transaction -> {
@@ -1028,7 +1010,6 @@ public class WebhookService {
                                     paymentIntentId,
                                     eventId,
                                     organiserId,
-                                    isPrivate,
                                     orderId,
                                     ticketIds);
 
@@ -1045,20 +1026,16 @@ public class WebhookService {
             }
 
             String eventName = "Event";
-            if (eventSnapshot.exists()) {
-                String resolvedName = eventSnapshot.getString("name");
-                if (resolvedName != null && !resolvedName.isBlank()) {
-                    eventName = resolvedName;
-                }
+            String resolvedName = event.getName();
+            if (resolvedName != null && !resolvedName.isBlank()) {
+                eventName = resolvedName;
             }
 
             String email = order.getEmail();
             if (email != null && !email.isBlank()) {
-                String startDate = formatEventTimestampOrEmpty(eventSnapshot, "startDate");
-                String endDate = formatEventTimestampOrEmpty(eventSnapshot, "endDate");
-                String location = eventSnapshot.exists()
-                        ? Optional.ofNullable(eventSnapshot.getString("location")).orElse("")
-                        : "";
+                String startDate = formatTimestampOrEmpty(event.getStartDate());
+                String endDate = formatTimestampOrEmpty(event.getEndDate());
+                String location = Optional.ofNullable(event.getLocation()).orElse("");
                 boolean emailSent = EmailService.sendRejectBookingEmail(
                         email,
                         order.getFullName(),
@@ -1087,14 +1064,10 @@ public class WebhookService {
         }
     }
 
-    private static String formatEventTimestampOrEmpty(DocumentSnapshot eventSnapshot, String field) {
-        if (!eventSnapshot.exists()) {
+    private static String formatTimestampOrEmpty(com.google.cloud.Timestamp timestamp) {
+        if (timestamp == null) {
             return "";
         }
-        com.google.cloud.Timestamp ts = eventSnapshot.getTimestamp(field);
-        if (ts == null) {
-            return "";
-        }
-        return TimeUtils.formatTimestampForEmail(ts);
+        return TimeUtils.formatTimestampForEmail(timestamp);
     }
 }

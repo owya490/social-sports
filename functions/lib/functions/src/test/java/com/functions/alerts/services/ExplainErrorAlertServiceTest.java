@@ -30,7 +30,7 @@ public class ExplainErrorAlertServiceTest {
     @Before
     public void setUp() {
         store = mock(ErrorAlertDedupStore.class);
-        when(store.reserve()).thenReturn(Optional.of(new Reservation("owner")));
+        when(store.reserve(any())).thenReturn(Optional.of(new Reservation("owner")));
         when(store.smsFor(any())).thenReturn(Optional.empty());
         published = new ArrayList<>();
         service = service(published::add);
@@ -65,20 +65,19 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
-    public void process_skipsAlreadyPagedFingerprintWithoutReservingOrPublishing() {
-        when(store.smsFor(any())).thenReturn(Optional.of("Persisted SMS sentence."));
+    public void process_skipsCappedIncidentWithoutCallingAiOrPublishing() {
+        when(store.reserve(any())).thenReturn(Optional.empty());
         service = new ExplainErrorAlertService(store, new ErrorAlertSummarizer(prompt -> {
-            throw new AssertionError("Already-paged fingerprints must not call the model");
+            throw new AssertionError("Capped incidents must not call the model");
         }, parsed -> List.of()), published::add);
         service.process(sampleLog());
         assertTrue(published.isEmpty());
-        verify(store, never()).reserve();
         verify(store, never()).rememberSms(any(), any());
         verify(store, never()).complete(any(), any());
     }
 
     @Test
-    public void processLogEntryJson_skipsSameFingerprintInsideIncidentWindowThenRefreshesAfterExpiry() {
+    public void processLogEntryJson_sendsAtMostThreeTimesThenRefreshesAfterExpiry() {
         ExpiringSmsStore expiring = new ExpiringSmsStore(Instant.parse("2026-10-11T03:00:00Z"));
         service = new ExplainErrorAlertService(expiring,
                 new ErrorAlertSummarizer(this::emailServiceStatusInterpretation, parsed -> List.of()),
@@ -89,13 +88,15 @@ public class ExplainErrorAlertServiceTest {
 
         expiring.advance(Duration.ofDays(1));
         service.processLogEntryJson(emailServiceHttpError(403));
-        assertEquals(1, published.size());
+        service.processLogEntryJson(emailServiceHttpError(403));
+        service.processLogEntryJson(emailServiceHttpError(403));
+        assertEquals(3, published.size());
+        assertEquals("Email service returned 403.", published.get(2).sms());
 
         expiring.advance(Duration.ofDays(30));
         service.processLogEntryJson(emailServiceHttpError(403));
-        assertEquals("Email service returned 403.", published.get(1).sms());
-        assertEquals(published.get(0).fingerprint(), published.get(1).fingerprint());
-        assertNotEquals(published.get(0).sms(), published.get(1).sms());
+        assertEquals("Email service returned 403.", published.get(3).sms());
+        assertEquals(published.get(0).fingerprint(), published.get(3).fingerprint());
     }
 
     @Test
@@ -108,21 +109,16 @@ public class ExplainErrorAlertServiceTest {
     }
 
     @Test
-    public void process_propagatesInFlightLeaseSoPubSubRedelivers() {
-        when(store.reserve()).thenThrow(new IllegalStateException("Error alert delivery already in progress"));
-        try {
-            service.process(sampleLog());
-            fail("In-flight delivery must not ack");
-        } catch (IllegalStateException expected) {
-            assertEquals("Error alert delivery already in progress", expected.getMessage());
-        }
+    public void process_acksInFlightDuplicateWithoutFailing() {
+        when(store.reserve(any())).thenReturn(Optional.empty());
+        service.process(sampleLog());
         assertTrue(published.isEmpty());
         verify(store, never()).complete(any(), any());
     }
 
     @Test
     public void process_skipsSuppressedErrorsWithoutCallingAiOrPublisher() {
-        when(store.reserve()).thenReturn(Optional.empty());
+        when(store.reserve(any())).thenReturn(Optional.empty());
         service = new ExplainErrorAlertService(store, new ErrorAlertSummarizer(prompt -> {
             throw new AssertionError("Suppressed errors must not call the model");
         }, parsed -> List.of()), published::add);
@@ -200,7 +196,7 @@ public class ExplainErrorAlertServiceTest {
                  "httpRequest":{"requestMethod":"GET"},
                  "sourceLocation":{"function":"_on_call_handler"}}
                 """);
-        verify(store, never()).reserve();
+        verify(store, never()).reserve(any());
         assertTrue(published.isEmpty());
     }
 
@@ -263,6 +259,8 @@ public class ExplainErrorAlertServiceTest {
         private Instant now;
         private final Map<String, String> smsByFingerprint = new HashMap<>();
         private final Map<String, Instant> savedAtByFingerprint = new HashMap<>();
+        private final Map<String, Integer> sentCount = new HashMap<>();
+        private final Map<String, Instant> openedAt = new HashMap<>();
 
         ExpiringSmsStore(Instant now) {
             this.now = now;
@@ -273,14 +271,27 @@ public class ExplainErrorAlertServiceTest {
         }
 
         @Override
-        public Optional<Reservation> reserve() {
-            return Optional.of(new Reservation("owner"));
+        public Optional<Reservation> reserve(String fingerprint) {
+            Instant opened = openedAt.get(fingerprint);
+            int sent = sentCount.getOrDefault(fingerprint, 0);
+            if (opened != null && opened.isAfter(now.minus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW))
+                    && sent >= ErrorAlertDedupRepository.INCIDENT_LIMIT) {
+                return Optional.empty();
+            }
+            return Optional.of(new Reservation("owner", fingerprint));
         }
 
         @Override
         public void complete(Reservation reservation, String fingerprint) {
             if (fingerprint == null || fingerprint.isBlank()) {
                 return;
+            }
+            Instant opened = openedAt.get(fingerprint);
+            if (opened == null || !opened.isAfter(now.minus(ErrorAlertDedupRepository.SMS_INCIDENT_WINDOW))) {
+                openedAt.put(fingerprint, now);
+                sentCount.put(fingerprint, 1);
+            } else {
+                sentCount.put(fingerprint, sentCount.getOrDefault(fingerprint, 0) + 1);
             }
             if (smsByFingerprint.containsKey(fingerprint)) {
                 savedAtByFingerprint.put(fingerprint, now);

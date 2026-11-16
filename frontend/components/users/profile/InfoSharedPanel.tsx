@@ -1,5 +1,5 @@
 import eye from "@/public/images/Eye.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 export const InfoSharedPanel = () => {
   return (

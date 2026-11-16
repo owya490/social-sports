@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import HeroImage from "./../../public/images/basketball-hero.png";
 import Link from "next/link";
 

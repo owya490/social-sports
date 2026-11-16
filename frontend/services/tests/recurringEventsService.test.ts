@@ -5,6 +5,7 @@ import { DocumentData, QueryDocumentSnapshot, Timestamp } from "firebase/firesto
 import { executeGlobalAppControllerFunction } from "../src/functions/functionsUtils";
 import {
   createRecurrenceTemplate,
+  deleteRecurrenceTemplate,
   updateRecurrenceTemplate,
   updateRecurrenceTemplateEventData,
   updateRecurrenceTemplateRecurrenceData,
@@ -54,7 +55,7 @@ describe("recurringEventsService GAC calls", () => {
         eventData: { ...eventData, price: 10, capacity: 20, vacancy: 20 },
         recurrenceData: { ...recurrenceData, allRecurrences: [], pastRecurrences: {} },
       }),
-    } as QueryDocumentSnapshot<DocumentData, DocumentData>);
+    } as unknown as QueryDocumentSnapshot<DocumentData, DocumentData>);
   };
 
   it("creates a recurrence template through the authenticated GAC endpoint", async () => {
@@ -80,6 +81,17 @@ describe("recurringEventsService GAC calls", () => {
     expect(executeGac).toHaveBeenCalledWith(
       EndpointType.UPDATE_RECURRENCE_TEMPLATE,
       { recurrenceTemplateId: "template-1", eventData: null, recurrenceData },
+      { attachAuth: true }
+    );
+  });
+
+  it("deletes a recurrence template through the authenticated GAC endpoint", async () => {
+    executeGac.mockResolvedValue({ recurrenceTemplateId: "template-1" as RecurrenceTemplateId });
+
+    await expect(deleteRecurrenceTemplate("template-1" as RecurrenceTemplateId)).resolves.toBe("template-1");
+    expect(executeGac).toHaveBeenCalledWith(
+      EndpointType.DELETE_RECURRENCE_TEMPLATE,
+      { recurrenceTemplateId: "template-1" },
       { attachAuth: true }
     );
   });

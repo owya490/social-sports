@@ -1,6 +1,6 @@
 import { PublicUserData } from "@/interfaces/UserTypes";
 import Tick from "@svgs/Verified_tick.png";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import Link from "next/link";
 
 interface UserInlineDisplayProps {

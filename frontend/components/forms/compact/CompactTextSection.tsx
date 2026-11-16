@@ -1,7 +1,7 @@
 "use client";
 
 import { TextSection } from "@/interfaces/FormTypes";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-base text-foreground font-sans placeholder:text-foreground-muted focus:outline-none disabled:bg-surface disabled:text-foreground-muted";

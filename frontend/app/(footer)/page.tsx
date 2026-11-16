@@ -16,7 +16,7 @@ import {
   searchUserByKeyword,
 } from "@/services/src/users/usersService";
 import { Alert } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useLayoutEffect, useState } from "react";
 

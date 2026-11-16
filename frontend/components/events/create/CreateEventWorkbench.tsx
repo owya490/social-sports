@@ -39,7 +39,7 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import { Alert } from "@material-tailwind/react";
-import Image from "next/image";
+import Image from "@/components/elements/AppImage";
 import { FormEvent, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 
 export const STRIPE_MIN_PRICE_ERROR_MESSAGE = `Price cannot be below $${(

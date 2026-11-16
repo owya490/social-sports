@@ -22,6 +22,7 @@ export default defineConfig([
       "react-hooks/immutability": "warn",
       "react-hooks/static-components": "warn",
       "react-hooks/purity": "warn",
+      "react-hooks/refs": "warn",
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-this-alias": "warn",
       "@typescript-eslint/no-require-imports": "warn",

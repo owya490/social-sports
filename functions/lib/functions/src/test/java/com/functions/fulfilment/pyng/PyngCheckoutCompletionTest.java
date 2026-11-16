@@ -52,7 +52,6 @@ public class PyngCheckoutCompletionTest {
     @After
     public void tearDown() {
         FulfilmentSessionPublisher.resetTransport();
-        PyngCheckoutCompletion.reset();
         PyngService.client = PyngCheckoutClient.http();
     }
 
@@ -106,6 +105,18 @@ public class PyngCheckoutCompletionTest {
         assertEquals(PaymentStatus.CANCELLED,
                 ((PyngCheckoutFulfilmentSession) declined).getPyngMetadata().getStatus());
         assertEquals(1, publishes.get());
+    }
+
+    @Test
+    public void crystallisedSessionReturnsItsStatusWithoutPublishing() throws Exception {
+        PyngCheckoutFulfilmentSession session = session(PaymentStatus.SUCCEEDED, "Ada", "ada@example.com");
+        session.setStatus(FulfilmentSessionStatus.COMPLETED);
+        session.setIsFulfilmentSessionCrystalised(true);
+        stored.set(session);
+
+        assertEquals(PaymentStatus.SUCCEEDED, PyngCheckoutCompletion.refresh(SESSION_ID));
+
+        assertEquals(0, publishes.get());
     }
 
     @Test

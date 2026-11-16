@@ -44,13 +44,26 @@ const nextConfig = {
     GOOGLE_MAPS_PROD_API_KEY: process.env.GOOGLE_MAPS_PROD_API_KEY,
   },
   images: {
+    // Restricted to our own buckets so the optimiser cannot be used to spend our Vercel image quota on
+    // arbitrary URLs. Prod pages also load the default sport thumbnails from the dev bucket.
     remotePatterns: [
       {
         protocol: "https",
         hostname: "firebasestorage.googleapis.com",
+        pathname: "/v0/b/socialsportsprod.appspot.com/o/**",
+      },
+      {
+        protocol: "https",
+        hostname: "firebasestorage.googleapis.com",
+        pathname: "/v0/b/socialsports-44162.appspot.com/o/**",
       },
     ],
-    unoptimized: true,
+    unoptimized: false,
+    // Firebase download URLs are unique per upload, so optimised copies can be cached long-term. Without this,
+    // the 4-hour default re-fetches from Firebase and re-bills a transformation for every image every 4 hours.
+    minimumCacheTTL: 2678400,
+    // WebP only: adding AVIF would double the transformations counted against the Vercel plan.
+    formats: ["image/webp"],
   },
   async redirects() {
     return [

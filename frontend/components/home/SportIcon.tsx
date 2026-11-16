@@ -1,4 +1,5 @@
-import Image, { StaticImageData } from "next/image";
+import Image from "@/components/elements/AppImage";
+import { StaticImageData } from "next/image";
 
 interface SportIconProps {
   name: string;
