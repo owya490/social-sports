@@ -38,7 +38,6 @@ type RecurringHubHeaderProps = {
   startDate: Timestamp;
   location: string;
   frequency: Frequency;
-  canDelete: boolean;
   recurrenceTemplateId: RecurrenceTemplateId;
 };
 
@@ -48,7 +47,6 @@ export function RecurringHubHeader({
   startDate,
   location,
   frequency,
-  canDelete,
   recurrenceTemplateId,
 }: RecurringHubHeaderProps) {
   const meta = loading
@@ -77,13 +75,11 @@ export function RecurringHubHeader({
           <span className="inline-flex items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
             Template
           </span>
-          {canDelete ? (
-            <RecurringTemplateDeleteButton
-              recurrenceTemplateId={recurrenceTemplateId}
-              templateName={name}
-              disabled={loading}
-            />
-          ) : null}
+          <RecurringTemplateDeleteButton
+            recurrenceTemplateId={recurrenceTemplateId}
+            templateName={name}
+            disabled={loading}
+          />
         </div>
       </div>
     </header>

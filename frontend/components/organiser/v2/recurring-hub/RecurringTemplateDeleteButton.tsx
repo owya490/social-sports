@@ -68,8 +68,8 @@ export function RecurringTemplateDeleteButton({
               Delete template
             </DialogTitle>
             <p className="mt-2 text-sm text-foreground-secondary font-sans leading-relaxed">
-              {name} is removed from your schedule. Custom links and collections that point to it are updated too.
-              Events already created stay.
+              {name} is removed from your schedule. Custom links and collections stay, but they no longer point at
+              this series. Events already created stay.
             </p>
             {error ? (
               <p className="mt-3 text-sm text-danger font-sans" role="alert">
