@@ -3,7 +3,8 @@
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Logger } from "@/observability/logger";
 import { deleteRecurrenceTemplate } from "@/services/src/recurringEvents/recurringEventsService";
-import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle, Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
+import { EllipsisHorizontalIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -48,28 +49,53 @@ export function RecurringTemplateDeleteButton({
 
   return (
     <>
-      <button
-        type="button"
-        disabled={disabled || deleting}
-        onClick={() => {
-          setError(false);
-          setConfirmOpen(true);
-        }}
-        className="inline-flex shrink-0 items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-danger font-sans hover:bg-surface-hover transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
-      >
-        Delete
-      </button>
+      <Menu as="div" className="relative shrink-0">
+        <MenuButton
+          type="button"
+          disabled={disabled || deleting}
+          aria-label="Template actions"
+          className="rounded-lg p-1.5 text-foreground-muted hover:bg-surface-hover hover:text-foreground transition-colors disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+        >
+          <EllipsisHorizontalIcon className="h-5 w-5" aria-hidden />
+        </MenuButton>
+        <MenuItems
+          transition
+          anchor="bottom end"
+          modal={false}
+          className="z-[100] w-44 origin-top-right rounded-xl border border-border bg-background p-1 shadow-lg outline-none [--anchor-gap:4px] data-[closed]:scale-95 data-[closed]:opacity-0"
+        >
+          <MenuItem>
+            {({ focus }) => (
+              <button
+                type="button"
+                onClick={() => {
+                  setError(false);
+                  setConfirmOpen(true);
+                }}
+                className={`${
+                  focus ? "bg-surface-hover text-foreground" : "text-foreground-secondary"
+                } flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-xs font-medium`}
+              >
+                <TrashIcon className="h-4 w-4 shrink-0 text-danger" aria-hidden />
+                Delete template
+              </button>
+            )}
+          </MenuItem>
+        </MenuItems>
+      </Menu>
 
       <Dialog open={confirmOpen} onClose={closeConfirm} className="relative z-[120]">
         <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
         <div className="fixed inset-0 flex items-center justify-center p-4">
           <DialogPanel className="w-full max-w-sm rounded-xl border border-border bg-background p-5 shadow-lg">
             <DialogTitle className="font-sans text-base font-semibold text-foreground">
-              Delete template
+              Delete recurring event
             </DialogTitle>
             <p className="mt-2 text-sm text-foreground-secondary font-sans leading-relaxed">
-              {name} is removed from your schedule. Custom links and collections stay, but they no longer point at
-              this series. Events already created stay.
+              You are about to delete <span className="font-semibold text-foreground">{name}</span>.
+            </p>
+            <p className="mt-2 text-sm text-foreground-secondary font-sans leading-relaxed">
+              All references to this Recurring event will be deleted. Existing events will not be modified.
             </p>
             {error ? (
               <p className="mt-3 text-sm text-danger font-sans" role="alert">
