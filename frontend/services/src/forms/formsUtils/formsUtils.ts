@@ -277,10 +277,14 @@ export function filterFormResponsesForApprovedOrders(
 
 /**
  * Form responses linked to approved tickets for a specific event ticket type.
- * General Admission is a catch-all for:
+ * General Admission is also a catch-all for:
  * - legacy tickets with no eventTicketTypeId
  * - tickets still named General Admission (stale type id after remigration)
- * - responses not linked to any ticket (manual / legacy attendee answers)
+ *
+ * Responses not linked to any ticket (manual organiser "Add answers" / legacy
+ * attendee answers) are included for every type tab. Callers already load
+ * responses for the selected type's formId, so unlinked rows belong to that
+ * form; hiding them on non-GA tabs made successful manual saves appear to fail.
  */
 export function filterFormResponsesForTicketType(
   formResponses: FormResponse[],
@@ -291,9 +295,7 @@ export function filterFormResponsesForTicketType(
   const approvedMap = getApprovedOrderTicketsMap(orderTicketsMap);
   const typeFormResponseIds = new Set<FormResponseId>();
   const includeCatchAll = ticketTypeName === GENERAL_TICKET_TYPE_NAME;
-  const allLinkedFormResponseIds = includeCatchAll
-    ? getFormResponseIdsFromOrderTicketsMap(orderTicketsMap)
-    : null;
+  const allLinkedFormResponseIds = getFormResponseIdsFromOrderTicketsMap(orderTicketsMap);
 
   approvedMap.forEach((tickets) => {
     tickets.forEach((ticket) => {
@@ -318,8 +320,7 @@ export function filterFormResponsesForTicketType(
     if (typeFormResponseIds.has(id)) {
       return true;
     }
-    // Unlinked responses only surface under General Admission.
-    return includeCatchAll && allLinkedFormResponseIds !== null && !allLinkedFormResponseIds.has(id);
+    return !allLinkedFormResponseIds.has(id);
   });
 }
 
