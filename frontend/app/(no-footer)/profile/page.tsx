@@ -14,6 +14,12 @@ import { ProfilePhotoPanel } from "@/components/users/profile/ProfilePhotoPanel"
 import { useUser } from "@/components/utility/UserContext";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { getOrganiserEvents } from "@/services/src/organiser/organiserEventsService";
+import {
+  featuredEventChoices,
+  featuredEventFromSelection,
+  FeaturedEventChoice,
+} from "@/services/src/users/featuredEvent";
 import { updateUser } from "@/services/src/users/usersService";
 import { bustUserLocalStorageCache } from "@/services/src/users/usersUtils/getUsersUtils";
 import { updateUsername } from "@/services/src/users/usersUtils/usernameUtils";
@@ -43,6 +49,8 @@ type ProfileDraft = {
   username: string;
   privateMobile: string;
   isSearchable: boolean;
+  featureEvent: boolean;
+  featuredEventId: string;
 };
 
 function draftFromUser(user: UserData): ProfileDraft {
@@ -58,6 +66,8 @@ function draftFromUser(user: UserData): ProfileDraft {
     username: user.username || "",
     privateMobile: user.contactInformation?.mobile || "",
     isSearchable: Boolean(user.isSearchable),
+    featureEvent: Boolean(user.featuredEvent?.eventId),
+    featuredEventId: user.featuredEvent?.eventId || "",
   };
 }
 
@@ -89,6 +99,11 @@ const Profile = () => {
   const [usernameWarning, setUsernameWarning] = useState(false);
   const [emailChangeModalOpened, setEmailChangeModalOpened] = useState(false);
   const [saveAttempted, setSaveAttempted] = useState(false);
+  const [eventsLoad, setEventsLoad] = useState<{
+    userId: string;
+    events: FeaturedEventChoice[];
+    error: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (user.userId !== "") {
@@ -100,11 +115,45 @@ const Profile = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- preserve unsaved edits during photo updates
   }, [user.userId]);
 
+  useEffect(() => {
+    if (!user.userId) return;
+    let cancelled = false;
+    const userId = user.userId;
+    getOrganiserEvents(userId)
+      .then((events) => {
+        if (cancelled) return;
+        setEventsLoad({
+          userId,
+          events: events.map((event) => ({ eventId: event.eventId, name: event.name })),
+          error: false,
+        });
+      })
+      .catch((error) => {
+        logger.error(`Failed to load events for featured event selection: ${error}`);
+        if (!cancelled) setEventsLoad({ userId, events: [], error: true });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user.userId]);
+
   const isDirty = useMemo(() => {
     if (!draft || !user.userId) return false;
     const baseline = draftFromUser(user);
     return JSON.stringify(draft) !== JSON.stringify(baseline);
   }, [draft, user]);
+
+  const organiserEvents = useMemo(
+    () => (eventsLoad?.userId === user.userId ? eventsLoad.events : []),
+    [eventsLoad, user.userId]
+  );
+  const eventsLoading = Boolean(user.userId) && eventsLoad?.userId !== user.userId;
+  const eventsLoadError = eventsLoad?.userId === user.userId && eventsLoad.error;
+
+  const eventChoices = useMemo(
+    () => featuredEventChoices(organiserEvents, user.featuredEvent),
+    [organiserEvents, user.featuredEvent]
+  );
 
   const contactErrors = useMemo(
     () =>
@@ -147,6 +196,17 @@ const Profile = () => {
       return;
     }
 
+    const featuredEvent = featuredEventFromSelection(
+      draft.featureEvent,
+      draft.featuredEventId,
+      organiserEvents,
+      user.featuredEvent
+    );
+    if (draft.featureEvent && !featuredEvent) {
+      setSaveError("Choose an event to feature.");
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -179,6 +239,7 @@ const Profile = () => {
           ...user.contactInformation,
           mobile: draft.privateMobile.trim(),
         },
+        featuredEvent,
       };
 
       await updateUser(user.userId, patch);
@@ -321,6 +382,75 @@ const Profile = () => {
               <div className="sm:col-span-2 space-y-1.5">
                 <p className="text-xs font-medium text-foreground-muted font-sans">Bio</p>
                 <ProfileBioEditor value={draft.bio} onChange={(v) => updateDraft("bio", v)} />
+              </div>
+              <div className="sm:col-span-2 border-t border-border pt-4">
+                <div className="flex items-start gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground font-sans">Featured event</p>
+                    <p className="mt-1 text-xs text-foreground-muted font-sans leading-relaxed">
+                      Show one event above Events and Collections on your public profile.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={draft.featureEvent}
+                    aria-label="Feature an event on your public profile"
+                    onClick={() => {
+                      setDraft((prev) => {
+                        if (!prev) return prev;
+                        const featureEvent = !prev.featureEvent;
+                        return {
+                          ...prev,
+                          featureEvent,
+                          featuredEventId: featureEvent
+                            ? prev.featuredEventId || user.featuredEvent?.eventId || ""
+                            : "",
+                        };
+                      });
+                      setSaveSuccess(false);
+                      setSaveError("");
+                    }}
+                    className={`relative shrink-0 h-5 w-9 rounded-full transition-colors ${
+                      draft.featureEvent ? "bg-foreground" : "bg-surface-muted"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
+                        draft.featureEvent ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </button>
+                </div>
+                {draft.featureEvent ? (
+                  <div className="mt-4">
+                    <ProfileField
+                      label="Event"
+                      htmlFor="profile-featured-event"
+                      hint={
+                        eventsLoading
+                          ? "Loading your events…"
+                          : eventsLoadError
+                            ? "Couldn't load your events. You can still keep or clear the current one."
+                            : eventChoices.length === 0
+                              ? "You don't have any events to feature yet."
+                              : "Pick one of your events."
+                      }
+                    >
+                      <ProfileSelect
+                        id="profile-featured-event"
+                        value={draft.featuredEventId}
+                        onChange={(v) => updateDraft("featuredEventId", v)}
+                        disabled={eventsLoading && eventChoices.length === 0}
+                        options={[
+                          { value: "", label: eventsLoading ? "Loading your events…" : "Choose an event" },
+                          ...eventChoices.map((event) => ({ value: event.eventId, label: event.name })),
+                        ]}
+                      />
+                    </ProfileField>
+                  </div>
+                ) : null}
               </div>
             </div>
           </ProfileSection>

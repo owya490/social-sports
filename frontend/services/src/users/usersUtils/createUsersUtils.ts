@@ -21,9 +21,14 @@ export function extractPublicUserData(data: Partial<UserData> | NewUserData): Pa
   const publicUserData: any = {};
 
   for (const key of Object.keys(EmptyPublicUserData)) {
-    if (key in data && (data as any)[key] !== undefined && (data as any)[key] !== null) {
-      publicUserData[key] = (data as any)[key];
+    if (!(key in data) || (data as any)[key] === undefined) {
+      continue;
     }
+    // Turning a featured event off is stored as null. Other nulls stay omitted.
+    if ((data as any)[key] === null && key !== "featuredEvent") {
+      continue;
+    }
+    publicUserData[key] = (data as any)[key];
   }
 
   return publicUserData as Partial<PublicUserData>;

@@ -8,6 +8,12 @@ import { Timestamp } from "firebase/firestore";
 
 export type UserId = Branded<string, "UserId">;
 
+/** Public-profile reference. The profile page loads the event when the id still exists. */
+export interface FeaturedEventReference {
+  eventId: EventId;
+  name: string;
+}
+
 /** Whether the user primarily hosts events or joins them as a participant (set during onboarding). */
 export type OnboardingPersona = "organiser" | "attendee";
 
@@ -27,6 +33,8 @@ export interface PublicUserData {
   publicUpcomingOrganiserEvents: EventId[];
   bio: string;
   publicEventCollections: EventCollectionId[];
+  /** Set when the organiser chooses to feature one event. Null when they do not. */
+  featuredEvent: FeaturedEventReference | null;
 }
 
 export interface PrivateUserData {
@@ -90,6 +98,7 @@ export const EmptyPublicUserData: PublicUserData = {
   publicUpcomingOrganiserEvents: [],
   bio: "",
   publicEventCollections: [],
+  featuredEvent: null,
 };
 
 // BEWARE - PLEASE TAKE CARE WHEN EDITING THESE AS THEY WILL AFFECT DESERIALISATION AND DEFAULT USER CREATION

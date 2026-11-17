@@ -2,10 +2,11 @@
 
 import Loading from "@/components/loading/Loading";
 import EventCollectionCard from "@/components/organiser/event-collection/EventCollectionCard";
+import { FeaturedEvent } from "@/components/users/profile/FeaturedEvent";
 import OrganiserEventsBrowse from "@/components/users/profile/OrganiserEventsBrowse";
 import { UserProfileHeader } from "@/components/users/profile/UserProfileHeader";
 import { EventCollection } from "@/interfaces/EventCollectionTypes";
-import { EventData } from "@/interfaces/EventTypes";
+import { EventData, EventId } from "@/interfaces/EventTypes";
 import { EmptyPublicUserData, PublicUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { getOrganiserPublicEventCollections } from "@/services/src/eventCollections/eventCollectionsService";
@@ -27,6 +28,7 @@ export default function UserProfilePage() {
   const [publicUserProfile, setPublicUserProfile] = useState<PublicUserData>(EmptyPublicUserData);
   const [upcomingOrganiserEvents, setUpcomingOrganiserEvents] = useState<EventData[]>([]);
   const [publicEventCollections, setPublicEventCollections] = useState<EventCollection[]>([]);
+  const [featuredEvent, setFeaturedEvent] = useState<EventData | null>(null);
   const [activeTab, setActiveTab] = useState<ProfileTab>("events");
 
   useEffect(() => {
@@ -44,19 +46,40 @@ export default function UserProfilePage() {
       return collections;
     };
 
+    const fetchFeaturedEvent = async (user: PublicUserData) => {
+      const eventId = user.featuredEvent?.eventId?.trim();
+      if (!eventId) {
+        setFeaturedEvent(null);
+        return null;
+      }
+      try {
+        const event = await getEventById(eventId as EventId);
+        setFeaturedEvent(event);
+        return event;
+      } catch (error) {
+        logger.error(`Could not load featured event ${eventId}: ${error}`);
+        setFeaturedEvent(null);
+        return null;
+      }
+    };
+
     const fetchUserProfile = async () => {
       try {
         const userIdMapFromUsername = await getUsernameMapping(userId, true);
         const user = await getPublicUserById(userIdMapFromUsername.userId);
         setPublicUserProfile(user);
-        await Promise.all([fetchEvents(user), fetchCollections(userIdMapFromUsername.userId)]);
+        await Promise.all([
+          fetchEvents(user),
+          fetchCollections(userIdMapFromUsername.userId),
+          fetchFeaturedEvent(user),
+        ]);
         setLoading(false);
       } catch (error) {
         if (error instanceof UserNotFoundError) {
           try {
             const userById = await getPublicUserById(userId, true);
             setPublicUserProfile(userById);
-            await Promise.all([fetchEvents(userById), fetchCollections(userId)]);
+            await Promise.all([fetchEvents(userById), fetchCollections(userId), fetchFeaturedEvent(userById)]);
             setLoading(false);
             return;
           } catch (innerError) {
@@ -88,6 +111,9 @@ export default function UserProfilePage() {
 
       <div className="border-t border-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-6">
+          {publicUserProfile.featuredEvent?.eventId ? (
+            <FeaturedEvent reference={publicUserProfile.featuredEvent} event={featuredEvent} />
+          ) : null}
           <div
             role="tablist"
             aria-label="Profile sections"
