@@ -26,7 +26,6 @@ public abstract class AbstractUserData {
 	private List<String> publicUpcomingOrganiserEvents = new ArrayList<>();
 	private String username;
 	private List<String> publicEventCollections = new ArrayList<>();
-	private FeaturedEvent featuredEvent;
 	/** 
 	 * Private User Data fields
 	 * NEEDS TO MATCH PrivateUserData.java AND PrivateUserData in UserTypes.ts
@@ -56,14 +55,6 @@ public abstract class AbstractUserData {
 	public static class ContactInformation {
 		private String mobile;
 		private String email;
-	}
-
-	/** Event id and name shown on the public profile. */
-	@Data
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	public static class FeaturedEvent {
-		private String eventId;
-		private String name;
 	}
 
 	@Data

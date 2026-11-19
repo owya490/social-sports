@@ -10,6 +10,8 @@ import com.functions.events.handlers.CreateEventHandler;
 import com.functions.events.handlers.CreateRecurrenceTemplateHandler;
 import com.functions.events.handlers.DeleteRecurrenceTemplateHandler;
 import com.functions.events.handlers.GetEventByIdHandler;
+import com.functions.events.handlers.GetPartnerEventCollectionHandler;
+import com.functions.events.handlers.GetPartnerEventHandler;
 import com.functions.events.handlers.GetPartnerEventsHandler;
 import com.functions.events.handlers.GetSyrioEventsHandler;
 import com.functions.events.handlers.UpdateRecurrenceTemplateHandler;
@@ -67,6 +69,8 @@ public class HandlerRegistry {
                 new UpdateFulfilmentEntityWithWaitlistDataHandler());
         handlers.put(EndpointType.GET_SYRIO_EVENTS, new GetSyrioEventsHandler());
         handlers.put(EndpointType.GET_PARTNER_EVENTS, new GetPartnerEventsHandler());
+        handlers.put(EndpointType.GET_PARTNER_EVENT, new GetPartnerEventHandler());
+        handlers.put(EndpointType.GET_PARTNER_EVENT_COLLECTION, new GetPartnerEventCollectionHandler());
         handlers.put(EndpointType.GET_EVENT_BY_ID, new GetEventByIdHandler());
         handlers.put(EndpointType.GET_ORDER, new GetOrderHandler());
         handlers.put(EndpointType.GET_TICKET, new GetTicketHandler());

@@ -117,7 +117,8 @@ public class PartnerEventsHttpTest {
 
     @Test
     public void bothPartnerEndpointsRequireAdmissionBeforeParsingData() throws Exception {
-        for (String endpoint : List.of("GET_PARTNER_EVENTS", "INIT_PARTNER_FULFILMENT_SESSION")) {
+        for (String endpoint : List.of("GET_PARTNER_EVENTS", "GET_PARTNER_EVENT", "GET_PARTNER_EVENT_COLLECTION",
+                "INIT_PARTNER_FULFILMENT_SESSION")) {
             for (String data : List.of("", ",\"data\":null", ",\"data\":{}")) {
                 Call denied = call("{\"endpointType\":\"" + endpoint + "\"" + data + "}", Map.of(), 401);
                 assertDeniedCors(denied.response());
@@ -131,7 +132,8 @@ public class PartnerEventsHttpTest {
 
     @Test
     public void recognizedPartnerEnvelopeErrorsRetainVerifiedCors() throws Exception {
-        for (String endpoint : List.of("GET_PARTNER_EVENTS", "INIT_PARTNER_FULFILMENT_SESSION")) {
+        for (String endpoint : List.of("GET_PARTNER_EVENTS", "GET_PARTNER_EVENT", "GET_PARTNER_EVENT_COLLECTION",
+                "INIT_PARTNER_FULFILMENT_SESSION")) {
             for (String data : List.of("", ",\"data\":null", ",\"data\":[]")) {
                 Call invalid = call("{\"endpointType\":\"" + endpoint + "\"" + data + "}",
                         partnerHeaders(KEY, ORIGIN), 400);

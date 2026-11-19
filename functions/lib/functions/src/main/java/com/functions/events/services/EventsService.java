@@ -2,22 +2,30 @@ package com.functions.events.services;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.functions.events.models.EventCollectionData;
 import com.functions.events.models.EventData;
 import com.functions.events.models.EventTicketType;
 import com.functions.events.models.ResolvedEventTicketType;
+import com.functions.events.models.responses.GetPartnerEventCollectionResponse;
+import com.functions.events.models.responses.GetPartnerEventResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerEvent;
 import com.functions.events.models.responses.GetPartnerEventsResponse.PartnerTicketType;
+import com.functions.events.repositories.EventCollectionsRepository;
 import com.functions.events.repositories.EventsRepository;
 import com.functions.fulfilment.payment.PaymentProviderPolicy;
+import com.functions.global.exceptions.NotFoundException;
 import com.google.cloud.Timestamp;
 
 /**
@@ -32,6 +40,52 @@ public class EventsService {
                 .sorted(Comparator.comparing(PartnerEvent::startDate).thenComparing(PartnerEvent::eventId))
                 .collect(Collectors.toList());
         return new GetPartnerEventsResponse(events);
+    }
+
+    public static GetPartnerEventResponse getPublicPartnerEvent(String organiserId, String eventId) {
+        EventData event = EventsRepository.getActivePublicEventById(eventId)
+                .filter(found -> isUpcomingOwnedPublicEvent(found, organiserId))
+                .orElseThrow(() -> new NotFoundException("Event is not available"));
+        return new GetPartnerEventResponse(toPartnerEvent(event, organiserId));
+    }
+
+    public static GetPartnerEventCollectionResponse getPublicPartnerEventCollection(String organiserId,
+            String collectionId) {
+        EventCollectionData collection = EventCollectionsRepository.getPublicEventCollectionById(collectionId)
+                .filter(found -> organiserId.equals(found.getOrganiserId()) && !Boolean.TRUE.equals(found.getIsPrivate()))
+                .orElseThrow(() -> new NotFoundException("Event collection is not available"));
+        Map<String, EventData> upcoming = getActivePublicEventsByOrganiser(organiserId).stream()
+                .filter(event -> event.getEventId() != null)
+                .collect(Collectors.toMap(EventData::getEventId, Function.identity(), (first, second) -> first));
+        List<PartnerEvent> events = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        List<String> eventIds = collection.getEventIds() == null ? List.of() : collection.getEventIds();
+        for (String eventId : eventIds) {
+            if (eventId == null || !seen.add(eventId)) {
+                continue;
+            }
+            EventData event = upcoming.get(eventId);
+            if (event == null) {
+                continue;
+            }
+            events.add(toPartnerEvent(event, organiserId));
+        }
+        String image = collection.getImage();
+        if (image != null && image.isBlank()) {
+            image = null;
+        }
+        return new GetPartnerEventCollectionResponse(collectionId,
+                collection.getName() == null ? "" : collection.getName(),
+                collection.getDescription() == null ? "" : collection.getDescription(),
+                image, List.copyOf(events));
+    }
+
+    private static boolean isUpcomingOwnedPublicEvent(EventData event, String organiserId) {
+        return organiserId.equals(event.getOrganiserId())
+                && Boolean.TRUE.equals(event.getIsActive())
+                && Boolean.FALSE.equals(event.getIsPrivate())
+                && event.getStartDate() != null
+                && event.getStartDate().compareTo(Timestamp.now()) >= 0;
     }
 
     private static PartnerEvent toPartnerEvent(EventData event, String organiserId) {

@@ -24,7 +24,6 @@ public class UsersUtils {
 		publicUserData.setPublicUpcomingOrganiserEvents(data.getPublicUpcomingOrganiserEvents());
 		publicUserData.setUsername(data.getUsername());
 		publicUserData.setPublicEventCollections(data.getPublicEventCollections());
-		publicUserData.setFeaturedEvent(data.getFeaturedEvent());
 
 		return publicUserData;
 	}

@@ -8,6 +8,8 @@ import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
+import com.functions.events.models.requests.GetPartnerEventCollectionRequest;
+import com.functions.events.models.requests.GetPartnerEventRequest;
 import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
@@ -16,6 +18,8 @@ import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
 import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
 import com.functions.events.models.responses.GetEventByIdResponse;
+import com.functions.events.models.responses.GetPartnerEventCollectionResponse;
+import com.functions.events.models.responses.GetPartnerEventResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.events.models.responses.CreateEventResponse;
@@ -105,6 +109,9 @@ public enum EndpointType {
     // token. TODO: give Syrio its own API-key auth scheme as a follow-up.
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class, AuthLevel.PUBLIC),
     GET_PARTNER_EVENTS(GetPartnerEventsRequest.class, GetPartnerEventsResponse.class, AuthLevel.PARTNER),
+    GET_PARTNER_EVENT(GetPartnerEventRequest.class, GetPartnerEventResponse.class, AuthLevel.PARTNER),
+    GET_PARTNER_EVENT_COLLECTION(GetPartnerEventCollectionRequest.class, GetPartnerEventCollectionResponse.class,
+            AuthLevel.PARTNER),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class, AuthLevel.PUBLIC),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class, AuthLevel.AUTHENTICATED),
     GET_TICKET(GetTicketRequest.class, Ticket.class, AuthLevel.AUTHENTICATED),
