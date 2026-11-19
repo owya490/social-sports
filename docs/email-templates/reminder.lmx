@@ -1,0 +1,18 @@
+<Style backgroundColor="" backgroundXPadding="0" backgroundYPadding="0" bodyColor="" bodyXPadding="0" bodyYPadding="0" bodyFontFamily="Default" bodyFontCategory="sans-serif" borderColor="" borderWidth="0" borderRadius="4" buttonBodyColor="" buttonBodyXPadding="16" buttonBodyYPadding="12" buttonBorderColor="" buttonBorderWidth="0" buttonBorderRadius="4" buttonTextColor="" buttonTextFormat="0" buttonTextFontSize="16" dividerColor="" dividerBorderWidth="1" textBaseColor="" textBaseFontSize="14" textBaseLineHeight="150" textBaseLetterSpacing="0" textLinkColor="" heading1Color="" heading1FontSize="28" heading1LineHeight="125" heading1LetterSpacing="0" heading2Color="" heading2FontSize="24" heading2LineHeight="125" heading2LetterSpacing="0" heading3Color="" heading3FontSize="20" heading3LineHeight="125" heading3LetterSpacing="0" />
+<Paragraph fontSize="16"><Strong>Hi {data.name}!</Strong></Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>Just a reminder that you have an event {data.eventName} coming up soon!</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph fontSize="20"><Strong>Event Information</Strong></Paragraph>
+<Paragraph><Link href="https://emojipedia.org/calendar"></Link></Paragraph>
+<H3 fontSize="14">⭐ <Strong>Event Name</Strong>: <Link href="https://www.sportshub.net.au/event/{data.eventId}">{data.eventName}</Link></H3>
+<Paragraph paddingTop="12" paddingBottom="4">🆔 <Strong>Event ID</Strong>: {data.eventId}</Paragraph>
+<H3 fontSize="14">📅 <Strong>Start Date</Strong>: {data.startDate}</H3>
+<Paragraph fontSize="14"><Link href="https://emojipedia.org/calendar"></Link></Paragraph>
+<H3 fontSize="14">📅 <Strong>End Date</Strong>: {data.endDate}</H3>
+<Paragraph><Link href="https://emojipedia.org/round-pushpin"></Link></Paragraph>
+<H3 fontSize="14">📍 <Strong>Location</Strong>: {data.location}</H3>
+<Paragraph></Paragraph>
+<Image src="https://d3b9kr64nievew.cloudfront.net/cm5dwlbtf034tasyzfmkegsjc/cm5dws6lr0215100fucj3ej9p.jpg" width="600" />
+<Paragraph></Paragraph>
+<Paragraph>Thank you for booking with SPORTSHUB!</Paragraph>
