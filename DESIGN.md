@@ -603,7 +603,7 @@ One Headless UI `Dialog` — right drawer on `md+`, bottom sheet on phone.
 
 #### Event hub settings — flush preference stack
 
-Preference switches reuse the account Settings switch (accent on / `surface-muted` off, `28×48px`). Rows stack with `divide-y divide-border` directly on the stage—no outlined settings-panel shell, no header strip. Destructive “Delete event” is a danger text link below a hairline, not a yellow button.
+Preference switches reuse the account Settings switch (accent on / `surface-muted` off, `28×48px`). Rows stack with `divide-y divide-border` directly on the stage—no outlined settings-panel shell, no header strip. Destructive delete lives in the header actions menu beside Duplicate event and opens the existing delete confirmation, including the attendee list. It is not a settings link and not a yellow button.
 
 #### Recurring-series controls
 
