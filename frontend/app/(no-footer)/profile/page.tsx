@@ -49,7 +49,6 @@ type ProfileDraft = {
   username: string;
   privateMobile: string;
   isSearchable: boolean;
-  featureEvent: boolean;
   featuredEventId: string;
 };
 
@@ -66,7 +65,6 @@ function draftFromUser(user: UserData): ProfileDraft {
     username: user.username || "",
     privateMobile: user.contactInformation?.mobile || "",
     isSearchable: Boolean(user.isSearchable),
-    featureEvent: Boolean(user.featuredEvent?.eventId),
     featuredEventId: user.featuredEvent?.eventId || "",
   };
 }
@@ -196,13 +194,8 @@ const Profile = () => {
       return;
     }
 
-    const featuredEvent = featuredEventFromSelection(
-      draft.featureEvent,
-      draft.featuredEventId,
-      organiserEvents,
-      user.featuredEvent
-    );
-    if (draft.featureEvent && !featuredEvent) {
+    const featuredEvent = featuredEventFromSelection(draft.featuredEventId, organiserEvents, user.featuredEvent);
+    if (draft.featuredEventId.trim() && !featuredEvent) {
       setSaveError("Choose an event to feature.");
       return;
     }
@@ -384,73 +377,30 @@ const Profile = () => {
                 <ProfileBioEditor value={draft.bio} onChange={(v) => updateDraft("bio", v)} />
               </div>
               <div className="sm:col-span-2 border-t border-border pt-4">
-                <div className="flex items-start gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground font-sans">Featured event</p>
-                    <p className="mt-1 text-xs text-foreground-muted font-sans leading-relaxed">
-                      Show one event above Events and Collections on your public profile.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={draft.featureEvent}
-                    aria-label="Feature an event on your public profile"
-                    onClick={() => {
-                      setDraft((prev) => {
-                        if (!prev) return prev;
-                        const featureEvent = !prev.featureEvent;
-                        return {
-                          ...prev,
-                          featureEvent,
-                          featuredEventId: featureEvent
-                            ? prev.featuredEventId || user.featuredEvent?.eventId || ""
-                            : "",
-                        };
-                      });
-                      setSaveSuccess(false);
-                      setSaveError("");
-                    }}
-                    className={`relative shrink-0 h-5 w-9 rounded-full transition-colors ${
-                      draft.featureEvent ? "bg-foreground" : "bg-surface-muted"
-                    }`}
-                  >
-                    <span
-                      aria-hidden
-                      className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-background border border-border transition-transform duration-200 ease-out ${
-                        draft.featureEvent ? "translate-x-4" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
-                </div>
-                {draft.featureEvent ? (
-                  <div className="mt-4">
-                    <ProfileField
-                      label="Event"
-                      htmlFor="profile-featured-event"
-                      hint={
-                        eventsLoading
-                          ? "Loading your events…"
-                          : eventsLoadError
-                            ? "Couldn't load your events. You can still keep or clear the current one."
-                            : eventChoices.length === 0
-                              ? "You don't have any events to feature yet."
-                              : "Pick one of your events."
-                      }
-                    >
-                      <ProfileSelect
-                        id="profile-featured-event"
-                        value={draft.featuredEventId}
-                        onChange={(v) => updateDraft("featuredEventId", v)}
-                        disabled={eventsLoading && eventChoices.length === 0}
-                        options={[
-                          { value: "", label: eventsLoading ? "Loading your events…" : "Choose an event" },
-                          ...eventChoices.map((event) => ({ value: event.eventId, label: event.name })),
-                        ]}
-                      />
-                    </ProfileField>
-                  </div>
-                ) : null}
+                <ProfileField
+                  label="Featured event"
+                  htmlFor="profile-featured-event"
+                  hint={
+                    eventsLoading
+                      ? "Loading your events…"
+                      : eventsLoadError
+                        ? "Couldn't load your events. You can still keep or clear the current one."
+                        : eventChoices.length === 0
+                          ? "You don't have any events to feature yet."
+                          : "Shown above Events and Collections. Choose none to hide it."
+                  }
+                >
+                  <ProfileSelect
+                    id="profile-featured-event"
+                    value={draft.featuredEventId}
+                    onChange={(v) => updateDraft("featuredEventId", v)}
+                    disabled={eventsLoading && eventChoices.length === 0}
+                    options={[
+                      { value: "", label: "None" },
+                      ...eventChoices.map((event) => ({ value: event.eventId, label: event.name })),
+                    ]}
+                  />
+                </ProfileField>
               </div>
             </div>
           </ProfileSection>

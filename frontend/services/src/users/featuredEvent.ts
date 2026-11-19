@@ -27,14 +27,12 @@ export function featuredEventChoices(
   );
 }
 
-/** Null when the organiser is not featuring an event, or no event is selected. */
+/** Null when no event is selected. */
 export function featuredEventFromSelection(
-  enabled: boolean,
   eventId: string,
   events: FeaturedEventChoice[],
   current: FeaturedEventReference | null | undefined
 ): FeaturedEventReference | null {
-  if (!enabled) return null;
   const id = eventId.trim();
   if (!id) return null;
   const fromList = events.find((event) => event.eventId === id)?.name.trim() ?? "";

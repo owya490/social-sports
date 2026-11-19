@@ -26,23 +26,23 @@ describe("featuredEventFromSelection", () => {
   ];
 
   it("stores the selected event id and name", () => {
-    expect(featuredEventFromSelection(true, "evt-sunday", events, null)).toEqual({
+    expect(featuredEventFromSelection("evt-sunday", events, null)).toEqual({
       eventId: "evt-sunday",
       name: "Sunday Kickabout",
     });
   });
 
-  it("clears the featured event when it is turned off", () => {
-    expect(featuredEventFromSelection(false, "evt-friday", events, friday)).toBeNull();
+  it("clears the featured event when no event is selected", () => {
+    expect(featuredEventFromSelection("", events, friday)).toBeNull();
   });
 
   it("keeps the stored name when that event is no longer in the list", () => {
     const current: FeaturedEventReference = { eventId: "evt-old" as EventId, name: "Archived Social" };
-    expect(featuredEventFromSelection(true, "evt-old", events, current)).toEqual(current);
+    expect(featuredEventFromSelection("evt-old", events, current)).toEqual(current);
   });
 
-  it("returns null when featuring is on but no event is chosen", () => {
-    expect(featuredEventFromSelection(true, "  ", events, null)).toBeNull();
+  it("returns null when the selection is blank", () => {
+    expect(featuredEventFromSelection("  ", events, null)).toBeNull();
   });
 });
 
