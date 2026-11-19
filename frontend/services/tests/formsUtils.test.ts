@@ -173,4 +173,35 @@ describe("attendee and form export ticket filters", () => {
     );
     expect(filtered.map((item) => item.formResponseId)).toEqual(["fr-vip"]);
   });
+
+  it("filterFormResponsesForTicketType keeps manual unlinked responses on non-GA tabs", () => {
+    const approved = order({ orderId: "o1" as Order["orderId"], status: OrderAndTicketStatus.APPROVED });
+    const map = new Map<Order, Ticket[]>([
+      [
+        approved,
+        [
+          ticket({
+            ticketId: "t-vip" as Ticket["ticketId"],
+            status: OrderAndTicketStatus.APPROVED,
+            eventTicketTypeId: vipTypeId,
+            formResponseId: "fr-vip" as Ticket["formResponseId"],
+          }),
+          ticket({
+            ticketId: "t-ga" as Ticket["ticketId"],
+            status: OrderAndTicketStatus.APPROVED,
+            eventTicketTypeId: gaTypeId,
+            formResponseId: "fr-ga" as Ticket["formResponseId"],
+          }),
+        ],
+      ],
+    ]);
+
+    const filtered = filterFormResponsesForTicketType(
+      [response("fr-vip"), response("fr-ga"), response("fr-manual")],
+      map,
+      vipTypeId,
+      "VIP"
+    );
+    expect(filtered.map((item) => item.formResponseId)).toEqual(["fr-vip", "fr-manual"]);
+  });
 });
