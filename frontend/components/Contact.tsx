@@ -34,7 +34,7 @@ const ContactUs = () => {
         </div>
 
         <p className="max-w-[18rem] border-l border-gray-300 pl-3 text-sm leading-snug text-gray-500">
-          Need a refund? Contact the organiser directly — they handle the booking. Their details are on their user
+          Need a refund? Contact the organiser directly - they handle the booking. Their details are on their profile
           page.
         </p>
       </div>
