@@ -2,6 +2,7 @@
 
 # Currently available functions are:
 # recurringEventsCron
+# moveInactiveEventsCron
 # cleanupOldFulfilmentSessionsCron
 # expirePendingBookingsCron
 # pollPendingPyngCheckoutsCron
@@ -15,6 +16,7 @@
 
 VALID_FUNCTIONS=(
     "recurringEventsCron"
+    "moveInactiveEventsCron"
     "cleanupOldFulfilmentSessionsCron"
     "expirePendingBookingsCron"
     "pollPendingPyngCheckoutsCron"
@@ -27,6 +29,7 @@ VALID_FUNCTIONS=(
 
 VALID_ENDPOINTS=(
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
+    "com.functions.events.controllers.MoveInactiveEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
     "com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint"

@@ -52,9 +52,9 @@ the repository-root `.tmp/` when needed and tee long-running output there. From
 | CLI build | `sportshub-cli/` | `npm run build` |
 
 `.github/workflows/branch_ci.yml` runs frontend lint, tests, build, Java
-verification, and focused Python event-archival tests. Run the documented Python
-suite or CLI build locally when changing those areas; branch CI only covers the
-event-archival Python tests and does not cover the CLI.
+verification, and the AI alert configuration tests. Java verification includes
+inactive-event archival. Run the documented Python suite or CLI build locally
+when changing those areas; branch CI does not cover the CLI.
 
 ## Local Prerequisites
 
