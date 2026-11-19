@@ -2,7 +2,11 @@ package com.functions.events.repositories;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import com.functions.events.models.EventCollectionData;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +22,33 @@ import com.google.cloud.firestore.Transaction;
 public class EventCollectionsRepository {
   private static final Logger logger = LoggerFactory.getLogger(EventCollectionsRepository.class);
   private static final Firestore db = FirebaseService.getFirestore();
+
+  public static Optional<EventCollectionData> getPublicEventCollectionById(String collectionId) {
+    if (collectionId == null || collectionId.isBlank()) {
+      throw new IllegalArgumentException("collectionId cannot be null or empty");
+    }
+    try {
+      DocumentSnapshot snapshot = db.collection("EventCollections")
+          .document("Active")
+          .collection("Public")
+          .document(collectionId)
+          .get()
+          .get();
+      if (!snapshot.exists()) {
+        return Optional.empty();
+      }
+      EventCollectionData collection = snapshot.toObject(EventCollectionData.class);
+      if (collection == null) {
+        throw new IllegalStateException("Failed to map public event collection: " + collectionId);
+      }
+      return Optional.of(collection);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IllegalStateException("Interrupted while retrieving public event collection: " + collectionId, e);
+    } catch (ExecutionException e) {
+      throw new IllegalStateException("Failed to retrieve public event collection: " + collectionId, e);
+    }
+  }
 
   public static void addEventIdToEventCollection(String collectionId, boolean isPrivate,String eventId) throws Exception {
     try {
