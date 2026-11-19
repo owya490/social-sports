@@ -21,35 +21,17 @@ const ClubCarousel = () => {
   const allImages = [...imagePaths, ...imagePaths]; // Duplicate for seamless loop
 
   return (
-    <div className="relative overflow-hidden w-full bg-white mt-6">
-      <div className="md:hidden flex animate-carousel-mobile whitespace-nowrap">
-        {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
-            <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
-          </div>
-        ))}
-        {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
-            <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
-          </div>
-        ))}
-      </div>
-      <div className="hidden md:flex animate-carousel whitespace-nowrap">
-        {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
-            <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
-          </div>
-        ))}
-        {allImages.map((src, idx) => (
-          <div key={idx} className="flex items-center justify-center w-20 h-20 mx-12 flex-shrink-0 rounded-lg overflow-hidden">
-            <img src={src} alt={`Club Logo ${idx}`} className="w-full h-full object-contain" />
+    <div
+      aria-hidden
+      className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
+    >
+      <div className="flex w-max animate-carousel-mobile">
+        {[...allImages, ...allImages].map((src, idx) => (
+          <div key={idx} className="mx-3 flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl bg-white p-2.5">
+            <img src={src} alt="" className="h-full w-full object-contain" />
           </div>
         ))}
       </div>
-      {/* Left fade */}
-      <div className="hidden md:block absolute top-0 left-0 w-32 h-full bg-gradient-to-r from-white to-transparent pointer-events-none z-10"></div>
-      {/* Right fade */}
-      <div className="hidden md:block absolute top-0 right-0 w-32 h-full bg-gradient-to-l from-white to-transparent pointer-events-none z-10"></div>
     </div>
   );
 };
