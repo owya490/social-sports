@@ -10,6 +10,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { EmptyEventData, EventId, NewEventData } from "@/interfaces/EventTypes";
 import { UserData } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { createEvent } from "@/services/src/events/eventsService";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import { buildNewEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
@@ -100,6 +101,22 @@ export default function CreateEvent() {
     try {
       const eventId = await createEventWorkflow(eventFormData, user);
       if (eventId !== null) {
+        trackEvent(AnalyticsEvent.ORGANISER_EVENT_CREATE, {
+          event_id: eventId,
+          sport: eventFormData.sport,
+          is_paid: eventFormData.price > 0,
+          is_private: eventFormData.isPrivate,
+          is_recurring: eventFormData.newRecurrenceData.recurrenceEnabled,
+          payments_active: eventFormData.paymentsActive,
+          waitlist_enabled: eventFormData.waitlistEnabled,
+          booking_approval_enabled: eventFormData.bookingApprovalEnabled,
+          has_form: eventFormData.formId !== null,
+          has_image: Boolean(eventFormData.image),
+          promotional_codes_enabled: eventFormData.promotionalCodesEnabled,
+        });
+        if (eventFormData.newRecurrenceData.recurrenceEnabled) {
+          trackEvent(AnalyticsEvent.ORGANISER_RECURRING_TEMPLATE_CREATE, { event_id: eventId });
+        }
         router.push(`/organiser/v2/event/${eventId}`);
       }
       // null: workflow already alerted (stay on page) or redirected (loading cleared, no alert)

@@ -19,6 +19,7 @@ type AttendeeListActionsProps = {
   csvData: object[];
   csvHeaders: CsvHeader[];
   csvFilename: string;
+  onDownload?: () => void;
 };
 
 function menuItemClass(focus: boolean, disabled = false) {
@@ -34,18 +35,26 @@ export function AttendeeListActions({
   csvData,
   csvHeaders,
   csvFilename,
+  onDownload,
 }: AttendeeListActionsProps) {
   return (
     <div className="shrink-0">
       <div className="hidden items-center gap-1.5 sm:flex">
         <CopyEmailsButton compact emails={emails} />
-        <DownloadCsvButton compact data={csvData} headers={csvHeaders} filename={csvFilename} />
+        <DownloadCsvButton
+          compact
+          data={csvData}
+          headers={csvHeaders}
+          filename={csvFilename}
+          onDownload={onDownload}
+        />
       </div>
       <AttendeeActionsMenu
         emails={emails}
         csvData={csvData}
         csvHeaders={csvHeaders}
         csvFilename={csvFilename}
+        onDownload={onDownload}
       />
     </div>
   );
@@ -56,10 +65,12 @@ function AttendeeActionsMenu({
   csvData,
   csvHeaders,
   csvFilename,
+  onDownload,
 }: AttendeeListActionsProps) {
   const downloadRef = useRef<HTMLDivElement>(null);
   const { copied, copyEmails, ariaLabel, empty } = useCopyEmails(emails);
   const downloadCsv = () => {
+    onDownload?.();
     downloadRef.current?.querySelector("a")?.click();
   };
 

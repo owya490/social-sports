@@ -6,6 +6,7 @@ import { CustomEventLink, CustomEventLinkType, EMPTY_CUSTOM_EVENT_LINK } from "@
 import { EventData } from "@/interfaces/EventTypes";
 import { RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { UserData } from "@/interfaces/UserTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import {
   deleteCustomEventLink,
   saveCustomEventLink,
@@ -232,7 +233,11 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
     setSaving(true);
     setFormError(null);
     try {
+      const created = isNewDraft;
       await saveCustomEventLink(user.userId, draft);
+      if (created) {
+        trackEvent(AnalyticsEvent.ORGANISER_CUSTOM_LINK_CREATE, { link_type: draft.type });
+      }
       const next = { ...links, [draft.id]: draft };
       setLinks(next);
       setList(next);
@@ -249,6 +254,7 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
     const url = getUrlWithCurrentHostname(`/event/${user.username}/${slug}`);
     try {
       await navigator.clipboard.writeText(url);
+      trackEvent(AnalyticsEvent.ORGANISER_CUSTOM_LINK_COPY);
       setCopiedId(id);
       window.setTimeout(() => setCopiedId((current) => (current === id ? null : current)), 1500);
     } catch {
@@ -265,6 +271,7 @@ export const CustomLinksPanel = forwardRef<CustomLinksPanelHandle, CustomLinksPa
     setFormError(null);
     try {
       await deleteCustomEventLink(user.userId, draft);
+      trackEvent(AnalyticsEvent.ORGANISER_CUSTOM_LINK_DELETE, { link_type: draft.type });
       const next = { ...links };
       delete next[draft.id];
       setLinks(next);

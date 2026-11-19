@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/components/utility/UserContext";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl, isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
@@ -44,6 +45,9 @@ export function SettingsStripePanel({
         getUrlWithCurrentHostname(returnPath),
         getRefreshAccountLinkUrl(),
       );
+      if (link.startsWith("http")) {
+        trackEvent(AnalyticsEvent.ORGANISER_STRIPE_SETUP_START);
+      }
       window.location.href = link;
     } catch {
       onConnecting(false);

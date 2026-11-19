@@ -5,6 +5,8 @@ import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBre
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId, FormResponseId } from "@/interfaces/FormTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
+import { useEffect } from "react";
 
 type FormResponseViewerProps = {
   formId: FormId;
@@ -14,6 +16,9 @@ type FormResponseViewerProps = {
 
 export function FormResponseViewer({ formId, eventId, responseId }: FormResponseViewerProps) {
   useOrganiserBreadcrumbTitle("Response");
+  useEffect(() => {
+    trackEvent(AnalyticsEvent.ORGANISER_FORM_RESPONSE_VIEW, { event_id: eventId, form_id: formId });
+  }, [eventId, formId]);
 
   return (
     <div className="min-h-screen bg-surface text-foreground pb-10">

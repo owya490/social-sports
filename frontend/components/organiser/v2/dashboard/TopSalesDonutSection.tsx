@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { TopSalesEventSlice } from "@/services/src/organiser/organiserDashboardMetricsService";
 import { displayPrice } from "@/utilities/priceUtils";
 import Link from "next/link";
@@ -194,6 +195,12 @@ export function TopSalesDonutSection({ slices, loading }: TopSalesDonutSectionPr
                     ) : (
                       <Link
                         href={`/organiser/v2/event/${slice.eventId}`}
+                        onClick={() =>
+                          trackEvent(AnalyticsEvent.ORGANISER_EVENT_CARD_OPEN, {
+                            event_id: slice.eventId,
+                            source: "top_sales",
+                          })
+                        }
                         className="flex items-start gap-2 px-2 py-1.5 rounded-lg hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
                       >
                         {content}

@@ -6,6 +6,7 @@ import { useUser } from "@/components/utility/UserContext";
 import { EventCollection } from "@/interfaces/EventCollectionTypes";
 import { DEFAULT_EVENT_IMAGE_URL } from "@/interfaces/ImageTypes";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import {
   createEventCollection,
   getOrganiserCollections,
@@ -58,6 +59,7 @@ export default function OrganiserEventCollectionsV2Page() {
         true,
         DEFAULT_EVENT_IMAGE_URL,
       );
+      trackEvent(AnalyticsEvent.ORGANISER_COLLECTION_CREATE, { is_private: true });
       router.push(`/organiser/v2/event/event-collection/${collectionId}`);
     } catch (createError) {
       logger.error(`Failed to create collection: ${createError}`);

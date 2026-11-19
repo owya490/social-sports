@@ -4,6 +4,7 @@ import { AnimatedSection } from "@/components/organiser/wrapped/AnimatedSection"
 import { Confetti } from "@/components/organiser/wrapped/Confetti";
 import { useUser } from "@/components/utility/UserContext";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { motion, useInView } from "framer-motion";
 import Link from "next/link";
@@ -28,6 +29,7 @@ export function ShareSection({ organiserName, year, wrappedId }: ShareSectionPro
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
+      trackEvent(AnalyticsEvent.ORGANISER_WRAPPED_SHARE, { year });
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {

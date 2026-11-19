@@ -9,6 +9,7 @@ import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowTh
 import { EntityRowStatuses } from "@/components/organiser/v2/shared/EntityRowStatuses";
 import { Frequency, RecurrenceTemplate } from "@/interfaces/RecurringEventTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { calculateRecurrenceEnded } from "@/services/src/recurringEvents/recurringEventsService";
 import { getEventPriceDisplay } from "@/utilities/priceUtils";
 import { ArrowPathIcon, CalendarDaysIcon, MapPinIcon } from "@heroicons/react/24/outline";
@@ -74,6 +75,7 @@ export function RecurringTemplateRow({ template }: RecurringTemplateRowProps) {
     >
       <Link
         href={`/organiser/v2/event/recurring-events/${recurrenceTemplateId}`}
+        onClick={() => trackEvent(AnalyticsEvent.ORGANISER_RECURRING_TEMPLATE_OPEN)}
         className="group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus"
       >
         <EntityRowThumbnail
