@@ -54,7 +54,9 @@ import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
+import com.functions.users.models.requests.GetPartnerUserRequest;
 import com.functions.users.models.requests.ProvisionUserRequest;
+import com.functions.users.models.responses.GetPartnerUserResponse;
 import com.functions.users.models.responses.ProvisionUserResponse;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
 import com.functions.wrapped.models.responses.GetWrappedResponse;
@@ -112,6 +114,7 @@ public enum EndpointType {
     GET_PARTNER_EVENT(GetPartnerEventRequest.class, GetPartnerEventResponse.class, AuthLevel.PARTNER),
     GET_PARTNER_EVENT_COLLECTION(GetPartnerEventCollectionRequest.class, GetPartnerEventCollectionResponse.class,
             AuthLevel.PARTNER),
+    GET_PARTNER_USER(GetPartnerUserRequest.class, GetPartnerUserResponse.class, AuthLevel.PARTNER),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class, AuthLevel.PUBLIC),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class, AuthLevel.AUTHENTICATED),
     GET_TICKET(GetTicketRequest.class, Ticket.class, AuthLevel.AUTHENTICATED),

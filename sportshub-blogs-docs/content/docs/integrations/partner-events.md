@@ -20,7 +20,8 @@ Your website displays events and lets customers select a ticket type and quantit
 | 1. Load events | `GET_PARTNER_EVENTS` | Public event and ticket information for your calendar. |
 | 2. Load one event | `GET_PARTNER_EVENT` | One public event from your feed. |
 | 3. Load one collection | `GET_PARTNER_EVENT_COLLECTION` | One public event collection and its upcoming events. |
-| 4. Start a booking | `INIT_PARTNER_FULFILMENT_SESSION` | A SPORTSHUB booking URL to open. |
+| 4. Load the organiser | `GET_PARTNER_USER` | Public name, bio, contact details, username, and profile URL. |
+| 5. Start a booking | `INIT_PARTNER_FULFILMENT_SESSION` | A SPORTSHUB booking URL to open. |
 
 ## Before you start
 
@@ -260,7 +261,46 @@ Events that are missing, private, already started, duplicated, or not part of yo
 
 The same refresh and error guidance as the public feed applies.
 
-## 4. Start a booking
+## 4. Load the organiser profile
+
+Use this to show the organiser's public name and contact details. The partner key selects the organiser. Do not send an organiser or user ID.
+
+**Request body**
+
+```json
+{
+  "endpointType": "GET_PARTNER_USER",
+  "data": {}
+}
+```
+
+**Successful response**
+
+```json
+{
+  "data": {
+    "name": "Ada Lovelace",
+    "bio": "Writes programs.",
+    "email": "ada@example.com",
+    "phone": "0400000000",
+    "username": "ada",
+    "profileUrl": "https://www.sportshub.net.au/user/ada"
+  }
+}
+```
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `name` | String | Public first name and surname. `""` when both are absent. |
+| `bio` | String | Public bio. `""` when absent. Render as text, or sanitize it before rendering HTML. |
+| `email` | String, nullable | Public contact email. |
+| `phone` | String, nullable | Public contact phone. |
+| `username` | String | Public username. `""` when absent. |
+| `profileUrl` | String | Public SPORTSHUB profile URL. It uses the username, or the organiser's user ID when no username is set. |
+
+A missing public profile returns HTTP 404. Other errors match the public event feed. The same refresh guidance applies.
+
+## 5. Start a booking
 
 Before enabling bookings on your site, test the handoff with your event and ticket types.
 
