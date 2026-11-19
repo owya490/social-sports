@@ -44,6 +44,8 @@ export interface FormResponderRef {
   save: () => Promise<FormResponseId>;
   areAllRequiredFieldsFilled: () => boolean;
   hasUnsavedChanges: () => boolean;
+  /** True once the form template has been fetched into local state. */
+  isFormLoaded: () => boolean;
 }
 
 interface FormResponderCommonProps {
@@ -164,6 +166,7 @@ const FormResponder = forwardRef<FormResponderRef, FormResponderProps>(
         save: onSave,
         areAllRequiredFieldsFilled,
         hasUnsavedChanges,
+        isFormLoaded: () => form !== null,
       }),
       [form, canEdit, formResponseIdState, fulfilmentInfo, saveLoading, hasUnsavedChangesState]
     );
