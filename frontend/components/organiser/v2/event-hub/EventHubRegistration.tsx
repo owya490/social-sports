@@ -551,7 +551,7 @@ export function EventHubRegistration({
                 setAddError("No form is attached to this ticket type.");
                 return;
               }
-              if (!formResponderRef.current) {
+              if (!formResponderRef.current?.isFormLoaded()) {
                 setAddError("Form is still loading. Please try again.");
                 return;
               }
