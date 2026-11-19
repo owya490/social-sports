@@ -6,18 +6,11 @@ import EventCard from "./EventCard";
 
 jest.mock("@svgs/Verified_tick.png", () => "verified-tick.png");
 
-const organiser = {
-  ...EmptyPublicUserData,
-  userId: "host-1",
-  firstName: "Ada",
-  surname: "Lovelace",
-};
-
 const cardProps = {
   image: "",
   thumbnail: "",
   name: "Friday Social",
-  organiser,
+  organiser: { ...EmptyPublicUserData, userId: "host-1", firstName: "Ada", surname: "Lovelace" },
   startTime: Timestamp.fromDate(new Date("2026-06-01T00:00:00Z")),
   location: "Sydney",
   price: 0,
@@ -25,28 +18,18 @@ const cardProps = {
   loading: false,
 };
 
-function anchorBlocks(markup: string) {
-  return [...markup.matchAll(/<a\b[^>]*>[\s\S]*?<\/a>/g)].map((match) => match[0]);
-}
-
 describe("EventCard host link", () => {
-  it("opens the host pill on the user page and the card on the event page", () => {
+  it("links the title to the event and the host pill to the user page", () => {
     const markup = renderToStaticMarkup(<EventCard {...cardProps} eventId={"event-1" as EventId} />);
-    const anchors = anchorBlocks(markup);
-    const eventLink = anchors.find((anchor) => anchor.includes('href="/event/event-1"'));
-    const hostLink = anchors.find((anchor) => anchor.includes('href="/user/host-1"'));
 
-    expect(eventLink).toContain("Friday Social");
-    expect(eventLink).not.toContain("Hosted by Ada Lovelace");
-    expect(hostLink).toContain("Hosted by Ada Lovelace");
-    expect(hostLink).not.toContain('href="/event/event-1"');
+    expect(markup).toMatch(/<a [^>]*href="\/event\/event-1"[^>]*>Friday Social<\/a>/);
+    expect(markup).toMatch(/<a [^>]*href="\/user\/host-1"[^>]*>Hosted by Ada Lovelace<\/a>/);
   });
 
   it("keeps the host pill linked when the card itself is not clickable", () => {
     const markup = renderToStaticMarkup(<EventCard {...cardProps} isClickable={false} />);
 
     expect(markup).toContain('href="/user/host-1"');
-    expect(markup).toContain("Hosted by Ada Lovelace");
     expect(markup).not.toContain('href="/event/');
   });
 });

@@ -76,15 +76,13 @@ export default function EventCard(props: EventCardProps) {
               <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
               <h4 className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(price)}</h4>
             </div>
-            <h2 className="text-lg font-semibold mt-0.5 text-core-text">
+            <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">
               {isCardClickable ? (
-                // Leave this link unpositioned so its overlay uses the card as the containing block.
-                // The host link is stacked above that overlay and opens the user page.
-                <Link href={`/event/${props.eventId}`} className="after:absolute after:inset-0 after:z-0 after:content-['']">
-                  <span className="block whitespace-nowrap overflow-hidden">{name}</span>
+                <Link href={`/event/${props.eventId}`} className="after:absolute after:inset-0">
+                  {name}
                 </Link>
               ) : (
-                <span className="block whitespace-nowrap overflow-hidden">{name}</span>
+                name
               )}
             </h2>
             <UserInlineDisplay organiser={organiser} />
