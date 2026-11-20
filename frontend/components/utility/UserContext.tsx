@@ -31,7 +31,7 @@ export default function UserContext({ children }: { children: any }) {
   const [userLoading, setUserLoading] = useState(true);
 
   const protectedRoutes = ["/organiser", "/profile", "/event/create", "/onboarding"];
-  const LoginRegisterRoutes = ["/register", "/login"];
+  const LoginRegisterRoutes = ["/register"];
 
   const refreshUser = async () => {
     if (!user.userId) {

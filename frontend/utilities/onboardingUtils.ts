@@ -8,19 +8,18 @@ export function hasProvisionedFirestoreProfile(user: UserData): boolean {
   return user.userId !== "" && user.username !== "";
 }
 
-/** New signups persist `onboardingCompletedAt: null`; legacy accounts omit onboarding fields. */
-export function isInOnboardingCohort(user: UserData): boolean {
-  return user.onboardingCompletedAt === null;
+/** Missing or false means the account is not in onboarding, including legacy users. */
+export function isUserOnboarding(user: UserData): boolean {
+  return user.isOnboarding === true;
 }
 
-export function hasDismissedProductOnboarding(user: UserData): boolean {
-  return user.onboardingSkippedAt != null;
+export function pathAfterSignIn(user: UserData): string {
+  return isUserOnboarding(user) ? "/onboarding" : "/?login=success";
 }
 
 export function needsOnboardingPersonaChoice(user: UserData): boolean {
   return (
-    isInOnboardingCohort(user) &&
-    !hasDismissedProductOnboarding(user) &&
+    isUserOnboarding(user) &&
     hasProvisionedFirestoreProfile(user) &&
     user.onboardingPersona == null
   );
@@ -28,8 +27,7 @@ export function needsOnboardingPersonaChoice(user: UserData): boolean {
 
 export function needsAttendeeOnboarding(user: UserData): boolean {
   return (
-    isInOnboardingCohort(user) &&
-    !hasDismissedProductOnboarding(user) &&
+    isUserOnboarding(user) &&
     hasProvisionedFirestoreProfile(user) &&
     user.onboardingPersona === "attendee"
   );
@@ -37,8 +35,7 @@ export function needsAttendeeOnboarding(user: UserData): boolean {
 
 export function needsOrganiserOnboarding(user: UserData): boolean {
   return (
-    isInOnboardingCohort(user) &&
-    !hasDismissedProductOnboarding(user) &&
+    isUserOnboarding(user) &&
     hasProvisionedFirestoreProfile(user) &&
     user.onboardingPersona === "organiser"
   );

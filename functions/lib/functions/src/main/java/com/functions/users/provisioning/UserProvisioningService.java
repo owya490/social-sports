@@ -138,7 +138,8 @@ public final class UserProvisioningService {
 		contact.setEmail(email);
 		profile.setContactInformation(contact);
 		profile.setSendOrganiserTicketEmails(false);
-		// Explicit null marks a new account as still in onboarding. Older accounts omit the field.
+		profile.setIsOnboarding(true);
+		// Kept for migration. Older accounts omit both fields and are treated as finished.
 		profile.setOnboardingCompletedAt(null);
 		return profile;
 	}

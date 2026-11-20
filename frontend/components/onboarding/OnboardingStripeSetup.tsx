@@ -22,21 +22,21 @@ export default function OnboardingStripeSetup(props: {
 
       <div className="grid sm:grid-cols-3 gap-4 mb-6">
         <div className="flex items-start gap-3">
-          <CreditCardIcon aria-hidden="true" className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
+          <CreditCardIcon aria-hidden="true" className="w-6 h-6 text-core-text shrink-0 mt-1" />
           <div>
             <h3 className="font-semibold text-sm">Sell tickets later</h3>
-            <p className="text-xs text-gray-600">Turn on paid pricing only when you choose — not required for free RSVP</p>
+            <p className="text-xs text-gray-600">Add paid pricing when you want. Free events don&apos;t need it.</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <ShieldCheckIcon aria-hidden="true" className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
+          <ShieldCheckIcon aria-hidden="true" className="w-6 h-6 text-core-text shrink-0 mt-1" />
           <div>
             <h3 className="font-semibold text-sm">Handled securely</h3>
-            <p className="text-xs text-gray-600">Card payments go through Stripe — standard for online ticket sales</p>
+            <p className="text-xs text-gray-600">Card payments go through Stripe.</p>
           </div>
         </div>
         <div className="flex items-start gap-3">
-          <BoltIcon aria-hidden="true" className="w-6 h-6 text-highlight-yellow shrink-0 mt-1" />
+          <BoltIcon aria-hidden="true" className="w-6 h-6 text-core-text shrink-0 mt-1" />
           <div>
             <h3 className="font-semibold text-sm">Usually quick</h3>
             <p className="text-xs text-gray-600">Most organisers finish in a few minutes</p>
@@ -54,7 +54,7 @@ export default function OnboardingStripeSetup(props: {
           window.scrollTo(0, 0);
           const link = await getStripeStandardAccountLink(
             props.userId,
-            getUrlWithCurrentHostname("/onboarding/organiser"),
+            getUrlWithCurrentHostname("/onboarding"),
             getRefreshAccountLinkUrl()
           );
           window.location.assign(link);

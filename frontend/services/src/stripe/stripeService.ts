@@ -1,10 +1,29 @@
+import { EndpointType } from "@/interfaces/FunctionsTypes";
 import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
+import { executeGlobalAppControllerFunction } from "../functions/functionsUtils";
 import {
   FIREBASE_FUNCTIONS_CREATE_STRIPE_STANDARD_ACCOUNT,
   getFirebaseFunctionByName,
 } from "../firebaseFunctionsService";
 import { getPrivateUserById } from "../users/usersService";
+
+export type StripePayoutOnboardingRequest = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  hasAbn: boolean;
+  abn?: string;
+  dateOfBirth?: string;
+  addressLine1?: string;
+  city?: string;
+  state?: string;
+  postcode?: string;
+  accountHolderName: string;
+  bsb: string;
+  accountNumber: string;
+};
 
 interface StripeCreateStandardAccountResponse {
   url: string;
@@ -28,6 +47,15 @@ export async function getStripeStandardAccountLink(organiserId: string, returnUr
       stripeServiceLogger.warn(`Failed to return Stripe create standard account link. error=${error}`);
       return "/error";
     });
+}
+
+export async function startStripePayoutOnboarding(details: StripePayoutOnboardingRequest): Promise<string> {
+  const response = await executeGlobalAppControllerFunction<StripePayoutOnboardingRequest, { url: string }>(
+    EndpointType.START_STRIPE_PAYOUT_ONBOARDING,
+    details,
+    { attachAuth: true }
+  );
+  return response.url;
 }
 
 export async function getStripeAccId(userId: UserId): Promise<string> {

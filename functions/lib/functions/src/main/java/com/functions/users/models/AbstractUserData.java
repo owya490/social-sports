@@ -45,10 +45,17 @@ public abstract class AbstractUserData {
 	private Boolean sendOrganiserTicketEmails = false;
 	private List<String> forms = new ArrayList<>();
 	private List<String> privateEventCollections = new ArrayList<>();
+	/** True until onboarding is finished. Missing means false. */
+	private Boolean isOnboarding;
+	/** Kept for migration. New persona choices are stored on UserMetadata. */
 	private String onboardingPersona;
+	/** Kept for migration. Product onboarding now uses isOnboarding. */
 	private Timestamp onboardingCompletedAt;
+	/** Kept for migration. */
 	private Timestamp stripeConnectSetupCompletedAt;
+	/** Kept for migration. */
 	private Timestamp stripeConnectSetupSkippedAt;
+	/** Kept for migration. */
 	private Timestamp onboardingSkippedAt;
 	@Data
 	@JsonIgnoreProperties(ignoreUnknown = true)
