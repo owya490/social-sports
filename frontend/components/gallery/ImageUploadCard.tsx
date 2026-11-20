@@ -1,5 +1,6 @@
 "use client";
-import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
+import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
+import { cropSizeError, fittingCropOrientation, readImageDimensions } from "@/services/src/images/imageUtils";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useRef, useState } from "react";
 import { ImageCropModal } from "./ImageCropModal";
@@ -7,28 +8,49 @@ import { ImageCropModal } from "./ImageCropModal";
 interface ImageUploadCardProps {
   type: ImageType;
   onImageUploaded: (file: File) => void;
+  onInvalidFile: (message: string | null) => void;
 }
 
-export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps) => {
+export const ImageUploadCard = ({ type, onImageUploaded, onInvalidFile }: ImageUploadCardProps) => {
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [initialOrientation, setInitialOrientation] = useState(ImageOrientation.LANDSCAPE);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const selectionId = useRef(0);
+  const config = ImageConfig[type];
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
 
-      // Validate file type using config
-      if (!config.supportedTypes.includes(file.type)) {
-        alert("Please upload a valid image file (jpg, png).");
-        // Clear the input value to allow selecting the same file again
-        e.target.value = "";
-        return;
-      }
-
-      setSelectedFile(file);
-      setShowCropModal(true);
+    const requestId = ++selectionId.current;
+    if (!config.supportedTypes.includes(file.type)) {
+      onInvalidFile("Please upload a valid image file (jpg, png).");
+      return;
     }
+
+    let size: { width: number; height: number };
+    try {
+      size = await readImageDimensions(file);
+    } catch {
+      if (requestId !== selectionId.current) return;
+      onInvalidFile("Couldn't read that image. Try a different JPG or PNG.");
+      return;
+    }
+    if (requestId !== selectionId.current) return;
+
+    const message = cropSizeError(type, size);
+    if (message) {
+      onInvalidFile(message);
+      return;
+    }
+
+    onInvalidFile(null);
+    setInitialOrientation(fittingCropOrientation(type, size) ?? ImageOrientation.LANDSCAPE);
+    setSelectedFile(file);
+    setShowCropModal(true);
   };
 
   const handleCropComplete = (croppedFile: File) => {
@@ -50,7 +72,6 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
     }
   };
 
-  const config = ImageConfig[type];
   const aspectText = config.aspectText;
 
   return (
@@ -80,6 +101,7 @@ export const ImageUploadCard = ({ type, onImageUploaded }: ImageUploadCardProps)
           onCropComplete={handleCropComplete}
           imageFile={selectedFile}
           cropType={type}
+          initialOrientation={initialOrientation}
         />
       )}
     </>

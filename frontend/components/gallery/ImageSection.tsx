@@ -83,14 +83,20 @@ export const ImageSection = ({
   description,
 }: ImageSectionProps) => {
   const config = ImageConfig[type];
+  const [fileError, setFileError] = useState<string | null>(null);
 
   return (
     <div>
       <h2 className="text-xl font-semibold text-core-text mb-1">{title || config.title}</h2>
       <p className="text-sm text-gray-600 mb-4">{description || config.description}</p>
+      {fileError ? (
+        <p role="alert" className="mb-4 text-sm text-danger">
+          {fileError}
+        </p>
+      ) : null}
 
       <div className={`grid ${gridCols} gap-4`}>
-        <ImageUploadCard type={type} onImageUploaded={onImageUploaded} />
+        <ImageUploadCard type={type} onImageUploaded={onImageUploaded} onInvalidFile={setFileError} />
 
         {imageUrls.map((url, index) => (
           <SelectableImageTile

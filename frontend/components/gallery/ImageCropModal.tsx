@@ -2,7 +2,7 @@
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
-import { switchableOrientations, switchOrientation } from "@/services/src/images/imageUtils";
+import { orientationCropError, switchableOrientations, switchOrientation } from "@/services/src/images/imageUtils";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactCrop, { centerCrop, Crop, makeAspectCrop, PixelCrop } from "react-image-crop";
@@ -14,6 +14,7 @@ interface ImageCropModalProps {
   onCropComplete: (croppedFile: File) => void;
   imageFile: File;
   cropType: ImageType;
+  initialOrientation?: ImageOrientation;
 }
 
 function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number, isMobile: boolean = false) {
@@ -32,16 +33,24 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
   );
 }
 
-export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cropType }: ImageCropModalProps) => {
+export const ImageCropModal = ({
+  isOpen,
+  onClose,
+  onCropComplete,
+  imageFile,
+  cropType,
+  initialOrientation = ImageOrientation.LANDSCAPE,
+}: ImageCropModalProps) => {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isProcessing, setIsProcessing] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageSrc, setImageSrc] = useState<string>("");
   const [hasValidCrop, setHasValidCrop] = useState(false);
-  const [orientation, setOrientation] = useState<ImageOrientation>(ImageOrientation.LANDSCAPE); // For form images
+  const [orientation, setOrientation] = useState<ImageOrientation>(initialOrientation);
   const [currentAspectRatio, setCurrentAspectRatio] = useState(ImageConfig[cropType].defaultAspectRatio);
   const [isMobile, setIsMobile] = useState(false);
+  const [cropError, setCropError] = useState<string | null>(null);
 
   // Detect if device is mobile
   useEffect(() => {
@@ -87,8 +96,8 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
       };
       reader.readAsDataURL(imageFile);
       setHasValidCrop(false);
-      // Reset image orientation to landscape when opening
-      setOrientation(ImageOrientation.LANDSCAPE);
+      setCropError(null);
+      setOrientation(initialOrientation);
     } else if (!isOpen) {
       // Reset state when modal closes
       setImageSrc("");
@@ -96,9 +105,10 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
       setCompletedCrop(undefined);
       setHasValidCrop(false);
       setIsProcessing(false);
+      setCropError(null);
       setOrientation(ImageOrientation.LANDSCAPE);
     }
-  }, [imageFile, isOpen, cropType]);
+  }, [imageFile, isOpen, cropType, initialOrientation]);
 
   const getCroppedImg = useCallback(
     (image: HTMLImageElement, crop: PixelCrop): Promise<File> => {
@@ -155,6 +165,18 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
   const toggleOrientation = () => {
     if (switchableOrientations(cropType) && imgRef.current) {
       const newOrientation = switchOrientation(orientation);
+      const { naturalWidth, naturalHeight } = imgRef.current;
+      if (naturalWidth > 0 && naturalHeight > 0) {
+        const message = orientationCropError(cropType, newOrientation, {
+          width: naturalWidth,
+          height: naturalHeight,
+        });
+        if (message) {
+          setCropError(message);
+          return;
+        }
+      }
+      setCropError(null);
       setOrientation(newOrientation);
 
       // Recalculate crop immediately with new aspect ratio from config
@@ -244,6 +266,11 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
                   </button>
                 )}
               </div>
+              {cropError ? (
+                <p role="alert" className="mb-2 text-xs sm:text-sm text-danger">
+                  {cropError}
+                </p>
+              ) : null}
               <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
                 <ReactCrop
                   crop={crop}
