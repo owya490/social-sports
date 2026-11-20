@@ -2,7 +2,7 @@
 import { InvertedHighlightButton } from "@/components/elements/HighlightButton";
 import { LoadingSpinner } from "@/components/loading/LoadingSpinner";
 import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
-import { orientationCropError, switchableOrientations, switchOrientation } from "@/services/src/images/imageUtils";
+import { switchableOrientations, switchOrientation } from "@/services/src/images/imageUtils";
 import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useCallback, useEffect, useRef, useState } from "react";
 import ReactCrop, { centerCrop, Crop, makeAspectCrop, PixelCrop } from "react-image-crop";
@@ -14,7 +14,12 @@ interface ImageCropModalProps {
   onCropComplete: (croppedFile: File) => void;
   imageFile: File;
   cropType: ImageType;
-  initialOrientation?: ImageOrientation;
+}
+
+function minimumSizeError(cropType: ImageType, orientation: ImageOrientation, width: number, height: number) {
+  const minimum = ImageConfig[cropType].orientationConfigs[orientation];
+  if (!minimum || (width >= minimum.minCropWidth && height >= minimum.minCropHeight)) return null;
+  return `Minimum size is ${minimum.minCropWidth}×${minimum.minCropHeight}.`;
 }
 
 function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: number, isMobile: boolean = false) {
@@ -33,24 +38,17 @@ function centerAspectCrop(mediaWidth: number, mediaHeight: number, aspect: numbe
   );
 }
 
-export const ImageCropModal = ({
-  isOpen,
-  onClose,
-  onCropComplete,
-  imageFile,
-  cropType,
-  initialOrientation = ImageOrientation.LANDSCAPE,
-}: ImageCropModalProps) => {
+export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cropType }: ImageCropModalProps) => {
   const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const [isProcessing, setIsProcessing] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageSrc, setImageSrc] = useState<string>("");
   const [hasValidCrop, setHasValidCrop] = useState(false);
-  const [orientation, setOrientation] = useState<ImageOrientation>(initialOrientation);
+  const [orientation, setOrientation] = useState<ImageOrientation>(ImageOrientation.LANDSCAPE); // For form images
   const [currentAspectRatio, setCurrentAspectRatio] = useState(ImageConfig[cropType].defaultAspectRatio);
   const [isMobile, setIsMobile] = useState(false);
-  const [cropError, setCropError] = useState<string | null>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   // Detect if device is mobile
   useEffect(() => {
@@ -64,7 +62,8 @@ export const ImageCropModal = ({
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const { width, height } = e.currentTarget;
+      const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
+      setSizeError(minimumSizeError(cropType, orientation, naturalWidth, naturalHeight));
       const initialCrop = centerAspectCrop(width, height, currentAspectRatio, isMobile);
       setCrop(initialCrop);
       // Immediately set a completed crop so the user can't proceed without a crop
@@ -77,7 +76,7 @@ export const ImageCropModal = ({
       });
       setHasValidCrop(true);
     },
-    [currentAspectRatio, isMobile]
+    [cropType, currentAspectRatio, isMobile, orientation]
   );
 
   // Initialize aspect ratio based on crop type
@@ -96,8 +95,9 @@ export const ImageCropModal = ({
       };
       reader.readAsDataURL(imageFile);
       setHasValidCrop(false);
-      setCropError(null);
-      setOrientation(initialOrientation);
+      setSizeError(null);
+      // Reset image orientation to landscape when opening
+      setOrientation(ImageOrientation.LANDSCAPE);
     } else if (!isOpen) {
       // Reset state when modal closes
       setImageSrc("");
@@ -105,10 +105,10 @@ export const ImageCropModal = ({
       setCompletedCrop(undefined);
       setHasValidCrop(false);
       setIsProcessing(false);
-      setCropError(null);
+      setSizeError(null);
       setOrientation(ImageOrientation.LANDSCAPE);
     }
-  }, [imageFile, isOpen, cropType, initialOrientation]);
+  }, [imageFile, isOpen, cropType]);
 
   const getCroppedImg = useCallback(
     (image: HTMLImageElement, crop: PixelCrop): Promise<File> => {
@@ -165,19 +165,10 @@ export const ImageCropModal = ({
   const toggleOrientation = () => {
     if (switchableOrientations(cropType) && imgRef.current) {
       const newOrientation = switchOrientation(orientation);
-      const { naturalWidth, naturalHeight } = imgRef.current;
-      if (naturalWidth > 0 && naturalHeight > 0) {
-        const message = orientationCropError(cropType, newOrientation, {
-          width: naturalWidth,
-          height: naturalHeight,
-        });
-        if (message) {
-          setCropError(message);
-          return;
-        }
-      }
-      setCropError(null);
       setOrientation(newOrientation);
+      setSizeError(
+        minimumSizeError(cropType, newOrientation, imgRef.current.naturalWidth, imgRef.current.naturalHeight)
+      );
 
       // Recalculate crop immediately with new aspect ratio from config
       const config = ImageConfig[cropType];
@@ -266,9 +257,9 @@ export const ImageCropModal = ({
                   </button>
                 )}
               </div>
-              {cropError ? (
+              {sizeError ? (
                 <p role="alert" className="mb-2 text-xs sm:text-sm text-danger">
-                  {cropError}
+                  {sizeError}
                 </p>
               ) : null}
               <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">

@@ -1,8 +1,7 @@
 "use client";
 
 import { ImageCropModal } from "@/components/gallery/ImageCropModal";
-import { ImageConfig, ImageOrientation, ImageType } from "@/interfaces/ImageTypes";
-import { cropSizeError, fittingCropOrientation, readImageDimensions } from "@/services/src/images/imageUtils";
+import { ImageConfig, ImageType } from "@/interfaces/ImageTypes";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Image from "@/components/elements/AppImage";
 import { useRef, useState } from "react";
@@ -11,48 +10,24 @@ import Skeleton from "react-loading-skeleton";
 type GalleryUploadTileProps = {
   type: ImageType;
   onImageUploaded: (file: File) => void;
-  onInvalidFile: (message: string | null) => void;
+  onInvalidFile: (message: string) => void;
   disabled?: boolean;
 };
 
 function GalleryUploadTile({ type, onImageUploaded, onInvalidFile, disabled }: GalleryUploadTileProps) {
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [initialOrientation, setInitialOrientation] = useState(ImageOrientation.LANDSCAPE);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const selectionId = useRef(0);
   const config = ImageConfig[type];
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target;
-    const file = input.files?.[0];
-    input.value = "";
-    if (!file) return;
-
-    const requestId = ++selectionId.current;
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    const file = e.target.files[0];
     if (!config.supportedTypes.includes(file.type)) {
       onInvalidFile("Use a JPG or PNG image.");
+      e.target.value = "";
       return;
     }
-
-    let size: { width: number; height: number };
-    try {
-      size = await readImageDimensions(file);
-    } catch {
-      if (requestId !== selectionId.current) return;
-      onInvalidFile("Couldn't read that image. Try a different JPG or PNG.");
-      return;
-    }
-    if (requestId !== selectionId.current) return;
-
-    const message = cropSizeError(type, size);
-    if (message) {
-      onInvalidFile(message);
-      return;
-    }
-
-    onInvalidFile(null);
-    setInitialOrientation(fittingCropOrientation(type, size) ?? ImageOrientation.LANDSCAPE);
     setSelectedFile(file);
     setShowCropModal(true);
   };
@@ -100,7 +75,6 @@ function GalleryUploadTile({ type, onImageUploaded, onInvalidFile, disabled }: G
           }}
           imageFile={selectedFile}
           cropType={type}
-          initialOrientation={initialOrientation}
         />
       ) : null}
     </>
@@ -111,7 +85,7 @@ type GallerySectionProps = {
   type: ImageType;
   imageUrls: string[];
   onImageUploaded: (file: File) => void;
-  onInvalidFile: (message: string | null) => void;
+  onInvalidFile: (message: string) => void;
   gridCols: string;
   uploading: boolean;
   emptyHint?: string;
@@ -195,7 +169,7 @@ export function GalleryPanel({
       {fileError ? (
         <div
           role="alert"
-          className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-danger font-sans"
+          className="rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground font-sans"
         >
           {fileError}
         </div>
