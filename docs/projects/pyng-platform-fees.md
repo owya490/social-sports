@@ -1,6 +1,6 @@
 # Pyng organiser platform fees
 
-Last updated: 2026-11-16 (Australia/Sydney).
+Last updated: 2026-11-21 (Australia/Sydney).
 Product decision owner: Brian.
 Status: discovery and design; fee collection is not implemented in the inspected checkout.
 
@@ -15,7 +15,8 @@ This is the canonical project context for this initiative, not a provider
 contract or an instruction to implement, send email, activate collections or
 deploy. Brian has authorised research, this document and an unsent email draft.
 Current task: obtain a written collection specification and quote, then review
-the implementation design. The email below has not been sent by the agent.
+the implementation design. No agent has sent the email below; Brian is sending
+his own copy. Whether it has been sent, and any reply, is not recorded here.
 
 ## Agreed product rules
 
@@ -168,6 +169,23 @@ Per-debit charges may dominate a small club's 1% fee. Compare weekly costs with
 the expected amounts before deciding any minimum collection/carry-forward rule.
 Do not introduce a minimum charge to the club without a product decision.
 
+### Cost terms to keep distinct
+
+- **Failed-payment charge:** a fee the provider may charge SPORTSHUB when a
+  club's debit fails, for example insufficient funds or invalid account details.
+  Retries may be charged separately. It does not change the fee the club owes.
+  Providers differ: Pinch's public pricing listed a $5 failed-payment fee for
+  BECS direct debit when checked on 2026-11-21. Assume neither a charge nor its
+  absence for Pyng. [Pinch pricing](https://getpinch.com.au/pricing).
+- **Dishonour fee:** a fee the club's own bank may charge the club for a
+  dishonoured debit. It is separate from any provider charge to SPORTSHUB and
+  varies by bank.
+- **Minimum commitment:** a SPORTSHUB-level minimum to use the service, such as
+  a minimum number of clubs, debits, monthly collected value or monthly spend.
+- **Minimum debit amount:** a limit on how small a single weekly collection can
+  be. It affects carry-forward rules for low-volume clubs, unlike a minimum
+  commitment.
+
 ## Open decisions and delivery gates
 
 ### Confirm with Pyng
@@ -185,6 +203,8 @@ Do not introduce a minimum charge to the club without a product decision.
   failure/dispute signals and retry/cancellation rules.
 - Setup, monthly, successful-debit, failed-debit, retry, dispute and minimum
   charges. Existing checkout pricing does not answer these questions.
+- Both a minimum commitment and a minimum debit amount, if either applies. The
+  email draft asks only about minimum commitments.
 
 ### Decide internally after provider confirmation
 
@@ -214,7 +234,9 @@ Do not introduce a minimum charge to the club without a product decision.
   do not infer permission to pool ticket proceeds in SPORTSHUB's account.
   [Restriction policy](https://www.pyng.com.au/merchant-transaction-restriction-policy).
 
-## Email draft - not sent
+## Email draft - not sent by an agent
+
+Brian's copy has a personalised greeting and opening that are left out here.
 
 Subject: Weekly collection of SPORTSHUB's 1% platform fee
 
@@ -272,5 +294,7 @@ Brian
 | 2026-11-16 | Brian confirmed 1% of paid ticket amount, no separate GST calculation, no reversal for ticket refunds, all Pyng clubs and weekly cadence preference. | Accepted product rules; schedule mechanics remain open. |
 | 2026-11-16 | Brian requested a persistent repo knowledge base and an unsent Pyng email draft. | Documentation authorised; sending and implementation are not authorised by this request. |
 | 2026-11-16 | Brian approved a public documentation PR with private correspondence details removed. | Publication authorised for this version; no email sending or implementation authorised. |
+| 2026-11-16 | [owya490/social-sports#743](https://github.com/owya490/social-sports/pull/743) merged. Brian took the email to send himself. | Next gate: Pyng's reply on responsibilities, weekly support and costs. |
+| 2026-11-19/21 | Clarified failed-payment, dishonour, minimum-commitment and minimum-debit terms; checked Pinch's public BECS pricing. | Reference only; Pyng's charges remain unconfirmed. |
 
 Generated with AI assistance.
