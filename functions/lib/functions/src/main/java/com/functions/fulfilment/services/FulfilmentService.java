@@ -771,6 +771,13 @@ public class FulfilmentService {
                     FulfilmentSession fulfilmentSession = maybeFulfilmentSession.get();
                     logger.info("Fulfilment session found for ID: {}, session: {}", fulfilmentSessionId,
                             fulfilmentSession);
+                    // The fulfilment processor completes Pyng checkouts once Pyng settles them; deleting the
+                    // session here could lose a payment that settles later.
+                    if (fulfilmentSession instanceof PyngCheckoutFulfilmentSession) {
+                        logger.warn("completeFulfilmentSession: refusing to complete Pyng checkout session {}",
+                                fulfilmentSessionId);
+                        return false;
+                    }
                     Map<String, FulfilmentEntity> fulfilmentEntityMap = fulfilmentSession.getFulfilmentEntityMap();
 
                     FulfilmentEntity entity = fulfilmentEntityMap.get(fulfilmentEntityId);
