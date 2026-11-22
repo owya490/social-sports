@@ -1,6 +1,7 @@
 package com.functions.fulfilment.services;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNull;
@@ -38,6 +39,7 @@ import com.functions.fulfilment.models.InitialisedFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
 import com.functions.fulfilment.models.fulfilmentEntities.FulfilmentEntityType;
 import com.functions.firebase.services.FirebaseService;
 import com.functions.global.exceptions.NotFoundException;
@@ -399,6 +401,26 @@ public class FulfilmentServiceTest {
         sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession("checkout-1"));
         sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession("pyng-1"), times(0));
         sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession("unreadable-1"), times(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void completeFulfilmentSessionRefusesAPyngCheckout() throws Exception {
+        Transaction transaction = mock(Transaction.class);
+        sessions.when(() -> FulfilmentSessionRepository.getFulfilmentSession("session-1", Optional.of(transaction)))
+                .thenReturn(Optional.of(PyngCheckoutFulfilmentSession.builder()
+                        .id("session-1")
+                        .fulfilmentEntityIds(List.of("end-1"))
+                        .fulfilmentEntityMap(Map.of("end-1", EndFulfilmentEntity.builder().build()))
+                        .build()));
+        try (MockedStatic<FirebaseService> firebase = mockStatic(FirebaseService.class)) {
+            firebase.when(() -> FirebaseService.createFirestoreTransaction(any(Transaction.Function.class)))
+                    .thenAnswer(invocation -> ((Transaction.Function<?>) invocation.getArgument(0))
+                            .updateCallback(transaction));
+
+            assertFalse(FulfilmentService.completeFulfilmentSession("session-1", "end-1"));
+        }
+        sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession(eq("session-1"), any()), times(0));
     }
 
     private void assertUnavailable() throws Exception {
