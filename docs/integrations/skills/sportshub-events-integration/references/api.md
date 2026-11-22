@@ -4,22 +4,19 @@ description: Display your public SPORTSHUB events and open the hosted booking fl
 weight: 1
 draft: false
 date: 2026-10-14
-lastmod: 2026-11-19
+lastmod: 2026-10-18
 contractVersion: 1
 canonicalURL: https://www.sportshub.net.au/docs/integrations/partner-events/
 ---
 
-**Contract:** v1. **Updated:** 19 November 2026.
+**Contract:** v1. **Updated:** 18 October 2026.
 
 Your website displays events and lets customers select a ticket type and quantity. SPORTSHUB handles the booking after you open its hosted flow.
 
 | Step | Operation | Result |
 | --- | --- | --- |
 | 1. Load events | `GET_PARTNER_EVENTS` | Public event and ticket information for your calendar. |
-| 2. Load one event | `GET_PARTNER_EVENT` | One public event from your feed. |
-| 3. Load one collection | `GET_PARTNER_EVENT_COLLECTION` | One public event collection and its upcoming events. |
-| 4. Load the organiser | `GET_PARTNER_USER` | Public name, bio, contact details, username, and profile URL. |
-| 5. Start a booking | `INIT_PARTNER_FULFILMENT_SESSION` | A SPORTSHUB booking URL to open. |
+| 2. Start a booking | `INIT_PARTNER_FULFILMENT_SESSION` | A SPORTSHUB booking URL to open. |
 
 ## Before you start
 
@@ -29,7 +26,7 @@ Use the key supplied for the environment you are calling. It is intended for bro
 
 ## Send requests
 
-Send each operation to the same URL with `POST`:
+Send both operations to the same URL with `POST`:
 
 **API URL**
 
@@ -180,125 +177,7 @@ A sold-out ticket can lead to a waitlist when `waitlistEnabled` is true. Keep th
 
 Fetch on page load. If you refresh while the page remains visible, we recommend no more than once per minute. Keep only the data needed for the current page; responses use `Cache-Control: no-store` and must not go into shared HTTP caches. Availability can change between the feed request and checkout.
 
-## 2. Load one public event
-
-Use this when the page is for one known event. The event must be one that `GET_PARTNER_EVENTS` would return for your integration.
-
-**Request body**
-
-```json
-{
-  "endpointType": "GET_PARTNER_EVENT",
-  "data": {
-    "eventId": "example-event"
-  }
-}
-```
-
-| Input | Type | Meaning |
-| --- | --- | --- |
-| `eventId` | String | Event ID. |
-
-**Successful response**
-
-```json
-{
-  "data": {
-    "event": {
-      "eventId": "example-event",
-      "name": "Example sports session"
-    }
-  }
-}
-```
-
-The example is abbreviated. `event` includes every event field documented for the public feed. A missing, private, past, or other organiser's event returns HTTP 404. Other errors match the feed.
-
-## 3. Load one public event collection
-
-Use this when the page should show one chosen group of events. Hardcode the collection ID supplied by SPORTSHUB. The collection must be a public collection owned by your integration's organiser.
-
-**Request body**
-
-```json
-{
-  "endpointType": "GET_PARTNER_EVENT_COLLECTION",
-  "data": {
-    "eventCollectionId": "example-collection"
-  }
-}
-```
-
-| Input | Type | Meaning |
-| --- | --- | --- |
-| `eventCollectionId` | String | Public event collection ID. |
-
-**Successful response**
-
-```json
-{
-  "data": {
-    "eventCollectionId": "example-collection",
-    "name": "Featured sessions",
-    "description": "A group of public sessions.",
-    "image": null,
-    "events": []
-  }
-}
-```
-
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `eventCollectionId` | String | The requested collection ID. |
-| `name` | String | Collection name; `""` when absent. |
-| `description` | String | Collection description; `""` when absent. Render as text, or sanitize it before rendering HTML. |
-| `image` | String, nullable | Collection image location. |
-| `events` | Array | Upcoming public events from this collection, in the organiser's stored order. Each entry uses the same event fields as the public feed. |
-
-Events that are missing, private, already started, duplicated, or not part of your public feed are omitted. A successful collection can contain `events: []`. A missing collection, a private collection, or another organiser's collection returns HTTP 404. Do not treat 404 as an empty collection.
-
-The same refresh and error guidance as the public feed applies.
-
-## 4. Load the organiser profile
-
-Use this to show the organiser's public name and contact details. The partner key selects the organiser. Do not send an organiser or user ID.
-
-**Request body**
-
-```json
-{
-  "endpointType": "GET_PARTNER_USER",
-  "data": {}
-}
-```
-
-**Successful response**
-
-```json
-{
-  "data": {
-    "name": "Ada Lovelace",
-    "bio": "Writes programs.",
-    "email": "ada@example.com",
-    "phone": "0400000000",
-    "username": "ada",
-    "profileUrl": "https://www.sportshub.net.au/user/ada"
-  }
-}
-```
-
-| Field | Type | Meaning |
-| --- | --- | --- |
-| `name` | String | Public first name and surname. `""` when both are absent. |
-| `bio` | String | Public bio. `""` when absent. Render as text, or sanitize it before rendering HTML. |
-| `email` | String, nullable | Public contact email. |
-| `phone` | String, nullable | Public contact phone. |
-| `username` | String | Public username. `""` when absent. |
-| `profileUrl` | String | Public SPORTSHUB profile URL. It uses the username, or the organiser's user ID when no username is set. |
-
-A missing public profile returns HTTP 404. Other errors match the public event feed. The same refresh guidance applies.
-
-## 5. Start a booking
+## 2. Start a booking
 
 Before enabling bookings on your site, test the handoff with your event and ticket types.
 
