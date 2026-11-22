@@ -92,18 +92,30 @@ export default function TermsDataPolicyPage() {
         <section className="mt-8 space-y-3">
           <h2 className="text-xl font-semibold text-gray-900">6) Financial Information and Payment Providers</h2>
           <p className="text-gray-700">
-            SPORTSHUB does not collect or store financial information for either organisers or attendees. For attendees,
-            SPORTSHUB does not store payment card numbers, bank account details, or payment credentials. For organisers,
-            SPORTSHUB does not store payout bank account details, financial credentials, or identity verification
-            documents.
+            SPORTSHUB does not collect or store financial information for either organisers or attendees:
           </p>
-          <p className="text-gray-700">
-            All payment processing, checkout transactions, and organiser payout onboarding are handled directly by our
-            third-party payment providers, Stripe and Pyng, and are subject to their respective terms of service and
-            privacy policies. SPORTSHUB retains only non-sensitive operational records and transaction references (such
-            as linked provider account or site identifiers, order and ticket records, and payment statuses) necessary to
-            confirm bookings and operate events.
-          </p>
+          <ul className="list-disc space-y-2 pl-6 text-gray-700">
+            <li>
+              <strong className="font-semibold text-gray-900">Attendees:</strong> SPORTSHUB does not collect or store
+              payment card numbers, bank account details, or payment credentials.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Organisers:</strong> SPORTSHUB does not collect or store
+              payout bank account details, financial credentials, or identity verification documents.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Third-Party Payment Providers:</strong> All payment
+              processing, checkout transactions, and organiser payout onboarding are handled directly by our
+              third-party payment providers, Stripe and Pyng, and are subject to their respective terms of service and
+              privacy policies.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Operational Records Only:</strong> SPORTSHUB retains only
+              non-sensitive operational records and transaction references (such as linked provider account or site
+              identifiers, order and ticket records, and payment statuses) necessary to confirm bookings and operate
+              events.
+            </li>
+          </ul>
         </section>
 
         <section className="mt-8 space-y-3">
