@@ -1,16 +1,18 @@
 "use client";
 
 import Logo from "./Logo";
-import { useNavbarVisibility } from "./navbarVisibility";
+import { useNavbarVariant } from "./navbarVisibility";
 import ProfilePic from "./ProfilePic";
 import SearchBar from "./SearchBar";
 
 export default function Navbar() {
-  const isNavbarHidden = useNavbarVisibility();
+  const variant = useNavbarVariant();
 
-  if (isNavbarHidden) {
+  if (variant === "hidden") {
     return null;
   }
+
+  const isBrandOnly = variant === "brandOnly";
 
   return (
     <header className="bg-white fixed top-0 w-full z-50 box-border border-b-[1px] border-core-outline h-[var(--navbar-height)]">
@@ -20,15 +22,19 @@ export default function Navbar() {
       >
         <div className="flex items-center min-w-0">
           <div className="mr-6 lg:mr-12 flex-shrink-0">
-            <Logo />
+            <Logo linkToHome={!isBrandOnly} />
           </div>
-          <div className="min-w-0 flex-shrink">
-            <SearchBar />
+          {!isBrandOnly && (
+            <div className="min-w-0 flex-shrink">
+              <SearchBar />
+            </div>
+          )}
+        </div>
+        {!isBrandOnly && (
+          <div className="flex-shrink-0">
+            <ProfilePic />
           </div>
-        </div>
-        <div className="flex-shrink-0">
-          <ProfilePic />
-        </div>
+        )}
       </nav>
     </header>
   );

@@ -2,19 +2,20 @@
 import { Tag } from "@/interfaces/TagTypes";
 import { getAllTags } from "@/services/src/tagService";
 import { useEffect, useState } from "react";
+import Logo from "../navbar/Logo";
 import { SportshubHomeLink } from "../navbar/SportshubHomeLink";
 import ProfilePic from "../navbar/ProfilePic";
-import { useNavbarVisibility } from "@components/navbar/navbarVisibility";
+import { useNavbarVariant } from "@components/navbar/navbarVisibility";
 import MobileSearchBar from "./MobileSearchBar";
 import MobileSearchInput from "./MobileSearchInput";
 
 export default function MobileNavbar() {
-  const isNavbarHidden = useNavbarVisibility();
+  const variant = useNavbarVariant();
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [tags, setTags] = useState<Tag[]>([]);
 
   useEffect(() => {
-    if (isNavbarHidden) return;
+    if (variant !== "full") return;
 
     let cancelled = false;
     getAllTags()
@@ -30,9 +31,9 @@ export default function MobileNavbar() {
     return () => {
       cancelled = true;
     };
-  }, [isNavbarHidden]);
+  }, [variant]);
 
-  if (isNavbarHidden) {
+  if (variant === "hidden") {
     return null;
   }
 
@@ -47,15 +48,25 @@ export default function MobileNavbar() {
         role="navigation"
         aria-label="Mobile navigation"
       >
-        <SportshubHomeLink imageClassName="h-10 w-10" />
+        {variant === "brandOnly" ? (
+          <Logo linkToHome={false} />
+        ) : (
+          <>
+            <SportshubHomeLink imageClassName="h-10 w-10" />
 
-        <div className="flex-1 min-w-0 mx-4">
-          <MobileSearchBar openSearchInput={handleSearchExpanded} />
-          <MobileSearchInput searchExpanded={searchExpanded} setSearchExpanded={handleSearchExpanded} tags={tags} />
-        </div>
-        <div className="flex-shrink-0">
-          <ProfilePic />
-        </div>
+            <div className="flex-1 min-w-0 mx-4">
+              <MobileSearchBar openSearchInput={handleSearchExpanded} />
+              <MobileSearchInput
+                searchExpanded={searchExpanded}
+                setSearchExpanded={handleSearchExpanded}
+                tags={tags}
+              />
+            </div>
+            <div className="flex-shrink-0">
+              <ProfilePic />
+            </div>
+          </>
+        )}
       </nav>
       <div className="h-[1px] bg-core-outline"></div>
     </header>
