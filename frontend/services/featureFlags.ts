@@ -14,6 +14,7 @@ export function isBookingMaintenanceActive(): boolean {
 /** Organisers whose paid events can offer Pay with PYNG. This overrides supportedPaymentProviders. */
 export const PAY_WITH_PYNG_ORGANISER_IDS: readonly string[] = [
   "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
+  "qfsJZjCeWtWb0RZzl7kNK2Mh1Xx1", // jpnvolleyau
 ];
 
 export function isPayWithPyngEnabled(organiserId: string | null | undefined): boolean {
