@@ -9,7 +9,8 @@ import com.functions.events.models.PaymentProvider;
 public final class PaymentProviderPolicy {
     /** Launch allowlist. The organiser id is read from the stored event, not the client. */
     private static final Set<String> PYNG_CHECKOUT_ORGANISER_IDS = Set.of(
-            "ZzuRS5v8hhWonnp2qdIOZG8R7f12"); // sportshub prod
+            "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
+            "qfsJZjCeWtWb0RZzl7kNK2Mh1Xx1"); // jpnvolleyau
 
     private PaymentProviderPolicy() {
     }

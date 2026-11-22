@@ -22,18 +22,29 @@ const LOGO_SIZES = {
 export default function Logo({
   showText = false,
   size = "md",
+  linkToHome = true,
 }: {
   showText?: boolean;
   size?: keyof typeof LOGO_SIZES;
+  linkToHome?: boolean;
 }) {
   const { gap, mark, text } = LOGO_SIZES[size];
-
-  return (
-    <Link href="/" className={`sportshub-mark-trigger flex items-center text-core-text ${gap}`}>
+  const className = `sportshub-mark-trigger flex items-center text-core-text ${gap}`;
+  const content = (
+    <>
       <SportshubMark label="SPORTSHUB - Find and book social sports events" className={mark} />
+
       {showText && (
         <span className={`${text} font-sans font-semibold uppercase leading-none text-core-text`}>SPORTSHUB</span>
       )}
+    </>
+  );
+
+  return linkToHome ? (
+    <Link href="/" className={className}>
+      {content}
     </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }

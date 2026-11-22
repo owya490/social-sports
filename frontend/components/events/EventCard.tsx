@@ -42,8 +42,8 @@ export default function EventCard(props: EventCardProps) {
   const isCardClickable = props.isClickable !== false;
   const cardImage = thumbnail || image;
 
-  const cardContent = (
-    <div className="bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
+  return (
+    <div className="relative bg-white text-left w-full hover:cursor-pointer hover:scale-[1.02] transition-all duration-300 md:min-w-72">
       {loading ? (
         <div className="w-full">
           <LoadingSkeletonEventCard />
@@ -76,8 +76,16 @@ export default function EventCard(props: EventCardProps) {
               <h4 className="font-light text-gray-500 text-xs">{timestampToEventCardDateString(startTime)}</h4>
               <h4 className="font-light text-gray-500 text-xs ml-auto">{getEventPriceDisplay(price)}</h4>
             </div>
-            <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">{name}</h2>
-            <UserInlineDisplay organiser={organiser} isLinkEnabled={!isCardClickable} />
+            <h2 className="text-lg font-semibold mt-0.5 whitespace-nowrap overflow-hidden text-core-text">
+              {isCardClickable ? (
+                <Link href={`/event/${props.eventId}`} className="after:absolute after:inset-0">
+                  {name}
+                </Link>
+              ) : (
+                name
+              )}
+            </h2>
+            <UserInlineDisplay organiser={organiser} />
             <div className="mt-1 space-y-3">
               <div className="flex items-center ml-0.5">
                 <MapPinIcon className="w-4 shrink-0" />
@@ -89,10 +97,4 @@ export default function EventCard(props: EventCardProps) {
       )}
     </div>
   );
-
-  if (!isCardClickable) {
-    return cardContent;
-  }
-
-  return <Link href={`/event/${props.eventId}`}>{cardContent}</Link>;
 }

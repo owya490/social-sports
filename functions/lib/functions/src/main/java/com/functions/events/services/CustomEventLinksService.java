@@ -1,6 +1,7 @@
 package com.functions.events.services;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.functions.events.models.CustomEventLink;
 import com.functions.events.repositories.CustomEventLinksRepository;
 import com.google.cloud.firestore.DocumentSnapshot;
+import com.google.cloud.firestore.FieldValue;
 import com.google.cloud.firestore.Transaction;
 
 public class CustomEventLinksService {
@@ -38,5 +40,16 @@ public class CustomEventLinksService {
     }).collect(Collectors.toList());
     logger.info("Updated {} event links: {}", updatedEventLinks.size(), updatedEventLinks);
     return updatedEventLinks;
+  }
+
+  public static void clearRecurrenceTemplateReference(List<DocumentSnapshot> eventLinkDocuments,
+      Transaction transaction) {
+    Map<String, Object> clearedReference = Map.of(
+        "referenceId", FieldValue.delete(),
+        "referenceName", FieldValue.delete());
+    for (DocumentSnapshot eventLinkDocument : eventLinkDocuments) {
+      transaction.update(eventLinkDocument.getReference(), clearedReference);
+    }
+    logger.info("Cleared recurrence template reference on {} event links", eventLinkDocuments.size());
   }
 }
