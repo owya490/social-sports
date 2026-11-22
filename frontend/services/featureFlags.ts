@@ -11,7 +11,7 @@ export function isBookingMaintenanceActive(): boolean {
   return BOOKING_MAINTENANCE_ENABLED;
 }
 
-/** Organisers whose paid events can offer Pay with PYNG. This overrides supportedPaymentProviders. */
+/** Organisers whose paid events offer Pay with PYNG even when the event does not list PYNG. */
 export const PAY_WITH_PYNG_ORGANISER_IDS: readonly string[] = [
   "ZzuRS5v8hhWonnp2qdIOZG8R7f12", // sportshub prod
 ];

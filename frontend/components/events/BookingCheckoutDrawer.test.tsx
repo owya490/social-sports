@@ -70,9 +70,12 @@ describe("BookingCheckoutSummary", () => {
     expect(markup).toContain('disabled=""');
   });
 
-  it("follows supported providers, with the Pyng flag overriding that list", () => {
+  it("enables Pyng when the event lists it, with the Pyng flag as an override", () => {
     expect(actionsMarkup([PaymentProvider.PYNG])).not.toContain("Pay with Card");
-    expect(actionsMarkup([PaymentProvider.STRIPE, PaymentProvider.PYNG])).toContain("Pay with Pyng - Coming Soon...");
+    expect(actionsMarkup([PaymentProvider.STRIPE])).toContain("Pay with Pyng - Coming Soon...");
+    const listed = actionsMarkup([PaymentProvider.STRIPE, PaymentProvider.PYNG]);
+    expect(listed).toContain("Pay with PYNG");
+    expect(listed).not.toContain('disabled=""');
 
     pyngFlag.mockReturnValue(true);
     const enabled = actionsMarkup([PaymentProvider.STRIPE]);
