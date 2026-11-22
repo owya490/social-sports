@@ -2,11 +2,19 @@
 
 import OnboardingStepNav from "@/components/onboarding/OnboardingStepNav";
 import { SportshubStripeIntegrationIcon } from "@/components/organiser/v2/settings/SportshubStripeIntegrationIcon";
-import { ProfileField, ProfileSection, ProfileTextInput } from "@/components/users/profile/ProfileFormControls";
+import {
+  ProfileField,
+  ProfileSection,
+  ProfileTextInput,
+  profileFieldClass,
+  profileFieldShellClass,
+} from "@/components/users/profile/ProfileFormControls";
 import { useUser } from "@/components/utility/UserContext";
 import { UserId } from "@/interfaces/UserTypes";
 import { initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
-import { startStripePayoutOnboarding } from "@/services/src/stripe/stripeService";
+import { getStripeStandardAccountLink, startStripePayoutOnboarding } from "@/services/src/stripe/stripeService";
+import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { markProductOnboardingCompleted, updateUser } from "@/services/src/users/usersService";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { hasCompletedStripeConnectSetup } from "@/utilities/onboardingUtils";
@@ -93,6 +101,7 @@ export default function OnboardingPayoutsStep({
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
+  const [existingStripeBusy, setExistingStripeBusy] = useState(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const scriptLoadResult = useGoogleMapsScript();
@@ -121,8 +130,37 @@ export default function OnboardingPayoutsStep({
     };
   }, [mapsLoaded]);
 
+  const busy = submitting || skipBusy || existingStripeBusy;
+
+  const connectExistingStripe = async () => {
+    if (!user.userId || busy) return;
+    setErrorMessage("");
+    setExistingStripeBusy(true);
+    try {
+      const link = await getStripeStandardAccountLink(
+        user.userId,
+        getUrlWithCurrentHostname("/organiser/v2/settings"),
+        getRefreshAccountLinkUrl()
+      );
+      if (!link || link === "/error") {
+        setErrorMessage("Could not open Stripe. Try again.");
+        setExistingStripeBusy(false);
+        return;
+      }
+      try {
+        await markProductOnboardingCompleted(user.userId as UserId);
+      } catch {
+        // The Stripe link is single-use, so still send them on if saving completion fails.
+      }
+      window.location.assign(link);
+    } catch {
+      setErrorMessage("Could not open Stripe. Try again.");
+      setExistingStripeBusy(false);
+    }
+  };
+
   const skipGettingPaid = async () => {
-    if (!user.userId || skipBusy || submitting) return;
+    if (!user.userId || busy) return;
     setSkipBusy(true);
     try {
       if (!hasCompletedStripeConnectSetup(user) && user.stripeConnectSetupSkippedAt == null) {
@@ -150,7 +188,7 @@ export default function OnboardingPayoutsStep({
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user.userId || submitting || skipBusy) return;
+    if (!user.userId || busy) return;
     setErrorMessage("");
 
     const phone = user.publicContactInformation?.mobile || user.contactInformation?.mobile || "";
@@ -190,7 +228,6 @@ export default function OnboardingPayoutsStep({
     }
   };
 
-  const busy = submitting || skipBusy;
   const canFinish =
     form.firstName.trim() !== "" &&
     form.lastName.trim() !== "" &&
@@ -205,28 +242,29 @@ export default function OnboardingPayoutsStep({
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-3">
+      <header className="flex flex-col items-start gap-3">
         <SportshubStripeIntegrationIcon />
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">Getting paid</h1>
           <p className="mt-1.5 text-sm text-foreground-secondary sm:text-base">
             Add your payout details. Stripe will ask you to review them and accept its agreement.
           </p>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => void connectExistingStripe()}
+            className="mt-2 inline-block text-left text-xs font-medium text-foreground-secondary underline decoration-border underline-offset-4 transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:opacity-50"
+          >
+            {existingStripeBusy ? "Opening Stripe…" : "I have an existing Stripe account"}
+          </button>
         </div>
       </header>
 
       <form onSubmit={(event) => void handleSubmit(event)} noValidate className="space-y-4">
-        <ProfileSection
-          title="Identity and business"
-          description="Used by Stripe to verify who receives payouts."
-        >
+        <ProfileSection title="Identity and business" description="Used by Stripe to verify who receives payouts.">
           <fieldset className="space-y-2">
             <legend className="text-xs font-medium text-foreground-muted">Do you have an ABN?</legend>
-            <div
-              role="radiogroup"
-              aria-label="Do you have an ABN?"
-              className="inline-flex rounded-xl bg-surface p-1"
-            >
+            <div role="radiogroup" aria-label="Do you have an ABN?" className="inline-flex rounded-xl bg-surface p-1">
               {[
                 { label: "Yes", value: true },
                 { label: "No", value: false },
@@ -240,10 +278,8 @@ export default function OnboardingPayoutsStep({
                     aria-checked={selected}
                     disabled={busy}
                     onClick={() => updateField("hasAbn", option.value)}
-                    className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 ${
-                      selected
-                        ? "bg-foreground text-background"
-                        : "text-foreground-secondary hover:text-foreground"
+                    className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:opacity-50 ${
+                      selected ? "bg-foreground text-background" : "text-foreground-secondary hover:text-foreground"
                     }`}
                   >
                     {option.label}
@@ -258,7 +294,7 @@ export default function OnboardingPayoutsStep({
               <ProfileTextInput
                 id="payout-first-name"
                 value={form.firstName}
-                onChange={(value) => updateField("firstName", value)}
+                onChange={(v) => updateField("firstName", v)}
                 autoComplete="given-name"
                 disabled={busy}
               />
@@ -267,7 +303,7 @@ export default function OnboardingPayoutsStep({
               <ProfileTextInput
                 id="payout-last-name"
                 value={form.lastName}
-                onChange={(value) => updateField("lastName", value)}
+                onChange={(v) => updateField("lastName", v)}
                 autoComplete="family-name"
                 disabled={busy}
               />
@@ -277,7 +313,7 @@ export default function OnboardingPayoutsStep({
                 id="payout-email"
                 type="email"
                 value={form.email}
-                onChange={(value) => updateField("email", value)}
+                onChange={(v) => updateField("email", v)}
                 autoComplete="email"
                 disabled={busy}
               />
@@ -292,7 +328,7 @@ export default function OnboardingPayoutsStep({
                 <ProfileTextInput
                   id="payout-abn"
                   value={form.abn}
-                  onChange={(value) => updateField("abn", value)}
+                  onChange={(v) => updateField("abn", v)}
                   inputMode="numeric"
                   disabled={busy}
                 />
@@ -303,24 +339,27 @@ export default function OnboardingPayoutsStep({
                 id="payout-dob"
                 type="date"
                 value={form.dateOfBirth}
-                onChange={(value) => updateField("dateOfBirth", value)}
+                onChange={(v) => updateField("dateOfBirth", v)}
                 autoComplete="bday"
                 disabled={busy}
               />
             </ProfileField>
             <ProfileField label="Address" htmlFor="payout-address" className="sm:col-span-2">
-              <ProfileTextInput
-                id="payout-address"
-                inputRef={addressInputRef}
-                value={form.addressQuery}
-                disabled={busy}
-                autoComplete="off"
-                placeholder="Start typing your address"
-                onChange={(value) => {
-                  updateField("addressQuery", value);
-                  setAddress(null);
-                }}
-              />
+              <div className={profileFieldShellClass}>
+                <input
+                  id="payout-address"
+                  ref={addressInputRef}
+                  value={form.addressQuery}
+                  disabled={busy}
+                  autoComplete="off"
+                  placeholder="Start typing your address"
+                  onChange={(event) => {
+                    updateField("addressQuery", event.target.value);
+                    setAddress(null);
+                  }}
+                  className={profileFieldClass}
+                />
+              </div>
             </ProfileField>
           </div>
         </ProfileSection>
@@ -331,7 +370,7 @@ export default function OnboardingPayoutsStep({
               <ProfileTextInput
                 id="payout-account-name"
                 value={form.accountHolderName}
-                onChange={(value) => updateField("accountHolderName", value)}
+                onChange={(v) => updateField("accountHolderName", v)}
                 disabled={busy}
               />
             </ProfileField>
@@ -339,7 +378,7 @@ export default function OnboardingPayoutsStep({
               <ProfileTextInput
                 id="payout-bsb"
                 value={form.bsb}
-                onChange={(value) => updateField("bsb", value)}
+                onChange={(v) => updateField("bsb", v)}
                 inputMode="numeric"
                 disabled={busy}
               />
@@ -348,7 +387,7 @@ export default function OnboardingPayoutsStep({
               <ProfileTextInput
                 id="payout-account-number"
                 value={form.accountNumber}
-                onChange={(value) => updateField("accountNumber", value)}
+                onChange={(v) => updateField("accountNumber", v)}
                 inputMode="numeric"
                 disabled={busy}
               />

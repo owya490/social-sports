@@ -97,10 +97,10 @@ function stepStatus(visibleIndex: number, currentIndex: number): StepStatus {
 }
 
 function markerClass(status: StepStatus): string {
-  const shared = `relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 transition-colors ${MOTION}`;
-  if (status === "complete") return `${shared} bg-foreground text-background ring-transparent`;
-  if (status === "current") return `${shared} bg-background text-foreground ring-foreground`;
-  return `${shared} bg-background text-foreground-muted ring-border`;
+  const shared = `relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${MOTION}`;
+  if (status === "complete") return `${shared} border-transparent bg-[#22c55e] text-white`;
+  if (status === "current") return `${shared} border-transparent bg-surface-muted text-foreground`;
+  return `${shared} border-border bg-background text-foreground-muted`;
 }
 
 function Marker({ status, number }: { status: StepStatus; number: number }) {
@@ -147,7 +147,7 @@ function FillLine({
       aria-hidden
     >
       <span
-        className={`block h-full w-full bg-foreground transition-transform ${MOTION} ${
+        className={`block h-full w-full bg-[#22c55e] transition-transform ${MOTION} ${
           vertical ? "origin-top" : "origin-left"
         }`}
         style={{ transform: filled ? (vertical ? "scaleY(1)" : "scaleX(1)") : vertical ? "scaleY(0)" : "scaleX(0)" }}
@@ -197,7 +197,7 @@ export default function OnboardingTimeline({
               aria-current={status === "current" ? "step" : undefined}
               aria-hidden={visible ? undefined : true}
             >
-              <div className="flex w-full items-center">
+              <div className="flex w-full items-center py-0.5">
                 <span className="h-0.5 flex-1">
                   <FillLine filled={showLeft && status !== "upcoming"} active={showLeft} orientation="horizontal" />
                 </span>

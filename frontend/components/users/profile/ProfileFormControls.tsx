@@ -1,14 +1,7 @@
 "use client";
 
 import { EventHubDescriptionEditor } from "@/components/organiser/v2/event-hub/EventHubDescriptionEditor";
-import { InputHTMLAttributes, ReactNode, Ref } from "react";
-
-export const PROFILE_GENDER_OPTIONS = [
-  { value: "", label: "Prefer not to say" },
-  { value: "Male", label: "Male" },
-  { value: "Female", label: "Female" },
-  { value: "Other", label: "Other" },
-];
+import { InputHTMLAttributes, ReactNode } from "react";
 
 export const profileFieldClass =
   "w-full min-w-0 rounded-xl border-0 bg-transparent py-2.5 px-3 text-base sm:text-sm leading-6 text-foreground font-sans placeholder:text-foreground-muted outline-none ring-0 shadow-none focus:outline-none focus:ring-0 focus:shadow-none focus-visible:outline-none focus-visible:ring-0 disabled:opacity-60";
@@ -63,7 +56,6 @@ export function ProfileField({ label, htmlFor, hint, error, children, className 
 
 type ProfileTextInputProps = {
   id?: string;
-  inputRef?: Ref<HTMLInputElement>;
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -77,7 +69,6 @@ type ProfileTextInputProps = {
 
 export function ProfileTextInput({
   id,
-  inputRef,
   value,
   onChange,
   placeholder,
@@ -97,7 +88,6 @@ export function ProfileTextInput({
       ) : null}
       <input
         id={id}
-        ref={inputRef}
         type={type}
         value={value}
         disabled={disabled}

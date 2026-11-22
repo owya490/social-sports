@@ -2,7 +2,6 @@
 
 import OnboardingStepNav from "@/components/onboarding/OnboardingStepNav";
 import {
-  PROFILE_GENDER_OPTIONS,
   ProfileBioEditor,
   ProfileField,
   ProfileSection,
@@ -16,6 +15,13 @@ import { updateUser } from "@/services/src/users/usersService";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { PHONE_VALIDATION_ERROR_MESSAGE, validatePhoneNumber } from "@/utilities/phoneValidationUtils";
 import { FormEvent, useState } from "react";
+
+const GENDER_OPTIONS = [
+  { value: "", label: "Prefer not to say" },
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female" },
+  { value: "Other", label: "Other" },
+];
 
 type ProfileDraft = {
   firstName: string;
@@ -186,7 +192,7 @@ export default function OnboardingProfileStep({
                     id="onboarding-gender"
                     value={draft.gender}
                     onChange={(value) => updateDraft("gender", value as UserData["gender"])}
-                    options={PROFILE_GENDER_OPTIONS}
+                    options={GENDER_OPTIONS}
                     disabled={submitting}
                   />
                 </ProfileField>

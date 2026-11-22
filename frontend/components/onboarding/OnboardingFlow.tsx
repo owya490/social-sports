@@ -157,7 +157,7 @@ export default function OnboardingFlow() {
                     type="button"
                     disabled={submitting}
                     onClick={() => void choosePersona(optionPersona)}
-                    className="rounded-xl border border-border bg-background p-5 text-left transition-colors hover:border-foreground hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50 sm:p-6"
+                    className="rounded-xl border border-border bg-background p-5 text-left transition-colors hover:border-foreground hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:opacity-50 sm:p-6"
                   >
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-surface text-foreground">
                       <Icon aria-hidden className="h-5 w-5 stroke-[1.5]" />
