@@ -1,5 +1,16 @@
 # SPORTSHUB Agent Guide
 
+## Writing Rules
+
+Before you write any direct response to the user or any text in changes, follow these rules:
+
+- Write in ASD-STE100 Simplified Technical English.
+- Do not use techno-babble of any kind.
+- Do not physicalize things.
+- Always use the simplest phrase.
+- Do not use synonymous phrases for variety.
+- Use active voice.
+
 AGENTS.md loaded
 
 ## MOST CRITICAL NOTES
