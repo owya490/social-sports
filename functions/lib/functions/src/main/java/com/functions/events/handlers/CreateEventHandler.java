@@ -7,6 +7,8 @@ import static com.functions.firebase.services.FirebaseService.CollectionPaths.IN
 import static com.functions.firebase.services.FirebaseService.CollectionPaths.PRIVATE;
 import static com.functions.firebase.services.FirebaseService.CollectionPaths.PUBLIC;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,10 +20,12 @@ import com.functions.events.utils.EventsMetadataUtils;
 import com.functions.events.utils.EventIdGenerator;
 import com.functions.events.utils.EventsUtils;
 import com.functions.firebase.services.FirebaseService;
+import com.functions.fulfilment.payment.PaymentProviderPolicy;
 import com.functions.global.models.AuthContext;
 import com.functions.global.models.Handler;
 import com.functions.global.models.requests.UnifiedRequest;
 import com.functions.global.services.EventAuthorizationService;
+import com.functions.users.services.Users;
 import com.functions.utils.JavaUtils;
 import com.google.cloud.firestore.DocumentReference;
 import com.google.cloud.firestore.Firestore;
@@ -78,6 +82,9 @@ public class CreateEventHandler implements Handler<NewEventData, CreateEventResp
     public static String createEvent(NewEventData data, Transaction transaction, String eventId)
             throws Exception {
         logger.info("Creating event: {}", data.getName());
+        // Firestore transactions require this read before any write below.
+        data.setSupportedPaymentProviders(PaymentProviderPolicy.organiserPaymentProviders(
+                Users.getPrivateUserDataById(data.getOrganiserId(), Optional.of(transaction))));
         Firestore db = FirebaseService.getFirestore();
         String isActive = data.getIsActive() ? ACTIVE : INACTIVE;
         String isPrivate = data.getIsPrivate() ? PRIVATE : PUBLIC;

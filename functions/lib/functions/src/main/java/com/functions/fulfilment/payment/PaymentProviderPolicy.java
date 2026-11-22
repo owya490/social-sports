@@ -1,10 +1,12 @@
 package com.functions.fulfilment.payment;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import com.functions.events.models.EventData;
 import com.functions.events.models.PaymentProvider;
+import com.functions.users.models.PrivateUserData;
 
 public final class PaymentProviderPolicy {
     /** Launch allowlist. The organiser id is read from the stored event, not the client. */
@@ -15,8 +17,18 @@ public final class PaymentProviderPolicy {
     }
 
     public static boolean allowsPyngCheckout(EventData event) {
-        return event != null && event.getOrganiserId() != null
-                && PYNG_CHECKOUT_ORGANISER_IDS.contains(event.getOrganiserId());
+        if (event == null) {
+            return false;
+        }
+        List<PaymentProvider> configured = event.getSupportedPaymentProviders();
+        return (configured != null && configured.contains(PaymentProvider.PYNG))
+                || (event.getOrganiserId() != null && PYNG_CHECKOUT_ORGANISER_IDS.contains(event.getOrganiserId()));
+    }
+
+    /** Providers a newly created event inherits from its organiser. */
+    public static List<PaymentProvider> organiserPaymentProviders(PrivateUserData organiser) {
+        List<PaymentProvider> configured = organiser == null ? null : organiser.getSupportedPaymentProviders();
+        return configured == null ? new ArrayList<>(List.of(PaymentProvider.STRIPE)) : new ArrayList<>(configured);
     }
 
     public static List<PaymentProvider> supportedPaymentProviders(EventData event) {

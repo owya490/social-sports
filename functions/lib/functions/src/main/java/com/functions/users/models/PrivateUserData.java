@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.functions.events.models.PaymentProvider;
 import com.functions.users.models.AbstractUserData.ActiveBooking;
 import com.functions.users.models.AbstractUserData.ContactInformation;
 import com.google.cloud.Timestamp;
@@ -28,6 +29,8 @@ public class PrivateUserData {
 	private Boolean stripeAccountActive;
 	/** Organiser Pyng site id. */
 	private String pyngSiteId;
+	/** Copied onto events the organiser creates. */
+	private List<PaymentProvider> supportedPaymentProviders = new ArrayList<>(List.of(PaymentProvider.STRIPE));
 	private List<String> organiserEvents = new ArrayList<>();
 	private List<String> recurrenceTemplates = new ArrayList<>();
 	private Boolean sendOrganiserTicketEmails = false;
