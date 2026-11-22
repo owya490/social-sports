@@ -26,7 +26,6 @@ import com.functions.events.models.responses.CreateEventResponse;
 import com.functions.events.models.responses.UpdateRecurrenceTemplateResponse;
 import com.functions.forms.models.requests.SaveTempFormResponseRequest;
 import com.functions.forms.models.responses.SaveTempFormResponseResponse;
-import com.functions.fulfilment.models.requests.CompleteFulfilmentSessionRequest;
 import com.functions.fulfilment.models.requests.GetFulfilmentEntityInfoRequest;
 import com.functions.fulfilment.models.requests.RefreshPyngCheckoutRequest;
 import com.functions.fulfilment.models.requests.UpdateFulfilmentPurchaserRequest;
@@ -97,7 +96,6 @@ public enum EndpointType {
             AuthLevel.PUBLIC),
     GET_FULFILMENT_ENTITY_INFO(GetFulfilmentEntityInfoRequest.class, GetFulfilmentEntityInfoResponse.class,
             AuthLevel.PUBLIC),
-    COMPLETE_FULFILMENT_SESSION(CompleteFulfilmentSessionRequest.class, String.class, AuthLevel.PUBLIC),
     UPDATE_FULFILMENT_PURCHASER(UpdateFulfilmentPurchaserRequest.class, UpdateFulfilmentPurchaserResponse.class,
             AuthLevel.PUBLIC),
     REFRESH_PYNG_CHECKOUT(RefreshPyngCheckoutRequest.class, RefreshPyngCheckoutResponse.class, AuthLevel.PUBLIC),

@@ -2,20 +2,13 @@ import { EventTicketTypeId } from "@/interfaces/EventTicketTypeTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FulfilmentSessionId, PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { Logger } from "@/observability/logger";
-import { Environment, getEnvironment } from "@/utilities/environment";
 import {
-  COMPLETE_FULFILMENT_SESSION_URL,
   FULFILMENT_SESSION_CACHE_TTL_MILLIS,
   getFulfilmentSessionExpiryTimestampKey,
   getFulfilmentSessionIdKey,
 } from "../fulfilmentConstants";
 
 const fulfilmentUtilsLogger = new Logger("fulfilmentUtilsLogger");
-
-export function getCompleteFulfilmentSessionUrl(): string {
-  const env = getEnvironment();
-  return COMPLETE_FULFILMENT_SESSION_URL[`${env || Environment.DEVELOPMENT}`];
-}
 
 /**
  * Purges all expired fulfilment session IDs from localStorage.
