@@ -212,19 +212,6 @@ public class FulfilmentSessionRepository {
         }
     }
 
-    public static void updatePyngMetadata(String sessionId, PyngMetadata pyngMetadata) throws Exception {
-        try {
-            DocumentReference sessionDocRef = getFulfilmentSessionDocRef(sessionId);
-            Map<String, Object> metadataMap = objectMapper.convertValue(pyngMetadata,
-                    new TypeReference<Map<String, Object>>() {
-                    });
-            sessionDocRef.update("pyngMetadata", metadataMap).get();
-        } catch (Exception e) {
-            logger.error("Failed to update pyngMetadata for sessionId: {}", sessionId, e);
-            throw new Exception("Failed to update pyngMetadata for sessionId: " + sessionId, e);
-        }
-    }
-
     /**
      * Deletes a fulfilment session (convenience method without transaction)
      */

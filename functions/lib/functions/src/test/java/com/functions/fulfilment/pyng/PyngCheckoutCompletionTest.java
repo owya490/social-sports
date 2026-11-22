@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 import org.junit.After;
 import org.junit.Before;
@@ -120,6 +121,23 @@ public class PyngCheckoutCompletionTest {
     }
 
     @Test
+    public void storedTerminalStatusIsConfirmedWithPyngBeforePublishing() throws Exception {
+        stored.set(session(PaymentStatus.SUCCEEDED, "Ada", "ada@example.com"));
+        AtomicInteger polls = new AtomicInteger();
+        AtomicReference<String> liveStatus = new AtomicReference<>("Pending");
+        PyngService.client = clientReturning(liveStatus::get, polls);
+
+        assertEquals(PaymentStatus.PENDING, PyngCheckoutCompletion.refresh(SESSION_ID));
+        assertEquals(1, polls.get());
+        assertEquals(0, publishes.get());
+
+        liveStatus.set("Settled");
+        assertEquals(PaymentStatus.SUCCEEDED, PyngCheckoutCompletion.refresh(SESSION_ID));
+        assertEquals(2, polls.get());
+        assertEquals(1, publishes.get());
+    }
+
+    @Test
     public void pendingDoesNotPublish() throws Exception {
         stored.set(session(PaymentStatus.PENDING, "Ada", "ada@example.com"));
         PyngService.client = clientReturning("Pending");
@@ -129,9 +147,16 @@ public class PyngCheckoutCompletionTest {
     }
 
     private static PyngCheckoutClient clientReturning(String transactionStatus) {
-        return new PyngCheckoutClient(request -> new PyngCheckoutClient.RawResponse(200, """
-                {"data":{"checkoutSessionId":"cs-1","transactionStatus":"%s","orderId":"%s"},"traceId":"trace-1"}
-                """.formatted(transactionStatus, SESSION_ID)));
+        return clientReturning(() -> transactionStatus, new AtomicInteger());
+    }
+
+    private static PyngCheckoutClient clientReturning(Supplier<String> transactionStatus, AtomicInteger polls) {
+        return new PyngCheckoutClient(request -> {
+            polls.incrementAndGet();
+            return new PyngCheckoutClient.RawResponse(200, """
+                    {"data":{"checkoutSessionId":"cs-1","transactionStatus":"%s","orderId":"%s"},"traceId":"trace-1"}
+                    """.formatted(transactionStatus.get(), SESSION_ID));
+        });
     }
 
     private static PyngCheckoutFulfilmentSession session(PaymentStatus status, String name, String email) {

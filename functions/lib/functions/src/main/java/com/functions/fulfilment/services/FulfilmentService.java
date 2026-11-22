@@ -100,6 +100,8 @@ public class FulfilmentService {
 
     /**
      * Pyng sessions are removed by the fulfilment processor, not this cleanup.
+     * A session that cannot be read is kept, because it may be a Pyng checkout
+     * whose payment settles later.
      */
     private static boolean shouldRetainPyngCheckout(String fulfilmentSessionId) {
         try {
@@ -107,9 +109,9 @@ public class FulfilmentService {
                     fulfilmentSessionId, Optional.empty());
             return maybeSession.isPresent() && maybeSession.get() instanceof PyngCheckoutFulfilmentSession;
         } catch (Exception e) {
-            logger.warn("Could not inspect fulfilment session {} before cleanup; deleting it",
+            logger.warn("Could not inspect fulfilment session {} before cleanup; keeping it",
                     fulfilmentSessionId, e);
-            return false;
+            return true;
         }
     }
 
