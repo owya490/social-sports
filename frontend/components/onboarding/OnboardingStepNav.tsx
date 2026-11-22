@@ -1,7 +1,5 @@
 "use client";
 
-import { HighlightButton } from "@/components/elements/HighlightButton";
-
 type OnboardingStepNavProps = {
   onBack: () => void;
   primaryLabel: string;
@@ -15,7 +13,6 @@ type OnboardingStepNavProps = {
   };
 };
 
-/** Back on the left, continue or finish on the right. Shared by every onboarding step. */
 export default function OnboardingStepNav({
   onBack,
   primaryLabel,
@@ -27,33 +24,33 @@ export default function OnboardingStepNav({
 }: OnboardingStepNavProps) {
   return (
     <div className="flex w-full items-center justify-between gap-4 pt-2">
-      <HighlightButton
+      <button
         type="button"
-        className="border border-core-outline bg-transparent disabled:opacity-50"
         disabled={disabled}
         onClick={onBack}
+        className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
       >
         Back
-      </HighlightButton>
-      <div className="flex flex-col items-end gap-2">
-        <HighlightButton
-          type={primaryType}
-          className="bg-core-text text-white hover:bg-black disabled:opacity-50"
-          disabled={disabled || primaryDisabled}
-          onClick={onPrimary}
-        >
-          {primaryLabel}
-        </HighlightButton>
+      </button>
+      <div className="flex items-center gap-4">
         {skip ? (
           <button
             type="button"
             disabled={disabled}
-            className="text-xs text-gray-500 underline decoration-gray-300 underline-offset-2 hover:text-gray-800 disabled:opacity-50"
             onClick={() => void skip.onSkip()}
+            className="text-sm font-medium text-foreground-muted transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
           >
-            {skip.busy ? "Working…" : "Skip"}
+            {skip.busy ? "Working…" : "Skip for now"}
           </button>
         ) : null}
+        <button
+          type={primaryType}
+          disabled={disabled || primaryDisabled}
+          onClick={onPrimary}
+          className="inline-flex items-center justify-center rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-accent-contrast transition-[filter] hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:opacity-50"
+        >
+          {primaryLabel}
+        </button>
       </div>
     </div>
   );

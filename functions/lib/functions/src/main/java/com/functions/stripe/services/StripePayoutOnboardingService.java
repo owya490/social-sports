@@ -18,6 +18,7 @@ import com.functions.stripe.models.requests.StartStripePayoutOnboardingRequest;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.models.PublicUserData;
 import com.functions.users.services.Users;
+import com.functions.utils.UrlUtils;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.AccountLink;
@@ -34,9 +35,26 @@ public class StripePayoutOnboardingService {
     private static final ZoneId SYDNEY = ZoneId.of("Australia/Sydney");
     private static final Set<String> AU_STATES = Set.of("NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT");
     private static final int[] ABN_WEIGHTS = {10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19};
-    static final String RETURN_URL = "https://www.sportshub.net.au/organiser/v2/settings";
-    static final String REFRESH_URL = "https://www.sportshub.net.au/stripe/refreshAccountLink";
+    static final String RETURN_URL = UrlUtils.SPORTSHUB_URL + "/organiser/v2/settings";
+    static final String REFRESH_URL = UrlUtils.SPORTSHUB_URL + "/stripe/refreshAccountLink";
     private static final String PRODUCT_DESCRIPTION = "Sells tickets and takes bookings for social sports events on SPORTSHUB.";
+
+    private record ValidatedDetails(
+            String firstName,
+            String lastName,
+            String email,
+            String phone,
+            boolean hasAbn,
+            String abn,
+            LocalDate dob,
+            String line1,
+            String city,
+            String state,
+            String postcode,
+            String accountHolderName,
+            String bsb,
+            String accountNumber) {
+    }
 
     public static String start(String userId, StartStripePayoutOnboardingRequest request) throws Exception {
         PrivateUserData privateUser = Users.getPrivateUserDataById(userId);
@@ -49,15 +67,16 @@ public class StripePayoutOnboardingService {
 
         PublicUserData publicUser = Users.getPublicUserDataById(userId);
         String username = publicUser == null ? null : publicUser.getUsername();
-        AccountCreateParams params = accountParams(userId, username, request);
+        ValidatedDetails details = validate(request);
+        AccountCreateParams params = accountParams(userId, username, details);
 
         StripeConfig.initialize();
         Account account;
         AccountLink link;
         try {
             account = Account.create(params);
-            if (request.hasAbn()) {
-                account.persons().create(representativeParams(request));
+            if (details.hasAbn()) {
+                account.persons().create(representativeParams(details));
             }
             link = AccountLink.create(linkParams(account.getId()));
         } catch (StripeException e) {
@@ -70,7 +89,7 @@ public class StripePayoutOnboardingService {
         return link.getUrl();
     }
 
-    static AccountCreateParams accountParams(String userId, String username, StartStripePayoutOnboardingRequest request) {
+    private static ValidatedDetails validate(StartStripePayoutOnboardingRequest request) {
         String firstName = required(request.firstName(), "Enter your first name");
         String lastName = required(request.lastName(), "Enter your last name");
         String email = required(request.email(), "Enter your email");
@@ -90,20 +109,6 @@ public class StripePayoutOnboardingService {
         if (accountNumber.length() < 5 || accountNumber.length() > 10) {
             throw new IllegalArgumentException("Enter a valid account number");
         }
-
-        String profilePath = username == null || username.isBlank() ? userId : username;
-        AccountCreateParams.Builder builder = AccountCreateParams.builder()
-                .setType(AccountCreateParams.Type.STANDARD)
-                .setCountry("AU")
-                .setEmail(email)
-                .setBusinessProfile(AccountCreateParams.BusinessProfile.builder()
-                        .setMcc("7941")
-                        .setProductDescription(PRODUCT_DESCRIPTION)
-                        .setSupportPhone(phone)
-                        .setUrl("https://www.sportshub.net.au/user/" + profilePath)
-                        .build())
-                .putExtraParam("external_account", bankAccount(accountHolderName, bsb, accountNumber, request.hasAbn()));
-
         String line1 = required(request.addressLine1(), "Enter your address");
         String city = required(request.city(), "Enter your city");
         String state = request.state() == null ? "" : request.state().trim().toUpperCase();
@@ -114,46 +119,67 @@ public class StripePayoutOnboardingService {
         if (postcode.length() != 4) {
             throw new IllegalArgumentException("Enter a 4-digit postcode");
         }
+        LocalDate dob = parseAdultDob(request.dateOfBirth());
 
-        parseAdultDob(request.dateOfBirth());
-
+        String abn = null;
         if (request.hasAbn()) {
-            String abn = digits(request.abn());
+            abn = digits(request.abn());
             if (!isValidAbn(abn)) {
                 throw new IllegalArgumentException("Enter a valid ABN");
             }
-            builder.setCompany(AccountCreateParams.Company.builder()
-                    .setTaxId(abn)
-                    .setAddress(AccountCreateParams.Company.Address.builder()
-                            .setLine1(line1)
-                            .setCity(city)
-                            .setState(state)
-                            .setPostalCode(postcode)
-                            .setCountry("AU")
-                            .build())
-                    .build());
-            return builder.build();
         }
 
-        LocalDate dob = parseAdultDob(request.dateOfBirth());
+        return new ValidatedDetails(
+                firstName, lastName, email, phone, request.hasAbn(), abn, dob,
+                line1, city, state, postcode, accountHolderName, bsb, accountNumber);
+    }
+
+    private static AccountCreateParams accountParams(String userId, String username, ValidatedDetails details) {
+        String profilePath = username == null || username.isBlank() ? userId : username;
+        AccountCreateParams.Builder builder = AccountCreateParams.builder()
+                .setType(AccountCreateParams.Type.STANDARD)
+                .setCountry("AU")
+                .setEmail(details.email())
+                .setBusinessProfile(AccountCreateParams.BusinessProfile.builder()
+                        .setMcc("7941")
+                        .setProductDescription(PRODUCT_DESCRIPTION)
+                        .setSupportPhone(details.phone())
+                        .setUrl(UrlUtils.SPORTSHUB_URL + "/user/" + profilePath)
+                        .build())
+                .putExtraParam("external_account", bankAccount(details));
+
+        if (details.hasAbn()) {
+            return builder
+                    .setCompany(AccountCreateParams.Company.builder()
+                            .setTaxId(details.abn())
+                            .setAddress(AccountCreateParams.Company.Address.builder()
+                                    .setLine1(details.line1())
+                                    .setCity(details.city())
+                                    .setState(details.state())
+                                    .setPostalCode(details.postcode())
+                                    .setCountry("AU")
+                                    .build())
+                            .build())
+                    .build();
+        }
 
         return builder
                 .setBusinessType(AccountCreateParams.BusinessType.INDIVIDUAL)
                 .setIndividual(AccountCreateParams.Individual.builder()
-                        .setFirstName(firstName)
-                        .setLastName(lastName)
-                        .setEmail(email)
-                        .setPhone(phone)
+                        .setFirstName(details.firstName())
+                        .setLastName(details.lastName())
+                        .setEmail(details.email())
+                        .setPhone(details.phone())
                         .setDob(AccountCreateParams.Individual.Dob.builder()
-                                .setDay((long) dob.getDayOfMonth())
-                                .setMonth((long) dob.getMonthValue())
-                                .setYear((long) dob.getYear())
+                                .setDay((long) details.dob().getDayOfMonth())
+                                .setMonth((long) details.dob().getMonthValue())
+                                .setYear((long) details.dob().getYear())
                                 .build())
                         .setAddress(AccountCreateParams.Individual.Address.builder()
-                                .setLine1(line1)
-                                .setCity(city)
-                                .setState(state)
-                                .setPostalCode(postcode)
+                                .setLine1(details.line1())
+                                .setCity(details.city())
+                                .setState(details.state())
+                                .setPostalCode(details.postcode())
                                 .setCountry("AU")
                                 .build())
                         .build())
@@ -164,27 +190,22 @@ public class StripePayoutOnboardingService {
      * The person completing signup is the business representative. Stripe stores
      * that person separately when the account has an ABN.
      */
-    static PersonCollectionCreateParams representativeParams(StartStripePayoutOnboardingRequest request) {
-        LocalDate dob = parseAdultDob(request.dateOfBirth());
-        String line1 = required(request.addressLine1(), "Enter your address");
-        String city = required(request.city(), "Enter your city");
-        String state = request.state() == null ? "" : request.state().trim().toUpperCase();
-        String postcode = digits(request.postcode());
+    private static PersonCollectionCreateParams representativeParams(ValidatedDetails details) {
         return PersonCollectionCreateParams.builder()
-                .setFirstName(required(request.firstName(), "Enter your first name"))
-                .setLastName(required(request.lastName(), "Enter your last name"))
-                .setEmail(required(request.email(), "Enter your email"))
-                .setPhone(toAustralianE164(request.phone()))
+                .setFirstName(details.firstName())
+                .setLastName(details.lastName())
+                .setEmail(details.email())
+                .setPhone(details.phone())
                 .setDob(PersonCollectionCreateParams.Dob.builder()
-                        .setDay((long) dob.getDayOfMonth())
-                        .setMonth((long) dob.getMonthValue())
-                        .setYear((long) dob.getYear())
+                        .setDay((long) details.dob().getDayOfMonth())
+                        .setMonth((long) details.dob().getMonthValue())
+                        .setYear((long) details.dob().getYear())
                         .build())
                 .setAddress(PersonCollectionCreateParams.Address.builder()
-                        .setLine1(line1)
-                        .setCity(city)
-                        .setState(state)
-                        .setPostalCode(postcode)
+                        .setLine1(details.line1())
+                        .setCity(details.city())
+                        .setState(details.state())
+                        .setPostalCode(details.postcode())
                         .setCountry("AU")
                         .build())
                 .setRelationship(PersonCollectionCreateParams.Relationship.builder()
@@ -193,7 +214,7 @@ public class StripePayoutOnboardingService {
                 .build();
     }
 
-    static AccountLinkCreateParams linkParams(String accountId) {
+    private static AccountLinkCreateParams linkParams(String accountId) {
         return AccountLinkCreateParams.builder()
                 .setAccount(accountId)
                 .setRefreshUrl(REFRESH_URL)
@@ -205,15 +226,15 @@ public class StripePayoutOnboardingService {
                 .build();
     }
 
-    private static Map<String, Object> bankAccount(String accountHolderName, String bsb, String accountNumber, boolean hasAbn) {
+    private static Map<String, Object> bankAccount(ValidatedDetails details) {
         Map<String, Object> bank = new HashMap<>();
         bank.put("object", "bank_account");
         bank.put("country", "AU");
         bank.put("currency", "aud");
-        bank.put("account_holder_name", accountHolderName);
-        bank.put("account_holder_type", hasAbn ? "company" : "individual");
-        bank.put("routing_number", bsb);
-        bank.put("account_number", accountNumber);
+        bank.put("account_holder_name", details.accountHolderName());
+        bank.put("account_holder_type", details.hasAbn() ? "company" : "individual");
+        bank.put("routing_number", details.bsb());
+        bank.put("account_number", details.accountNumber());
         return bank;
     }
 
@@ -260,10 +281,7 @@ public class StripePayoutOnboardingService {
     }
 
     private static String digits(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.replaceAll("\\D", "");
+        return value == null ? "" : value.replaceAll("\\D", "");
     }
 
     private static String required(String value, String message) {

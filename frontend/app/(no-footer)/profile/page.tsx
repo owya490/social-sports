@@ -3,6 +3,7 @@
 import Loading from "@/components/loading/Loading";
 import { EmailChangeModal } from "@/components/users/profile/EmailChangeModal";
 import {
+  PROFILE_GENDER_OPTIONS,
   ProfileBioEditor,
   ProfileField,
   ProfileReadonlyField,
@@ -270,12 +271,7 @@ const Profile = () => {
                   id="profile-gender"
                   value={draft.gender}
                   onChange={(v) => updateDraft("gender", v as UserData["gender"])}
-                  options={[
-                    { value: "", label: "Prefer not to say" },
-                    { value: "Male", label: "Male" },
-                    { value: "Female", label: "Female" },
-                    { value: "Other", label: "Other" },
-                  ]}
+                  options={PROFILE_GENDER_OPTIONS}
                 />
               </ProfileField>
             </div>
