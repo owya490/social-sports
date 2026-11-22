@@ -4,6 +4,7 @@ import DeleteEventModal from "@/components/organiser/event/settings/DeleteEventM
 import { ConnectStripeCta } from "@/components/organiser/v2/settings/ConnectStripeCta";
 import { useUser } from "@/components/utility/UserContext";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
@@ -21,6 +22,7 @@ import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
 import { isFreeEvent } from "@/utilities/priceUtils";
 import {
   CheckBadgeIcon,
+  ChevronRightIcon,
   CreditCardIcon,
   QueueListIcon,
   TicketIcon,
@@ -35,6 +37,7 @@ import {
   EventHubSettingTileRow,
   EventHubStage,
 } from "./EventHubStage";
+import { PaymentProvidersPanel, paymentProvidersLabel } from "./PaymentProvidersPanel";
 import { useSettingsAutosave } from "./useSettingsAutosave";
 
 type EventHubSettingsProps = {
@@ -60,6 +63,8 @@ type EventHubSettingsProps = {
   setShowAttendeesOnEventPage: (value: boolean) => void;
   maxTicketsPerTransaction: number;
   setMaxTicketsPerTransaction: (n: number) => void;
+  supportedPaymentProviders: PaymentProvider[];
+  setSupportedPaymentProviders: (providers: PaymentProvider[]) => void;
   eventCapacity: number;
   eventPrice: number;
 };
@@ -108,6 +113,8 @@ export function EventHubSettings({
   setShowAttendeesOnEventPage,
   maxTicketsPerTransaction,
   setMaxTicketsPerTransaction,
+  supportedPaymentProviders,
+  setSupportedPaymentProviders,
   eventCapacity,
   eventPrice,
 }: EventHubSettingsProps) {
@@ -115,6 +122,7 @@ export function EventHubSettings({
   const { user, auth } = useUser();
   const logger = useMemo(() => new Logger("EventHubSettings"), []);
   const [modalOpen, setModalOpen] = useState(false);
+  const [providersPanelOpen, setProvidersPanelOpen] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const { status: saveStatus, isSaving, run: runSave, retry: retrySave } = useSettingsAutosave();
 
@@ -154,6 +162,15 @@ export function EventHubSettings({
       { maxTicketsPerTransaction: clamped },
       () => setMaxTicketsPerTransaction(clamped),
       () => setMaxTicketsPerTransaction(previous)
+    );
+  };
+
+  const persistPaymentProviders = (next: PaymentProvider[]) => {
+    const previous = supportedPaymentProviders;
+    void saveEventSettings(
+      { supportedPaymentProviders: next },
+      () => setSupportedPaymentProviders(next),
+      () => setSupportedPaymentProviders(previous)
     );
   };
 
@@ -241,6 +258,21 @@ export function EventHubSettings({
               />
             ) : null}
           </EventHubSettingTileRow>
+          {!isFree && stripeReady && paymentsActive ? (
+            <button
+              type="button"
+              onClick={() => setProvidersPanelOpen(true)}
+              className="mt-2 flex w-full items-center gap-3 rounded-lg border border-border px-3 py-2.5 text-left hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-foreground font-sans">Payment providers</span>
+                <span className="mt-0.5 block text-xs text-foreground-secondary font-sans">
+                  {paymentProvidersLabel(supportedPaymentProviders)}
+                </span>
+              </span>
+              <ChevronRightIcon className="h-4 w-4 shrink-0 text-foreground-muted" aria-hidden />
+            </button>
+          ) : null}
           {!stripeReady ? <ConnectStripeCta className="mt-3 mb-1" /> : null}
         </SettingsGroup>
 
@@ -321,6 +353,15 @@ export function EventHubSettings({
           </div>
         </SettingsGroup>
       </div>
+
+      <PaymentProvidersPanel
+        open={providersPanelOpen}
+        onClose={() => setProvidersPanelOpen(false)}
+        supportedPaymentProviders={supportedPaymentProviders}
+        organiserPaymentProviders={user.supportedPaymentProviders ?? [PaymentProvider.STRIPE]}
+        disabled={isSaving}
+        onChange={persistPaymentProviders}
+      />
 
       <DeleteEventModal
         eventName={eventName}
