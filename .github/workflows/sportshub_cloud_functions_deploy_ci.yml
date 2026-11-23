@@ -29,6 +29,8 @@ jobs:
     name: Deploy Cloud Functions to ${{ matrix.env }}
     runs-on: ubuntu-latest
     strategy:
+      # A failure in one environment must not cancel the other part-way through its deploy.
+      fail-fast: false
       matrix:
         env: [dev, prod]
     steps:
