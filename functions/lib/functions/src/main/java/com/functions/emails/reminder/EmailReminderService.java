@@ -18,19 +18,26 @@ public final class EmailReminderService implements EmailReminderJob {
     private final ActiveEventSource events;
     private final PurchaserSource purchasers;
     private final ReminderMailer mailer;
+    private final ReminderClaims claims;
     private final EventStartDay startDay = new EventStartDay();
 
-    public EmailReminderService(ActiveEventSource events, PurchaserSource purchasers, ReminderMailer mailer) {
+    public EmailReminderService(
+            ActiveEventSource events,
+            PurchaserSource purchasers,
+            ReminderMailer mailer,
+            ReminderClaims claims) {
         this.events = events;
         this.purchasers = purchasers;
         this.mailer = mailer;
+        this.claims = claims;
     }
 
     public static EmailReminderService production() {
         return new EmailReminderService(
                 new FirestoreActiveEvents(),
                 new FirestoreApprovedPurchasers(new ApprovedPurchaserCollector()),
-                new LoopsReminderSender());
+                new LoopsReminderSender(),
+                new FirestoreReminderClaims());
     }
 
     @Override
@@ -50,21 +57,41 @@ public final class EmailReminderService implements EmailReminderJob {
 
         int sent = 0;
         int failed = 0;
+        int alreadySent = 0;
         for (EventReminderDraft event : due) {
             for (ReminderPurchaser purchaser : purchasers.forEvent(event.eventId())) {
-                try {
-                    if (mailer.send(event, purchaser)) {
-                        sent++;
-                    } else {
-                        failed++;
-                    }
-                } catch (RuntimeException e) {
+                if (!claims.claim(event.eventId(), eventDate, purchaser.email())) {
+                    alreadySent++;
+                    continue;
+                }
+                if (send(event, purchaser)) {
+                    sent++;
+                } else {
                     failed++;
-                    logger.error("Failed to send event reminder. eventId={}", event.eventId(), e);
+                    release(event.eventId(), eventDate, purchaser.email());
                 }
             }
         }
+        logger.info("Reminder pass. date={} sent={} failed={} alreadySent={}",
+                eventDate, sent, failed, alreadySent);
         return new EmailReminderResult(eventDate, eventIds, sent, failed);
+    }
+
+    private boolean send(EventReminderDraft event, ReminderPurchaser purchaser) {
+        try {
+            return mailer.send(event, purchaser);
+        } catch (RuntimeException e) {
+            logger.error("Failed to send event reminder. eventId={}", event.eventId(), e);
+            return false;
+        }
+    }
+
+    private void release(String eventId, LocalDate eventDate, String email) {
+        try {
+            claims.release(eventId, eventDate, email);
+        } catch (RuntimeException e) {
+            logger.error("Failed to release reminder claim. eventId={}", eventId, e);
+        }
     }
 
     public interface ActiveEventSource {
@@ -79,5 +106,15 @@ public final class EmailReminderService implements EmailReminderJob {
 
     public interface ReminderMailer {
         boolean send(EventReminderDraft event, ReminderPurchaser purchaser);
+    }
+
+    /**
+     * Claims one recipient for one event date before the email is sent.
+     * A second run sees the claim and does not send again. A failed send releases it.
+     */
+    public interface ReminderClaims {
+        boolean claim(String eventId, LocalDate eventDate, String email);
+
+        void release(String eventId, LocalDate eventDate, String email);
     }
 }
