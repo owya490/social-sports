@@ -11,6 +11,4 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserMetadata {
 	private String userId;
-	/** Host vs participant choice. Unset until selected during onboarding. */
-	private String onboardingPersona;
 }

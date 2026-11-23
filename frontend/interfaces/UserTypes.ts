@@ -4,11 +4,10 @@ import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
-import { Timestamp } from "firebase/firestore";
 
 export type UserId = Branded<string, "UserId">;
 
-/** Whether the user primarily hosts events or joins them as a participant (set during onboarding). */
+/** Role picked in the onboarding screen. Held in page state only and never stored. */
 export type OnboardingPersona = "organiser" | "attendee";
 
 export interface PublicUserData {
@@ -51,16 +50,6 @@ export interface PrivateUserData {
   privateEventCollections: EventCollectionId[];
   /** True until onboarding is finished. Missing means false, so legacy accounts stay out. */
   isOnboarding?: boolean;
-  /** Kept for migration. New persona choices are stored on UserMetadata. */
-  onboardingPersona?: OnboardingPersona | null;
-  /** Kept for migration. Product onboarding now uses isOnboarding. */
-  onboardingCompletedAt?: Timestamp | null;
-  /** Kept for migration. */
-  stripeConnectSetupCompletedAt?: Timestamp | null;
-  /** Kept for migration. */
-  stripeConnectSetupSkippedAt?: Timestamp | null;
-  /** Kept for migration. */
-  onboardingSkippedAt?: Timestamp | null;
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -142,6 +131,4 @@ export const USER_METADATA_PATH = "Users/Active/Metadata";
 /** Users/Active/Metadata/{userId}. Client writes are denied; the backend owns this document. */
 export interface UserMetadata {
   userId: string;
-  /** Host vs participant choice. Unset until selected during onboarding. */
-  onboardingPersona?: OnboardingPersona | null;
 }

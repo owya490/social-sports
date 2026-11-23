@@ -13,7 +13,6 @@ export function pathAfterSignIn(user: UserData): string {
   return isUserOnboarding(user) ? "/onboarding" : "/?login=success";
 }
 
-/** Prefer persisted completion timestamp; fall back to legacy Stripe-ready fields. */
 export function hasCompletedStripeConnectSetup(user: UserData): boolean {
-  return user.stripeConnectSetupCompletedAt != null || user.stripeAccountActive === true;
+  return user.stripeAccountActive === true;
 }

@@ -15,7 +15,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  Timestamp,
   Transaction,
   updateDoc,
 } from "firebase/firestore";
@@ -226,28 +225,8 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
   }
 }
 
-/** Persist Stripe Connect completion once payments are verified (`stripeAccountActive`). */
-export async function syncStripeConnectSetupCompletedIfNeeded(userId: UserId, user: UserData): Promise<boolean> {
-  if (user.stripeAccountActive !== true) return false;
-  if (user.stripeConnectSetupCompletedAt != null) return false;
-  await updateUser(userId, { stripeConnectSetupCompletedAt: Timestamp.now() });
-  bustUserLocalStorageCache();
-  return true;
-}
-
 export async function markProductOnboardingCompleted(userId: UserId): Promise<void> {
-  await updateUser(userId, { isOnboarding: false, onboardingCompletedAt: Timestamp.now() });
-  bustUserLocalStorageCache();
-}
-
-/** Marks onboarding finished without completing the guided flow (records skip + completion timestamps). */
-export async function skipProductOnboarding(userId: UserId): Promise<void> {
-  const now = Timestamp.now();
-  await updateUser(userId, {
-    isOnboarding: false,
-    onboardingSkippedAt: now,
-    onboardingCompletedAt: now,
-  });
+  await updateUser(userId, { isOnboarding: false });
   bustUserLocalStorageCache();
 }
 

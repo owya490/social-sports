@@ -7,7 +7,7 @@ import OnboardingProfileStep from "@/components/onboarding/OnboardingProfileStep
 import OnboardingTimeline, { OnboardingTimelinePersona } from "@/components/onboarding/OnboardingTimeline";
 import { useUser } from "@/components/utility/UserContext";
 import { OnboardingPersona, UserData, UserId } from "@/interfaces/UserTypes";
-import { markProductOnboardingCompleted, updateUser } from "@/services/src/users/usersService";
+import { markProductOnboardingCompleted } from "@/services/src/users/usersService";
 import { hasProvisionedFirestoreProfile, isUserOnboarding } from "@/utilities/onboardingUtils";
 import { CalendarDaysIcon, TicketIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
@@ -43,28 +43,24 @@ function readStoredStep(): OnboardingStep | null {
   return value === "profile" || value === "payouts" ? value : null;
 }
 
-function initialStepForUser(user: UserData): OnboardingStep {
-  if (user.onboardingPersona === "organiser") {
+function initialStepForUser(user: UserData, persona: OnboardingPersona | null): OnboardingStep {
+  if (persona === "organiser") {
     if (user.stripeAccount) return "profile";
     return readStoredStep() === "payouts" ? "payouts" : "profile";
   }
-  if (user.onboardingPersona === "attendee") return "profile";
+  if (persona === "attendee") return "profile";
   return "role";
 }
 
 export default function OnboardingFlow() {
   const { user, userLoading, refreshUser } = useUser();
   const router = useRouter();
-  const [submitting, setSubmitting] = useState(false);
   const [stepOverride, setStepOverride] = useState<OnboardingStep | null>(null);
-  const [personaOverride, setPersonaOverride] = useState<OnboardingPersona | null>(null);
+  const [persona, setPersona] = useState<OnboardingPersona | null>(null);
   const [allComplete, setAllComplete] = useState(false);
 
   const ready = !userLoading && hasProvisionedFirestoreProfile(user) && isUserOnboarding(user);
-  const step: OnboardingStep | null = ready ? (stepOverride ?? initialStepForUser(user)) : null;
-  const persona: OnboardingPersona | null =
-    personaOverride ??
-    (user.onboardingPersona === "organiser" || user.onboardingPersona === "attendee" ? user.onboardingPersona : null);
+  const step: OnboardingStep | null = ready ? (stepOverride ?? initialStepForUser(user, persona)) : null;
 
   useEffect(() => {
     if (userLoading) return;
@@ -97,22 +93,9 @@ export default function OnboardingFlow() {
     router.replace("/");
   };
 
-  const choosePersona = async (nextPersona: OnboardingPersona) => {
-    if (!user.userId || submitting) return;
-    const previousStep = stepOverride;
-    const previousPersona = personaOverride;
-    setSubmitting(true);
-    setPersonaOverride(nextPersona);
+  const choosePersona = (nextPersona: OnboardingPersona) => {
+    setPersona(nextPersona);
     setStepOverride("profile");
-    try {
-      await updateUser(user.userId, { onboardingPersona: nextPersona });
-      void refreshUser();
-    } catch {
-      setPersonaOverride(previousPersona);
-      setStepOverride(previousStep);
-    } finally {
-      setSubmitting(false);
-    }
   };
 
   if (!ready || step === null) {
@@ -159,9 +142,8 @@ export default function OnboardingFlow() {
                   <button
                     key={optionPersona}
                     type="button"
-                    disabled={submitting}
-                    onClick={() => void choosePersona(optionPersona)}
-                    className="rounded-xl border border-border bg-background p-5 text-left transition-colors hover:border-foreground hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:opacity-50 sm:p-6"
+                    onClick={() => choosePersona(optionPersona)}
+                    className="rounded-xl border border-border bg-background p-5 text-left transition-colors hover:border-foreground hover:bg-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground sm:p-6"
                   >
                     <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-surface text-foreground">
                       <Icon aria-hidden className="h-5 w-5 stroke-[1.5]" />

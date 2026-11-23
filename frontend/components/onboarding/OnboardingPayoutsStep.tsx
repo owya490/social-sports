@@ -15,10 +15,8 @@ import { initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps
 import { getStripeStandardAccountLink, startStripePayoutOnboarding } from "@/services/src/stripe/stripeService";
 import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
-import { markProductOnboardingCompleted, updateUser } from "@/services/src/users/usersService";
+import { markProductOnboardingCompleted } from "@/services/src/users/usersService";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
-import { hasCompletedStripeConnectSetup } from "@/utilities/onboardingUtils";
-import { Timestamp } from "firebase/firestore";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
 const AU_STATES = ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"];
@@ -267,9 +265,6 @@ export default function OnboardingPayoutsStep({
     if (!user.userId || busy) return;
     setSkipBusy(true);
     try {
-      if (!hasCompletedStripeConnectSetup(user) && user.stripeConnectSetupSkippedAt == null) {
-        await updateUser(user.userId, { stripeConnectSetupSkippedAt: Timestamp.now() });
-      }
       await markProductOnboardingCompleted(user.userId as UserId);
       await onFinished();
     } finally {

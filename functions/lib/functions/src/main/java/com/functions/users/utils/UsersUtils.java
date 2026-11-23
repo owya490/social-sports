@@ -48,11 +48,6 @@ public class UsersUtils {
 		privateUserData.setForms(data.getForms());
 		privateUserData.setPrivateEventCollections(data.getPrivateEventCollections());
 		privateUserData.setIsOnboarding(data.getIsOnboarding());
-		privateUserData.setOnboardingPersona(data.getOnboardingPersona());
-		privateUserData.setOnboardingCompletedAt(data.getOnboardingCompletedAt());
-		privateUserData.setStripeConnectSetupCompletedAt(data.getStripeConnectSetupCompletedAt());
-		privateUserData.setStripeConnectSetupSkippedAt(data.getStripeConnectSetupSkippedAt());
-		privateUserData.setOnboardingSkippedAt(data.getOnboardingSkippedAt());
 
 		return privateUserData;
 	}

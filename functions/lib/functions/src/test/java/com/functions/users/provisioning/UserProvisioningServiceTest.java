@@ -1,8 +1,6 @@
 package com.functions.users.provisioning;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -76,11 +74,7 @@ public class UserProvisioningServiceTest {
             assertEquals(false, harness.publicData.get("isSearchable"));
             assertEquals("ada@example.com", contactEmail(harness.privateData));
             assertEquals(true, harness.privateData.get("isOnboarding"));
-            assertTrue(harness.privateData.containsKey("onboardingCompletedAt"));
-            assertNull(harness.privateData.get("onboardingCompletedAt"));
             assertEquals("uid-1", harness.metadata.get("userId"));
-            assertTrue(harness.metadata.containsKey("onboardingPersona"));
-            assertNull(harness.metadata.get("onboardingPersona"));
             assertEquals(List.of(
                     "read-public",
                     "read-private",

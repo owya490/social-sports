@@ -75,7 +75,7 @@ public final class UserProvisioningService {
 				// Step 3b. Create the private profile, including the account email.
 				UserProvisioningRepository.createPrivateProfile(transaction, privateSnap, privateData);
 				logger.info("Step 3b succeeded {}", uid);
-				// Step 4b. Create metadata. A null onboarding time sends the new account into onboarding.
+				// Step 4b. Create metadata.
 				UserProvisioningRepository.createMetadata(transaction, metadataSnap, metadata);
 				logger.info("Step 4b succeeded {}", uid);
 				return null;
@@ -139,8 +139,6 @@ public final class UserProvisioningService {
 		profile.setContactInformation(contact);
 		profile.setSendOrganiserTicketEmails(false);
 		profile.setIsOnboarding(true);
-		// Kept for migration. Older accounts omit both fields and are treated as finished.
-		profile.setOnboardingCompletedAt(null);
 		return profile;
 	}
 
