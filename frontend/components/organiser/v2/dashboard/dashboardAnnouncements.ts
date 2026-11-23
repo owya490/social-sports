@@ -16,6 +16,14 @@ export type DashboardAnnouncement = {
 
 export const DASHBOARD_ANNOUNCEMENTS: DashboardAnnouncement[] = [
   {
+    id: "pay-with-pyng",
+    tag: "Pyng",
+    label: "Use Pyng for payments",
+    description: "A $15 ticket drops from a 70¢ card surcharge to 15¢",
+    href: "https://www.sportshub.net.au/blogs/features/pay-with-pyng",
+    external: true,
+  },
+  {
     id: "booking-approval",
     tag: "Feature",
     label: "Booking approval",
