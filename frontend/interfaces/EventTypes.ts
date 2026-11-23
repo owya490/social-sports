@@ -136,9 +136,14 @@ export type EventTeam = {
 /** How many of one order's tickets sit on each team. */
 export type TeamTicketSplit = Record<string, number>;
 
+/**
+ * `assignments` is the order summary: order id → team id → ticket count.
+ * `ticketAssignments` names the team for each ticket. It is null on boards that only have the summary.
+ */
 export type TeamBoard = {
   teams: EventTeam[];
   assignments: Record<string, TeamTicketSplit>;
+  ticketAssignments?: Record<string, string> | null;
 };
 
 export interface EventMetadata {

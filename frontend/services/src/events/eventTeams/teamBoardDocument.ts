@@ -1,6 +1,6 @@
 import { TeamBoard, TeamTicketSplit } from "@/interfaces/EventTypes";
 
-const EMPTY_STORED_BOARD: TeamBoard = { teams: [], assignments: {} };
+const EMPTY_STORED_BOARD: TeamBoard = { teams: [], assignments: {}, ticketAssignments: null };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -40,5 +40,30 @@ export function teamBoardFromStored(data: unknown): TeamBoard {
     }
   }
 
-  return { teams, assignments };
+  return { teams, assignments, ticketAssignments: ticketAssignmentsFromStored(data) };
+}
+
+/**
+ * Order counts are always written. Ticket ids are written only after a placement has recorded them,
+ * so a count-only document is left unchanged.
+ */
+export function eventTeamBoardPayload(board: TeamBoard): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    teams: board.teams,
+    assignments: board.assignments,
+  };
+  if (board.ticketAssignments != null) payload.ticketAssignments = board.ticketAssignments;
+  return payload;
+}
+
+function ticketAssignmentsFromStored(data: Record<string, unknown>): Record<string, string> | null {
+  if (!Object.prototype.hasOwnProperty.call(data, "ticketAssignments")) return null;
+  if (!isRecord(data.ticketAssignments)) return {};
+
+  const ticketAssignments: Record<string, string> = {};
+  for (const [ticketId, teamId] of Object.entries(data.ticketAssignments)) {
+    if (typeof teamId !== "string" || teamId.length === 0) continue;
+    ticketAssignments[ticketId] = teamId;
+  }
+  return ticketAssignments;
 }

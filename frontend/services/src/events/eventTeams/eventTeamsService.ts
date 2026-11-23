@@ -3,12 +3,14 @@ import { Logger } from "@/observability/logger";
 import { doc, onSnapshot, setDoc, Unsubscribe } from "firebase/firestore";
 import { db } from "../../firebase";
 import { CollectionPaths } from "../eventsConstants";
-import { teamBoardFromStored } from "./teamBoardDocument";
+import { eventTeamBoardPayload, teamBoardFromStored } from "./teamBoardDocument";
 
 const eventTeamsLogger = new Logger("eventTeamsService");
 
 /**
  * Team layouts are stored in EventTeams/{eventId}.
+ * assignments keeps order id → team counts. ticketAssignments maps ticket id → team id.
+ * Older documents have assignments only; a count-only save leaves that field off.
  * EventsMetadata is rewritten in full by ticket webhooks, so a board stored there would be deleted
  * on the next paid checkout, cancellation, or expired-session restock.
  */
@@ -19,7 +21,7 @@ function eventTeamDocRef(eventId: EventId) {
 export async function saveEventTeamBoard(eventId: EventId, board: TeamBoard): Promise<void> {
   eventTeamsLogger.info(`saveEventTeamBoard, ${eventId}`);
   try {
-    await setDoc(eventTeamDocRef(eventId), board);
+    await setDoc(eventTeamDocRef(eventId), eventTeamBoardPayload(board));
   } catch (error) {
     eventTeamsLogger.error(`saveEventTeamBoard ${error}`);
     throw error;
