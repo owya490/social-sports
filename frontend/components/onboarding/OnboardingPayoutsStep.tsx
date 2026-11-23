@@ -164,11 +164,6 @@ export async function requestExistingStripeAccountLink(userId: UserId): Promise<
   if (!url || url === "/error") {
     throw new Error("Could not open Stripe. Try again.");
   }
-  try {
-    await markProductOnboardingCompleted(userId);
-  } catch {
-    // The Stripe link is single-use, so still send them on if saving completion fails.
-  }
   return url;
 }
 

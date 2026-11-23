@@ -81,6 +81,11 @@ public class StripePayoutOnboardingService {
             link = AccountLink.create(linkParams(account.getId()));
         } catch (StripeException e) {
             logger.error("Stripe payout onboarding failed for user {} code={}", userId, e.getCode());
+            // A 4xx from Stripe means Stripe rejected the details, so the organiser can fix them.
+            Integer stripeStatus = e.getStatusCode();
+            if (stripeStatus != null && stripeStatus >= 400 && stripeStatus < 500) {
+                throw new IllegalArgumentException(e.getMessage());
+            }
             throw new IllegalStateException("Stripe could not start payout onboarding");
         }
 

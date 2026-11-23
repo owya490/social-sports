@@ -142,9 +142,8 @@ describe("OnboardingPayoutsStep forms", () => {
     expect(markup).not.toContain(">Continue<");
   });
 
-  it("requests a standard Stripe onboarding link and marks onboarding completed", async () => {
+  it("requests a standard Stripe onboarding link and does not mark onboarding completed", async () => {
     mockGetStripeStandardAccountLink.mockResolvedValue("https://connect.stripe.com/setup/s/existing");
-    mockMarkProductOnboardingCompleted.mockResolvedValue(undefined);
 
     const url = await requestExistingStripeAccountLink("user-123" as UserId);
 
@@ -155,20 +154,11 @@ describe("OnboardingPayoutsStep forms", () => {
       "https://www.sportshub.net.au/organiser/v2/settings",
       "https://www.sportshub.net.au/stripe/refreshAccountLink"
     );
-    expect(mockMarkProductOnboardingCompleted).toHaveBeenCalledWith("user-123");
+    expect(mockMarkProductOnboardingCompleted).not.toHaveBeenCalled();
     expect(url).toBe("https://connect.stripe.com/setup/s/existing");
   });
 
-  it("still returns the Stripe URL when marking onboarding completed fails", async () => {
-    mockGetStripeStandardAccountLink.mockResolvedValue("https://connect.stripe.com/setup/s/existing");
-    mockMarkProductOnboardingCompleted.mockRejectedValue(new Error("firestore failed"));
-
-    const url = await requestExistingStripeAccountLink("user-123" as UserId);
-
-    expect(url).toBe("https://connect.stripe.com/setup/s/existing");
-  });
-
-  it("throws and does not mark onboarding completed when Stripe link creation fails", async () => {
+  it("throws when Stripe link creation fails", async () => {
     mockGetStripeStandardAccountLink.mockResolvedValue("/error");
 
     await expect(requestExistingStripeAccountLink("user-123" as UserId)).rejects.toThrow(
