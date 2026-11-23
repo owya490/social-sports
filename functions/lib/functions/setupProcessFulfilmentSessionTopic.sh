@@ -76,7 +76,7 @@ fi
 
 SUBSCRIPTIONS=""
 for attempt in 1 2 3 4 5 6; do
-    SUBSCRIPTIONS=$(gcloud pubsub topics list-subscriptions "$TOPIC" --project="$PROJECT_NAME" | sed '/^---$/d' | sed '/^$/d')
+    SUBSCRIPTIONS=$(gcloud pubsub topics list-subscriptions "$TOPIC" --project="$PROJECT_NAME" | sed -E -e 's/^[[:space:]-]+//' -e 's/[[:space:]]+$//' -e '/^$/d')
     if [ -n "$SUBSCRIPTIONS" ]; then
         break
     fi
