@@ -2,8 +2,10 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { EventDuplicateMenu } from "@/components/organiser/v2/events/EventDuplicateMenu";
+import { EventActionsMenu } from "@/components/organiser/v2/events/EventActionsMenu";
 import { EventData, EventId } from "@/interfaces/EventTypes";
+import { Order } from "@/interfaces/OrderTypes";
+import { Ticket } from "@/interfaces/TicketTypes";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import {
   ArrowTopRightOnSquareIcon,
@@ -21,6 +23,7 @@ import Skeleton from "react-loading-skeleton";
 type EventHubHeaderProps = {
   loading: boolean;
   event: EventData;
+  orderTicketsMap: Map<Order, Ticket[]>;
   eventId: EventId;
   name: string;
   startDate: Timestamp;
@@ -34,6 +37,7 @@ type EventHubHeaderProps = {
 export function EventHubHeader({
   loading,
   event,
+  orderTicketsMap,
   eventId,
   name,
   startDate,
@@ -90,7 +94,7 @@ export function EventHubHeader({
               <span>{paused ? "Resume" : "Pause"}</span>
             </button>
           </div>
-          <EventDuplicateMenu event={event} disabled={loading} />
+          <EventActionsMenu event={event} orderTicketsMap={orderTicketsMap} disabled={loading} />
         </div>
       </div>
     </header>

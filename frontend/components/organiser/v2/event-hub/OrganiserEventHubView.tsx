@@ -273,6 +273,7 @@ export function OrganiserEventHubView() {
         <EventHubHeader
           loading={loading}
           event={eventData}
+          orderTicketsMap={orderTicketsMap}
           eventId={eventId}
           name={eventName}
           startDate={eventStartDate}
@@ -381,9 +382,6 @@ export function OrganiserEventHubView() {
 
         {section === "Settings" && (
           <EventHubSettings
-            orderTicketsMap={orderTicketsMap}
-            eventName={eventName}
-            eventStartDate={eventStartDate}
             eventId={eventId}
             paused={eventPaused}
             setPaused={setEventPaused}
