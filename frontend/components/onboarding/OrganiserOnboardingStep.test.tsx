@@ -1,3 +1,8 @@
+import { EmptyUserData, UserId } from "@/interfaces/UserTypes";
+import { getStripeStandardAccountLink } from "@/services/src/stripe/stripeService";
+import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
+import { markProductOnboardingCompleted } from "@/services/src/users/usersService";
 import { renderToStaticMarkup } from "react-dom/server";
 import OrganiserOnboardingStep, {
   canContinuePayoutDetails,
@@ -5,15 +10,25 @@ import OrganiserOnboardingStep, {
   isValidAbn,
   ParsedAddress,
   PayoutDetailsFields,
+  requestExistingStripeAccountLink,
   resolveAccountHolderName,
   validateBankAccount,
   validatePayoutDetails,
 } from "./OrganiserOnboardingStep";
 
+jest.mock("@/components/organiser/v2/event-hub/EventHubDescriptionEditor", () => ({
+  EventHubDescriptionEditor: () => null,
+}));
+
+jest.mock("@/components/organiser/v2/settings/SportshubStripeIntegrationIcon", () => ({
+  SportshubStripeIntegrationIcon: () => <div data-testid="stripe-icon" />,
+}));
+
 jest.mock("@/components/utility/UserContext", () => ({
-  useUser: () => ({
+  useUser: jest.fn(() => ({
     user: {
-      userId: "user-1",
+      ...EmptyUserData,
+      userId: "user-123",
       firstName: "Ada",
       surname: "Lovelace",
       publicContactInformation: {
@@ -25,16 +40,25 @@ jest.mock("@/components/utility/UserContext", () => ({
         mobile: "0412345678",
       },
     },
-  }),
+  })),
 }));
 
 jest.mock("@/services/src/maps/mapsService", () => ({
-  useGoogleMapsScript: () => ({ isLoaded: false }),
   initializeAutocomplete: jest.fn(),
+  useGoogleMapsScript: jest.fn(() => ({ isLoaded: false })),
 }));
 
 jest.mock("@/services/src/stripe/stripeService", () => ({
+  getStripeStandardAccountLink: jest.fn(),
   startStripePayoutOnboarding: jest.fn(),
+}));
+
+jest.mock("@/services/src/stripe/stripeUtils", () => ({
+  getRefreshAccountLinkUrl: jest.fn(() => "https://www.sportshub.net.au/stripe/refreshAccountLink"),
+}));
+
+jest.mock("@/services/src/urlUtils", () => ({
+  getUrlWithCurrentHostname: jest.fn((path: string) => `https://www.sportshub.net.au${path}`),
 }));
 
 jest.mock("@/services/src/users/usersService", () => ({
@@ -42,13 +66,14 @@ jest.mock("@/services/src/users/usersService", () => ({
   updateUser: jest.fn(),
 }));
 
-jest.mock("@/components/organiser/v2/event-hub/EventHubDescriptionEditor", () => ({
-  EventHubDescriptionEditor: () => null,
-}));
-
-jest.mock("@/components/organiser/v2/settings/SportshubStripeIntegrationIcon", () => ({
-  SportshubStripeIntegrationIcon: () => <div data-testid="stripe-icon" />,
-}));
+const mockGetStripeStandardAccountLink = getStripeStandardAccountLink as jest.MockedFunction<
+  typeof getStripeStandardAccountLink
+>;
+const mockGetRefreshAccountLinkUrl = getRefreshAccountLinkUrl as jest.MockedFunction<typeof getRefreshAccountLinkUrl>;
+const mockGetUrlWithCurrentHostname = getUrlWithCurrentHostname as jest.MockedFunction<typeof getUrlWithCurrentHostname>;
+const mockMarkProductOnboardingCompleted = markProductOnboardingCompleted as jest.MockedFunction<
+  typeof markProductOnboardingCompleted
+>;
 
 const VALID_ADDRESS: ParsedAddress = {
   line1: "1 George St",
@@ -68,13 +93,21 @@ const VALID_DETAILS: PayoutDetailsFields = {
 };
 
 describe("OrganiserOnboardingStep forms", () => {
-  it("renders only personal/payout details on the primary form with Continue", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("renders only personal/payout details and the existing Stripe button on the primary form with Continue", () => {
     const markup = renderToStaticMarkup(
       <OrganiserOnboardingStep onBack={() => {}} onFinished={async () => {}} />
     );
 
     expect(markup).toContain("Getting paid");
     expect(markup).toContain("Do you have an ABN?");
+    expect(markup).toContain("I already have a Stripe account");
+    expect(markup).toMatch(/<button[^>]*type="button"[^>]*>I already have a Stripe account<\/button>/);
+    expect(markup.indexOf("Do you have an ABN?")).toBeLessThan(markup.indexOf("I already have a Stripe account"));
+    expect(markup.indexOf("I already have a Stripe account")).toBeLessThan(markup.indexOf("Legal first name"));
     expect(markup).toContain('id="payout-first-name"');
     expect(markup).toContain('id="payout-last-name"');
     expect(markup).toContain('id="payout-email"');
@@ -111,6 +144,41 @@ describe("OrganiserOnboardingStep forms", () => {
     expect(markup).not.toContain('id="payout-address"');
     expect(markup).not.toContain(">Continue<");
   });
+
+  it("requests a standard Stripe onboarding link and marks onboarding completed", async () => {
+    mockGetStripeStandardAccountLink.mockResolvedValue("https://connect.stripe.com/setup/s/existing");
+    mockMarkProductOnboardingCompleted.mockResolvedValue(undefined);
+
+    const url = await requestExistingStripeAccountLink("user-123" as UserId);
+
+    expect(mockGetUrlWithCurrentHostname).toHaveBeenCalledWith("/organiser/v2/settings");
+    expect(mockGetRefreshAccountLinkUrl).toHaveBeenCalledTimes(1);
+    expect(mockGetStripeStandardAccountLink).toHaveBeenCalledWith(
+      "user-123",
+      "https://www.sportshub.net.au/organiser/v2/settings",
+      "https://www.sportshub.net.au/stripe/refreshAccountLink"
+    );
+    expect(mockMarkProductOnboardingCompleted).toHaveBeenCalledWith("user-123");
+    expect(url).toBe("https://connect.stripe.com/setup/s/existing");
+  });
+
+  it("still returns the Stripe URL when marking onboarding completed fails", async () => {
+    mockGetStripeStandardAccountLink.mockResolvedValue("https://connect.stripe.com/setup/s/existing");
+    mockMarkProductOnboardingCompleted.mockRejectedValue(new Error("firestore failed"));
+
+    const url = await requestExistingStripeAccountLink("user-123" as UserId);
+
+    expect(url).toBe("https://connect.stripe.com/setup/s/existing");
+  });
+
+  it("throws and does not mark onboarding completed when Stripe link creation fails", async () => {
+    mockGetStripeStandardAccountLink.mockResolvedValue("/error");
+
+    await expect(requestExistingStripeAccountLink("user-123" as UserId)).rejects.toThrow(
+      "Could not start Stripe. Try again."
+    );
+    expect(mockMarkProductOnboardingCompleted).not.toHaveBeenCalled();
+  });
 });
 
 describe("OrganiserOnboardingStep validation", () => {
@@ -128,18 +196,13 @@ describe("OrganiserOnboardingStep validation", () => {
     expect(canContinuePayoutDetails({ ...VALID_DETAILS, hasAbn: true, abn: "51 824 753 556" })).toBe(true);
   });
 
-  it("returns actionable messages for details errors including missing phone", () => {
-    expect(validatePayoutDetails(VALID_DETAILS, "0412345678")).toBe("");
-    expect(validatePayoutDetails({ ...VALID_DETAILS, firstName: "" }, "0412345678")).toBe("Enter your legal name.");
-    expect(validatePayoutDetails({ ...VALID_DETAILS, email: "bad" }, "0412345678")).toContain("valid email");
-    expect(validatePayoutDetails(VALID_DETAILS, "")).toContain("phone number");
-    expect(validatePayoutDetails({ ...VALID_DETAILS, hasAbn: true, abn: "111" }, "0412345678")).toBe(
-      "Enter a valid 11-digit ABN."
-    );
-    expect(validatePayoutDetails({ ...VALID_DETAILS, dateOfBirth: "" }, "0412345678")).toBe(
-      "Enter your date of birth."
-    );
-    expect(validatePayoutDetails({ ...VALID_DETAILS, address: null }, "0412345678")).toBe(
+  it("returns actionable messages for details errors", () => {
+    expect(validatePayoutDetails(VALID_DETAILS)).toBe("");
+    expect(validatePayoutDetails({ ...VALID_DETAILS, firstName: "" })).toBe("Enter your legal name.");
+    expect(validatePayoutDetails({ ...VALID_DETAILS, email: "bad" })).toContain("valid email");
+    expect(validatePayoutDetails({ ...VALID_DETAILS, hasAbn: true, abn: "111" })).toBe("Enter a valid 11-digit ABN.");
+    expect(validatePayoutDetails({ ...VALID_DETAILS, dateOfBirth: "" })).toBe("Enter your date of birth.");
+    expect(validatePayoutDetails({ ...VALID_DETAILS, address: null })).toBe(
       "Choose an Australian street address from the suggestions."
     );
   });

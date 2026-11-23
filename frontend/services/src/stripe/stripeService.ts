@@ -12,7 +12,7 @@ export type StripePayoutOnboardingRequest = {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string;
+  phone?: string;
   hasAbn: boolean;
   abn?: string;
   dateOfBirth?: string;

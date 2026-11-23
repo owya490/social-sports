@@ -147,6 +147,20 @@ public class StripePayoutOnboardingServiceTest {
         }
     }
 
+    @Test
+    public void params_omitPhoneWhenMissingOrNonAustralian() {
+        AccountCreateParams noPhone = StripePayoutOnboardingService.accountParams("uid-1", "ada", individualRequest(null));
+        assertNull(noPhone.getBusinessProfile().getSupportPhone());
+        assertNull(noPhone.getIndividual().getPhone());
+
+        AccountCreateParams nonAu = StripePayoutOnboardingService.accountParams("uid-1", "ada", individualRequest("412345678"));
+        assertNull(nonAu.getBusinessProfile().getSupportPhone());
+        assertNull(nonAu.getIndividual().getPhone());
+
+        PersonCollectionCreateParams abnPerson = StripePayoutOnboardingService.representativeParams(abnRequest("   "));
+        assertNull(abnPerson.getPhone());
+    }
+
     private static void stubUser(MockedStatic<Users> users, String stripeAccount, String username) throws Exception {
         PrivateUserData privateUser = new PrivateUserData();
         privateUser.setStripeAccount(stripeAccount);
@@ -157,11 +171,15 @@ public class StripePayoutOnboardingServiceTest {
     }
 
     private static StartStripePayoutOnboardingRequest individualRequest() {
+        return individualRequest("0412345678");
+    }
+
+    private static StartStripePayoutOnboardingRequest individualRequest(String phone) {
         return new StartStripePayoutOnboardingRequest(
                 "Ada",
                 "Lovelace",
                 "ada@example.com",
-                "0412345678",
+                phone,
                 false,
                 null,
                 "1990-01-15",
@@ -175,11 +193,15 @@ public class StripePayoutOnboardingServiceTest {
     }
 
     private static StartStripePayoutOnboardingRequest abnRequest() {
+        return abnRequest("0412345678");
+    }
+
+    private static StartStripePayoutOnboardingRequest abnRequest(String phone) {
         return new StartStripePayoutOnboardingRequest(
                 "Ada",
                 "Lovelace",
                 "ada@example.com",
-                "0412345678",
+                phone,
                 true,
                 "51 824 753 556",
                 "1990-01-15",

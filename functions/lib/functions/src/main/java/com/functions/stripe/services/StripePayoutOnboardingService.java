@@ -77,7 +77,7 @@ public class StripePayoutOnboardingService {
         if (!email.contains("@")) {
             throw new IllegalArgumentException("Enter a valid email");
         }
-        String phone = toAustralianE164(request.phone());
+        String phone = optionalAustralianE164(request.phone());
         String accountHolderName = blankToNull(request.accountHolderName());
         if (accountHolderName == null) {
             accountHolderName = firstName + " " + lastName;
@@ -174,7 +174,7 @@ public class StripePayoutOnboardingService {
                 .setFirstName(required(request.firstName(), "Enter your first name"))
                 .setLastName(required(request.lastName(), "Enter your last name"))
                 .setEmail(required(request.email(), "Enter your email"))
-                .setPhone(toAustralianE164(request.phone()))
+                .setPhone(optionalAustralianE164(request.phone()))
                 .setDob(PersonCollectionCreateParams.Dob.builder()
                         .setDay((long) dob.getDayOfMonth())
                         .setMonth((long) dob.getMonthValue())
@@ -248,13 +248,21 @@ public class StripePayoutOnboardingService {
         return sum % 89 == 0;
     }
 
-    private static String toAustralianE164(String phone) {
+    /**
+     * Normalises an Australian phone number for Stripe prefill, returning null when
+     * missing or non-AU so Stripe collects it during hosted onboarding instead of
+     * blocking a step that has no phone field.
+     */
+    private static String optionalAustralianE164(String phone) {
+        if (blankToNull(phone) == null) {
+            return null;
+        }
         String digits = digits(phone);
         if (digits.startsWith("0")) {
             digits = "61" + digits.substring(1);
         }
         if (!digits.startsWith("61") || digits.length() < 11) {
-            throw new IllegalArgumentException("Enter a valid phone number");
+            return null;
         }
         return "+" + digits;
     }

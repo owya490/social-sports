@@ -6,7 +6,9 @@ import { ProfileField, ProfileTextInput, profileFieldClass, profileFieldShellCla
 import { useUser } from "@/components/utility/UserContext";
 import { UserId } from "@/interfaces/UserTypes";
 import { initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
-import { startStripePayoutOnboarding } from "@/services/src/stripe/stripeService";
+import { getStripeStandardAccountLink, startStripePayoutOnboarding } from "@/services/src/stripe/stripeService";
+import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
+import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { markProductOnboardingCompleted, updateUser } from "@/services/src/users/usersService";
 import { EMAIL_VALIDATION_ERROR_MESSAGE, validateEmail } from "@/utilities/emailValidationUtils";
 import { hasCompletedStripeConnectSetup } from "@/utilities/onboardingUtils";
@@ -104,15 +106,12 @@ export function canFinishBankAccount(details: PayoutDetailsFields, bank: BankAcc
   );
 }
 
-export function validatePayoutDetails(details: PayoutDetailsFields, phone: string): string {
+export function validatePayoutDetails(details: PayoutDetailsFields): string {
   if (!details.firstName.trim() || !details.lastName.trim()) {
     return "Enter your legal name.";
   }
   if (!validateEmail(details.email)) {
     return EMAIL_VALIDATION_ERROR_MESSAGE;
-  }
-  if (!phone.trim()) {
-    return "Add a phone number on your profile. Stripe needs it for payouts.";
   }
   if (details.hasAbn && !isValidAbn(details.abn)) {
     return "Enter a valid 11-digit ABN.";
@@ -166,6 +165,23 @@ function parsePlace(place: google.maps.places.PlaceResult): ParsedAddress | null
   return { line1, city, state, postcode };
 }
 
+export async function requestExistingStripeAccountLink(userId: UserId): Promise<string> {
+  const url = await getStripeStandardAccountLink(
+    userId,
+    getUrlWithCurrentHostname("/organiser/v2/settings"),
+    getRefreshAccountLinkUrl()
+  );
+  if (!url || url === "/error") {
+    throw new Error("Could not start Stripe. Try again.");
+  }
+  try {
+    await markProductOnboardingCompleted(userId);
+  } catch {
+    // The Stripe link is single-use, so still send them on if saving completion fails.
+  }
+  return url;
+}
+
 export default function OrganiserOnboardingStep({
   onBack,
   onFinished,
@@ -192,11 +208,13 @@ export default function OrganiserOnboardingStep({
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
+  const [existingStripeBusy, setExistingStripeBusy] = useState(false);
   const accountHolderEditedRef = useRef(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const scriptLoadResult = useGoogleMapsScript();
   const mapsLoaded = scriptLoadResult?.isLoaded === true;
+  const busy = submitting || skipBusy || existingStripeBusy;
 
   // Re-attach autocomplete whenever returning to the details form because the input remounts.
   useEffect(() => {
@@ -224,7 +242,7 @@ export default function OrganiserOnboardingStep({
     setFormError("");
   };
 
-  const phone = user.publicContactInformation?.mobile || user.contactInformation?.mobile || "";
+  const phone = (user.publicContactInformation?.mobile || user.contactInformation?.mobile || "").trim();
   const detailsFields: PayoutDetailsFields = {
     firstName,
     lastName,
@@ -241,7 +259,7 @@ export default function OrganiserOnboardingStep({
   };
 
   const skipGettingPaid = async () => {
-    if (!user.userId || skipBusy || submitting) return;
+    if (!user.userId || busy) return;
     setSkipBusy(true);
     try {
       if (!hasCompletedStripeConnectSetup(user) && user.stripeConnectSetupSkippedAt == null) {
@@ -254,12 +272,25 @@ export default function OrganiserOnboardingStep({
     }
   };
 
+  const connectExistingStripeAccount = async () => {
+    if (!user.userId || busy) return;
+    clearErrors();
+    setExistingStripeBusy(true);
+    try {
+      const url = await requestExistingStripeAccountLink(user.userId as UserId);
+      window.location.assign(url);
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Could not start Stripe. Try again.");
+      setExistingStripeBusy(false);
+    }
+  };
+
   const continueToBank = (event: FormEvent) => {
     event.preventDefault();
-    if (submitting || skipBusy) return;
+    if (busy) return;
     clearErrors();
 
-    const detailsError = validatePayoutDetails(detailsFields, phone);
+    const detailsError = validatePayoutDetails(detailsFields);
     if (detailsError) {
       setFieldError(detailsError);
       return;
@@ -273,7 +304,7 @@ export default function OrganiserOnboardingStep({
   };
 
   const handleBackToDetails = () => {
-    if (submitting || skipBusy) return;
+    if (busy) return;
     clearErrors();
     setSubStep("details");
     window.scrollTo?.(0, 0);
@@ -281,10 +312,10 @@ export default function OrganiserOnboardingStep({
 
   const submitPayouts = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user.userId || submitting || skipBusy) return;
+    if (!user.userId || busy) return;
     clearErrors();
 
-    const detailsError = validatePayoutDetails(detailsFields, phone);
+    const detailsError = validatePayoutDetails(detailsFields);
     if (detailsError || !address) {
       setFieldError(detailsError || "Choose an Australian street address from the suggestions.");
       return;
@@ -302,7 +333,7 @@ export default function OrganiserOnboardingStep({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         email: email.trim(),
-        phone,
+        phone: phone || undefined,
         hasAbn,
         abn: hasAbn ? digits(abn) : undefined,
         dateOfBirth,
@@ -326,7 +357,6 @@ export default function OrganiserOnboardingStep({
     }
   };
 
-  const busy = submitting || skipBusy;
   const isBankStep = subStep === "bank";
   const canContinue = canContinuePayoutDetails(detailsFields);
   const canFinish = canFinishBankAccount(detailsFields, bankFields);
@@ -359,29 +389,39 @@ export default function OrganiserOnboardingStep({
       <div className="mt-6 w-full space-y-4 text-left">
         {!isBankStep ? (
           <>
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-semibold text-core-text">Do you have an ABN?</legend>
-              <div className="flex gap-4 text-sm">
-                <AbnChoice
-                  checked={hasAbn}
-                  label="Yes"
-                  disabled={busy}
-                  onSelect={() => {
-                    setHasAbn(true);
-                    clearErrors();
-                  }}
-                />
-                <AbnChoice
-                  checked={!hasAbn}
-                  label="No"
-                  disabled={busy}
-                  onSelect={() => {
-                    setHasAbn(false);
-                    clearErrors();
-                  }}
-                />
-              </div>
-            </fieldset>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <fieldset className="space-y-2">
+                <legend className="text-sm font-semibold text-core-text">Do you have an ABN?</legend>
+                <div className="flex gap-4 text-sm">
+                  <AbnChoice
+                    checked={hasAbn}
+                    label="Yes"
+                    disabled={busy}
+                    onSelect={() => {
+                      setHasAbn(true);
+                      clearErrors();
+                    }}
+                  />
+                  <AbnChoice
+                    checked={!hasAbn}
+                    label="No"
+                    disabled={busy}
+                    onSelect={() => {
+                      setHasAbn(false);
+                      clearErrors();
+                    }}
+                  />
+                </div>
+              </fieldset>
+              <button
+                type="button"
+                className="whitespace-nowrap rounded-full border border-gray-200 bg-gray-50/60 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
+                disabled={busy}
+                onClick={() => void connectExistingStripeAccount()}
+              >
+                {existingStripeBusy ? "Working…" : "I already have a Stripe account"}
+              </button>
+            </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <ProfileField label="Legal first name" htmlFor="payout-first-name">
