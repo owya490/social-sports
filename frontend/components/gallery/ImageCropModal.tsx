@@ -42,6 +42,12 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
   const [orientation, setOrientation] = useState<ImageOrientation>(ImageOrientation.LANDSCAPE); // For form images
   const [currentAspectRatio, setCurrentAspectRatio] = useState(ImageConfig[cropType].defaultAspectRatio);
   const [isMobile, setIsMobile] = useState(false);
+  const [imageSize, setImageSize] = useState<{
+    width: number;
+    height: number;
+    naturalWidth: number;
+    naturalHeight: number;
+  }>();
 
   // Detect if device is mobile
   useEffect(() => {
@@ -55,7 +61,8 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
 
   const onImageLoad = useCallback(
     (e: React.SyntheticEvent<HTMLImageElement>) => {
-      const { width, height } = e.currentTarget;
+      const { width, height, naturalWidth, naturalHeight } = e.currentTarget;
+      setImageSize({ width, height, naturalWidth, naturalHeight });
       const initialCrop = centerAspectCrop(width, height, currentAspectRatio, isMobile);
       setCrop(initialCrop);
       // Immediately set a completed crop so the user can't proceed without a crop
@@ -96,6 +103,7 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
       setCompletedCrop(undefined);
       setHasValidCrop(false);
       setIsProcessing(false);
+      setImageSize(undefined);
       setOrientation(ImageOrientation.LANDSCAPE);
     }
   }, [imageFile, isOpen, cropType]);
@@ -198,6 +206,20 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
 
   if (!isOpen) return null;
 
+  const minimum = ImageConfig[cropType].orientationConfigs[orientation];
+  const configMinWidth = minimum?.minCropWidth || 200;
+  // Smaller minimum on mobile (40% of desktop, at least 100px).
+  const baseMinWidth = isMobile ? Math.max(100, configMinWidth * 0.4) : configMinWidth;
+  // react-image-crop clamps width and height separately, so a minimum larger than the
+  // image breaks the aspect ratio. Keep the minimum inside the displayed image.
+  const minCropWidth = imageSize
+    ? Math.min(baseMinWidth, imageSize.width, imageSize.height * currentAspectRatio)
+    : baseMinWidth;
+  const tooSmall =
+    !!minimum &&
+    !!imageSize &&
+    (imageSize.naturalWidth < minimum.minCropWidth || imageSize.naturalHeight < minimum.minCropHeight);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
       <div className="bg-white rounded-lg p-3 sm:p-6 max-w-4xl w-full max-h-[95vh] sm:max-h-[90vh] flex flex-col">
@@ -244,6 +266,11 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
                   </button>
                 )}
               </div>
+              {tooSmall ? (
+                <p role="alert" className="mb-2 text-xs sm:text-sm text-danger">
+                  Minimum size is {minimum?.minCropWidth}×{minimum?.minCropHeight}.
+                </p>
+              ) : null}
               <div className="flex-1 min-h-0 flex items-center justify-center overflow-hidden">
                 <ReactCrop
                   crop={crop}
@@ -256,18 +283,8 @@ export const ImageCropModal = ({ isOpen, onClose, onCropComplete, imageFile, cro
                   }}
                   aspect={currentAspectRatio}
                   locked={false}
-                  minWidth={(() => {
-                    const config = ImageConfig[cropType];
-                    const baseMinWidth = config.orientationConfigs[orientation]?.minCropWidth || 200;
-                    // Use smaller min dimensions on mobile (40% of desktop values, min 100px)
-                    return isMobile ? Math.max(100, baseMinWidth * 0.4) : baseMinWidth;
-                  })()}
-                  minHeight={(() => {
-                    const config = ImageConfig[cropType];
-                    const baseMinHeight = config.orientationConfigs[orientation]?.minCropHeight || 200;
-                    // Use smaller min dimensions on mobile (40% of desktop values, min 100px)
-                    return isMobile ? Math.max(100, baseMinHeight * 0.4) : baseMinHeight;
-                  })()}
+                  minWidth={minCropWidth}
+                  minHeight={minCropWidth / currentAspectRatio}
                   keepSelection={true}
                   ruleOfThirds={true}
                   circularCrop={false}
