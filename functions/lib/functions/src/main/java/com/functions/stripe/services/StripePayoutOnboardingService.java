@@ -143,10 +143,26 @@ public class StripePayoutOnboardingService {
                 .setBusinessProfile(AccountCreateParams.BusinessProfile.builder()
                         .setMcc("7941")
                         .setProductDescription(PRODUCT_DESCRIPTION)
-                        .setSupportPhone(details.phone())
                         .setUrl(UrlUtils.SPORTSHUB_URL + "/user/" + profilePath)
                         .build())
                 .putExtraParam("external_account", bankAccount(details));
+
+        String statementDescriptor = statementDescriptor(details.firstName(), details.lastName());
+        String statementDescriptorPrefix = statementDescriptorPrefix(details.firstName(), details.lastName());
+        if (statementDescriptor != null || statementDescriptorPrefix != null) {
+            AccountCreateParams.Settings.Builder settings = AccountCreateParams.Settings.builder();
+            if (statementDescriptor != null) {
+                settings.setPayments(AccountCreateParams.Settings.Payments.builder()
+                        .setStatementDescriptor(statementDescriptor)
+                        .build());
+            }
+            if (statementDescriptorPrefix != null) {
+                settings.setCardPayments(AccountCreateParams.Settings.CardPayments.builder()
+                        .setStatementDescriptorPrefix(statementDescriptorPrefix)
+                        .build());
+            }
+            builder.setSettings(settings.build());
+        }
 
         if (details.hasAbn()) {
             return builder
@@ -286,6 +302,39 @@ public class StripePayoutOnboardingService {
             return null;
         }
         return "+" + digits;
+    }
+
+    private static String statementDescriptor(String firstName, String lastName) {
+        String candidate = sanitizeDescriptor(firstName);
+        if (candidate.length() < 5) {
+            candidate = sanitizeDescriptor(firstName + " " + lastName);
+        }
+        return clampDescriptor(candidate, 5, 22);
+    }
+
+    private static String statementDescriptorPrefix(String firstName, String lastName) {
+        String candidate = sanitizeDescriptor(firstName);
+        if (candidate.length() < 2) {
+            candidate = sanitizeDescriptor(firstName + " " + lastName);
+        }
+        return clampDescriptor(candidate, 2, 10);
+    }
+
+    private static String sanitizeDescriptor(String value) {
+        if (value == null) {
+            return "";
+        }
+        return value.replaceAll("[^\\x20-\\x7E]|[<>\\\\\"'*]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+    }
+
+    private static String clampDescriptor(String candidate, int minLength, int maxLength) {
+        String trimmed = candidate.length() > maxLength ? candidate.substring(0, maxLength).trim() : candidate;
+        if (trimmed.length() < minLength || !trimmed.matches(".*[A-Za-z].*")) {
+            return null;
+        }
+        return trimmed;
     }
 
     private static String digits(String value) {

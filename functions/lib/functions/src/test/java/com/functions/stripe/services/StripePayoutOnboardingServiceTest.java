@@ -68,6 +68,9 @@ public class StripePayoutOnboardingServiceTest {
             assertEquals("2000", params.getIndividual().getAddress().getPostalCode());
             assertEquals("7941", params.getBusinessProfile().getMcc());
             assertEquals("https://www.sportshub.net.au/user/ada", params.getBusinessProfile().getUrl());
+            assertNull(params.getBusinessProfile().getSupportPhone());
+            assertEquals("Ada Lovelace", params.getSettings().getPayments().getStatementDescriptor());
+            assertEquals("Ada", params.getSettings().getCardPayments().getStatementDescriptorPrefix());
             assertNull(params.getCompany());
             Map<?, ?> bank = (Map<?, ?>) params.getExtraParams().get("external_account");
             assertEquals("individual", bank.get("account_holder_type"));
@@ -162,6 +165,20 @@ public class StripePayoutOnboardingServiceTest {
         PersonCollectionCreateParams abnPerson = StripePayoutOnboardingService.representativeParams(
                 StripePayoutOnboardingService.validate(abnRequest("   ")));
         assertNull(abnPerson.getPhone());
+    }
+
+    @Test
+    public void accountParams_usesFirstNameForStatementDescriptorWhenLongEnough() {
+        StartStripePayoutOnboardingRequest request = new StartStripePayoutOnboardingRequest(
+                "Catherine", "Yang", "cat@example.com", null, false, null, "1990-01-15",
+                "1 George Street", "Sydney", "NSW", "2000", "Catherine Yang", "000000", "000123456");
+
+        AccountCreateParams params = StripePayoutOnboardingService.accountParams(
+                "uid-1", "cat", StripePayoutOnboardingService.validate(request));
+
+        assertEquals("Catherine", params.getSettings().getPayments().getStatementDescriptor());
+        assertEquals("Catherine", params.getSettings().getCardPayments().getStatementDescriptorPrefix());
+        assertNull(params.getBusinessProfile().getSupportPhone());
     }
 
     private static void stubUser(MockedStatic<Users> users, String stripeAccount, String username) throws Exception {
