@@ -41,6 +41,86 @@ disable the integration. If creation fails or times out, inspect the selected
 project before retrying; the record might already exist. Provisioning does not
 deploy the backend or change the partner's website.
 
+## Grant dead-letter forwarding
+
+Pub/Sub moves a failing `processFulfilmentSession` message to
+`process-fulfilment-sessions-dead-letter` only when its service agent may publish
+to that topic and acknowledge on the trigger subscription. CI sets the
+dead-letter policy on each deploy but cannot change IAM policy, so a project
+Owner grants this once per project, after `processFulfilmentSession` is deployed:
+
+```bash
+./setupProcessFulfilmentSessionTopic.sh dev grant-dead-letter-access
+./setupProcessFulfilmentSessionTopic.sh prod grant-dead-letter-access
+```
+
+Run it again if the function's Eventarc trigger is recreated, because the grant is
+on the trigger subscription.
+
+## Replay a dead-lettered fulfilment session
+
+`processFulfilmentSession` retries a failing message 5 times, then Pub/Sub moves
+it to `process-fulfilment-sessions-dead-letter`. That topic has no subscriber and
+keeps messages for 7 days (`setupProcessFulfilmentSessionTopic.sh`), so a replay
+must start within 7 days of the failure. The session document stays in
+`FulfilmentSessions` with `isFulfilmentSessionCrystalised: true` until a replay
+succeeds. For a Pyng checkout with `status: COMPLETED`, the buyer has paid but has
+no tickets.
+
+Fix the cause before replaying, using the processor's error log for the session.
+A replay of an unchanged cause fails again and returns to the dead-letter topic.
+If the cause cannot be fixed, for example the event was deleted, resolve the
+purchase with the buyer and organiser instead of replaying.
+
+Replaying is safe to repeat: the processor skips a session the event already
+records. Run these commands from the repository root, which has the gitignored
+`.tmp/` directory, with the operator's approval. Set the project
+(`socialsports-44162` for dev, `socialsportsprod` for prod), the session id, and a
+time before the session started:
+
+```bash
+PROJECT=socialsportsprod
+SESSION_ID='<fulfilment-session-id>'
+SINCE='2026-11-20T00:00:00Z'
+```
+
+Create a temporary subscription and seek it back to `SINCE`. Topic retention lets a
+new subscription read messages published before it was created:
+
+```bash
+gcloud pubsub subscriptions create fulfilment-dead-letter-replay \
+  --topic=process-fulfilment-sessions-dead-letter --project="$PROJECT"
+gcloud pubsub subscriptions seek fulfilment-dead-letter-replay \
+  --time="$SINCE" --project="$PROJECT"
+```
+
+Pull without acknowledging, and extract the session's message body. The pulled
+data is base64-encoded session JSON. One pull can return fewer messages than are
+available, so repeat it until the file is not empty:
+
+```bash
+gcloud pubsub subscriptions pull fulfilment-dead-letter-replay \
+  --limit=100 --format=json --project="$PROJECT" \
+  | jq -r --arg id "$SESSION_ID" \
+    '.[].message.data | @base64d | fromjson | select(.id == $id) | tojson' \
+  | head -n 1 > .tmp/dead-letter-session.json
+```
+
+Check the JSON's `id`, `status`, `eventData.eventId`, and purchaser, then publish
+it unchanged to the processing topic and watch the `processFulfilmentSession` logs:
+
+```bash
+gcloud pubsub topics publish process-fulfilment-sessions-topic \
+  --message="$(cat .tmp/dead-letter-session.json)" --project="$PROJECT"
+```
+
+A successful replay moves the session to `ArchivedFulfilmentSessions`. Delete the
+temporary subscription afterwards; the topic keeps its messages:
+
+```bash
+gcloud pubsub subscriptions delete fulfilment-dead-letter-replay --project="$PROJECT"
+```
+
 ## AI error alerts
 
 Cloud Logging routes eligible function errors through the `error-log-alerts`

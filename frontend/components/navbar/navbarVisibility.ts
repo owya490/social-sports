@@ -16,51 +16,48 @@ export function usesOrganiserV2Shell(pathname: string): boolean {
   return pathname.startsWith("/organiser/v2");
 }
 
+/** `brandOnly` shows just the non-clickable logo, for partner sessions that must not navigate away. */
+export type NavbarVariant = "full" | "brandOnly" | "hidden";
+
 const HIDE_SPORTSHUB_NAVBAR_KEY = "hideSportshubNavbar";
 
-function pathnameHidesNavbar(pathname: string): boolean {
+export function shouldHideNavbar(pathname: string): boolean {
   return usesOrganiserV2Shell(pathname) || HIDDEN_NAVBAR_ROUTES.some((pattern) => pattern.test(pathname));
 }
 
-export function shouldHideNavbar(pathname: string): boolean {
-  if (pathnameHidesNavbar(pathname)) return true;
-  if (typeof window !== "undefined") {
-    if (sessionStorage.getItem(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {
-      return true;
-    }
-  }
-  return false;
+function getNavbarVariant(pathname: string): NavbarVariant {
+  if (shouldHideNavbar(pathname)) return "hidden";
+  if (sessionStorage.getItem(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") return "brandOnly";
+  return "full";
 }
 
 /**
- * Encapsulates all navbar-visibility logic: reads initial state synchronously,
+ * Encapsulates all navbar-variant logic: reads initial state synchronously,
  * persists/reads the hideSportshubNavbar sessionStorage flag, and strips the URL param.
- * Returns true when the navbar should be hidden.
  */
-export function useNavbarVisibility(): boolean {
+export function useNavbarVariant(): NavbarVariant {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { replace } = useRouter();
 
   // Initial state must only use pathname/searchParams so server and client render the same
   // (avoids hydration mismatch). sessionStorage is synced in useEffect after mount.
-  const [isNavbarHidden, setIsNavbarHidden] = useState<boolean>(() => {
-    if (pathnameHidesNavbar(pathname)) {
-      return true;
+  const [variant, setVariant] = useState<NavbarVariant>(() => {
+    if (shouldHideNavbar(pathname)) {
+      return "hidden";
     }
     if (searchParams.get(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {
-      return true;
+      return "brandOnly";
     }
-    return false;
+    return "full";
   });
 
-  // When landing with ?hideSportshubNavbar=true (from Syrio), store in sessionStorage and strip param.
+  // When landing with ?hideSportshubNavbar=true (from a partner), store in sessionStorage and strip param.
   useEffect(() => {
     if (searchParams.get(HIDE_SPORTSHUB_NAVBAR_KEY) === "true") {
       sessionStorage.setItem(HIDE_SPORTSHUB_NAVBAR_KEY, "true");
-      setIsNavbarHidden(true);
+      setVariant(shouldHideNavbar(pathname) ? "hidden" : "brandOnly");
 
-      // Strip ?hideSportshubNavbar=true from URL; navbar stays hidden via sessionStorage
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete(HIDE_SPORTSHUB_NAVBAR_KEY);
       const newSearch = newSearchParams.toString();
@@ -69,8 +66,8 @@ export function useNavbarVisibility(): boolean {
       return;
     }
 
-    setIsNavbarHidden(shouldHideNavbar(pathname));
+    setVariant(getNavbarVariant(pathname));
   }, [pathname, searchParams, replace]);
 
-  return isNavbarHidden;
+  return variant;
 }

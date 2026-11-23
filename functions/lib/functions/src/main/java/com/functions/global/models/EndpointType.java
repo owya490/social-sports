@@ -8,12 +8,18 @@ import com.functions.attendee.models.responses.GetEventAttendeeNamesResponse;
 import com.functions.attendee.models.responses.SetAttendeeTicketsResponse;
 import com.functions.events.models.NewEventData;
 import com.functions.events.models.requests.GetEventByIdRequest;
+import com.functions.events.models.requests.GetPartnerEventCollectionRequest;
+import com.functions.events.models.requests.GetPartnerEventRequest;
 import com.functions.events.models.requests.GetPartnerEventsRequest;
 import com.functions.events.models.requests.GetSyrioEventsRequest;
 import com.functions.events.models.requests.CreateRecurrenceTemplateRequest;
+import com.functions.events.models.requests.DeleteRecurrenceTemplateRequest;
 import com.functions.events.models.requests.UpdateRecurrenceTemplateRequest;
 import com.functions.events.models.responses.CreateRecurrenceTemplateResponse;
+import com.functions.events.models.responses.DeleteRecurrenceTemplateResponse;
 import com.functions.events.models.responses.GetEventByIdResponse;
+import com.functions.events.models.responses.GetPartnerEventCollectionResponse;
+import com.functions.events.models.responses.GetPartnerEventResponse;
 import com.functions.events.models.responses.GetPartnerEventsResponse;
 import com.functions.events.models.responses.GetSyrioEventsResponse;
 import com.functions.events.models.responses.CreateEventResponse;
@@ -50,7 +56,9 @@ import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlist
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
 import com.functions.stripe.models.requests.StartStripePayoutOnboardingRequest;
 import com.functions.stripe.models.responses.StartStripePayoutOnboardingResponse;
+import com.functions.users.models.requests.GetPartnerUserRequest;
 import com.functions.users.models.requests.ProvisionUserRequest;
+import com.functions.users.models.responses.GetPartnerUserResponse;
 import com.functions.users.models.responses.ProvisionUserResponse;
 import com.functions.wrapped.models.requests.GetWrappedRequest;
 import com.functions.wrapped.models.responses.GetWrappedResponse;
@@ -74,6 +82,8 @@ public enum EndpointType {
     CREATE_RECURRENCE_TEMPLATE(CreateRecurrenceTemplateRequest.class, CreateRecurrenceTemplateResponse.class,
             AuthLevel.AUTHENTICATED),
     UPDATE_RECURRENCE_TEMPLATE(UpdateRecurrenceTemplateRequest.class, UpdateRecurrenceTemplateResponse.class,
+            AuthLevel.AUTHENTICATED),
+    DELETE_RECURRENCE_TEMPLATE(DeleteRecurrenceTemplateRequest.class, DeleteRecurrenceTemplateResponse.class,
             AuthLevel.AUTHENTICATED),
     INIT_FULFILMENT_SESSION(InitCheckoutFulfilmentSessionRequest.class, InitCheckoutFulfilmentSessionResponse.class,
             AuthLevel.PUBLIC),
@@ -103,6 +113,10 @@ public enum EndpointType {
     // token. TODO: give Syrio its own API-key auth scheme as a follow-up.
     GET_SYRIO_EVENTS(GetSyrioEventsRequest.class, GetSyrioEventsResponse.class, AuthLevel.PUBLIC),
     GET_PARTNER_EVENTS(GetPartnerEventsRequest.class, GetPartnerEventsResponse.class, AuthLevel.PARTNER),
+    GET_PARTNER_EVENT(GetPartnerEventRequest.class, GetPartnerEventResponse.class, AuthLevel.PARTNER),
+    GET_PARTNER_EVENT_COLLECTION(GetPartnerEventCollectionRequest.class, GetPartnerEventCollectionResponse.class,
+            AuthLevel.PARTNER),
+    GET_PARTNER_USER(GetPartnerUserRequest.class, GetPartnerUserResponse.class, AuthLevel.PARTNER),
     GET_EVENT_BY_ID(GetEventByIdRequest.class, GetEventByIdResponse.class, AuthLevel.PUBLIC),
     GET_ORDER(GetOrderRequest.class, GetOrderResponse.class, AuthLevel.AUTHENTICATED),
     GET_TICKET(GetTicketRequest.class, Ticket.class, AuthLevel.AUTHENTICATED),

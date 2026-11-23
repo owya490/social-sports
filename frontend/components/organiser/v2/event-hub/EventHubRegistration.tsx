@@ -547,7 +547,14 @@ export function EventHubRegistration({
           <EventHubPrimaryButton
             disabled={addSaving}
             onClick={async () => {
-              if (!formResponderRef.current || !formId) return;
+              if (!formId) {
+                setAddError("No form is attached to this ticket type.");
+                return;
+              }
+              if (!formResponderRef.current) {
+                setAddError("Form is still loading. Please try again.");
+                return;
+              }
               if (!formResponderRef.current.areAllRequiredFieldsFilled()) {
                 setAddError("Please fill out all required fields.");
                 return;

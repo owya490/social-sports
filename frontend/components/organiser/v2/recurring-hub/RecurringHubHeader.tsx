@@ -2,7 +2,8 @@
 
 import { useOrganiserBreadcrumbTitle } from "@/components/organiser/OrganiserBreadcrumbContext";
 import { OrganiserBreadcrumbs } from "@/components/organiser/OrganiserBreadcrumbs";
-import { Frequency } from "@/interfaces/RecurringEventTypes";
+import { RecurringTemplateDeleteButton } from "@/components/organiser/v2/recurring-hub/RecurringTemplateDeleteButton";
+import { Frequency, RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Timestamp } from "firebase/firestore";
 import Skeleton from "react-loading-skeleton";
 
@@ -37,6 +38,7 @@ type RecurringHubHeaderProps = {
   startDate: Timestamp;
   location: string;
   frequency: Frequency;
+  recurrenceTemplateId: RecurrenceTemplateId;
 };
 
 export function RecurringHubHeader({
@@ -45,6 +47,7 @@ export function RecurringHubHeader({
   startDate,
   location,
   frequency,
+  recurrenceTemplateId,
 }: RecurringHubHeaderProps) {
   const meta = loading
     ? ""
@@ -68,9 +71,16 @@ export function RecurringHubHeader({
           </div>
         </div>
 
-        <span className="inline-flex shrink-0 items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
-          Template
-        </span>
+        <div className="flex items-center gap-0.5 shrink-0">
+          <span className="inline-flex items-center rounded-xl border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground-secondary font-sans">
+            Template
+          </span>
+          <RecurringTemplateDeleteButton
+            recurrenceTemplateId={recurrenceTemplateId}
+            templateName={name}
+            disabled={loading}
+          />
+        </div>
       </div>
     </header>
   );

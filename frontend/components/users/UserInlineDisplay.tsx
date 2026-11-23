@@ -16,7 +16,7 @@ export const UserInlineDisplay = ({ organiser, isLinkEnabled = true }: UserInlin
     <div className="flex ml-0.5 items-center">
       <Image src={organiser.profilePicture} alt="DP" width={50} height={50} className="rounded-full w-4 h-4" />
       {isLinkEnabled ? (
-        <Link href={`/user/${organiser.userId}`} className={organiserClassName}>
+        <Link href={`/user/${organiser.userId}`} className={`relative z-10 ${organiserClassName}`}>
           {organiserLabel}
         </Link>
       ) : (

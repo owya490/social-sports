@@ -23,14 +23,16 @@ const LOGO_SIZES = {
 export default function Logo({
   showText = false,
   size = "md",
+  linkToHome = true,
 }: {
   showText?: boolean;
   size?: keyof typeof LOGO_SIZES;
+  linkToHome?: boolean;
 }) {
   const { gap, image, text } = LOGO_SIZES[size];
-
-  return (
-    <Link href="/" className={`flex items-center ${gap}`}>
+  const className = `flex items-center ${gap}`;
+  const content = (
+    <>
       <Image
         priority={true}
         src={LogoImage}
@@ -42,6 +44,14 @@ export default function Logo({
       {showText && (
         <span className={`${text} font-sans font-semibold uppercase leading-none text-core-text`}>SPORTSHUB</span>
       )}
+    </>
+  );
+
+  return linkToHome ? (
+    <Link href="/" className={className}>
+      {content}
     </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }
