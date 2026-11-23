@@ -19,6 +19,9 @@ public enum EmailTemplateType {
     /** Sent when a pending booking is rejected or expires. */
     BOOKING_REJECTED("cml0rm3t21e8s0ixa21rvcfnx"),
 
+    /** Sent the day before an event starts, to each approved purchaser. */
+    EVENT_REMINDER("cm5dwlbsj034sasyzg1w6sg39"),
+
     /** Same Loops transactional as {@link #BOOKING_PENDING} — organiser copy at pending checkout. */
     BOOKING_APPROVAL_ORGANISER(BOOKING_PENDING.templateId);
 
