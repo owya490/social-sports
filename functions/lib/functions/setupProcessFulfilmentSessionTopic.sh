@@ -8,20 +8,35 @@
 # trigger subscription moves a failing message to the dead-letter topic.
 # Pub/Sub rejects a dead-letter policy below 5 delivery attempts, so 5 is the smallest retry count.
 #
-# Usage: ./setupProcessFulfilmentSessionTopic.sh <dev|prod> [attach-dead-letter]
+# Pub/Sub forwards to the dead-letter topic only when its service agent can publish
+# to that topic and acknowledge on the trigger subscription. Granting that changes
+# IAM policy, which the CI deploy account cannot do, so a project Owner runs
+# grant-dead-letter-access once per project after processFulfilmentSession is
+# deployed, and again if its trigger subscription is recreated.
+#
+# Usage: ./setupProcessFulfilmentSessionTopic.sh <dev|prod> [attach-dead-letter|grant-dead-letter-access]
 
 set -euo pipefail
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-    echo "Usage: $0 <environment> [attach-dead-letter]"
+usage() {
+    echo "Usage: $0 <environment> [attach-dead-letter|grant-dead-letter-access]"
     echo "  <environment>: 'dev' or 'prod'"
     exit 1
+}
+
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
+    usage
 fi
 
 ENVIRONMENT=$1
 if [ "$ENVIRONMENT" != "dev" ] && [ "$ENVIRONMENT" != "prod" ]; then
     echo "Invalid environment: $ENVIRONMENT"
     exit 1
+fi
+
+ACTION="${2:-}"
+if [ -n "$ACTION" ] && [ "$ACTION" != "attach-dead-letter" ] && [ "$ACTION" != "grant-dead-letter-access" ]; then
+    usage
 fi
 
 if [ "$ENVIRONMENT" == "dev" ]; then
@@ -55,7 +70,26 @@ ensure_topic() {
 ensure_topic "$TOPIC"
 ensure_topic "$DEAD_LETTER_TOPIC"
 
-if [ "$#" -eq 2 ] && [ "$2" == "attach-dead-letter" ]; then
+if [ -z "$ACTION" ]; then
+    exit 0
+fi
+
+SUBSCRIPTIONS=""
+for attempt in 1 2 3 4 5 6; do
+    SUBSCRIPTIONS=$(gcloud pubsub topics list-subscriptions "$TOPIC" --project="$PROJECT_NAME" | sed '/^---$/d' | sed '/^$/d')
+    if [ -n "$SUBSCRIPTIONS" ]; then
+        break
+    fi
+    echo "No subscription on $TOPIC yet (attempt ${attempt})"
+    sleep 5
+done
+
+if [ -z "$SUBSCRIPTIONS" ]; then
+    echo "No Pub/Sub subscription found for $TOPIC"
+    exit 1
+fi
+
+if [ "$ACTION" == "grant-dead-letter-access" ]; then
     PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_NAME" --format='value(projectNumber)')
     PUBSUB_SA="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
 
@@ -64,31 +98,20 @@ if [ "$#" -eq 2 ] && [ "$2" == "attach-dead-letter" ]; then
         --member="serviceAccount:${PUBSUB_SA}" \
         --role="roles/pubsub.publisher" \
         --quiet
+fi
 
-    SUBSCRIPTIONS=""
-    for attempt in 1 2 3 4 5 6; do
-        SUBSCRIPTIONS=$(gcloud pubsub topics list-subscriptions "$TOPIC" --project="$PROJECT_NAME" | sed '/^---$/d' | sed '/^$/d')
-        if [ -n "$SUBSCRIPTIONS" ]; then
-            break
-        fi
-        echo "No subscription on $TOPIC yet (attempt ${attempt})"
-        sleep 5
-    done
-
-    if [ -z "$SUBSCRIPTIONS" ]; then
-        echo "No Pub/Sub subscription found for $TOPIC"
-        exit 1
+while IFS= read -r SUBSCRIPTION; do
+    if [ -z "$SUBSCRIPTION" ]; then
+        continue
     fi
-
-    while IFS= read -r SUBSCRIPTION; do
-        if [ -z "$SUBSCRIPTION" ]; then
-            continue
-        fi
+    if [ "$ACTION" == "grant-dead-letter-access" ]; then
         gcloud pubsub subscriptions add-iam-policy-binding "$SUBSCRIPTION" \
             --project="$PROJECT_NAME" \
             --member="serviceAccount:${PUBSUB_SA}" \
             --role="roles/pubsub.subscriber" \
             --quiet
+        echo "Granted dead-letter forwarding on $SUBSCRIPTION"
+    else
         gcloud pubsub subscriptions update "$SUBSCRIPTION" \
             --project="$PROJECT_NAME" \
             --dead-letter-topic="$DEAD_LETTER_TOPIC" \
@@ -96,7 +119,7 @@ if [ "$#" -eq 2 ] && [ "$2" == "attach-dead-letter" ]; then
             --message-retention-duration="$MESSAGE_RETENTION" \
             --quiet
         echo "Attached dead letter to $SUBSCRIPTION with message retention $MESSAGE_RETENTION"
-    done <<EOF
+    fi
+done <<EOF
 $SUBSCRIPTIONS
 EOF
-fi

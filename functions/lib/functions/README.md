@@ -41,6 +41,22 @@ disable the integration. If creation fails or times out, inspect the selected
 project before retrying; the record might already exist. Provisioning does not
 deploy the backend or change the partner's website.
 
+## Grant dead-letter forwarding
+
+Pub/Sub moves a failing `processFulfilmentSession` message to
+`process-fulfilment-sessions-dead-letter` only when its service agent may publish
+to that topic and acknowledge on the trigger subscription. CI sets the
+dead-letter policy on each deploy but cannot change IAM policy, so a project
+Owner grants this once per project, after `processFulfilmentSession` is deployed:
+
+```bash
+./setupProcessFulfilmentSessionTopic.sh dev grant-dead-letter-access
+./setupProcessFulfilmentSessionTopic.sh prod grant-dead-letter-access
+```
+
+Run it again if the function's Eventarc trigger is recreated, because the grant is
+on the trigger subscription.
+
 ## Replay a dead-lettered fulfilment session
 
 `processFulfilmentSession` retries a failing message 5 times, then Pub/Sub moves
