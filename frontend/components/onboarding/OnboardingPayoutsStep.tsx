@@ -2,7 +2,13 @@
 
 import OnboardingStepNav from "@/components/onboarding/OnboardingStepNav";
 import { SportshubStripeIntegrationIcon } from "@/components/organiser/v2/settings/SportshubStripeIntegrationIcon";
-import { ProfileField, ProfileTextInput, profileFieldClass, profileFieldShellClass } from "@/components/users/profile/ProfileFormControls";
+import {
+  ProfileField,
+  ProfileSection,
+  ProfileTextInput,
+  profileFieldClass,
+  profileFieldShellClass,
+} from "@/components/users/profile/ProfileFormControls";
 import { useUser } from "@/components/utility/UserContext";
 import { UserId } from "@/interfaces/UserTypes";
 import { initializeAutocomplete, useGoogleMapsScript } from "@/services/src/maps/mapsService";
@@ -43,32 +49,18 @@ export type BankAccountFields = {
   accountNumber: string;
 };
 
-function AbnChoice({
-  checked,
-  label,
-  disabled,
-  onSelect,
-}: {
-  checked: boolean;
-  label: string;
-  disabled: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-center gap-2">
-      <input type="radio" name="has-abn" className="sr-only" checked={checked} onChange={onSelect} disabled={disabled} />
-      <span
-        aria-hidden
-        className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-          checked ? "border-black" : "border-gray-400"
-        }`}
-      >
-        {checked ? <span className="h-2 w-2 rounded-full bg-black" /> : null}
-      </span>
-      {label}
-    </label>
-  );
-}
+type PayoutFormState = {
+  hasAbn: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  abn: string;
+  dateOfBirth: string;
+  addressQuery: string;
+  accountHolderName: string;
+  bsb: string;
+  accountNumber: string;
+};
 
 function digits(value: string): string {
   return value.replace(/\D/g, "");
@@ -172,7 +164,7 @@ export async function requestExistingStripeAccountLink(userId: UserId): Promise<
     getRefreshAccountLinkUrl()
   );
   if (!url || url === "/error") {
-    throw new Error("Could not start Stripe. Try again.");
+    throw new Error("Could not open Stripe. Try again.");
   }
   try {
     await markProductOnboardingCompleted(userId);
@@ -182,7 +174,7 @@ export async function requestExistingStripeAccountLink(userId: UserId): Promise<
   return url;
 }
 
-export default function OrganiserOnboardingStep({
+export default function OnboardingPayoutsStep({
   onBack,
   onFinished,
   initialSubStep = "details",
@@ -193,19 +185,20 @@ export default function OrganiserOnboardingStep({
 }) {
   const { user } = useUser();
   const [subStep, setSubStep] = useState<PayoutSubStep>(initialSubStep);
-  const [hasAbn, setHasAbn] = useState(false);
-  const [firstName, setFirstName] = useState(user.firstName || "");
-  const [lastName, setLastName] = useState(user.surname || "");
-  const [email, setEmail] = useState(user.publicContactInformation?.email || user.contactInformation?.email || "");
-  const [abn, setAbn] = useState("");
-  const [dateOfBirth, setDateOfBirth] = useState("");
-  const [addressQuery, setAddressQuery] = useState("");
+  const [form, setForm] = useState<PayoutFormState>(() => ({
+    hasAbn: false,
+    firstName: user.firstName || "",
+    lastName: user.surname || "",
+    email: user.publicContactInformation?.email || user.contactInformation?.email || "",
+    abn: "",
+    dateOfBirth: "",
+    addressQuery: "",
+    accountHolderName: `${user.firstName || ""} ${user.surname || ""}`.trim(),
+    bsb: "",
+    accountNumber: "",
+  }));
   const [address, setAddress] = useState<ParsedAddress | null>(null);
-  const [accountHolderName, setAccountHolderName] = useState(`${user.firstName || ""} ${user.surname || ""}`.trim());
-  const [bsb, setBsb] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
-  const [fieldError, setFieldError] = useState("");
-  const [formError, setFormError] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [existingStripeBusy, setExistingStripeBusy] = useState(false);
@@ -214,7 +207,11 @@ export default function OrganiserOnboardingStep({
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const scriptLoadResult = useGoogleMapsScript();
   const mapsLoaded = scriptLoadResult?.isLoaded === true;
-  const busy = submitting || skipBusy || existingStripeBusy;
+
+  const updateField = <K extends keyof PayoutFormState>(key: K, value: PayoutFormState[K]) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+    setErrorMessage("");
+  };
 
   // Re-attach autocomplete whenever returning to the details form because the input remounts.
   useEffect(() => {
@@ -224,8 +221,8 @@ export default function OrganiserOnboardingStep({
       if (!place) return;
       const parsed = parsePlace(place);
       setAddress(parsed);
-      setAddressQuery(place.formatted_address || parsed?.line1 || "");
-      setFieldError(parsed ? "" : "Choose an Australian street address from the suggestions.");
+      setForm((prev) => ({ ...prev, addressQuery: place.formatted_address || parsed?.line1 || "" }));
+      setErrorMessage(parsed ? "" : "Choose an Australian street address from the suggestions.");
     });
     return () => {
       if (autocompleteRef.current) {
@@ -237,25 +234,33 @@ export default function OrganiserOnboardingStep({
     };
   }, [mapsLoaded, subStep]);
 
-  const clearErrors = () => {
-    setFieldError("");
-    setFormError("");
-  };
-
-  const phone = (user.publicContactInformation?.mobile || user.contactInformation?.mobile || "").trim();
+  const busy = submitting || skipBusy || existingStripeBusy;
   const detailsFields: PayoutDetailsFields = {
-    firstName,
-    lastName,
-    email,
-    hasAbn,
-    abn,
-    dateOfBirth,
+    firstName: form.firstName,
+    lastName: form.lastName,
+    email: form.email,
+    hasAbn: form.hasAbn,
+    abn: form.abn,
+    dateOfBirth: form.dateOfBirth,
     address,
   };
   const bankFields: BankAccountFields = {
-    accountHolderName,
-    bsb,
-    accountNumber,
+    accountHolderName: form.accountHolderName,
+    bsb: form.bsb,
+    accountNumber: form.accountNumber,
+  };
+
+  const connectExistingStripe = async () => {
+    if (!user.userId || busy) return;
+    setErrorMessage("");
+    setExistingStripeBusy(true);
+    try {
+      const link = await requestExistingStripeAccountLink(user.userId as UserId);
+      window.location.assign(link);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "Could not open Stripe. Try again.");
+      setExistingStripeBusy(false);
+    }
   };
 
   const skipGettingPaid = async () => {
@@ -272,78 +277,73 @@ export default function OrganiserOnboardingStep({
     }
   };
 
-  const connectExistingStripeAccount = async () => {
-    if (!user.userId || busy) return;
-    clearErrors();
-    setExistingStripeBusy(true);
-    try {
-      const url = await requestExistingStripeAccountLink(user.userId as UserId);
-      window.location.assign(url);
-    } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Could not start Stripe. Try again.");
-      setExistingStripeBusy(false);
-    }
-  };
-
   const continueToBank = (event: FormEvent) => {
     event.preventDefault();
     if (busy) return;
-    clearErrors();
+    setErrorMessage("");
 
     const detailsError = validatePayoutDetails(detailsFields);
     if (detailsError) {
-      setFieldError(detailsError);
+      setErrorMessage(detailsError);
       return;
     }
 
-    setAccountHolderName((current) =>
-      resolveAccountHolderName(current, accountHolderEditedRef.current, firstName, lastName)
-    );
+    setForm((prev) => ({
+      ...prev,
+      accountHolderName: resolveAccountHolderName(
+        prev.accountHolderName,
+        accountHolderEditedRef.current,
+        prev.firstName,
+        prev.lastName
+      ),
+    }));
     setSubStep("bank");
     window.scrollTo?.(0, 0);
   };
 
   const handleBackToDetails = () => {
     if (busy) return;
-    clearErrors();
+    setErrorMessage("");
     setSubStep("details");
     window.scrollTo?.(0, 0);
   };
 
-  const submitPayouts = async (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!user.userId || busy) return;
-    clearErrors();
+    setErrorMessage("");
 
     const detailsError = validatePayoutDetails(detailsFields);
     if (detailsError || !address) {
-      setFieldError(detailsError || "Choose an Australian street address from the suggestions.");
+      setErrorMessage(detailsError || "Choose an Australian street address from the suggestions.");
       return;
     }
 
     const bankError = validateBankAccount(bankFields);
     if (bankError) {
-      setFieldError(bankError);
+      setErrorMessage(bankError);
       return;
     }
+
+    const phone = (user.publicContactInformation?.mobile || user.contactInformation?.mobile || "").trim();
 
     setSubmitting(true);
     try {
       const url = await startStripePayoutOnboarding({
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        email: email.trim(),
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim(),
         phone: phone || undefined,
-        hasAbn,
-        abn: hasAbn ? digits(abn) : undefined,
-        dateOfBirth,
+        hasAbn: form.hasAbn,
+        abn: form.hasAbn ? digits(form.abn) : undefined,
+        dateOfBirth: form.dateOfBirth,
         addressLine1: address.line1,
         city: address.city,
         state: address.state,
         postcode: address.postcode,
-        accountHolderName: accountHolderName.trim() || `${firstName.trim()} ${lastName.trim()}`,
-        bsb: digits(bsb),
-        accountNumber: digits(accountNumber),
+        accountHolderName: form.accountHolderName.trim() || `${form.firstName.trim()} ${form.lastName.trim()}`,
+        bsb: digits(form.bsb),
+        accountNumber: digits(form.accountNumber),
       });
       try {
         await markProductOnboardingCompleted(user.userId as UserId);
@@ -352,7 +352,7 @@ export default function OrganiserOnboardingStep({
       }
       window.location.assign(url);
     } catch (error) {
-      setFormError(error instanceof Error ? error.message : "Could not start Stripe. Try again.");
+      setErrorMessage(error instanceof Error ? error.message : "Could not start Stripe. Try again.");
       setSubmitting(false);
     }
   };
@@ -362,76 +362,78 @@ export default function OrganiserOnboardingStep({
   const canFinish = canFinishBankAccount(detailsFields, bankFields);
 
   return (
-    <form
-      key={subStep}
-      noValidate
-      className="flex flex-col items-center"
-      onSubmit={(event) => {
-        if (!isBankStep) {
-          continueToBank(event);
-          return;
-        }
-        void submitPayouts(event);
-      }}
-    >
-      <header className="flex w-full flex-col items-center text-center">
+    <div className="space-y-6">
+      <header className="flex flex-col items-start gap-3">
         <SportshubStripeIntegrationIcon />
-        <h1 className="mt-3 whitespace-nowrap text-3xl font-bold tracking-tight">
-          {isBankStep ? "Bank account" : "Getting paid"}
-        </h1>
-        <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600 sm:text-base">
-          {isBankStep
-            ? "Add where Stripe sends your payouts. Stripe will ask you to review your details and accept its agreement."
-            : "Add your payout details. You\u2019ll enter your bank account next."}
-        </p>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {isBankStep ? "Bank account" : "Getting paid"}
+          </h1>
+          <p className="mt-1.5 text-sm text-foreground-secondary sm:text-base">
+            {isBankStep
+              ? "Add where Stripe sends your payouts. Stripe will ask you to review your details and accept its agreement."
+              : "Add your payout details. You\u2019ll enter your bank account next."}
+          </p>
+          {!isBankStep ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void connectExistingStripe()}
+              className="mt-2 inline-block text-left text-xs font-medium text-foreground-secondary underline decoration-border underline-offset-4 transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:opacity-50"
+            >
+              {existingStripeBusy ? "Opening Stripe…" : "I have an existing Stripe account"}
+            </button>
+          ) : null}
+        </div>
       </header>
 
-      <div className="mt-6 w-full space-y-4 text-left">
+      <form
+        key={subStep}
+        onSubmit={(event) => {
+          if (!isBankStep) {
+            continueToBank(event);
+            return;
+          }
+          void handleSubmit(event);
+        }}
+        noValidate
+        className="space-y-4"
+      >
         {!isBankStep ? (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-semibold text-core-text">Do you have an ABN?</legend>
-                <div className="flex gap-4 text-sm">
-                  <AbnChoice
-                    checked={hasAbn}
-                    label="Yes"
-                    disabled={busy}
-                    onSelect={() => {
-                      setHasAbn(true);
-                      clearErrors();
-                    }}
-                  />
-                  <AbnChoice
-                    checked={!hasAbn}
-                    label="No"
-                    disabled={busy}
-                    onSelect={() => {
-                      setHasAbn(false);
-                      clearErrors();
-                    }}
-                  />
-                </div>
-              </fieldset>
-              <button
-                type="button"
-                className="whitespace-nowrap rounded-full border border-gray-200 bg-gray-50/60 px-3 py-1.5 text-xs font-medium text-gray-500 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50"
-                disabled={busy}
-                onClick={() => void connectExistingStripeAccount()}
-              >
-                {existingStripeBusy ? "Working…" : "I already have a Stripe account"}
-              </button>
-            </div>
+          <ProfileSection title="Identity and business" description="Used by Stripe to verify who receives payouts.">
+            <fieldset className="space-y-2">
+              <legend className="text-xs font-medium text-foreground-muted">Do you have an ABN?</legend>
+              <div role="radiogroup" aria-label="Do you have an ABN?" className="inline-flex rounded-xl bg-surface p-1">
+                {[
+                  { label: "Yes", value: true },
+                  { label: "No", value: false },
+                ].map((option) => {
+                  const selected = form.hasAbn === option.value;
+                  return (
+                    <button
+                      key={option.label}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      disabled={busy}
+                      onClick={() => updateField("hasAbn", option.value)}
+                      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground disabled:opacity-50 ${
+                        selected ? "bg-foreground text-background" : "text-foreground-secondary hover:text-foreground"
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <ProfileField label="Legal first name" htmlFor="payout-first-name">
                 <ProfileTextInput
                   id="payout-first-name"
-                  value={firstName}
-                  onChange={(value) => {
-                    setFirstName(value);
-                    clearErrors();
-                  }}
+                  value={form.firstName}
+                  onChange={(v) => updateField("firstName", v)}
                   autoComplete="given-name"
                   disabled={busy}
                 />
@@ -439,11 +441,8 @@ export default function OrganiserOnboardingStep({
               <ProfileField label="Legal last name" htmlFor="payout-last-name">
                 <ProfileTextInput
                   id="payout-last-name"
-                  value={lastName}
-                  onChange={(value) => {
-                    setLastName(value);
-                    clearErrors();
-                  }}
+                  value={form.lastName}
+                  onChange={(v) => updateField("lastName", v)}
                   autoComplete="family-name"
                   disabled={busy}
                 />
@@ -452,11 +451,8 @@ export default function OrganiserOnboardingStep({
                 <ProfileTextInput
                   id="payout-email"
                   type="email"
-                  value={email}
-                  onChange={(value) => {
-                    setEmail(value);
-                    clearErrors();
-                  }}
+                  value={form.email}
+                  onChange={(v) => updateField("email", v)}
                   autoComplete="email"
                   disabled={busy}
                 />
@@ -465,16 +461,13 @@ export default function OrganiserOnboardingStep({
                 <ProfileTextInput
                   id="payout-dob"
                   type="date"
-                  value={dateOfBirth}
-                  onChange={(value) => {
-                    setDateOfBirth(value);
-                    clearErrors();
-                  }}
+                  value={form.dateOfBirth}
+                  onChange={(v) => updateField("dateOfBirth", v)}
                   autoComplete="bday"
                   disabled={busy}
                 />
               </ProfileField>
-              {hasAbn ? (
+              {form.hasAbn ? (
                 <ProfileField
                   label="ABN"
                   htmlFor="payout-abn"
@@ -483,11 +476,8 @@ export default function OrganiserOnboardingStep({
                 >
                   <ProfileTextInput
                     id="payout-abn"
-                    value={abn}
-                    onChange={(value) => {
-                      setAbn(value);
-                      clearErrors();
-                    }}
+                    value={form.abn}
+                    onChange={(v) => updateField("abn", v)}
                     inputMode="numeric"
                     disabled={busy}
                   />
@@ -498,67 +488,58 @@ export default function OrganiserOnboardingStep({
                   <input
                     id="payout-address"
                     ref={addressInputRef}
-                    value={addressQuery}
+                    value={form.addressQuery}
                     disabled={busy}
                     autoComplete="off"
                     placeholder="Start typing your address"
                     onChange={(event) => {
-                      setAddressQuery(event.target.value);
+                      updateField("addressQuery", event.target.value);
                       setAddress(null);
-                      clearErrors();
                     }}
                     className={profileFieldClass}
                   />
                 </div>
               </ProfileField>
             </div>
-          </>
+          </ProfileSection>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <ProfileField label="Account name" htmlFor="payout-account-name" className="sm:col-span-2">
-              <ProfileTextInput
-                id="payout-account-name"
-                value={accountHolderName}
-                onChange={(value) => {
-                  accountHolderEditedRef.current = true;
-                  setAccountHolderName(value);
-                  clearErrors();
-                }}
-                disabled={busy}
-              />
-            </ProfileField>
-            <ProfileField label="BSB" htmlFor="payout-bsb">
-              <ProfileTextInput
-                id="payout-bsb"
-                value={bsb}
-                onChange={(value) => {
-                  setBsb(value);
-                  clearErrors();
-                }}
-                inputMode="numeric"
-                disabled={busy}
-              />
-            </ProfileField>
-            <ProfileField label="Account number" htmlFor="payout-account-number">
-              <ProfileTextInput
-                id="payout-account-number"
-                value={accountNumber}
-                onChange={(value) => {
-                  setAccountNumber(value);
-                  clearErrors();
-                }}
-                inputMode="numeric"
-                disabled={busy}
-              />
-            </ProfileField>
-          </div>
+          <ProfileSection title="Bank account" description="Where ticket payouts are sent.">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ProfileField label="Account name" htmlFor="payout-account-name" className="sm:col-span-2">
+                <ProfileTextInput
+                  id="payout-account-name"
+                  value={form.accountHolderName}
+                  onChange={(v) => {
+                    accountHolderEditedRef.current = true;
+                    updateField("accountHolderName", v);
+                  }}
+                  disabled={busy}
+                />
+              </ProfileField>
+              <ProfileField label="BSB" htmlFor="payout-bsb">
+                <ProfileTextInput
+                  id="payout-bsb"
+                  value={form.bsb}
+                  onChange={(v) => updateField("bsb", v)}
+                  inputMode="numeric"
+                  disabled={busy}
+                />
+              </ProfileField>
+              <ProfileField label="Account number" htmlFor="payout-account-number">
+                <ProfileTextInput
+                  id="payout-account-number"
+                  value={form.accountNumber}
+                  onChange={(v) => updateField("accountNumber", v)}
+                  inputMode="numeric"
+                  disabled={busy}
+                />
+              </ProfileField>
+            </div>
+          </ProfileSection>
         )}
 
-        {fieldError ? <p className="text-sm text-red-700">{fieldError}</p> : null}
-        {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
-      </div>
+        {errorMessage ? <p className="text-sm text-danger">{errorMessage}</p> : null}
 
-      <div className="mt-6 w-full">
         <OnboardingStepNav
           onBack={isBankStep ? handleBackToDetails : onBack}
           primaryType="submit"
@@ -567,7 +548,7 @@ export default function OrganiserOnboardingStep({
           primaryDisabled={isBankStep ? !canFinish : !canContinue}
           skip={{ busy: skipBusy, onSkip: skipGettingPaid }}
         />
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

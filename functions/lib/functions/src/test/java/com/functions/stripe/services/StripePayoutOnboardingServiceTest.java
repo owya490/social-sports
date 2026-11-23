@@ -149,15 +149,18 @@ public class StripePayoutOnboardingServiceTest {
 
     @Test
     public void params_omitPhoneWhenMissingOrNonAustralian() {
-        AccountCreateParams noPhone = StripePayoutOnboardingService.accountParams("uid-1", "ada", individualRequest(null));
+        AccountCreateParams noPhone = StripePayoutOnboardingService.accountParams(
+                "uid-1", "ada", StripePayoutOnboardingService.validate(individualRequest(null)));
         assertNull(noPhone.getBusinessProfile().getSupportPhone());
         assertNull(noPhone.getIndividual().getPhone());
 
-        AccountCreateParams nonAu = StripePayoutOnboardingService.accountParams("uid-1", "ada", individualRequest("412345678"));
+        AccountCreateParams nonAu = StripePayoutOnboardingService.accountParams(
+                "uid-1", "ada", StripePayoutOnboardingService.validate(individualRequest("412345678")));
         assertNull(nonAu.getBusinessProfile().getSupportPhone());
         assertNull(nonAu.getIndividual().getPhone());
 
-        PersonCollectionCreateParams abnPerson = StripePayoutOnboardingService.representativeParams(abnRequest("   "));
+        PersonCollectionCreateParams abnPerson = StripePayoutOnboardingService.representativeParams(
+                StripePayoutOnboardingService.validate(abnRequest("   ")));
         assertNull(abnPerson.getPhone());
     }
 

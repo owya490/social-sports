@@ -47,33 +47,44 @@ function useStaggeredSteps(revealed: OnboardingTimelinePersona | null, showPayou
     const wait = reduceMotion ? 0 : EXPAND_MS;
 
     if (revealed === "organiser") {
-      setProfileShown(true);
+      const showProfileTimer = window.setTimeout(() => setProfileShown(true), 0);
       if (!showPayouts) {
         payoutsShownRef.current = false;
-        setPayoutsShown(false);
-        return;
+        const hidePayoutsTimer = window.setTimeout(() => setPayoutsShown(false), 0);
+        return () => {
+          window.clearTimeout(showProfileTimer);
+          window.clearTimeout(hidePayoutsTimer);
+        };
       }
-      const timer = window.setTimeout(() => {
+      const showPayoutsTimer = window.setTimeout(() => {
         payoutsShownRef.current = true;
         setPayoutsShown(true);
       }, wait);
-      return () => window.clearTimeout(timer);
+      return () => {
+        window.clearTimeout(showProfileTimer);
+        window.clearTimeout(showPayoutsTimer);
+      };
     }
 
     if (revealed === "attendee") {
       payoutsShownRef.current = false;
-      setPayoutsShown(false);
-      setProfileShown(true);
-      return;
+      const timer = window.setTimeout(() => {
+        setPayoutsShown(false);
+        setProfileShown(true);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
     const hadPayouts = payoutsShownRef.current;
-    setPayoutsShown(false);
-    const timer = window.setTimeout(() => {
+    const hidePayoutsTimer = window.setTimeout(() => setPayoutsShown(false), 0);
+    const hideProfileTimer = window.setTimeout(() => {
       payoutsShownRef.current = false;
       setProfileShown(false);
     }, hadPayouts ? wait : 0);
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(hidePayoutsTimer);
+      window.clearTimeout(hideProfileTimer);
+    };
   }, [revealed, showPayouts]);
 
   return { profileShown, payoutsShown };
@@ -86,10 +97,10 @@ function stepStatus(visibleIndex: number, currentIndex: number): StepStatus {
 }
 
 function markerClass(status: StepStatus): string {
-  const shared = `relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-1 transition-colors ${MOTION}`;
-  if (status === "complete") return `${shared} bg-[#22c55e] text-white ring-transparent`;
-  if (status === "current") return `${shared} bg-surface-muted text-foreground ring-transparent`;
-  return `${shared} bg-surface text-foreground-muted ring-border`;
+  const shared = `relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors ${MOTION}`;
+  if (status === "complete") return `${shared} border-transparent bg-[#22c55e] text-white`;
+  if (status === "current") return `${shared} border-transparent bg-surface-muted text-foreground`;
+  return `${shared} border-border bg-background text-foreground-muted`;
 }
 
 function Marker({ status, number }: { status: StepStatus; number: number }) {
@@ -125,12 +136,6 @@ function FillLine({
   orientation: "vertical" | "horizontal";
   active?: boolean;
 }) {
-  const [shown, setShown] = useState(filled);
-
-  useEffect(() => {
-    setShown(filled);
-  }, [filled]);
-
   const vertical = orientation === "vertical";
   return (
     <span
@@ -145,7 +150,7 @@ function FillLine({
         className={`block h-full w-full bg-[#22c55e] transition-transform ${MOTION} ${
           vertical ? "origin-top" : "origin-left"
         }`}
-        style={{ transform: shown ? (vertical ? "scaleY(1)" : "scaleX(1)") : vertical ? "scaleY(0)" : "scaleX(0)" }}
+        style={{ transform: filled ? (vertical ? "scaleY(1)" : "scaleX(1)") : vertical ? "scaleY(0)" : "scaleX(0)" }}
       />
     </span>
   );
@@ -175,7 +180,7 @@ export default function OnboardingTimeline({
     <>
       <ol
         aria-label="Onboarding progress"
-        className={`grid w-full transition-[grid-template-columns] ${MOTION} md:hidden`}
+        className={`grid w-full transition-[grid-template-columns] ${MOTION} lg:hidden`}
         style={{
           gridTemplateColumns: visibility
             .map((visible) => (visible ? "minmax(max-content,1fr)" : "minmax(0,0fr)"))
@@ -192,7 +197,7 @@ export default function OnboardingTimeline({
               aria-current={status === "current" ? "step" : undefined}
               aria-hidden={visible ? undefined : true}
             >
-              <div className="flex w-full items-center">
+              <div className="flex w-full items-center py-0.5">
                 <span className="h-0.5 flex-1">
                   <FillLine filled={showLeft && status !== "upcoming"} active={showLeft} orientation="horizontal" />
                 </span>
@@ -213,7 +218,7 @@ export default function OnboardingTimeline({
         })}
       </ol>
 
-      <ol aria-label="Onboarding progress" className="hidden w-60 shrink-0 md:block">
+      <ol aria-label="Onboarding progress" className="hidden w-60 shrink-0 lg:block">
         {rows.map(({ step, visible, status, isLastVisible, number }) => {
           const expandable = step.id === "profile" || step.id === "payouts";
           return (

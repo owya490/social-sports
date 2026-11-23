@@ -4,7 +4,7 @@ import { getRefreshAccountLinkUrl } from "@/services/src/stripe/stripeUtils";
 import { getUrlWithCurrentHostname } from "@/services/src/urlUtils";
 import { markProductOnboardingCompleted } from "@/services/src/users/usersService";
 import { renderToStaticMarkup } from "react-dom/server";
-import OrganiserOnboardingStep, {
+import OnboardingPayoutsStep, {
   canContinuePayoutDetails,
   canFinishBankAccount,
   isValidAbn,
@@ -14,7 +14,7 @@ import OrganiserOnboardingStep, {
   resolveAccountHolderName,
   validateBankAccount,
   validatePayoutDetails,
-} from "./OrganiserOnboardingStep";
+} from "./OnboardingPayoutsStep";
 
 jest.mock("@/components/organiser/v2/event-hub/EventHubDescriptionEditor", () => ({
   EventHubDescriptionEditor: () => null,
@@ -92,22 +92,19 @@ const VALID_DETAILS: PayoutDetailsFields = {
   address: VALID_ADDRESS,
 };
 
-describe("OrganiserOnboardingStep forms", () => {
+describe("OnboardingPayoutsStep forms", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it("renders only personal/payout details and the existing Stripe button on the primary form with Continue", () => {
     const markup = renderToStaticMarkup(
-      <OrganiserOnboardingStep onBack={() => {}} onFinished={async () => {}} />
+      <OnboardingPayoutsStep onBack={() => {}} onFinished={async () => {}} />
     );
 
     expect(markup).toContain("Getting paid");
     expect(markup).toContain("Do you have an ABN?");
-    expect(markup).toContain("I already have a Stripe account");
-    expect(markup).toMatch(/<button[^>]*type="button"[^>]*>I already have a Stripe account<\/button>/);
-    expect(markup.indexOf("Do you have an ABN?")).toBeLessThan(markup.indexOf("I already have a Stripe account"));
-    expect(markup.indexOf("I already have a Stripe account")).toBeLessThan(markup.indexOf("Legal first name"));
+    expect(markup).toContain("I have an existing Stripe account");
     expect(markup).toContain('id="payout-first-name"');
     expect(markup).toContain('id="payout-last-name"');
     expect(markup).toContain('id="payout-email"');
@@ -117,7 +114,6 @@ describe("OrganiserOnboardingStep forms", () => {
     expect(markup).toContain("Back");
     expect(markup).toContain("Skip");
 
-    // Bank fields live on the secondary form so neither form scrolls.
     expect(markup).not.toContain('id="payout-account-name"');
     expect(markup).not.toContain('id="payout-bsb"');
     expect(markup).not.toContain('id="payout-account-number"');
@@ -126,7 +122,7 @@ describe("OrganiserOnboardingStep forms", () => {
 
   it("renders only bank account fields on the secondary form with Finish", () => {
     const markup = renderToStaticMarkup(
-      <OrganiserOnboardingStep onBack={() => {}} onFinished={async () => {}} initialSubStep="bank" />
+      <OnboardingPayoutsStep onBack={() => {}} onFinished={async () => {}} initialSubStep="bank" />
     );
 
     expect(markup).toContain("Bank account");
@@ -139,6 +135,7 @@ describe("OrganiserOnboardingStep forms", () => {
     expect(markup).toContain("Skip");
 
     expect(markup).not.toContain("Do you have an ABN?");
+    expect(markup).not.toContain("I have an existing Stripe account");
     expect(markup).not.toContain('id="payout-first-name"');
     expect(markup).not.toContain('id="payout-dob"');
     expect(markup).not.toContain('id="payout-address"');
@@ -175,13 +172,13 @@ describe("OrganiserOnboardingStep forms", () => {
     mockGetStripeStandardAccountLink.mockResolvedValue("/error");
 
     await expect(requestExistingStripeAccountLink("user-123" as UserId)).rejects.toThrow(
-      "Could not start Stripe. Try again."
+      "Could not open Stripe. Try again."
     );
     expect(mockMarkProductOnboardingCompleted).not.toHaveBeenCalled();
   });
 });
 
-describe("OrganiserOnboardingStep validation", () => {
+describe("OnboardingPayoutsStep validation", () => {
   it("validates details form progression independently of bank account fields", () => {
     expect(canContinuePayoutDetails(VALID_DETAILS)).toBe(true);
     expect(canContinuePayoutDetails({ ...VALID_DETAILS, firstName: "  " })).toBe(false);
