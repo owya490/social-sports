@@ -16,11 +16,29 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 const AU_STATES = ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"];
 const ABN_WEIGHTS = [10, 1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
 
-type ParsedAddress = {
+export type PayoutSubStep = "details" | "bank";
+
+export type ParsedAddress = {
   line1: string;
   city: string;
   state: string;
   postcode: string;
+};
+
+export type PayoutDetailsFields = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  hasAbn: boolean;
+  abn: string;
+  dateOfBirth: string;
+  address: ParsedAddress | null;
+};
+
+export type BankAccountFields = {
+  accountHolderName: string;
+  bsb: string;
+  accountNumber: string;
 };
 
 function AbnChoice({
@@ -54,7 +72,7 @@ function digits(value: string): string {
   return value.replace(/\D/g, "");
 }
 
-function isValidAbn(value: string): boolean {
+export function isValidAbn(value: string): boolean {
   const abn = digits(value);
   if (abn.length !== 11) return false;
   const sum = ABN_WEIGHTS.reduce((total, weight, index) => {
@@ -62,6 +80,71 @@ function isValidAbn(value: string): boolean {
     return total + digit * weight;
   }, 0);
   return sum % 89 === 0;
+}
+
+export function canContinuePayoutDetails(details: PayoutDetailsFields): boolean {
+  return (
+    details.firstName.trim() !== "" &&
+    details.lastName.trim() !== "" &&
+    validateEmail(details.email) &&
+    details.dateOfBirth !== "" &&
+    details.address !== null &&
+    (!details.hasAbn || isValidAbn(details.abn))
+  );
+}
+
+export function canFinishBankAccount(details: PayoutDetailsFields, bank: BankAccountFields): boolean {
+  const accountDigits = digits(bank.accountNumber);
+  return (
+    canContinuePayoutDetails(details) &&
+    bank.accountHolderName.trim() !== "" &&
+    digits(bank.bsb).length === 6 &&
+    accountDigits.length >= 5 &&
+    accountDigits.length <= 10
+  );
+}
+
+export function validatePayoutDetails(details: PayoutDetailsFields, phone: string): string {
+  if (!details.firstName.trim() || !details.lastName.trim()) {
+    return "Enter your legal name.";
+  }
+  if (!validateEmail(details.email)) {
+    return EMAIL_VALIDATION_ERROR_MESSAGE;
+  }
+  if (!phone.trim()) {
+    return "Add a phone number on your profile. Stripe needs it for payouts.";
+  }
+  if (details.hasAbn && !isValidAbn(details.abn)) {
+    return "Enter a valid 11-digit ABN.";
+  }
+  if (!details.dateOfBirth) {
+    return "Enter your date of birth.";
+  }
+  if (!details.address) {
+    return "Choose an Australian street address from the suggestions.";
+  }
+  return "";
+}
+
+export function validateBankAccount(bank: BankAccountFields): string {
+  if (!bank.accountHolderName.trim()) {
+    return "Enter the account name.";
+  }
+  const accountDigits = digits(bank.accountNumber);
+  if (digits(bank.bsb).length !== 6 || accountDigits.length < 5 || accountDigits.length > 10) {
+    return "Enter a 6-digit BSB and your account number.";
+  }
+  return "";
+}
+
+export function resolveAccountHolderName(
+  currentName: string,
+  editedByUser: boolean,
+  firstName: string,
+  lastName: string
+): string {
+  if (editedByUser) return currentName;
+  return `${firstName.trim()} ${lastName.trim()}`.trim();
 }
 
 function addressPart(place: google.maps.places.PlaceResult, type: string, shortName = false): string {
@@ -86,11 +169,14 @@ function parsePlace(place: google.maps.places.PlaceResult): ParsedAddress | null
 export default function OrganiserOnboardingStep({
   onBack,
   onFinished,
+  initialSubStep = "details",
 }: {
   onBack: () => void;
   onFinished: () => Promise<void>;
+  initialSubStep?: PayoutSubStep;
 }) {
   const { user } = useUser();
+  const [subStep, setSubStep] = useState<PayoutSubStep>(initialSubStep);
   const [hasAbn, setHasAbn] = useState(false);
   const [firstName, setFirstName] = useState(user.firstName || "");
   const [lastName, setLastName] = useState(user.surname || "");
@@ -106,13 +192,15 @@ export default function OrganiserOnboardingStep({
   const [formError, setFormError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
+  const accountHolderEditedRef = useRef(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const scriptLoadResult = useGoogleMapsScript();
   const mapsLoaded = scriptLoadResult?.isLoaded === true;
 
+  // Re-attach autocomplete whenever returning to the details form because the input remounts.
   useEffect(() => {
-    if (!mapsLoaded || !addressInputRef.current) return;
+    if (subStep !== "details" || !mapsLoaded || !addressInputRef.current) return;
     autocompleteRef.current = initializeAutocomplete(addressInputRef, () => {
       const place = autocompleteRef.current?.getPlace();
       if (!place) return;
@@ -123,11 +211,34 @@ export default function OrganiserOnboardingStep({
     });
     return () => {
       if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        if (window.google?.maps?.event) {
+          window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        }
         autocompleteRef.current = null;
       }
     };
-  }, [mapsLoaded]);
+  }, [mapsLoaded, subStep]);
+
+  const clearErrors = () => {
+    setFieldError("");
+    setFormError("");
+  };
+
+  const phone = user.publicContactInformation?.mobile || user.contactInformation?.mobile || "";
+  const detailsFields: PayoutDetailsFields = {
+    firstName,
+    lastName,
+    email,
+    hasAbn,
+    abn,
+    dateOfBirth,
+    address,
+  };
+  const bankFields: BankAccountFields = {
+    accountHolderName,
+    bsb,
+    accountNumber,
+  };
 
   const skipGettingPaid = async () => {
     if (!user.userId || skipBusy || submitting) return;
@@ -143,39 +254,45 @@ export default function OrganiserOnboardingStep({
     }
   };
 
+  const continueToBank = (event: FormEvent) => {
+    event.preventDefault();
+    if (submitting || skipBusy) return;
+    clearErrors();
+
+    const detailsError = validatePayoutDetails(detailsFields, phone);
+    if (detailsError) {
+      setFieldError(detailsError);
+      return;
+    }
+
+    setAccountHolderName((current) =>
+      resolveAccountHolderName(current, accountHolderEditedRef.current, firstName, lastName)
+    );
+    setSubStep("bank");
+    window.scrollTo?.(0, 0);
+  };
+
+  const handleBackToDetails = () => {
+    if (submitting || skipBusy) return;
+    clearErrors();
+    setSubStep("details");
+    window.scrollTo?.(0, 0);
+  };
+
   const submitPayouts = async (event: FormEvent) => {
     event.preventDefault();
     if (!user.userId || submitting || skipBusy) return;
-    setFieldError("");
-    setFormError("");
+    clearErrors();
 
-    const phone = user.publicContactInformation?.mobile || user.contactInformation?.mobile || "";
-    if (!firstName.trim() || !lastName.trim()) {
-      setFieldError("Enter your legal name.");
+    const detailsError = validatePayoutDetails(detailsFields, phone);
+    if (detailsError || !address) {
+      setFieldError(detailsError || "Choose an Australian street address from the suggestions.");
       return;
     }
-    if (!validateEmail(email)) {
-      setFieldError(EMAIL_VALIDATION_ERROR_MESSAGE);
-      return;
-    }
-    if (!phone.trim()) {
-      setFieldError("Add a phone number on your profile. Stripe needs it for payouts.");
-      return;
-    }
-    if (hasAbn && !isValidAbn(abn)) {
-      setFieldError("Enter a valid 11-digit ABN.");
-      return;
-    }
-    if (!dateOfBirth) {
-      setFieldError("Enter your date of birth.");
-      return;
-    }
-    if (!address) {
-      setFieldError("Choose an Australian street address from the suggestions.");
-      return;
-    }
-    if (digits(bsb).length !== 6 || digits(accountNumber).length < 5) {
-      setFieldError("Enter a 6-digit BSB and your account number.");
+
+    const bankError = validateBankAccount(bankFields);
+    if (bankError) {
+      setFieldError(bankError);
       return;
     }
 
@@ -210,98 +327,204 @@ export default function OrganiserOnboardingStep({
   };
 
   const busy = submitting || skipBusy;
-  const canFinish =
-    firstName.trim() !== "" &&
-    lastName.trim() !== "" &&
-    validateEmail(email) &&
-    dateOfBirth !== "" &&
-    address !== null &&
-    accountHolderName.trim() !== "" &&
-    digits(bsb).length === 6 &&
-    digits(accountNumber).length >= 5 &&
-    digits(accountNumber).length <= 10 &&
-    (!hasAbn || isValidAbn(abn));
+  const isBankStep = subStep === "bank";
+  const canContinue = canContinuePayoutDetails(detailsFields);
+  const canFinish = canFinishBankAccount(detailsFields, bankFields);
 
   return (
-    <form className="flex flex-col items-center" onSubmit={(event) => void submitPayouts(event)}>
+    <form
+      key={subStep}
+      noValidate
+      className="flex flex-col items-center"
+      onSubmit={(event) => {
+        if (!isBankStep) {
+          continueToBank(event);
+          return;
+        }
+        void submitPayouts(event);
+      }}
+    >
       <header className="flex w-full flex-col items-center text-center">
         <SportshubStripeIntegrationIcon />
-        <h1 className="mt-4 whitespace-nowrap text-3xl font-bold tracking-tight">Getting paid</h1>
-        <p className="mx-auto mt-4 max-w-lg text-sm text-gray-600 sm:text-base">
-          Add your payout details. Stripe will ask you to review them and accept its agreement.
+        <h1 className="mt-3 whitespace-nowrap text-3xl font-bold tracking-tight">
+          {isBankStep ? "Bank account" : "Getting paid"}
+        </h1>
+        <p className="mx-auto mt-2 max-w-lg text-sm text-gray-600 sm:text-base">
+          {isBankStep
+            ? "Add where Stripe sends your payouts. Stripe will ask you to review your details and accept its agreement."
+            : "Add your payout details. You\u2019ll enter your bank account next."}
         </p>
       </header>
 
-      <div className="mt-10 w-full space-y-4 text-left">
-        <fieldset className="space-y-2">
-          <legend className="text-sm font-semibold text-core-text">Do you have an ABN?</legend>
-          <div className="flex gap-4 text-sm">
-            <AbnChoice checked={hasAbn} label="Yes" disabled={busy} onSelect={() => setHasAbn(true)} />
-            <AbnChoice checked={!hasAbn} label="No" disabled={busy} onSelect={() => setHasAbn(false)} />
-          </div>
-        </fieldset>
+      <div className="mt-6 w-full space-y-4 text-left">
+        {!isBankStep ? (
+          <>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-semibold text-core-text">Do you have an ABN?</legend>
+              <div className="flex gap-4 text-sm">
+                <AbnChoice
+                  checked={hasAbn}
+                  label="Yes"
+                  disabled={busy}
+                  onSelect={() => {
+                    setHasAbn(true);
+                    clearErrors();
+                  }}
+                />
+                <AbnChoice
+                  checked={!hasAbn}
+                  label="No"
+                  disabled={busy}
+                  onSelect={() => {
+                    setHasAbn(false);
+                    clearErrors();
+                  }}
+                />
+              </div>
+            </fieldset>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <ProfileField label="Legal first name" htmlFor="payout-first-name">
-            <ProfileTextInput id="payout-first-name" value={firstName} onChange={setFirstName} autoComplete="given-name" disabled={busy} />
-          </ProfileField>
-          <ProfileField label="Legal last name" htmlFor="payout-last-name">
-            <ProfileTextInput id="payout-last-name" value={lastName} onChange={setLastName} autoComplete="family-name" disabled={busy} />
-          </ProfileField>
-          <ProfileField label="Email" htmlFor="payout-email" className="sm:col-span-2">
-            <ProfileTextInput id="payout-email" type="email" value={email} onChange={setEmail} autoComplete="email" disabled={busy} />
-          </ProfileField>
-          {hasAbn ? (
-            <ProfileField label="ABN" htmlFor="payout-abn" hint="Stripe will ask for the rest of your business details." className="sm:col-span-2">
-              <ProfileTextInput id="payout-abn" value={abn} onChange={setAbn} inputMode="numeric" disabled={busy} />
-            </ProfileField>
-          ) : null}
-          <ProfileField label="Date of birth" htmlFor="payout-dob">
-            <ProfileTextInput id="payout-dob" type="date" value={dateOfBirth} onChange={setDateOfBirth} autoComplete="bday" disabled={busy} />
-          </ProfileField>
-          <ProfileField label="Address" htmlFor="payout-address" className="sm:col-span-2">
-            <div className={profileFieldShellClass}>
-              <input
-                id="payout-address"
-                ref={addressInputRef}
-                value={addressQuery}
-                disabled={busy}
-                autoComplete="off"
-                placeholder="Start typing your address"
-                onChange={(event) => {
-                  setAddressQuery(event.target.value);
-                  setAddress(null);
-                }}
-                className={profileFieldClass}
-              />
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <ProfileField label="Legal first name" htmlFor="payout-first-name">
+                <ProfileTextInput
+                  id="payout-first-name"
+                  value={firstName}
+                  onChange={(value) => {
+                    setFirstName(value);
+                    clearErrors();
+                  }}
+                  autoComplete="given-name"
+                  disabled={busy}
+                />
+              </ProfileField>
+              <ProfileField label="Legal last name" htmlFor="payout-last-name">
+                <ProfileTextInput
+                  id="payout-last-name"
+                  value={lastName}
+                  onChange={(value) => {
+                    setLastName(value);
+                    clearErrors();
+                  }}
+                  autoComplete="family-name"
+                  disabled={busy}
+                />
+              </ProfileField>
+              <ProfileField label="Email" htmlFor="payout-email">
+                <ProfileTextInput
+                  id="payout-email"
+                  type="email"
+                  value={email}
+                  onChange={(value) => {
+                    setEmail(value);
+                    clearErrors();
+                  }}
+                  autoComplete="email"
+                  disabled={busy}
+                />
+              </ProfileField>
+              <ProfileField label="Date of birth" htmlFor="payout-dob">
+                <ProfileTextInput
+                  id="payout-dob"
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(value) => {
+                    setDateOfBirth(value);
+                    clearErrors();
+                  }}
+                  autoComplete="bday"
+                  disabled={busy}
+                />
+              </ProfileField>
+              {hasAbn ? (
+                <ProfileField
+                  label="ABN"
+                  htmlFor="payout-abn"
+                  hint="Stripe will ask for the rest of your business details."
+                  className="sm:col-span-2"
+                >
+                  <ProfileTextInput
+                    id="payout-abn"
+                    value={abn}
+                    onChange={(value) => {
+                      setAbn(value);
+                      clearErrors();
+                    }}
+                    inputMode="numeric"
+                    disabled={busy}
+                  />
+                </ProfileField>
+              ) : null}
+              <ProfileField label="Address" htmlFor="payout-address" className="sm:col-span-2">
+                <div className={profileFieldShellClass}>
+                  <input
+                    id="payout-address"
+                    ref={addressInputRef}
+                    value={addressQuery}
+                    disabled={busy}
+                    autoComplete="off"
+                    placeholder="Start typing your address"
+                    onChange={(event) => {
+                      setAddressQuery(event.target.value);
+                      setAddress(null);
+                      clearErrors();
+                    }}
+                    className={profileFieldClass}
+                  />
+                </div>
+              </ProfileField>
             </div>
-          </ProfileField>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <h2 className="text-sm font-semibold text-core-text sm:col-span-2">Bank account</h2>
-          <ProfileField label="Account name" htmlFor="payout-account-name" className="sm:col-span-2">
-            <ProfileTextInput id="payout-account-name" value={accountHolderName} onChange={setAccountHolderName} disabled={busy} />
-          </ProfileField>
-          <ProfileField label="BSB" htmlFor="payout-bsb">
-            <ProfileTextInput id="payout-bsb" value={bsb} onChange={setBsb} inputMode="numeric" disabled={busy} />
-          </ProfileField>
-          <ProfileField label="Account number" htmlFor="payout-account-number">
-            <ProfileTextInput id="payout-account-number" value={accountNumber} onChange={setAccountNumber} inputMode="numeric" disabled={busy} />
-          </ProfileField>
-        </div>
+          </>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <ProfileField label="Account name" htmlFor="payout-account-name" className="sm:col-span-2">
+              <ProfileTextInput
+                id="payout-account-name"
+                value={accountHolderName}
+                onChange={(value) => {
+                  accountHolderEditedRef.current = true;
+                  setAccountHolderName(value);
+                  clearErrors();
+                }}
+                disabled={busy}
+              />
+            </ProfileField>
+            <ProfileField label="BSB" htmlFor="payout-bsb">
+              <ProfileTextInput
+                id="payout-bsb"
+                value={bsb}
+                onChange={(value) => {
+                  setBsb(value);
+                  clearErrors();
+                }}
+                inputMode="numeric"
+                disabled={busy}
+              />
+            </ProfileField>
+            <ProfileField label="Account number" htmlFor="payout-account-number">
+              <ProfileTextInput
+                id="payout-account-number"
+                value={accountNumber}
+                onChange={(value) => {
+                  setAccountNumber(value);
+                  clearErrors();
+                }}
+                inputMode="numeric"
+                disabled={busy}
+              />
+            </ProfileField>
+          </div>
+        )}
 
         {fieldError ? <p className="text-sm text-red-700">{fieldError}</p> : null}
         {formError ? <p className="text-sm text-red-700">{formError}</p> : null}
       </div>
 
-      <div className="mt-10 w-full">
+      <div className="mt-6 w-full">
         <OnboardingStepNav
-          onBack={onBack}
+          onBack={isBankStep ? handleBackToDetails : onBack}
           primaryType="submit"
-          primaryLabel={submitting ? "Working…" : "Finish"}
+          primaryLabel={isBankStep ? (submitting ? "Working…" : "Finish") : "Continue"}
           disabled={busy}
-          primaryDisabled={!canFinish}
+          primaryDisabled={isBankStep ? !canFinish : !canContinue}
           skip={{ busy: skipBusy, onSkip: skipGettingPaid }}
         />
       </div>

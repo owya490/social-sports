@@ -1,5 +1,6 @@
 "use client";
 
+import Loading from "@/components/loading/Loading";
 import AttendeeOnboardingStep from "@/components/onboarding/AttendeeOnboardingStep";
 import OnboardingTimeline, { OnboardingTimelinePersona } from "@/components/onboarding/OnboardingTimeline";
 import OrganiserOnboardingStep from "@/components/onboarding/OrganiserOnboardingStep";
@@ -108,7 +109,7 @@ export default function OnboardingFlow() {
   if (userLoading || !hasProvisionedFirestoreProfile(user) || step === null) {
     return (
       <div className="flex min-h-dvh items-center justify-center px-6">
-        <p className="text-gray-600">Loading…</p>
+        <Loading inline />
       </div>
     );
   }
