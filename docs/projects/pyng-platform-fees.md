@@ -1,22 +1,24 @@
 # Pyng organiser platform fees
 
-Last updated: 2026-11-21 (Australia/Sydney).
+Last updated: 2026-11-23 (Australia/Sydney).
 Product decision owner: Brian.
-Status: discovery and design; fee collection is not implemented in the inspected checkout.
+Status: fees are calculated from Pyng tickets with a monthly query (2026-11-23,
+superseding per-sale fee records). Step zero (session hardening) is in review.
+The collection method is not chosen.
 
 ## Start here
 
 SPORTSHUB wants to collect its own 1% fee from clubs that receive Pyng ticket
-payments. Weekly collection is the chosen product direction. The provider
-service, division of responsibilities, payment system and price still need
-confirmation before implementation.
+payments. Pyng offered manual monthly direct debit, which needs a signed
+agreement from each club; Brian does not want that sign-up flow for clubs. The
+collection method is open (see [Collection method](#collection-method)). The fee
+amount comes from Pyng tickets either way.
 
 This is the canonical project context for this initiative, not a provider
-contract or an instruction to implement, send email, activate collections or
-deploy. Brian has authorised research, this document and an unsent email draft.
-Current task: obtain a written collection specification and quote, then review
-the implementation design. No agent has sent the email below; Brian is sending
-his own copy. Whether it has been sent, and any reply, is not recorded here.
+contract. It does not authorise sending email, activating collections or
+deploying.
+Current task: merge step zero (checkout session hardening), close browser
+creates on `Tickets` and `Orders`, then choose the collection method.
 
 ## Agreed product rules
 
@@ -27,19 +29,22 @@ Confirmed by Brian in the project discussion, most recently 2026-11-16:
 | Fee | 1% of the ticket amount the customer actually pays to the club, excluding other checkout fees. Use the amount after any discount that reduces that ticket payment. |
 | Trigger | A successfully paid Pyng ticket sale creates the fee obligation. An abandoned or failed payment does not. |
 | Refunds | Once earned, the fee remains owed. Later ticket refunds do not reverse it. Ticket-refund accounting is outside this fee calculation. |
+| Chargebacks and reversals | A payment undone after Settled (for example a card chargeback) does not reverse the fee either, matching Stripe today: SPORTSHUB's Stripe application fee is not refunded on refunds or disputes (no fee-refund or dispute handling in the codebase as of 2026-11-22). |
 | GST | No separate GST calculation, deduction or addition in this project calculation. This records the requested product rule, not a conclusion about either party's tax obligations. Do not reopen this as an unanswered product question. |
 | Coverage | All clubs using Pyng. Stripe platform-fee exemptions do not apply. |
-| Cadence | Accumulate fees and collect weekly, subject to provider confirmation. Exact weekday, cutoff and notice timing are not yet chosen. |
+| Cadence | Monthly, one statement per club per calendar month (2026-11-23, superseding weekly). The cutoff day is not chosen. |
 | Expected amounts | Brian estimates fees will be well below AUD 1,000 per club. This is an estimate, not a configured limit or provider-approved cap. |
+| Rounding | Round up once per statement: `feeCents = ceil(sum(ticket price cents) / 100)`. Not per ticket, so a club pays at most 1 cent extra per statement. Brian confirmed neither Pyng payment method adds a surcharge, so the ticket price is what the buyer paid. |
+| Rollout | No backfill. The first statement covers the first full month after collection starts. |
 
 Example: AUD 2,000 of qualifying ticket sales creates an AUD 20 SPORTSHUB fee.
-Later refunds do not reduce that fee. Fractional-cent rounding remains undecided.
+Later refunds do not reduce that fee.
 
 ## Keep these money flows separate
 
 1. **Attendee pays club:** the existing Pyng ticket checkout. The destination is
    the bank account associated with the merchant's Pyng organisation/site.
-2. **Club pays SPORTSHUB:** the proposed weekly collection of SPORTSHUB's 1% fee.
+2. **Club pays SPORTSHUB:** the proposed monthly collection of SPORTSHUB's 1% fee.
    Receiving ticket proceeds does not itself authorise these debits.
 3. **SPORTSHUB or club pays Pyng:** Pyng's own commercial charges. Monthly
    language in those charges is not evidence of a monthly restriction on flow 2.
@@ -74,8 +79,7 @@ a bounded documentation finding, not proof private capabilities do not exist.
 
 No source reviewed establishes a restriction to a particular number of
 SPORTSHUB fee collections per month. Per-sale collection is not established as
-technically prohibited; weekly is Brian's chosen direction, with provider
-support and economics still to be confirmed.
+technically prohibited. Brian chose monthly on 2026-11-23.
 
 ## BECS and PayTo
 
@@ -107,8 +111,8 @@ hard-coding a general notice period from this research.
 
 ## Current implementation evidence
 
-Source baseline: commit `5ee6cc99ed99efe46797a02aacc97f74f34adb04`, tree
-`67838984e23cd7c0ea6b45918e33296e7a952c33`. Code was inspected in this worktree;
+Source baseline: commit `bd3d0013ff6f5c794388b06e33638435dccbda1f`, tree
+`6942eb2e1849af48bea07e5a6f7a639642db821d` (rechecked 2026-11-22). Code was inspected in this worktree;
 this does not prove deployment state, production configuration or bank receipts.
 Recheck these symbols if implementing against a different revision.
 
@@ -136,38 +140,116 @@ collection batch, debit authority lifecycle or fee-collection reconciliation
 implementation. Persisted orders/fulfilment data are useful inputs, not proof
 that collecting fees is implemented.
 
-## Proposed design, not yet approved for implementation
+## Agreed design
 
-1. Record a fee accrual exactly once for each authoritative successful Pyng sale.
-   Preserve the club/legal billing identity, sale reference, qualifying amount,
-   fee rate and computed fee. Do not accrue from a browser redirect alone.
-2. Aggregate outstanding eligible accruals per club into an immutable weekly
-   statement with sale-level traceability. Freeze membership so rerunning a job
-   cannot charge the same sale twice.
-3. Collect under the club's separate valid authority, using the confirmed
-   provider interface and a stable collection reference. Avoid storing bank
-   details locally if the provider can host authorisation.
-4. Track submitted/pending, successful, failed, returned and disputed outcomes
-   independently from the ticket-sale state. Reconcile unknown outcomes before
-   retrying. Retrying collection must not create a new fee obligation.
-5. Keep ordinary ticket refunds out of fee reversal logic. Billing errors,
-   duplicate charges and returned collections still need correction/recovery.
+Agreed with Brian on 2026-11-23. It supersedes the 2026-11-22 design of per-sale
+fee records (`PlatformFeeAccruals`) written at Pyng settlement. With manual
+monthly collection from a few clubs, a monthly query over Pyng tickets is
+enough. Revisit per-sale records if collection is automated or volume grows.
 
-Use AUD integer cents for money storage, with an explicit fractional-cent rule
-for the 1% calculation. Whether to round per ticket, per order or per weekly
-aggregate is unresolved; these give different results for small sales. Do not
-silently adopt Stripe's `ceil` behavior.
+### Principles
 
-A candidate period is Monday 00:00 to the next Monday 00:00 in Australia/Sydney,
-with an agreed later debit date after any required notice. This is an example,
-not an accepted schedule. Account for DST and business-day holidays. If notice
-requires collecting an older completed week, the collection cadence can still
-remain weekly. Define treatment of late payment confirmation and avoid
-reopening already issued statements without a traceable adjustment.
+- Never overcharge a club. Bill only tickets the backend minted for a settled
+  Pyng checkout.
+- A ticket's status does not change the fee. A ticket the organiser later
+  rejects still counts, matching the refund rule.
+- Fees depend on tickets only after browsers can no longer create `Tickets` or
+  `Orders` (step one).
+- Each ticket is billed once: a statement covers one club and one calendar
+  month, and a club-month is billed once.
 
-Per-debit charges may dominate a small club's 1% fee. Compare weekly costs with
-the expected amounts before deciding any minimum collection/carry-forward rule.
-Do not introduce a minimum charge to the club without a product decision.
+### Where the fee comes from
+
+After Pyng reports Settled, the fulfilment processor mints tickets in
+`FulfilmentSessionTicketWriter.mintAndComplete`, through
+`EventTicketPurchaseService.fulfillCompletedEventTicketPurchase`. Each ticket of
+a Pyng sale stores:
+
+| Ticket field | Value for a Pyng sale | Fee use |
+| --- | --- | --- |
+| `paymentProvider` | `PYNG` (`FulfilmentSessionTicketWriter.paymentProvider`) | Selects Pyng sales. |
+| `type` | `GENERAL`. Tickets an organiser adds are `MANUAL` with no provider, even inside a paid order (`AttendeeService.setAttendeeTickets`). | Excludes organiser-added tickets. |
+| `price` | The session's ticket price in cents, the same amount `PyngService` charges per ticket. Pyng checkouts apply no discount. | The fee base. |
+| `status` | `APPROVED`; an organiser can later set `REJECTED`. | Ignored. |
+| `purchaseDate` | Mint time. | Assigns the ticket to a month. |
+| `eventId` | The event. | Leads to the event's `organiserId`, the club billed. |
+
+A month's fee for a club is 1% of the sum of `price` over its tickets with
+`paymentProvider == PYNG` and `type == GENERAL` and `purchaseDate` in that
+month (Australia/Sydney), rounded up once.
+
+Known gaps, accepted for manual monthly collection:
+
+- The amount is the ticket price, not Pyng's reported `amountPaid`. They match
+  while Pyng adds no surcharge and checkouts apply no discount. Revisit if
+  either changes (Pyng changelog 1.1.0 added discount support).
+- A paid sale whose tickets fail to mint (dead-lettered and never replayed)
+  bills nothing; the buyer also received nothing.
+- A ticket minted after its month's statement, for example a late dead-letter
+  replay, is missed. Run each month's statement a few days after month end.
+
+`FulfilmentSessions` must be closed to browser reads and writes so checkout
+state comes only from the backend (step zero). The frontend has not accessed
+that collection directly since its commented-out client code was deleted in
+June 2025 (`7e3c8f46e`); only the collection-name constant remains. Partner and
+Syrio integrations call the backend over HTTP and are unaffected. Merging to
+`master` deploys Firestore rules to dev and prod in parallel
+(`sportshub_cloud_functions_deploy_ci.yml`, job `deploy-firestore-rules`), at
+the same time as functions, so test rules with the emulator before merging.
+
+### Statements
+
+Provisional; depends on the collection method.
+
+- `PlatformFeeStatements/{organiserId}_{YYYY-MM}`: `organiserId`, `month`,
+  `ticketCount`, `ticketTotalCents`, `feeCents`, `createdAt`. Created with
+  `DocumentReference.create()`, so a club-month cannot be billed twice. Written
+  by a backend job or CLI command, never edited. Admin SDK only, with an
+  explicit client deny rule.
+- `feeCents = (ticketTotalCents + 99) / 100` in `long` arithmetic, summed with
+  `Math.addExact`.
+- Payment tracking is added once the collection method is chosen.
+
+Gates before statements ship:
+
+- Organisers control `organiserId` on events through client rules. Make it
+  server-controlled, or verify it, before billing depends on it.
+- Decide whether SPORTSHUB's own organiser account, which is on the Pyng
+  allowlist, is billed.
+
+Deliberately left out: per-sale fee records, write-offs, adjustments, backfill
+and a stored fee rate (1% is fixed in code; add a rate field if it changes).
+
+### Step zero: checkout session hardening (ships first, separately)
+
+A security and correctness fix to the existing Pyng checkout, independent of
+fees. [owya490/social-sports#758](https://github.com/owya490/social-sports/pull/758)
+is in review.
+
+1. Firestore rules: close `FulfilmentSessions` to browser reads and writes.
+   Verify with the emulator before merging, since merging deploys rules.
+2. `refresh`/`settle` always confirm a terminal status with a live Pyng poll and
+   act only on it; a live non-terminal status publishes nothing. Delete the
+   uncalled `PyngService.refreshCheckout`/`recordTerminalStatus` path.
+3. Session cleanup keeps a Pyng session it cannot read instead of deleting it
+   (`FulfilmentService.shouldRetainPyngCheckout`).
+4. Tests: a stored terminal status triggers a live poll; a live PENDING
+   publishes nothing; cleanup keeps an unreadable Pyng session.
+
+Keep the public pull request description at this level of detail.
+
+### Step one: close browser writes to tickets and orders
+
+1. Firestore rules: deny browser `create` on `Tickets` and `Orders`. Only the
+   backend creates them; no frontend code writes either collection (checked
+   2026-11-23). Reads stay as they are. Verify with the emulator before merging.
+2. Then build the monthly statement query and its tests: Pyng `GENERAL` tickets
+   count, `MANUAL` and Stripe tickets do not, `REJECTED` tickets still count,
+   month boundaries, rounding and a second run for the same club-month.
+
+Per-debit charges may dominate a small club's 1% fee. Compare costs with the
+expected amounts before deciding any minimum or carry-forward rule. Do not
+introduce a minimum charge to the club without a product decision.
 
 ### Cost terms to keep distinct
 
@@ -188,13 +270,39 @@ Do not introduce a minimum charge to the club without a product decision.
 
 ## Open decisions and delivery gates
 
+### Collection method
+
+Brian does not want clubs to go through a direct-debit sign-up flow for Pyng.
+Options, best club experience first:
+
+1. **Deduct at payment through Pyng**, like Stripe's application fee. Not
+   offered in Pyng's reply and not in its public docs; ask directly.
+2. **Stripe-hosted monthly invoice.** SPORTSHUB invoices each club from its own
+   Stripe account; the club pays by card or bank debit, optionally saving a
+   card for automatic payment. A platform can debit a connected account's Stripe
+   balance only where the platform is liable for its negative balance; Stripe
+   recommends Billing for the others. SPORTSHUB creates Standard accounts
+   (`functions/lib/stripe/create_account.py`), whose negative balances the
+   platform is not liable for, so their Stripe balance cannot be debited.
+   [Stripe account debits](https://docs.stripe.com/connect/account-debits).
+3. **Monthly invoice paid by bank transfer**, outside any provider.
+4. **Pyng manual monthly direct debit**, as Pyng offered: a signed agreement
+   per club.
+5. **Do not bill Pyng clubs yet**; calculate what would be owed.
+
+Options 1 to 4 need step one and the statement query.
+
 ### Confirm with Pyng
 
+- Whether Pyng can deduct SPORTSHUB's 1% at payment (collection option 1).
+- If direct debit is used: what does each debit cost, what happens and costs
+  when one fails, what monthly format and deadline Pyng needs, and how it
+  confirms which debits succeeded.
 - Whether a suitable service is available now, what further development would
   be required, delivery timing and any minimum volume.
 - BECS, PayTo or another rail; debit user/provider/sponsor, organiser authority,
   funds flow and settlement recipient.
-- Variable weekly collections, maximum and aggregate limits, required notices,
+- Variable monthly collections, maximum and aggregate limits, required notices,
   submission cutoffs and holiday behavior.
 - Hosted club onboarding, account eligibility, authorised signatories,
   authority evidence, revocation and bank-account changes.
@@ -208,8 +316,8 @@ Do not introduce a minimum charge to the club without a product decision.
 
 ### Decide internally after provider confirmation
 
-- Rounding basis, exact weekly period/debit date, late confirmations and first
-  billing period. Do not imply retrospective authorisation to debit old sales.
+- Debit day and retry policy (maximum attempts and spacing), once Pyng's
+  failed-debit charges and retry rules are known.
 - Map club, organiser user, legal billing entity and authority: one person can
   administer multiple clubs, and changing ownership must not misassign debts.
 - What happens before authority is active, after cancellation, or after a failed
@@ -223,12 +331,12 @@ Do not introduce a minimum charge to the club without a product decision.
   unable to authorise PayTo may need another supported attendee-refund route.
   This does not change the agreed non-reversal of SPORTSHUB's fee and is not a
   requirement to implement ticket-refund accounting in this initiative.
-- Confirm stable sale correlation and missing-redirect recovery before relying
-  on checkout data for accrual. Published session status and webhook references
-  differ; requested amount must not be substituted for actual paid ticket
-  amount if discounts can change it.
-  [Session status](https://www.docs.app.pyng.com.au/checkout/get-session-status.html),
-  [webhook](https://www.docs.app.pyng.com.au/checkout/push-transaction-status.html).
+- Pyng's B2B docs (checked 2026-11-22): `batchReference` is unique per partner
+  with 90-day idempotency, and `rowReference` is unique within a batch. Ask
+  Pyng the format, maximum length and allowed characters, which are not
+  documented, for whatever collection service it offers.
+- Pyng documents `Expired` as final ("no longer payable"). Ask whether a
+  `Declined` checkout can still become `Settled`.
 - Pyng's merchant restriction policy excludes payment processors collecting on
   behalf of merchants. Confirm the partner arrangement if funds flow changes;
   do not infer permission to pool ticket proceeds in SPORTSHUB's account.
@@ -260,6 +368,14 @@ Any documentation or a brief outline of the proposed flow would be helpful.
 
 Thanks,
 Brian
+
+## Pyng's reply
+
+Received by 2026-11-23 (private correspondence, summarised): Pyng would need a
+separate direct-debit agreement signed by each club, would process debits
+manually once a month at first, would consider automating with enough clubs,
+and will send a template agreement. Costs, failed-debit handling and the
+monthly data format were not covered.
 
 ## Maintenance and handoff
 
@@ -296,5 +412,9 @@ Brian
 | 2026-11-16 | Brian approved a public documentation PR with private correspondence details removed. | Publication authorised for this version; no email sending or implementation authorised. |
 | 2026-11-16 | [owya490/social-sports#743](https://github.com/owya490/social-sports/pull/743) merged. Brian took the email to send himself. | Next gate: Pyng's reply on responsibilities, weekly support and costs. |
 | 2026-11-19/21 | Clarified failed-payment, dishonour, minimum-commitment and minimum-debit terms; checked Pinch's public BECS pricing. | Reference only; Pyng's charges remain unconfirmed. |
+| 2026-11-22 | Brian agreed the fee data model after two independent reviews: immutable per-sale fee records created at Pyng settlement, claim-based statements, derived status; no backfill, write-offs or adjustments; round up once per statement; close `FulfilmentSessions` to the browser. | Superseded on 2026-11-23 by ticket-based fees. |
+| 2026-11-23 | Pyng replied offering manual monthly direct debit with a signed agreement per club. | Recorded in summary. |
+| 2026-11-23 | Brian chose to calculate fees from Pyng tickets with a monthly query, superseding per-sale fee records, and declined a club direct-debit sign-up flow. Stripe account debits ruled out for Standard accounts. | Collection method open; next: close browser ticket and order creates. |
+| 2026-11-22 | Final adversarial review: always re-verify status with Pyng, record the fee before the purchaser check, never bill `amountPaid` above the requested amount, keep unreadable Pyng sessions during cleanup, and gate statements on the billing key and client-writable organiser and site fields. Corrected: merging deploys Firestore rules. | Step one spec updated. |
 
 Generated with AI assistance.
