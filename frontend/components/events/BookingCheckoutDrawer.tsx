@@ -88,7 +88,8 @@ export function BookingCheckoutActions({
   organiserId,
 }: BookingCheckoutActionsProps) {
   const stripeSupported = supportedPaymentProviders.includes(PaymentProvider.STRIPE);
-  const pyngEnabled = isPayWithPyngEnabled(organiserId);
+  const pyngEnabled =
+    supportedPaymentProviders.includes(PaymentProvider.PYNG) || isPayWithPyngEnabled(organiserId);
 
   return (
     <div className="flex flex-col gap-2">

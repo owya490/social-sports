@@ -42,6 +42,7 @@ public class UsersUtils {
 		privateUserData.setStripeAccount(privateUserData.getStripeAccount());
 		privateUserData.setStripeAccountActive(privateUserData.getStripeAccountActive());
 		privateUserData.setPyngSiteId(data.getPyngSiteId());
+		privateUserData.setSupportedPaymentProviders(data.getSupportedPaymentProviders());
 		privateUserData.setOrganiserEvents(privateUserData.getOrganiserEvents());
 		privateUserData.setRecurrenceTemplates(data.getRecurrenceTemplates());
 		privateUserData.setSendOrganiserTicketEmails(data.getSendOrganiserTicketEmails());

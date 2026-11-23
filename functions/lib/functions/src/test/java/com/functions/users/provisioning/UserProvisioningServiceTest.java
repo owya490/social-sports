@@ -77,6 +77,7 @@ public class UserProvisioningServiceTest {
             assertEquals("ada@example.com", contactEmail(harness.privateData));
             assertTrue(harness.privateData.containsKey("onboardingCompletedAt"));
             assertNull(harness.privateData.get("onboardingCompletedAt"));
+            assertEquals(List.of("STRIPE"), harness.privateData.get("supportedPaymentProviders"));
             assertEquals(Map.of("userId", "uid-1"), harness.metadata);
             assertEquals(List.of(
                     "read-public",

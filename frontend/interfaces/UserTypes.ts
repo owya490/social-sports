@@ -3,6 +3,7 @@ import { Branded } from "@/interfaces";
 import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
 import { Timestamp } from "firebase/firestore";
 
@@ -44,6 +45,8 @@ export interface PrivateUserData {
   stripeAccountActive: boolean | null;
   /** Organiser Pyng site id. */
   pyngSiteId: string | null;
+  /** Copied onto events the organiser creates. Missing on older user documents. */
+  supportedPaymentProviders?: PaymentProvider[];
   organiserEvents: string[];
   recurrenceTemplates: RecurrenceTemplateId[];
   forms: FormId[];
@@ -109,6 +112,7 @@ export const EmptyPrivateUserData: PrivateUserData = {
   stripeAccount: null,
   stripeAccountActive: null,
   pyngSiteId: null,
+  supportedPaymentProviders: [PaymentProvider.STRIPE],
   forms: [],
   sendOrganiserTicketEmails: false,
   privateEventCollections: [],

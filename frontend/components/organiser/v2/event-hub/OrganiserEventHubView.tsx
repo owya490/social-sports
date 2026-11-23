@@ -33,6 +33,7 @@ import {
   DEFAULT_MAX_TICKETS_PER_ORDER,
 } from "@/interfaces/EventTypes";
 import { EventTicketTypesMap } from "@/interfaces/EventTicketTypeTypes";
+import { PaymentProvider } from "@/interfaces/FulfilmentTypes";
 import { Order, OrderAndTicketStatus } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import {
@@ -94,6 +95,9 @@ export function OrganiserEventHubView() {
   const [eventShowAttendeesOnEventPage, setEventShowAttendeesOnEventPage] = useState(false);
   const [eventMaxTicketsPerTransaction, setEventMaxTicketsPerTransaction] =
     useState(DEFAULT_MAX_TICKETS_PER_ORDER);
+  const [eventSupportedPaymentProviders, setEventSupportedPaymentProviders] = useState<PaymentProvider[]>(
+    EmptyEventData.supportedPaymentProviders
+  );
   const [eventIsActive, setEventIsActive] = useState(false);
   const [eventIsPrivate, setEventIsPrivate] = useState(false);
   const [eventTicketTypes, setEventTicketTypes] = useState<EventTicketTypesMap | undefined>(undefined);
@@ -150,6 +154,7 @@ export function OrganiserEventHubView() {
         setEventWaitlistEnabled(event.waitlistEnabled);
         setEventBookingApprovalEnabled(event.bookingApprovalEnabled);
         setEventShowAttendeesOnEventPage(event.showAttendeesOnEventPage);
+        setEventSupportedPaymentProviders(event.supportedPaymentProviders ?? EmptyEventData.supportedPaymentProviders);
         setEventMaxTicketsPerTransaction(
           clampMaxTicketsPerTransaction(
             event.maxTicketsPerTransaction ?? DEFAULT_MAX_TICKETS_PER_ORDER,
@@ -403,6 +408,8 @@ export function OrganiserEventHubView() {
             setShowAttendeesOnEventPage={setEventShowAttendeesOnEventPage}
             maxTicketsPerTransaction={eventMaxTicketsPerTransaction}
             setMaxTicketsPerTransaction={setEventMaxTicketsPerTransaction}
+            supportedPaymentProviders={eventSupportedPaymentProviders}
+            setSupportedPaymentProviders={setEventSupportedPaymentProviders}
             eventCapacity={eventCapacity}
             eventPrice={eventPrice}
           />

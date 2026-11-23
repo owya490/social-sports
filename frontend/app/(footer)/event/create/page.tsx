@@ -186,7 +186,7 @@ export default function CreateEvent() {
       bookingApprovalEnabled: paymentFields.bookingApprovalEnabled,
       formId: formData.formId,
       showAttendeesOnEventPage: formData.showAttendeesOnEventPage,
-      supportedPaymentProviders: [...EmptyEventData.supportedPaymentProviders],
+      supportedPaymentProviders: [...(user.supportedPaymentProviders ?? EmptyEventData.supportedPaymentProviders)],
       maxTicketsPerTransaction: clampMaxTicketsPerTransaction(
         formData.maxTicketsPerTransaction,
         formData.capacity

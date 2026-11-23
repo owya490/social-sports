@@ -173,6 +173,9 @@ public final class UserProvisioningService {
 				|| value instanceof Timestamp) {
 			return value;
 		}
+		if (value instanceof Enum<?> enumValue) {
+			return enumValue.name();
+		}
 		return toFirestoreMap(value);
 	}
 }
