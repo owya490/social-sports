@@ -46,6 +46,7 @@ public class FirebaseService {
         public static final String FULFILMENT_SESSIONS_ROOT_PATH = "FulfilmentSessions";
         public static final String ARCHIVED_FULFILMENT_SESSIONS_ROOT_PATH = "ArchivedFulfilmentSessions";
         public static final String ERROR_ALERT_DEDUP = "ErrorAlertDedup";
+        public static final String EMAIL_REMINDER_SENDS = "EmailReminderSends";
         public static final String TICKETS = "Tickets";
         public static final String ORDERS = "Orders";
         public static final String ATTENDEES = "Attendees";

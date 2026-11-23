@@ -4,6 +4,7 @@
 # recurringEventsCron
 # cleanupOldFulfilmentSessionsCron
 # expirePendingBookingsCron
+# emailReminderCron
 # pollPendingPyngCheckoutsCron
 # completeFulfilmentSession
 # globalAppController
@@ -17,6 +18,7 @@ VALID_FUNCTIONS=(
     "recurringEventsCron"
     "cleanupOldFulfilmentSessionsCron"
     "expirePendingBookingsCron"
+    "emailReminderCron"
     "pollPendingPyngCheckoutsCron"
     "completeFulfilmentSession"
     "globalAppController"
@@ -29,6 +31,7 @@ VALID_ENDPOINTS=(
     "com.functions.events.controllers.RecurringEventsCronEndpoint"
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
+    "com.functions.emails.controllers.EmailReminderCronEndpoint"
     "com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint"
     "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
@@ -118,6 +121,13 @@ fi
 
 if [ "$FUNCTION_NAME" == "processFulfilmentSession" ]; then
     TRIGGER_ARGS=(--gen2 --trigger-topic "$PROCESS_FULFILMENT_SESSIONS_TOPIC" --retry --no-allow-unauthenticated)
+fi
+
+# Private HTTP function. Cloud Scheduler calls it with an OIDC token.
+# The schedule is not created here: the Python email_reminder job is still active.
+if [ "$FUNCTION_NAME" == "emailReminderCron" ]; then
+    TRIGGER_ARGS=(--trigger-http --no-allow-unauthenticated)
+    EXTRA_DEPLOY_ARGS+=(--timeout 540s)
 fi
 
 echo "Deploying $FUNCTION_NAME (Entry point: $ENDPOINT_CLASS_NAME) to $ENVIRONMENT under project $PROJECT_NAME"
