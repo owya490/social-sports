@@ -29,6 +29,7 @@ import {
   placeSeats,
   removeTeam,
   renameTeam,
+  seatsFor,
   seatsOnTeam,
   setTeamTargetSize,
   unassignedSeats,
@@ -93,10 +94,7 @@ export function EventHubTeams({
   const persistedSyncRef = useRef<TeamBoard | null>(null);
   if (sourceBoard && (eventId || onPersist) && !hasPendingEdit && !boardMatchesOrders(sourceBoard, people)) {
     const next = visibleBoard(sourceBoard, people);
-    const key = JSON.stringify({
-      assignments: next.assignments,
-      ticketAssignments: next.ticketAssignments ?? null,
-    });
+    const key = JSON.stringify(next.assignments);
     if (syncedAssignmentKey !== key) {
       setSyncedAssignmentKey(key);
       setPendingSync(next);
@@ -307,7 +305,7 @@ export function EventHubTeams({
                     teamId=""
                     count={count}
                     onMove={(amount, toTeamId) =>
-                      update(placeSeats(view, person, null, toTeamId, amount, people))
+                      update(placeSeats(view, person.orderId, null, toTeamId, amount, seatsFor(person)))
                     }
                   />
                 ))}
@@ -437,7 +435,7 @@ export function EventHubTeams({
                               count={count}
                               onMove={(amount, toTeamId) =>
                                 update(
-                                  placeSeats(view, person, team.id, toTeamId, amount, people)
+                                  placeSeats(view, person.orderId, team.id, toTeamId, amount, seatsFor(person))
                                 )
                               }
                             />

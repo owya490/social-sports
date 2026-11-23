@@ -1,9 +1,9 @@
-import { eventTeamBoardPayload, teamBoardFromStored } from "./teamBoardDocument";
+import { teamBoardFromStored } from "./teamBoardDocument";
 
 describe("teamBoardFromStored", () => {
   it("returns an empty board when nothing is stored", () => {
-    expect(teamBoardFromStored(undefined)).toEqual({ teams: [], assignments: {}, ticketAssignments: null });
-    expect(teamBoardFromStored(null)).toEqual({ teams: [], assignments: {}, ticketAssignments: null });
+    expect(teamBoardFromStored(undefined)).toEqual({ teams: [], assignments: {} });
+    expect(teamBoardFromStored(null)).toEqual({ teams: [], assignments: {} });
   });
 
   it("keeps valid teams and drops malformed seats", () => {
@@ -28,41 +28,6 @@ describe("teamBoardFromStored", () => {
       assignments: {
         order1: { a: 2, c: 1 },
       },
-      ticketAssignments: null,
-    });
-  });
-
-  it("reads ticket ids without dropping the order summary", () => {
-    expect(
-      teamBoardFromStored({
-        teams: [{ id: "a", name: "Team A", targetSize: null }],
-        assignments: { order1: { a: 1 } },
-        ticketAssignments: { ticket1: "a", ticket2: "" },
-      })
-    ).toEqual({
-      teams: [{ id: "a", name: "Team A", targetSize: null }],
-      assignments: { order1: { a: 1 } },
-      ticketAssignments: { ticket1: "a" },
-    });
-  });
-});
-
-describe("eventTeamBoardPayload", () => {
-  it("leaves ticket assignments off a count-only board and writes them once they exist", () => {
-    expect(eventTeamBoardPayload({ teams: [], assignments: {}, ticketAssignments: null })).toEqual({
-      teams: [],
-      assignments: {},
-    });
-    expect(
-      eventTeamBoardPayload({
-        teams: [],
-        assignments: { order1: { a: 1 } },
-        ticketAssignments: { ticket1: "a" },
-      })
-    ).toEqual({
-      teams: [],
-      assignments: { order1: { a: 1 } },
-      ticketAssignments: { ticket1: "a" },
     });
   });
 });

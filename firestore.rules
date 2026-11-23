@@ -43,17 +43,14 @@ service cloud.firestore {
 
     // Team layouts for an event. Kept off EventsMetadata so ticket webhooks can replace that document
     // without deleting the board. Ownership follows the event's metadata organiserId.
-    // assignments is the order summary. ticketAssignments is ticket id → team id and is optional so
-    // existing count-only boards can still be saved.
     match /EventTeams/{eventId} {
       allow read: if request.auth != null
         && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId;
       allow create, update: if request.auth != null
         && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId
-        && request.resource.data.keys().hasOnly(['teams', 'assignments', 'ticketAssignments'])
+        && request.resource.data.keys().hasOnly(['teams', 'assignments'])
         && request.resource.data.teams is list
-        && request.resource.data.assignments is map
-        && request.resource.data.get('ticketAssignments', {}) is map;
+        && request.resource.data.assignments is map;
       allow delete: if request.auth != null
         && request.auth.uid == get(/databases/$(database)/documents/EventsMetadata/$(eventId)).data.organiserId;
     }
