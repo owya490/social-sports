@@ -7,7 +7,7 @@ export default function TermsDataPolicyPage() {
         <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
           Terms of Service &amp; Data Policy
         </h1>
-        <p className="mt-3 text-sm text-gray-600">Effective date: November 23, 2026</p>
+        <p className="mt-3 text-sm text-gray-600">Effective date: November 24, 2026</p>
 
         <section className="mt-8 space-y-3">
           <h2 className="text-xl font-semibold text-gray-900">1) Who We Are and Acceptance of Terms</h2>
@@ -124,6 +124,11 @@ export default function TermsDataPolicyPage() {
               responsible for collecting, using, and protecting custom form data under applicable privacy laws.
             </li>
             <li>
+              <strong className="font-semibold text-gray-900">Club Member Lists and Eligibility Data:</strong> Where a
+              club or event organiser provides member list or eligibility details to manage member bookings, SPORTSHUB
+              stores and uses those details only to operate that club&apos;s events and bookings.
+            </li>
+            <li>
               <strong className="font-semibold text-gray-900">Organiser and Event Content:</strong> Event listings,
               schedules, venue locations, images, custom forms, and settings that event organisers create or upload.
             </li>
@@ -173,41 +178,81 @@ export default function TermsDataPolicyPage() {
 
         <section className="mt-8 space-y-3">
           <h2 className="text-xl font-semibold text-gray-900">
-            8) Data Storage, Third-Party Services, and Overseas Processing
+            8) Data Storage, Access, Sharing, and Overseas Processing
           </h2>
-          <p className="text-gray-700">
-            SPORTSHUB stores platform data, including user profiles, event and booking records, and uploaded files, on
-            Google Cloud Platform.
-          </p>
-          <p className="text-gray-700">
-            To operate the platform, trusted third-party service providers may process limited data for payments (Stripe
-            and Pyng), transactional emails and support enquiries, mapping and venue location services, and platform
-            analytics and reliability monitoring. SPORTSHUB does not sell your personal information.
-          </p>
-          <p className="text-gray-700">
-            We store core platform data primarily in Australia. However, some Google Cloud Platform services and
-            third-party service providers store or process data outside Australia (including in the United States and
-            other locations where those providers operate). When you use the platform, you acknowledge that those
-            providers may store or process your data outside Australia.
-          </p>
+          <ul className="list-disc space-y-2 pl-6 text-gray-700">
+            <li>
+              <strong className="font-semibold text-gray-900">Storage and Encryption:</strong> SPORTSHUB stores
+              platform data, including user profiles, event and booking records, and uploaded files, on Google Cloud
+              Platform. We store core platform data primarily in Australia. Google Cloud Platform encrypts stored data
+              at rest, and SPORTSHUB protects data sent between your browser and the platform with encrypted
+              connections (HTTPS).
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Who Can Access Data:</strong> Only authorised SPORTSHUB
+              personnel can access personal information, and only when needed for user support, platform security, or
+              maintenance. Event organisers can access attendee, booking, form, and club member list data only for their
+              own events and clubs. Event organisers cannot access data from other clubs or event organisers.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">How We Share Data:</strong> We share personal information
+              only with the relevant event organiser to run their event, with trusted third-party service providers
+              needed to operate the platform (Stripe and Pyng for payments, transactional email and support providers,
+              mapping and venue location services, and platform analytics and reliability monitoring), or when
+              Australian law requires disclosure. SPORTSHUB does not sell your personal information and does not share
+              it for third-party marketing. You can request a current list of our core service providers through the{" "}
+              <Link href="/contact" className="font-medium text-gray-900 underline hover:text-gray-700">
+                Contact page
+              </Link>
+              .
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Overseas Processing:</strong> Although we store core
+              platform data primarily in Australia, some Google Cloud Platform services and third-party service
+              providers store or process data outside Australia (including in the United States and other locations
+              where those providers operate). When you use the platform, you acknowledge that those providers may store
+              or process your data outside Australia.
+            </li>
+          </ul>
         </section>
 
         <section className="mt-8 space-y-3">
           <h2 className="text-xl font-semibold text-gray-900">
-            9) Security, Retention, Account Deletion, and Your Choices
+            9) Security, Retention, Deletion, and Privacy Complaints
           </h2>
           <p className="text-gray-700">
-            We use reasonable administrative, technical, and organisational safeguards to protect stored information.
-            However, no electronic transmission or storage method is completely secure, and SPORTSHUB cannot guarantee
-            absolute security.
+            We use reasonable administrative, technical, and organisational safeguards, including access controls and
+            Google Cloud Platform encryption at rest, to protect stored information. However, no electronic
+            transmission or storage method is completely secure, and SPORTSHUB cannot guarantee absolute security.
           </p>
           <p className="text-gray-700">
-            We keep data only for as long as reasonably necessary to operate the platform, support legitimate business
-            operations, resolve disputes, prevent fraud, and meet legal obligations.
+            We keep personal information only for as long as reasonably necessary for its purpose:
           </p>
+          <ul className="list-disc space-y-2 pl-6 text-gray-700">
+            <li>
+              <strong className="font-semibold text-gray-900">Account and Profile Data:</strong> We keep this data while
+              your account stays active, or until you update it or request deletion.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Booking, Ticket, and Order Records:</strong> We keep these
+              records only as long as reasonably necessary to operate events, resolve disputes, prevent fraud, and meet
+              legal and accounting obligations.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Custom Form Responses and Club Member Lists:</strong> We
+              keep this data only while needed for the relevant event or club, or until the event organiser removes it
+              or a user requests deletion.
+            </li>
+            <li>
+              <strong className="font-semibold text-gray-900">Technical Logs and System Backups:</strong> We keep
+              these records temporarily for security and reliability, and our systems delete them automatically on a
+              regular cycle.
+            </li>
+          </ul>
           <p className="text-gray-700">
-            You can review, update, or remove optional profile information in your account settings. To request access
-            to your personal information, correct your data, or delete your account and associated personal information,
+            <strong className="font-semibold text-gray-900">Access, Correction, and Deletion Requests:</strong> You
+            can review, update, or remove optional profile information in your account settings. To request access to
+            your personal information, correct your data, or delete your account and associated personal information,
             contact us through the{" "}
             <Link href="/contact" className="font-medium text-gray-900 underline hover:text-gray-700">
               Contact page
@@ -219,8 +264,31 @@ export default function TermsDataPolicyPage() {
             >
               info@sportshub.net.au
             </a>
-            . When you request account deletion, we delete or de-identify your account data unless we must keep minimal
-            records to meet legal obligations, prevent fraud, or resolve disputes.
+            . We respond to access, correction, and deletion requests within 30 days. When you request account deletion,
+            we delete or de-identify your account data unless we must keep minimal records to meet legal obligations,
+            prevent fraud, or resolve disputes.
+          </p>
+          <p className="text-gray-700">
+            <strong className="font-semibold text-gray-900">
+              When a Club or Event Organiser Stops Using SPORTSHUB:
+            </strong>{" "}
+            An event organiser can export their event records and contact us to delete their club&apos;s event, form,
+            and member list data, subject to minimal records required by law, fraud prevention, or dispute resolution.
+          </p>
+          <p className="text-gray-700">
+            <strong className="font-semibold text-gray-900">Privacy Complaints:</strong> If you have a privacy
+            complaint or concern about how SPORTSHUB handles personal information, contact us through the{" "}
+            <Link href="/contact" className="font-medium text-gray-900 underline hover:text-gray-700">
+              Contact page
+            </Link>{" "}
+            or email{" "}
+            <a
+              href="mailto:info@sportshub.net.au"
+              className="font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              info@sportshub.net.au
+            </a>
+            . We will review your complaint and respond within 30 days.
           </p>
         </section>
 
@@ -244,7 +312,8 @@ export default function TermsDataPolicyPage() {
         <section className="mt-8 space-y-3">
           <h2 className="text-xl font-semibold text-gray-900">12) Contact</h2>
           <p className="text-gray-700">
-            For questions, privacy requests, or account deletion requests regarding these terms, contact us through the{" "}
+            For questions, privacy complaints, or access, correction, and account deletion requests regarding these
+            terms, contact us through the{" "}
             <Link href="/contact" className="font-medium text-gray-900 underline hover:text-gray-700">
               Contact page
             </Link>{" "}
