@@ -10,7 +10,7 @@ export default function TermsDataPolicyPage() {
         <p className="mt-3 text-sm text-gray-600">Effective date: November 23, 2026</p>
 
         <section className="mt-8 space-y-3">
-          <h2 className="text-xl font-semibold text-gray-900">1) Who We Are, Acceptance, and Age Requirements</h2>
+          <h2 className="text-xl font-semibold text-gray-900">1) Who We Are and Acceptance of Terms</h2>
           <p className="text-gray-700">
             The registered Australian partnership A.Y Chee &amp; E.Z Ni &amp; R Peng &amp; B Wang &amp; O.A Yang &amp;
             D Zhang operates SPORTSHUB (&quot;SPORTSHUB&quot;, &quot;we&quot;, &quot;us&quot;).
@@ -18,11 +18,6 @@ export default function TermsDataPolicyPage() {
           <p className="text-gray-700">
             When you access or use the SPORTSHUB platform, you agree to these Terms of Service and this Data Policy
             (&quot;these terms&quot;). If you do not agree, do not use the platform.
-          </p>
-          <p className="text-gray-700">
-            You must be at least 18 years old to create an account or book an event. If you are 16 or 17 years old, you
-            may use the platform only with the consent of a parent or legal guardian. A parent or legal guardian who
-            books an event for a person under 18 is responsible for that booking and for the minor&apos;s participation.
           </p>
         </section>
 
