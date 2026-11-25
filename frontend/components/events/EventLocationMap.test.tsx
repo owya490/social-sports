@@ -5,9 +5,14 @@ import {
   hasValidEventCoordinates,
   isClutteredMapLayer,
   LOCKED_LEAFLET_MAP_OPTIONS,
+  OPENFREEMAP_POSITRON_STYLE_URL,
 } from "./EventLocationMapUtils";
 
 describe("EventLocationMapUtils", () => {
+  it("uses the minimalist light-mode OpenFreeMap Positron style", () => {
+    expect(OPENFREEMAP_POSITRON_STYLE_URL).toBe("https://tiles.openfreemap.org/styles/positron");
+  });
+
   it("accepts valid coordinates and rejects invalid or sentinel coordinates", () => {
     expect(hasValidEventCoordinates({ lat: -33.8688, lng: 151.2093 })).toBe(true);
     expect(hasValidEventCoordinates({ lat: INVALID_LAT, lng: INVALID_LNG })).toBe(false);
@@ -18,10 +23,12 @@ describe("EventLocationMapUtils", () => {
     expect(hasValidEventCoordinates({ lat: -33.8688, lng: 185 })).toBe(false);
   });
 
-  it("identifies POI clutter layers while preserving roads, parks, water, and place labels", () => {
+  it("hides POI, housenumber, and building layers while keeping roads, parks, water, and place labels", () => {
     expect(isClutteredMapLayer({ id: "poi_r20", "source-layer": "poi" })).toBe(true);
     expect(isClutteredMapLayer({ id: "poi-level-1" })).toBe(true);
-    expect(isClutteredMapLayer({ id: "custom_shop_icons", "source-layer": "poi" })).toBe(true);
+    expect(isClutteredMapLayer({ id: "housenumber", "source-layer": "housenumber" })).toBe(true);
+    expect(isClutteredMapLayer({ id: "building", "source-layer": "building" })).toBe(true);
+    expect(isClutteredMapLayer({ id: "building-3d", "source-layer": "building" })).toBe(true);
     expect(isClutteredMapLayer({ id: "road_primary", "source-layer": "transportation" })).toBe(false);
     expect(isClutteredMapLayer({ id: "park", "source-layer": "park" })).toBe(false);
     expect(isClutteredMapLayer({ id: "water", "source-layer": "water" })).toBe(false);

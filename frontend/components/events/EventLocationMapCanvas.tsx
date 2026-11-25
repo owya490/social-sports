@@ -11,7 +11,7 @@ import {
   EVENT_LOCATION_MAP_ZOOM,
   isClutteredMapLayer,
   LOCKED_LEAFLET_MAP_OPTIONS,
-  OPENFREEMAP_LIBERTY_STYLE_URL,
+  OPENFREEMAP_POSITRON_STYLE_URL,
   OPENSTREETMAP_ATTRIBUTION,
   OPENSTREETMAP_TILE_URL,
   VectorStyleLayerRef,
@@ -25,8 +25,8 @@ interface EventLocationMapCanvasProps {
 
 const EVENT_LOCATION_PIN_HTML = `
   <svg width="34" height="42" viewBox="0 0 36 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-    <ellipse cx="18" cy="40.5" rx="6.5" ry="2.2" fill="#0a0a0a" fill-opacity="0.22" />
-    <path d="M18 3C10.82 3 5 8.82 5 16C5 25.25 18 39.5 18 39.5C18 39.5 31 25.25 31 16C31 8.82 25.18 3 18 3Z" fill="#0a0a0a" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" />
+    <ellipse cx="18" cy="40.5" rx="6" ry="2.2" fill="#0a0a0a" fill-opacity="0.18" />
+    <path d="M18 3C10.82 3 5 8.82 5 16C5 25.25 18 39.5 18 39.5C18 39.5 31 25.25 31 16C31 8.82 25.18 3 18 3Z" fill="#dc2626" stroke="#ffffff" stroke-width="2" stroke-linejoin="round" />
     <circle cx="18" cy="15.5" r="4.5" fill="#ffffff" />
   </svg>
 `;
@@ -51,6 +51,8 @@ export default function EventLocationMapCanvas({ lat, lng, location }: EventLoca
       return;
     }
 
+    container.classList.remove("event-location-map-raster-fallback");
+
     const map = L.map(container, {
       ...LOCKED_LEAFLET_MAP_OPTIONS,
       center: [lat, lng],
@@ -62,7 +64,7 @@ export default function EventLocationMapCanvas({ lat, lng, location }: EventLoca
     try {
       ensureMaplibreWorkerConfigured();
       const vectorLayer = maplibreGL({
-        style: OPENFREEMAP_LIBERTY_STYLE_URL,
+        style: OPENFREEMAP_POSITRON_STYLE_URL,
         interactive: false,
       }).addTo(map);
 
@@ -82,6 +84,7 @@ export default function EventLocationMapCanvas({ lat, lng, location }: EventLoca
         glMap.once("style.load", hideClutteredLayers);
       }
     } catch {
+      container.classList.add("event-location-map-raster-fallback");
       L.tileLayer(OPENSTREETMAP_TILE_URL, {
         attribution: OPENSTREETMAP_ATTRIBUTION,
         maxZoom: 19,
