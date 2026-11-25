@@ -1,54 +1,28 @@
-"use client";
+import FinalCTASection from "@/components/landing/FinalCTASection";
+import HeroSection from "@/components/landing/HeroSection";
+import scroll from "@/components/landing/landingScroll.module.css";
+import PricingComparisonSection from "@/components/landing/PricingComparisonSection";
+import SessionStory from "@/components/landing/SessionStory";
+import SportsClubsSection from "@/components/landing/SportsClubsSection";
+import StatementLine from "@/components/landing/StatementLine";
+import type { Metadata } from "next";
 
-import AdditionalFeaturesSection from "../../../components/landing/AdditionalFeaturesSection";
-import CoreFeaturesSection from "../../../components/landing/CoreFeaturesSection";
-import EventCreateSection from "../../../components/landing/EventCreateSection";
-import FeatureOverviewSection from "../../../components/landing/FeatureOverviewSection";
-import FeatureTilesSection from "../../../components/landing/FeatureTilesSection";
-import FinalCTASection from "../../../components/landing/FinalCTASection";
-import HeroSection from "../../../components/landing/HeroSection";
-import ImageHero from "../../../components/landing/ImageHero";
-import ImageHeroPhone from "../../../components/landing/ImageHeroPhone";
-import PaymentsSection from "../../../components/landing/PaymentsSection";
-import PricingComparisonSection from "../../../components/landing/PricingComparisonSection";
-import SportsClubsSection from "../../../components/landing/SportsClubsSection";
-import TechPlatformSection from "../../../components/landing/TechPlatformSection";
+export const metadata: Metadata = {
+  title: "SPORTSHUB for organisers | Bookings, payments and payouts for social sport",
+  description:
+    "Post social sport sessions, take bookings and payments, and get paid out. 2.65% + 30¢ per booking, which players can cover, with no subscription.",
+  alternates: { canonical: "/landing" },
+};
 
 export default function Home() {
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen overflow-x-clip bg-white">
+      <div aria-hidden className={scroll.progress} />
       <HeroSection />
-
-      {/* Hero Image */}
-      <ImageHero />
-      <ImageHeroPhone />
-
-      {/* Features Preview Section - Layered on top of image */}
-
       <SportsClubsSection />
-
-      {/* Modern Feature Tiles (light) under Sports Clubs */}
-      <FeatureTilesSection />
-
-      <PaymentsSection />
-
+      <StatementLine />
+      <SessionStory />
       <PricingComparisonSection />
-
-      {/* Feature Overview */}
-      <FeatureOverviewSection />
-
-      <EventCreateSection />
-
-      {/* Feature Overview: Additional */}
-      <AdditionalFeaturesSection />
-
-      {/* Feature Overview: Six Panels */}
-      <CoreFeaturesSection />
-
-      {/* Tech-centric Platform Section */}
-      <TechPlatformSection />
-
-      {/* Final CTA Section */}
       <FinalCTASection />
     </div>
   );
