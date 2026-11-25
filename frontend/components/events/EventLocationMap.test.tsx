@@ -2,8 +2,8 @@ import { INVALID_LAT, INVALID_LNG } from "@/interfaces/EventTypes";
 import { renderToStaticMarkup } from "react-dom/server";
 import EventLocationMap from "./EventLocationMap";
 import {
-  getEventDirectionsUrl,
   hasValidEventCoordinates,
+  isClutteredMapLayer,
   LOCKED_LEAFLET_MAP_OPTIONS,
 } from "./EventLocationMapUtils";
 
@@ -18,13 +18,13 @@ describe("EventLocationMapUtils", () => {
     expect(hasValidEventCoordinates({ lat: -33.8688, lng: 185 })).toBe(false);
   });
 
-  it("builds a Google Maps link from the address or falls back to coordinates", () => {
-    expect(getEventDirectionsUrl("Sydney Olympic Park", { lat: -33.8474, lng: 151.0631 })).toBe(
-      "https://www.google.com/maps/search/?api=1&query=Sydney%20Olympic%20Park"
-    );
-    expect(getEventDirectionsUrl("   ", { lat: -33.8474, lng: 151.0631 })).toBe(
-      "https://www.google.com/maps/search/?api=1&query=-33.8474%2C151.0631"
-    );
+  it("identifies POI clutter layers while preserving roads, parks, water, and place labels", () => {
+    expect(isClutteredMapLayer({ id: "poi_r20", "source-layer": "poi" })).toBe(true);
+    expect(isClutteredMapLayer({ id: "poi-level-1" })).toBe(true);
+    expect(isClutteredMapLayer({ id: "custom_shop_icons", "source-layer": "poi" })).toBe(true);
+    expect(isClutteredMapLayer({ id: "road_primary", "source-layer": "transportation" })).toBe(false);
+    expect(isClutteredMapLayer({ id: "park", "source-layer": "park" })).toBe(false);
+    expect(isClutteredMapLayer({ id: "water", "source-layer": "water" })).toBe(false);
   });
 
   it("disables all zoom and pan interactions while keeping attribution enabled", () => {
@@ -42,7 +42,7 @@ describe("EventLocationMapUtils", () => {
 });
 
 describe("EventLocationMap", () => {
-  it("renders the location card and Google Maps link when coordinates are valid", () => {
+  it("renders a flat map container without card chrome or a Google Maps button", () => {
     const markup = renderToStaticMarkup(
       <EventLocationMap
         location="Perry Park Recreation Centre, Alexandria"
@@ -50,12 +50,9 @@ describe("EventLocationMap", () => {
       />
     );
 
-    expect(markup).toContain("Location");
-    expect(markup).toContain("Perry Park Recreation Centre, Alexandria");
-    expect(markup).toContain("Open in Google Maps");
-    expect(markup).toContain(
-      'href="https://www.google.com/maps/search/?api=1&amp;query=Perry%20Park%20Recreation%20Centre%2C%20Alexandria"'
-    );
+    expect(markup).toContain("rounded-xl");
+    expect(markup).not.toContain("Open in Google Maps");
+    expect(markup).not.toContain("shadow-sm");
   });
 
   it("renders nothing when coordinates are invalid", () => {
