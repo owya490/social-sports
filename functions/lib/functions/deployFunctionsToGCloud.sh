@@ -5,7 +5,6 @@
 # cleanupOldFulfilmentSessionsCron
 # expirePendingBookingsCron
 # pollPendingPyngCheckoutsCron
-# completeFulfilmentSession
 # globalAppController
 # stripeWebhookEndpoint
 # explainErrorAlert
@@ -18,7 +17,6 @@ VALID_FUNCTIONS=(
     "cleanupOldFulfilmentSessionsCron"
     "expirePendingBookingsCron"
     "pollPendingPyngCheckoutsCron"
-    "completeFulfilmentSession"
     "globalAppController"
     "stripeWebhookEndpoint"
     "explainErrorAlert"
@@ -30,7 +28,6 @@ VALID_ENDPOINTS=(
     "com.functions.fulfilment.controllers.CleanupOldFulfilmentSessionsCronEndpoint"
     "com.functions.tickets.controllers.ExpirePendingBookingsCronEndpoint"
     "com.functions.fulfilment.controllers.PollPendingPyngCheckoutsCronEndpoint"
-    "com.functions.fulfilment.controllers.CompleteFulfilmentSessionEndpoint"
     "com.functions.global.controllers.GlobalAppController"
     "com.functions.stripe.controllers.StripeWebhookEndpoint"
     "com.functions.alerts.controllers.ExplainErrorAlertEndpoint"
