@@ -3,7 +3,7 @@
 import EventBanner from "@/components/events/EventBanner";
 import { EventDetails } from "@/components/events/EventDetails";
 import EventImage from "@/components/events/EventImage";
-import EventLocationMap from "@/components/events/EventLocationMap";
+import { EventLocationMap } from "@/components/events/location-map";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
