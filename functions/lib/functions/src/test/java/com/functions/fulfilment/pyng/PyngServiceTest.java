@@ -41,8 +41,6 @@ public class PyngServiceTest {
         PyngConfig.env = ENV::get;
         PyngConfig.productionOverride = false;
         PyngService.client = PyngCheckoutClient.http();
-        PyngService.continuation = null;
-        PyngService.statusRecorder = null;
         PyngService.siteIds = session -> "site-1";
         PyngAccessToken.clear();
     }
@@ -52,8 +50,6 @@ public class PyngServiceTest {
         PyngConfig.env = Global::getEnv;
         PyngConfig.productionOverride = null;
         PyngService.client = PyngCheckoutClient.http();
-        PyngService.continuation = null;
-        PyngService.statusRecorder = null;
         PyngService.siteIds = null;
         PyngAccessToken.clear();
     }
@@ -188,68 +184,6 @@ public class PyngServiceTest {
     }
 
     @Test
-    public void refreshCheckoutContinuesWhenPaymentSettlesOrDoesNotComplete() throws Exception {
-        Map<String, PaymentStatus> expected = Map.of(
-                "Settled", PaymentStatus.SUCCEEDED,
-                "Declined", PaymentStatus.CANCELLED,
-                "Expired", PaymentStatus.EXPIRED);
-        for (Map.Entry<String, PaymentStatus> outcome : expected.entrySet()) {
-            AtomicReference<PaymentStatus> saved = new AtomicReference<>();
-            AtomicInteger continuations = new AtomicInteger();
-            PyngService.statusRecorder = (sessionId, metadata) -> saved.set(metadata.getStatus());
-            PyngService.continuation = (sessionId, session) -> continuations.incrementAndGet();
-            PyngService.client = clientReturning(outcome.getKey());
-
-            PyngService.refreshCheckout(SESSION_ID, session(PaymentStatus.PENDING));
-
-            assertEquals(outcome.getValue(), saved.get());
-            assertEquals(outcome.getKey(), 1, continuations.get());
-        }
-    }
-
-    @Test
-    public void refreshCheckoutLeavesInProgressPaymentsAlone() throws Exception {
-        AtomicInteger continuations = new AtomicInteger();
-        AtomicInteger saves = new AtomicInteger();
-        PyngService.continuation = (sessionId, session) -> continuations.incrementAndGet();
-        PyngService.statusRecorder = (sessionId, metadata) -> saves.incrementAndGet();
-        PyngService.client = clientReturning("Pending");
-
-        PyngService.refreshCheckout(SESSION_ID, session(PaymentStatus.PENDING));
-
-        assertEquals(0, continuations.get());
-        assertEquals(0, saves.get());
-        PyngService.client = clientReturning("InProgress");
-        PyngService.refreshCheckout(SESSION_ID, session(PaymentStatus.PENDING));
-        assertEquals(0, continuations.get());
-        assertEquals(0, saves.get());
-    }
-
-    @Test
-    public void refreshCheckoutContinuesAStoredTerminalStatus() throws Exception {
-        AtomicInteger continuations = new AtomicInteger();
-        PyngService.continuation = (sessionId, session) -> continuations.incrementAndGet();
-        PyngService.client = new PyngCheckoutClient(request -> {
-            fail("A terminal checkout must not be polled again before continuing");
-            return null;
-        });
-
-        PyngService.refreshCheckout(SESSION_ID, session(PaymentStatus.EXPIRED));
-
-        assertEquals(1, continuations.get());
-    }
-
-    @Test
-    public void continueFulfilmentSkipsPendingPayment() throws Exception {
-        AtomicInteger continuations = new AtomicInteger();
-        PyngService.continuation = (sessionId, session) -> continuations.incrementAndGet();
-
-        PyngService.continueFulfilment(SESSION_ID, session(PaymentStatus.PENDING));
-
-        assertEquals(0, continuations.get());
-    }
-
-    @Test
     public void verifyReturnSignatureMatchesPyngWorkedExample() {
         ENV.put(PyngConfig.DEV_SIGNING_SECRET, "return-redirect-secret-sample");
 
@@ -320,12 +254,6 @@ public class PyngServiceTest {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("metadata key"));
         }
-    }
-
-    private static PyngCheckoutClient clientReturning(String transactionStatus) {
-        return new PyngCheckoutClient(request -> new PyngCheckoutClient.RawResponse(200, """
-                {"data":{"checkoutSessionId":"cs-1","transactionStatus":"%s","orderId":"%s"},"traceId":"trace-1"}
-                """.formatted(transactionStatus, SESSION_ID)));
     }
 
     private static PyngCheckoutFulfilmentSession session(PaymentStatus status) {

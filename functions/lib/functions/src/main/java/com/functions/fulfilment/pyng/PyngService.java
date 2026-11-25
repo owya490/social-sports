@@ -8,26 +8,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.functions.events.models.ResolvedEventTicketType;
 import com.functions.events.services.EventTicketTypeService;
 import com.functions.events.utils.EventsUtils;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngMetadata;
 import com.functions.fulfilment.payment.PaymentStatus;
-import com.functions.fulfilment.repositories.FulfilmentSessionRepository;
 import com.functions.users.models.PrivateUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.JavaUtils;
 
 /**
- * Pyng hosted checkout. Creates a Checkout Session, reads its status, and
- * continues the fulfilment session once payment has settled or did not complete.
+ * Pyng hosted checkout. Creates a Checkout Session and reads its status.
  */
 public final class PyngService {
-    private static final Logger logger = LoggerFactory.getLogger(PyngService.class);
     private static final Pattern METADATA_KEY = Pattern.compile("[A-Za-z0-9_-]{1,40}");
     private static final int MAX_METADATA_KEYS = 20;
     private static final int MAX_METADATA_VALUE_CHARS = 500;
@@ -36,19 +30,7 @@ public final class PyngService {
 
     // Replaced in tests so checkout calls do not hit Pyng or Firestore.
     static volatile PyngCheckoutClient client = PyngCheckoutClient.http();
-    static volatile Continuation continuation;
-    static volatile StatusRecorder statusRecorder;
     static volatile SiteIdSource siteIds;
-
-    @FunctionalInterface
-    interface Continuation {
-        void resume(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session) throws Exception;
-    }
-
-    @FunctionalInterface
-    interface StatusRecorder {
-        void save(String fulfilmentSessionId, PyngMetadata metadata) throws Exception;
-    }
 
     @FunctionalInterface
     interface SiteIdSource {
@@ -94,60 +76,6 @@ public final class PyngService {
             throw new IllegalStateException(
                     "Failed to read Pyng checkout session " + metadata.getCheckoutSessionId(), e);
         }
-    }
-
-    /**
-     * Polls Pyng while the checkout is open. A settled payment and a checkout
-     * that did not complete (declined or expired) are stored, then fulfilment
-     * continues. Pending and in-progress checkouts wait for a later poll.
-     */
-    public static void refreshCheckout(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
-            throws Exception {
-        PyngMetadata metadata = session.getPyngMetadata();
-        if (metadata == null || metadata.getStatus() == null) {
-            return;
-        }
-        if (metadata.getSiteId() == null || metadata.getSiteId().isBlank()) {
-            metadata.setSiteId(resolveSiteId(session));
-            session.setPyngMetadata(metadata);
-        }
-        if (!metadata.getStatus().isTerminal()) {
-            PaymentStatus observed = pollCheckout(metadata);
-            if (observed == null || !observed.isTerminal()) {
-                return;
-            }
-            if (!recordTerminalStatus(fulfilmentSessionId, session, metadata, observed)) {
-                return;
-            }
-        }
-        continueFulfilment(fulfilmentSessionId, session);
-    }
-
-    /**
-     * Continues the fulfilment session when Pyng has finished the checkout.
-     * Settled payments and incomplete outcomes both continue. An in-progress
-     * checkout does not. The pending-checkout poll records status and lets the
-     * Pyng entity end hook gate progression, so this resumes only when a
-     * continuation has been installed.
-     */
-    public static void continueFulfilment(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session)
-            throws Exception {
-        PyngMetadata metadata = session == null ? null : session.getPyngMetadata();
-        PaymentStatus status = metadata == null ? null : metadata.getStatus();
-        if (status == null || !status.isTerminal()) {
-            logger.info("Pyng payment for fulfilment session {} is not finished; leaving the checkout in progress",
-                    fulfilmentSessionId);
-            return;
-        }
-        Continuation resume = continuation;
-        if (resume == null) {
-            logger.info("Pyng payment for fulfilment session {} finished with status {}; the end hook gates progression",
-                    fulfilmentSessionId, status);
-            return;
-        }
-        logger.info("Pyng payment for fulfilment session {} finished with status {}; continuing fulfilment",
-                fulfilmentSessionId, status);
-        resume.resume(fulfilmentSessionId, session);
     }
 
     /**
@@ -211,30 +139,6 @@ public final class PyngService {
         } catch (Exception e) {
             throw new IllegalArgumentException("Pyng metadata could not be serialised", e);
         }
-    }
-
-    private static boolean recordTerminalStatus(String fulfilmentSessionId, PyngCheckoutFulfilmentSession session,
-            PyngMetadata metadata, PaymentStatus status) throws Exception {
-        PaymentStatus current = metadata.getStatus();
-        if (current == status) {
-            return true;
-        }
-        if (current != null && current.isTerminal()) {
-            logger.error("Refusing to change Pyng payment status from {} to {} for session {}",
-                    current, status, fulfilmentSessionId);
-            return false;
-        }
-
-        metadata.setStatus(status);
-        session.setPyngMetadata(metadata);
-        StatusRecorder recorder = statusRecorder;
-        if (recorder == null) {
-            FulfilmentSessionRepository.updatePyngMetadata(fulfilmentSessionId, metadata);
-        } else {
-            recorder.save(fulfilmentSessionId, metadata);
-        }
-        logger.info("Pyng checkout finished for fulfilment session {} with status {}", fulfilmentSessionId, status);
-        return true;
     }
 
     private static String resolveSiteId(PyngCheckoutFulfilmentSession session) {

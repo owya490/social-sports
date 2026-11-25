@@ -69,10 +69,8 @@ public final class PyngCheckoutCompletion {
         if (Boolean.TRUE.equals(session.getIsFulfilmentSessionCrystalised())) {
             return metadata.getStatus();
         }
-        if (metadata.getStatus().isTerminal()) {
-            return settle(sessionId, session, metadata, metadata.getStatus());
-        }
 
+        // Only Pyng's live answer settles a checkout.
         PaymentStatus observed = PyngService.pollCheckout(metadata);
         logger.info("Polled Pyng checkout for fulfilment session {} and observed status {}", sessionId, observed);
         if (observed == null || !observed.isTerminal()) {

@@ -36,6 +36,7 @@ import com.functions.events.repositories.EventsRepository;
 import com.functions.fulfilment.models.PaymentProvider;
 import com.functions.fulfilment.models.FulfilmentInitialisationScope;
 import com.functions.fulfilment.models.InitialisedFulfilmentSession;
+import com.functions.fulfilment.models.fulfilmentSession.CheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.FulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentSession.PyngCheckoutFulfilmentSession;
 import com.functions.fulfilment.models.fulfilmentEntities.EndFulfilmentEntity;
@@ -383,6 +384,23 @@ public class FulfilmentServiceTest {
 
     private FulfilmentEntityType firstEntity(FulfilmentSession session) {
         return session.getFulfilmentEntityMap().get(session.getFulfilmentEntityIds().get(0)).getType();
+    }
+
+    @Test
+    public void cleanupDeletesOldSessionsButKeepsPyngAndUnreadableOnes() throws Exception {
+        sessions.when(() -> FulfilmentSessionRepository.listFulfilmentSessionIdsOlderThan(any()))
+                .thenReturn(List.of("checkout-1", "pyng-1", "unreadable-1"));
+        sessions.when(() -> FulfilmentSessionRepository.getFulfilmentSession(eq("checkout-1"), any()))
+                .thenReturn(Optional.of(mock(CheckoutFulfilmentSession.class)));
+        sessions.when(() -> FulfilmentSessionRepository.getFulfilmentSession(eq("pyng-1"), any()))
+                .thenReturn(Optional.of(mock(PyngCheckoutFulfilmentSession.class)));
+        sessions.when(() -> FulfilmentSessionRepository.getFulfilmentSession(eq("unreadable-1"), any()))
+                .thenThrow(new Exception("read failed"));
+
+        assertEquals(1, FulfilmentService.cleanupOldFulfilmentSessions(30));
+        sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession("checkout-1"));
+        sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession("pyng-1"), times(0));
+        sessions.verify(() -> FulfilmentSessionRepository.deleteFulfilmentSession("unreadable-1"), times(0));
     }
 
     @Test
