@@ -3,7 +3,7 @@
 .event-location-map .maplibregl-canvas {
   width: 100%;
   height: 100%;
-  background: #f5f6f7;
+  background: #f1f3f4;
   cursor: default !important;
   touch-action: pan-y !important;
   font-family: var(--font-satoshi), system-ui, -apple-system, sans-serif;
