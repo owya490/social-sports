@@ -4,11 +4,10 @@ import { EventCollectionId } from "@/interfaces/EventCollectionTypes";
 import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { RecurrenceTemplateId } from "@/interfaces/RecurringEventTypes";
-import { Timestamp } from "firebase/firestore";
 
 export type UserId = Branded<string, "UserId">;
 
-/** Whether the user primarily hosts events or joins them as a participant (set during onboarding). */
+/** Role picked in the onboarding screen. Held in page state only and never stored. */
 export type OnboardingPersona = "organiser" | "attendee";
 
 export interface PublicUserData {
@@ -49,16 +48,8 @@ export interface PrivateUserData {
   forms: FormId[];
   sendOrganiserTicketEmails: boolean;
   privateEventCollections: EventCollectionId[];
-  /** Host vs participant choice from onboarding (unset until chosen). */
-  onboardingPersona?: OnboardingPersona | null;
-  /** Product onboarding finished. Null means a new account still needs onboarding. */
-  onboardingCompletedAt?: Timestamp | null;
-  /** Explicit Stripe Connect completion timestamp for onboarding/nudges. */
-  stripeConnectSetupCompletedAt?: Timestamp | null;
-  /** User skipped optional Stripe setup during organiser onboarding. */
-  stripeConnectSetupSkippedAt?: Timestamp | null;
-  /** User chose to leave onboarding before finishing. */
-  onboardingSkippedAt?: Timestamp | null;
+  /** True until onboarding is finished. Missing means false, so legacy accounts stay out. */
+  isOnboarding?: boolean;
 }
 
 export interface NewUserData extends PublicUserData, PrivateUserData {
@@ -135,3 +126,9 @@ export interface UsernameMap {
 
 export const PUBLIC_USER_PATH = "Users/Active/Public";
 export const PRIVATE_USER_PATH = "Users/Active/Private";
+export const USER_METADATA_PATH = "Users/Active/Metadata";
+
+/** Users/Active/Metadata/{userId}. Client writes are denied; the backend owns this document. */
+export interface UserMetadata {
+  userId: string;
+}

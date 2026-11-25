@@ -8,13 +8,7 @@ import {
 } from "@/interfaces/UserTypes";
 
 /** Writable via updateUser but omitted from EmptyPrivateUserData defaults (legacy grandfathering). */
-const ONBOARDING_PRIVATE_FIELD_KEYS = [
-  "onboardingPersona",
-  "onboardingCompletedAt",
-  "stripeConnectSetupCompletedAt",
-  "stripeConnectSetupSkippedAt",
-  "onboardingSkippedAt",
-] as const satisfies readonly (keyof PrivateUserData)[];
+const ONBOARDING_PRIVATE_FIELD_KEYS = ["isOnboarding"] as const satisfies readonly (keyof PrivateUserData)[];
 
 // Extracts Public user data
 export function extractPublicUserData(data: Partial<UserData> | NewUserData): Partial<PublicUserData> {

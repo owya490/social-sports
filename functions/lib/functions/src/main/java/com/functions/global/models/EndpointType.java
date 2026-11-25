@@ -54,6 +54,8 @@ import com.functions.tickets.models.responses.get.GetOrderResponse;
 import com.functions.tickets.models.responses.get.GetOrdersByEventResponse;
 import com.functions.waitlist.models.requests.UpdateFulfilmentEntityWithWaitlistDataRequest;
 import com.functions.waitlist.models.responses.UpdateFulfilmentEntityWithWaitlistDataResponse;
+import com.functions.stripe.models.requests.StartStripePayoutOnboardingRequest;
+import com.functions.stripe.models.responses.StartStripePayoutOnboardingResponse;
 import com.functions.users.models.requests.GetPartnerUserRequest;
 import com.functions.users.models.requests.ProvisionUserRequest;
 import com.functions.users.models.responses.GetPartnerUserResponse;
@@ -124,7 +126,9 @@ public enum EndpointType {
     GET_EVENT_ATTENDEE_NAMES(GetEventAttendeeNamesRequest.class, GetEventAttendeeNamesResponse.class,
             AuthLevel.PUBLIC),
     BOOKING_APPROVAL(BookingApprovalRequest.class, BookingApprovalResponse.class, AuthLevel.AUTHENTICATED),
-    PROVISION_USER(ProvisionUserRequest.class, ProvisionUserResponse.class, AuthLevel.AUTHENTICATED);
+    PROVISION_USER(ProvisionUserRequest.class, ProvisionUserResponse.class, AuthLevel.AUTHENTICATED),
+    START_STRIPE_PAYOUT_ONBOARDING(StartStripePayoutOnboardingRequest.class,
+            StartStripePayoutOnboardingResponse.class, AuthLevel.AUTHENTICATED);
 
     private final Class<?> requestClass;
     private final Class<?> responseClass;

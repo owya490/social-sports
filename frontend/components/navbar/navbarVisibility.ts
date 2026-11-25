@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 export const HIDDEN_NAVBAR_ROUTES = [
   /^\/login$/,
   /^\/register$/,
+  /^\/onboarding(?:\/|$)/,
   /^\/organiser\/wrapped/, // Organiser wrapped page
   /^\/user\/[^/]+\/wrapped/, // Public wrapped page (/user/*/wrapped)
 ];

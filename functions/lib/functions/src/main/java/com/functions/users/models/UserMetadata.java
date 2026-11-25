@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 /**
- * Users/Active/Metadata/{userId}. Holds the user id. Other fields stay empty for now.
+ * Users/Active/Metadata/{userId}. Client writes are denied; the backend owns this document.
  */
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)

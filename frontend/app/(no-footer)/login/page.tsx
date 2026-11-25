@@ -10,6 +10,7 @@ import { UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignIn } from "@/services/src/auth/authService";
 import { getFullUserById } from "@/services/src/users/usersService";
+import { pathAfterSignIn } from "@/utilities/onboardingUtils";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -29,8 +30,9 @@ export default function Login() {
   const logger = new Logger("loginLogger");
 
   const completeSocialSignIn = async (userId: UserId) => {
-    setUser(await getFullUserById(userId));
-    router.push("/?login=success");
+    const signedInUser = await getFullUserById(userId);
+    setUser(signedInUser);
+    router.push(pathAfterSignIn(signedInUser));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,8 +43,9 @@ export default function Login() {
       try {
         const userCreated = await handleEmailAndPasswordSignIn(userData.email, userData.password);
         if (userCreated !== null) {
-          setUser(await getFullUserById(userCreated));
-          router.push("/?login=success"); // Redirect only if user creation is successful
+          const signedInUser = await getFullUserById(userCreated);
+          setUser(signedInUser);
+          router.push(pathAfterSignIn(signedInUser));
         } else {
           throw new Error("Could not find user");
         }

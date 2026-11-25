@@ -12,11 +12,9 @@ import { Logger } from "@/observability/logger";
 import { sleep } from "@/utilities/sleepUtil";
 import {
   collection,
-  deleteField,
   doc,
   getDoc,
   getDocs,
-  Timestamp,
   Transaction,
   updateDoc,
 } from "firebase/firestore";
@@ -227,44 +225,9 @@ export async function updateUser(userId: UserId, newData: Partial<UserData>, tra
   }
 }
 
-/** Persist Stripe Connect completion once payments are verified (`stripeAccountActive`). */
-export async function syncStripeConnectSetupCompletedIfNeeded(userId: UserId, user: UserData): Promise<boolean> {
-  if (user.stripeAccountActive !== true) return false;
-  if (user.stripeConnectSetupCompletedAt != null) return false;
-  await updateUser(userId, { stripeConnectSetupCompletedAt: Timestamp.now() });
-  bustUserLocalStorageCache();
-  return true;
-}
-
 export async function markProductOnboardingCompleted(userId: UserId): Promise<void> {
-  await updateUser(userId, { onboardingCompletedAt: Timestamp.now() });
+  await updateUser(userId, { isOnboarding: false });
   bustUserLocalStorageCache();
-}
-
-/** Marks onboarding finished without completing the guided flow (records skip + completion timestamps). */
-export async function skipProductOnboarding(userId: UserId): Promise<void> {
-  const now = Timestamp.now();
-  await updateUser(userId, {
-    onboardingSkippedAt: now,
-    onboardingCompletedAt: now,
-  });
-  bustUserLocalStorageCache();
-}
-
-/** Removes persona so the user can pick host vs attendee again from `/onboarding`. */
-export async function clearOnboardingPersonaChoice(userId: UserId): Promise<void> {
-  if (userId === undefined) {
-    throw new UserNotFoundError(userId, "UserId is undefined");
-  }
-  try {
-    const privateUserDocRef = doc(db, "Users", "Active", "Private", userId);
-    await updateDoc(privateUserDocRef, { onboardingPersona: deleteField() });
-    bustUserLocalStorageCache();
-    userServiceLogger.info(`Cleared onboarding persona for re-choice: ${userId}`);
-  } catch (error) {
-    userServiceLogger.error(`Error clearing onboarding persona for ${userId}: ${error}`);
-    throw new UsersServiceError(userId);
-  }
 }
 
 export async function getFullUserByIdForUserContextWithRetries(userId: UserId): Promise<UserData> {
