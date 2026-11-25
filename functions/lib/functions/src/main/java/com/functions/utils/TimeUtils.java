@@ -162,4 +162,8 @@ public class TimeUtils {
         ZonedDateTime sydneyTime = instant.atZone(SYDNEY_TIMEZONE);
         return sydneyTime.format(EMAIL_DATE_FORMATTER);
     }
+
+    public static LocalDate toSydneyLocalDate(Timestamp timestamp) {
+        return timestamp.toSqlTimestamp().toInstant().atZone(SYDNEY_TIMEZONE).toLocalDate();
+    }
 }

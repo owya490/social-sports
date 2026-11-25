@@ -182,6 +182,30 @@ public class EventsRepositoryTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void listsActiveEventsAndSkipsUnreadableDocuments() throws Exception {
+        QueryDocumentSnapshot readable = mock(QueryDocumentSnapshot.class);
+        QueryDocumentSnapshot unreadable = mock(QueryDocumentSnapshot.class);
+        QueryDocumentSnapshot broken = mock(QueryDocumentSnapshot.class);
+        EventData event = new EventData();
+        when(readable.getId()).thenReturn("event-1");
+        when(readable.toObject(EventData.class)).thenReturn(event);
+        when(unreadable.getId()).thenReturn("bad-event");
+        when(unreadable.toObject(EventData.class)).thenReturn(null);
+        when(broken.getId()).thenReturn("broken-event");
+        when(broken.toObject(EventData.class)).thenThrow(new RuntimeException("bad field"));
+
+        ApiFuture<QuerySnapshot> listFuture = mock(ApiFuture.class);
+        QuerySnapshot listSnapshot = mock(QuerySnapshot.class);
+        when(publicEvents.get()).thenReturn(listFuture);
+        when(listFuture.get()).thenReturn(listSnapshot);
+        when(listSnapshot.getDocuments()).thenReturn(List.of(readable, unreadable, broken));
+
+        assertEquals(List.of(event), EventsRepository.listActiveEvents(false));
+        assertEquals("event-1", event.getEventId());
+    }
+
+    @Test
     public void privateEventsRequireTheBroaderActiveLookup() {
         EventData event = new EventData();
         when(privateSnapshot.exists()).thenReturn(true);

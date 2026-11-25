@@ -171,6 +171,53 @@ public class EventsRepository {
     }
 
     /**
+     * Lists every event in the active public or active private collection.
+     * An unreadable document is skipped so one bad event does not block the rest.
+     */
+    public static List<EventData> listActiveEvents(boolean isPrivate) {
+        String privacyPath = isPrivate ? FirebaseService.CollectionPaths.PRIVATE : FirebaseService.CollectionPaths.PUBLIC;
+        logger.info("Listing active {} events", privacyPath);
+
+        try {
+            Firestore db = FirebaseService.getFirestore();
+            QuerySnapshot querySnapshot = db.collection(FirebaseService.CollectionPaths.EVENTS)
+                    .document(FirebaseService.CollectionPaths.ACTIVE)
+                    .collection(privacyPath)
+                    .get()
+                    .get();
+
+            List<EventData> events = new ArrayList<>();
+            for (QueryDocumentSnapshot document : querySnapshot.getDocuments()) {
+                EventData eventData = readActiveEvent(document);
+                if (eventData == null) {
+                    continue;
+                }
+                eventData.setEventId(document.getId());
+                events.add(eventData);
+            }
+            return events;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Interrupted while listing active " + privacyPath + " events", e);
+        } catch (ExecutionException e) {
+            throw new IllegalStateException("Failed to list active " + privacyPath + " events", e);
+        }
+    }
+
+    private static EventData readActiveEvent(QueryDocumentSnapshot document) {
+        try {
+            EventData eventData = document.toObject(EventData.class);
+            if (eventData == null) {
+                logger.warn("Skipping active event {} because it could not be read", document.getId());
+            }
+            return eventData;
+        } catch (RuntimeException e) {
+            logger.warn("Skipping active event {} because it could not be read", document.getId(), e);
+            return null;
+        }
+    }
+
+    /**
      * Gets the DocumentReference for an event by ID. Performs a read - must be called
      * before any writes in a transaction to satisfy Firestore's read-before-write rule.
      *
