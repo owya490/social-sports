@@ -29,6 +29,7 @@ import {
   placeSeats,
   removeTeam,
   renameTeam,
+  seatsFor,
   seatsOnTeam,
   setTeamTargetSize,
   unassignedSeats,
