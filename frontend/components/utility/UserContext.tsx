@@ -5,6 +5,7 @@ import { EmptyUserData, UserData, UserId } from "@/interfaces/UserTypes";
 
 import { ensureProvisionedUser } from "@/services/src/auth/authService";
 import { getFullUserByIdForUserContextWithRetries } from "@/services/src/users/usersService";
+import { pathAfterSignIn } from "@/utilities/onboardingUtils";
 import { Auth, onAuthStateChanged } from "firebase/auth";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -31,7 +32,7 @@ export default function UserContext({ children }: { children: any }) {
   const [userLoading, setUserLoading] = useState(true);
 
   const protectedRoutes = ["/organiser", "/profile", "/event/create", "/onboarding"];
-  const LoginRegisterRoutes = ["/register"];
+  const LoginRegisterRoutes = ["/register", "/login"];
 
   const refreshUser = async () => {
     if (!user.userId) {
@@ -83,8 +84,8 @@ export default function UserContext({ children }: { children: any }) {
       }
 
       if (LoginRegisterRoutes.some((prefix) => pathname.startsWith(prefix))) {
-        if (auth.currentUser?.emailVerified) {
-          router.push("/");
+        if (auth.currentUser?.emailVerified && user.userId) {
+          router.replace(pathAfterSignIn(user));
         }
       }
     };

@@ -14,7 +14,7 @@ import { pathAfterSignIn } from "@/utilities/onboardingUtils";
 import { Alert } from "@material-tailwind/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 
 export default function Login() {
   const [userData, setUserData] = useState({
@@ -26,13 +26,8 @@ export default function Login() {
   const [isPending, startTransition] = useTransition();
   const [socialPending, setSocialPending] = useState(false);
   const router = useRouter();
-  const { setUser, user, userLoading, auth } = useUser();
+  const { setUser } = useUser();
   const logger = new Logger("loginLogger");
-
-  useEffect(() => {
-    if (userLoading || !auth.currentUser?.emailVerified || !user.userId) return;
-    router.replace(pathAfterSignIn(user));
-  }, [auth, router, user, userLoading]);
 
   const completeSocialSignIn = async (userId: UserId) => {
     const signedInUser = await getFullUserById(userId);

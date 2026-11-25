@@ -7,7 +7,6 @@ public record StartStripePayoutOnboardingRequest(
         @JsonProperty("firstName") String firstName,
         @JsonProperty("lastName") String lastName,
         @JsonProperty("email") String email,
-        @JsonProperty("phone") String phone,
         @JsonProperty("hasAbn") boolean hasAbn,
         @JsonProperty("abn") String abn,
         @JsonProperty("dateOfBirth") String dateOfBirth,

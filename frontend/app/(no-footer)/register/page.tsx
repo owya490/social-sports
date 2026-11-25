@@ -10,6 +10,7 @@ import { EmptyNewUserData, NewUserData, UserId } from "@/interfaces/UserTypes";
 import { Logger } from "@/observability/logger";
 import { handleEmailAndPasswordSignUp } from "@/services/src/auth/authService";
 import { getFullUserById } from "@/services/src/users/usersService";
+import { pathAfterSignIn } from "@/utilities/onboardingUtils";
 import { Alert } from "@material-tailwind/react";
 import { FirebaseError } from "firebase/app";
 import Link from "next/link";
@@ -31,8 +32,9 @@ export default function Register() {
   const { setUser } = useUser();
 
   const completeSocialSignIn = async (userId: UserId) => {
-    setUser(await getFullUserById(userId));
-    router.push("/?login=success");
+    const signedInUser = await getFullUserById(userId);
+    setUser(signedInUser);
+    router.push(pathAfterSignIn(signedInUser));
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {

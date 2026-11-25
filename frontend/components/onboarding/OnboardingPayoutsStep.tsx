@@ -164,6 +164,11 @@ export async function requestExistingStripeAccountLink(userId: UserId): Promise<
   if (!url || url === "/error") {
     throw new Error("Could not open Stripe. Try again.");
   }
+  try {
+    await markProductOnboardingCompleted(userId);
+  } catch {
+    // The Stripe link is single-use, so still redirect if saving completion fails.
+  }
   return url;
 }
 
@@ -195,6 +200,7 @@ export default function OnboardingPayoutsStep({
   const [submitting, setSubmitting] = useState(false);
   const [skipBusy, setSkipBusy] = useState(false);
   const [existingStripeBusy, setExistingStripeBusy] = useState(false);
+  const actionInFlightRef = useRef(false);
   const accountHolderEditedRef = useRef(false);
   const addressInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -244,25 +250,31 @@ export default function OnboardingPayoutsStep({
   };
 
   const connectExistingStripe = async () => {
-    if (!user.userId || busy) return;
+    if (!user.userId || busy || actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
     setErrorMessage("");
     setExistingStripeBusy(true);
     try {
       const link = await requestExistingStripeAccountLink(user.userId as UserId);
       window.location.assign(link);
     } catch (error) {
+      actionInFlightRef.current = false;
       setErrorMessage(error instanceof Error ? error.message : "Could not open Stripe. Try again.");
       setExistingStripeBusy(false);
     }
   };
 
   const skipGettingPaid = async () => {
-    if (!user.userId || busy) return;
+    if (!user.userId || busy || actionInFlightRef.current) return;
+    actionInFlightRef.current = true;
+    setErrorMessage("");
     setSkipBusy(true);
     try {
       await markProductOnboardingCompleted(user.userId as UserId);
       await onFinished();
-    } finally {
+    } catch {
+      actionInFlightRef.current = false;
+      setErrorMessage("Could not skip onboarding. Try again.");
       setSkipBusy(false);
     }
   };
@@ -300,7 +312,7 @@ export default function OnboardingPayoutsStep({
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user.userId || busy) return;
+    if (!user.userId || busy || actionInFlightRef.current) return;
     setErrorMessage("");
 
     const detailsError = validatePayoutDetails(detailsFields);
@@ -315,15 +327,13 @@ export default function OnboardingPayoutsStep({
       return;
     }
 
-    const phone = (user.publicContactInformation?.mobile || user.contactInformation?.mobile || "").trim();
-
+    actionInFlightRef.current = true;
     setSubmitting(true);
     try {
       const url = await startStripePayoutOnboarding({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
-        phone: phone || undefined,
         hasAbn: form.hasAbn,
         abn: form.hasAbn ? digits(form.abn) : undefined,
         dateOfBirth: form.dateOfBirth,
@@ -338,10 +348,11 @@ export default function OnboardingPayoutsStep({
       try {
         await markProductOnboardingCompleted(user.userId as UserId);
       } catch {
-        // The Stripe link is single-use, so still send them on if saving completion fails.
+        // The Stripe link is single-use, so still redirect if saving completion fails.
       }
       window.location.assign(url);
     } catch (error) {
+      actionInFlightRef.current = false;
       setErrorMessage(error instanceof Error ? error.message : "Could not start Stripe. Try again.");
       setSubmitting(false);
     }

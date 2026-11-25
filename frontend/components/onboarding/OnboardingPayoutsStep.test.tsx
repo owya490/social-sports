@@ -142,8 +142,9 @@ describe("OnboardingPayoutsStep forms", () => {
     expect(markup).not.toContain(">Continue<");
   });
 
-  it("requests a standard Stripe onboarding link and does not mark onboarding completed", async () => {
+  it("requests a standard Stripe onboarding link and marks onboarding completed before redirecting", async () => {
     mockGetStripeStandardAccountLink.mockResolvedValue("https://connect.stripe.com/setup/s/existing");
+    mockMarkProductOnboardingCompleted.mockResolvedValue(undefined);
 
     const url = await requestExistingStripeAccountLink("user-123" as UserId);
 
@@ -154,7 +155,17 @@ describe("OnboardingPayoutsStep forms", () => {
       "https://www.sportshub.net.au/organiser/v2/settings",
       "https://www.sportshub.net.au/stripe/refreshAccountLink"
     );
-    expect(mockMarkProductOnboardingCompleted).not.toHaveBeenCalled();
+    expect(mockMarkProductOnboardingCompleted).toHaveBeenCalledWith("user-123");
+    expect(url).toBe("https://connect.stripe.com/setup/s/existing");
+  });
+
+  it("still returns the Stripe link if marking onboarding completed fails", async () => {
+    mockGetStripeStandardAccountLink.mockResolvedValue("https://connect.stripe.com/setup/s/existing");
+    mockMarkProductOnboardingCompleted.mockRejectedValue(new Error("Firestore unavailable"));
+
+    const url = await requestExistingStripeAccountLink("user-123" as UserId);
+
+    expect(mockMarkProductOnboardingCompleted).toHaveBeenCalledWith("user-123");
     expect(url).toBe("https://connect.stripe.com/setup/s/existing");
   });
 

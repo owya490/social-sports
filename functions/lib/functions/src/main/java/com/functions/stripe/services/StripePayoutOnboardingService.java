@@ -19,6 +19,8 @@ import com.functions.users.models.PrivateUserData;
 import com.functions.users.models.PublicUserData;
 import com.functions.users.services.Users;
 import com.functions.utils.UrlUtils;
+import com.google.cloud.firestore.DocumentReference;
+import com.google.cloud.firestore.DocumentSnapshot;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
 import com.stripe.model.AccountLink;
@@ -43,7 +45,6 @@ public class StripePayoutOnboardingService {
             String firstName,
             String lastName,
             String email,
-            String phone,
             boolean hasAbn,
             String abn,
             LocalDate dob,
@@ -71,7 +72,7 @@ public class StripePayoutOnboardingService {
         AccountCreateParams params = accountParams(userId, username, details);
 
         StripeConfig.initialize();
-        Account account;
+        Account account = null;
         AccountLink link;
         try {
             account = Account.create(params);
@@ -80,6 +81,7 @@ public class StripePayoutOnboardingService {
             }
             link = AccountLink.create(linkParams(account.getId()));
         } catch (StripeException e) {
+            deleteQuietly(account, userId);
             logger.error("Stripe payout onboarding failed for user {} code={}", userId, e.getCode());
             // A 4xx from Stripe means Stripe rejected the details, so the organiser can fix them.
             Integer stripeStatus = e.getStatusCode();
@@ -89,7 +91,12 @@ public class StripePayoutOnboardingService {
             throw new IllegalStateException("Stripe could not start payout onboarding");
         }
 
-        StripeAccountStore.save(userId, account.getId());
+        try {
+            StripeAccountStore.saveIfAbsent(userId, account.getId());
+        } catch (Exception e) {
+            deleteQuietly(account, userId);
+            throw e;
+        }
         logger.info("Created Stripe account {} for user {}", account.getId(), userId);
         return link.getUrl();
     }
@@ -101,7 +108,6 @@ public class StripePayoutOnboardingService {
         if (!email.contains("@")) {
             throw new IllegalArgumentException("Enter a valid email");
         }
-        String phone = optionalAustralianE164(request.phone());
         String accountHolderName = blankToNull(request.accountHolderName());
         if (accountHolderName == null) {
             accountHolderName = firstName + " " + lastName;
@@ -135,7 +141,7 @@ public class StripePayoutOnboardingService {
         }
 
         return new ValidatedDetails(
-                firstName, lastName, email, phone, request.hasAbn(), abn, dob,
+                firstName, lastName, email, request.hasAbn(), abn, dob,
                 line1, city, state, postcode, accountHolderName, bsb, accountNumber);
     }
 
@@ -190,7 +196,6 @@ public class StripePayoutOnboardingService {
                         .setFirstName(details.firstName())
                         .setLastName(details.lastName())
                         .setEmail(details.email())
-                        .setPhone(details.phone())
                         .setDob(AccountCreateParams.Individual.Dob.builder()
                                 .setDay((long) details.dob().getDayOfMonth())
                                 .setMonth((long) details.dob().getMonthValue())
@@ -216,7 +221,6 @@ public class StripePayoutOnboardingService {
                 .setFirstName(details.firstName())
                 .setLastName(details.lastName())
                 .setEmail(details.email())
-                .setPhone(details.phone())
                 .setDob(PersonCollectionCreateParams.Dob.builder()
                         .setDay((long) details.dob().getDayOfMonth())
                         .setMonth((long) details.dob().getMonthValue())
@@ -290,23 +294,15 @@ public class StripePayoutOnboardingService {
         return sum % 89 == 0;
     }
 
-    /**
-     * Normalises an Australian phone number for Stripe prefill, returning null when
-     * missing or non-AU so Stripe collects it during hosted onboarding instead of
-     * blocking a step that has no phone field.
-     */
-    private static String optionalAustralianE164(String phone) {
-        if (blankToNull(phone) == null) {
-            return null;
+    private static void deleteQuietly(Account account, String userId) {
+        if (account == null) {
+            return;
         }
-        String digits = digits(phone);
-        if (digits.startsWith("0")) {
-            digits = "61" + digits.substring(1);
+        try {
+            account.delete();
+        } catch (Exception deleteError) {
+            logger.error("Failed to delete orphaned Stripe account {} for user {}", account.getId(), userId, deleteError);
         }
-        if (!digits.startsWith("61") || digits.length() < 11) {
-            return null;
-        }
-        return "+" + digits;
     }
 
     private static String statementDescriptor(String firstName, String lastName) {
@@ -363,15 +359,31 @@ public class StripePayoutOnboardingService {
     }
 }
 
-/** Writes only the new Stripe account id. Other private user fields stay as they are. */
+/**
+ * Saves only the new Stripe account id inside a Firestore transaction when no Stripe account is connected yet.
+ * Keeps external Stripe API calls outside the retryable transaction callback.
+ */
 class StripeAccountStore {
-    static void save(String userId, String stripeAccountId) throws Exception {
-        FirebaseService.getFirestore()
-                .collection(CollectionPaths.USERS)
-                .document(CollectionPaths.ACTIVE)
-                .collection(CollectionPaths.PRIVATE)
-                .document(userId)
-                .update("stripeAccount", stripeAccountId, "stripeAccountActive", false)
-                .get();
+    static void saveIfAbsent(String userId, String stripeAccountId) throws Exception {
+        FirebaseService.createFirestoreTransaction(transaction -> {
+            DocumentReference privateRef = FirebaseService.getFirestore()
+                    .collection(CollectionPaths.USERS)
+                    .document(CollectionPaths.ACTIVE)
+                    .collection(CollectionPaths.PRIVATE)
+                    .document(userId);
+            DocumentSnapshot snapshot = transaction.get(privateRef).get();
+            if (!snapshot.exists()) {
+                throw new NotFoundException("User was not found");
+            }
+            PrivateUserData privateUser = snapshot.toObject(PrivateUserData.class);
+            if (privateUser == null) {
+                throw new NotFoundException("User was not found");
+            }
+            if (privateUser.getStripeAccount() != null && !privateUser.getStripeAccount().isBlank()) {
+                throw new IllegalArgumentException("A Stripe account is already connected");
+            }
+            transaction.update(privateRef, "stripeAccount", stripeAccountId, "stripeAccountActive", false);
+            return null;
+        });
     }
 }
