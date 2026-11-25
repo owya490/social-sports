@@ -232,7 +232,146 @@ html[data-welcome-tour="0"] .organiser-welcome-ssr-blackout {
   transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Swooshes are revealed through feathered masks stroked along their centre
+   lines (pathLength 100). Each dash period is 100 visible plus 80 hidden, so
+   offsetting it by 180 slides a swoosh out past its head, as if behind the
+   globe, and back in from its tail. Fade layers widen their dash by --spread on
+   each side (keeping the same period) to soften the moving edges. The globe
+   turns gently against the rings. SportshubMark sets data-lap on hover so a lap
+   always finishes. A lap keeps the entry animation in the same animation list,
+   listed after it so the lap wins while running, because dropping a name and
+   adding it back would replay the entry when the lap ends; the globe uses
+   nested groups for the same reason. */
+.sportshub-mark-flow {
+  fill: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray:
+    calc(100px + 2 * var(--sportshub-mark-flow-spread))
+    calc(80px - 2 * var(--sportshub-mark-flow-spread));
+  stroke-dashoffset: var(--sportshub-mark-flow-spread);
+}
+
+.sportshub-mark mask:nth-of-type(1) .sportshub-mark-flow {
+  --sportshub-mark-flow-delay: 120ms;
+}
+
+.sportshub-mark mask:nth-of-type(2) .sportshub-mark-flow {
+  --sportshub-mark-flow-delay: 0ms;
+}
+
+.sportshub-mark mask:nth-of-type(3) .sportshub-mark-flow {
+  --sportshub-mark-flow-delay: 240ms;
+}
+
+.sportshub-mark-globe,
+.sportshub-mark-globe-motion {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.sportshub-mark[data-animation="intro"] .sportshub-mark-globe {
+  animation: sportshub-mark-globe-in 1200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sportshub-mark[data-animation="intro"] .sportshub-mark-flow {
+  animation: sportshub-mark-flow-in 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(250ms + var(--sportshub-mark-flow-delay));
+}
+
+.sportshub-mark[data-lap] .sportshub-mark-globe-motion {
+  animation: sportshub-mark-globe-turn 1700ms;
+}
+
+.sportshub-mark[data-lap] .sportshub-mark-flow {
+  animation: sportshub-mark-flow-lap 1500ms cubic-bezier(0.37, 0, 0.63, 1);
+  animation-delay: var(--sportshub-mark-flow-delay);
+}
+
+.sportshub-mark[data-animation="intro"][data-lap] .sportshub-mark-flow {
+  animation:
+    sportshub-mark-flow-in 1100ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    sportshub-mark-flow-lap 1500ms cubic-bezier(0.37, 0, 0.63, 1);
+  animation-delay:
+    calc(250ms + var(--sportshub-mark-flow-delay)),
+    var(--sportshub-mark-flow-delay);
+}
+
+.sportshub-mark[data-animation="loading"] .sportshub-mark-globe-motion {
+  animation: sportshub-mark-globe-spin 4000ms linear infinite;
+}
+
+.sportshub-mark[data-animation="loading"] .sportshub-mark-flow {
+  animation: sportshub-mark-flow-lap 1800ms linear infinite;
+  animation-delay: calc(-3 * var(--sportshub-mark-flow-delay));
+}
+
+@keyframes sportshub-mark-globe-in {
+  from {
+    opacity: 0;
+    transform: rotate(-30deg) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+/* Two eased halves so the globe drifts out and settles back without a jolt. */
+@keyframes sportshub-mark-globe-turn {
+  0% {
+    transform: rotate(0deg);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  50% {
+    transform: rotate(14deg);
+    animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes sportshub-mark-globe-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Entry slides each ring in from its tail, starting a full window behind it.
+   The gap starts wide so the next dash in the pattern stays past the head. */
+@keyframes sportshub-mark-flow-in {
+  from {
+    stroke-dasharray:
+      calc(100px + 2 * var(--sportshub-mark-flow-spread))
+      260px;
+    stroke-dashoffset: calc(var(--sportshub-mark-flow-spread) + 140px);
+  }
+  to {
+    stroke-dasharray:
+      calc(100px + 2 * var(--sportshub-mark-flow-spread))
+      calc(80px - 2 * var(--sportshub-mark-flow-spread));
+    stroke-dashoffset: var(--sportshub-mark-flow-spread);
+  }
+}
+
+@keyframes sportshub-mark-flow-lap {
+  from {
+    stroke-dashoffset: var(--sportshub-mark-flow-spread);
+  }
+  to {
+    stroke-dashoffset: calc(var(--sportshub-mark-flow-spread) - 180px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .sportshub-mark-globe,
+  .sportshub-mark-globe-motion,
+  .sportshub-mark-flow {
+    animation: none !important;
+  }
+
   .image-picker-shimmer {
     animation: none;
     transform: none;
