@@ -1,10 +1,12 @@
 import { INVALID_LAT, INVALID_LNG } from "@/interfaces/EventTypes";
 
 export const EVENT_LOCATION_MAP_ZOOM = 15;
-export const OPENFREEMAP_POSITRON_STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
-export const OPENSTREETMAP_TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-export const OPENSTREETMAP_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors';
+export const ESRI_LIGHT_GRAY_MAX_ZOOM = 16;
+export const ESRI_LIGHT_GRAY_BASE_TILE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}";
+export const ESRI_LIGHT_GRAY_REFERENCE_TILE_URL =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}";
+export const ESRI_LIGHT_GRAY_ATTRIBUTION = "&copy; Esri, HERE, Garmin, OpenStreetMap contributors";
 
 export const LOCKED_LEAFLET_MAP_OPTIONS = {
   zoomControl: false,
@@ -22,11 +24,6 @@ export interface EventCoordinates {
   lng: number;
 }
 
-export interface VectorStyleLayerRef {
-  id: string;
-  "source-layer"?: string;
-}
-
 export function hasValidEventCoordinates(locationLatLng?: EventCoordinates | null): locationLatLng is EventCoordinates {
   if (!locationLatLng) {
     return false;
@@ -42,23 +39,4 @@ export function hasValidEventCoordinates(locationLatLng?: EventCoordinates | nul
   }
 
   return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-}
-
-const HIDDEN_SOURCE_LAYERS = new Set(["poi", "housenumber", "building"]);
-
-export function isClutteredMapLayer(layer: VectorStyleLayerRef): boolean {
-  if (layer["source-layer"] && HIDDEN_SOURCE_LAYERS.has(layer["source-layer"])) {
-    return true;
-  }
-
-  const normalizedId = layer.id.toLowerCase();
-  return (
-    normalizedId === "poi" ||
-    normalizedId.startsWith("poi_") ||
-    normalizedId.startsWith("poi-") ||
-    normalizedId.startsWith("housenumber") ||
-    normalizedId === "building" ||
-    normalizedId.startsWith("building_") ||
-    normalizedId.startsWith("building-")
-  );
 }

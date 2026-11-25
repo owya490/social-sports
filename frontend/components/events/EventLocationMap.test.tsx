@@ -2,15 +2,16 @@ import { INVALID_LAT, INVALID_LNG } from "@/interfaces/EventTypes";
 import { renderToStaticMarkup } from "react-dom/server";
 import EventLocationMap from "./EventLocationMap";
 import {
+  ESRI_LIGHT_GRAY_BASE_TILE_URL,
+  ESRI_LIGHT_GRAY_REFERENCE_TILE_URL,
   hasValidEventCoordinates,
-  isClutteredMapLayer,
   LOCKED_LEAFLET_MAP_OPTIONS,
-  OPENFREEMAP_POSITRON_STYLE_URL,
 } from "./EventLocationMapUtils";
 
 describe("EventLocationMapUtils", () => {
-  it("uses the minimalist light-mode OpenFreeMap Positron style", () => {
-    expect(OPENFREEMAP_POSITRON_STYLE_URL).toBe("https://tiles.openfreemap.org/styles/positron");
+  it("uses the minimalist light-mode Esri Light Gray Canvas base and reference layers", () => {
+    expect(ESRI_LIGHT_GRAY_BASE_TILE_URL).toContain("Canvas/World_Light_Gray_Base/MapServer/tile");
+    expect(ESRI_LIGHT_GRAY_REFERENCE_TILE_URL).toContain("Canvas/World_Light_Gray_Reference/MapServer/tile");
   });
 
   it("accepts valid coordinates and rejects invalid or sentinel coordinates", () => {
@@ -21,17 +22,6 @@ describe("EventLocationMapUtils", () => {
     expect(hasValidEventCoordinates({ lat: Number.NaN, lng: 151.2093 })).toBe(false);
     expect(hasValidEventCoordinates({ lat: 95, lng: 151.2093 })).toBe(false);
     expect(hasValidEventCoordinates({ lat: -33.8688, lng: 185 })).toBe(false);
-  });
-
-  it("hides POI, housenumber, and building layers while keeping roads, parks, water, and place labels", () => {
-    expect(isClutteredMapLayer({ id: "poi_r20", "source-layer": "poi" })).toBe(true);
-    expect(isClutteredMapLayer({ id: "poi-level-1" })).toBe(true);
-    expect(isClutteredMapLayer({ id: "housenumber", "source-layer": "housenumber" })).toBe(true);
-    expect(isClutteredMapLayer({ id: "building", "source-layer": "building" })).toBe(true);
-    expect(isClutteredMapLayer({ id: "building-3d", "source-layer": "building" })).toBe(true);
-    expect(isClutteredMapLayer({ id: "road_primary", "source-layer": "transportation" })).toBe(false);
-    expect(isClutteredMapLayer({ id: "park", "source-layer": "park" })).toBe(false);
-    expect(isClutteredMapLayer({ id: "water", "source-layer": "water" })).toBe(false);
   });
 
   it("disables all zoom and pan interactions while keeping attribution enabled", () => {
