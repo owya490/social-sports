@@ -16,8 +16,11 @@ concurrency:
 
 jobs:
   claude-review:
-    # The review runs on the owner's Claude subscription, so only their own PRs trigger it.
-    if: github.event.pull_request.user.login == 'brian2w'
+    # The review runs on the owner's Claude subscription, so only their own PRs
+    # trigger it. The action skips PRs from forks, so those are left out too.
+    if: >-
+      github.event.pull_request.user.login == 'brian2w' &&
+      github.event.pull_request.head.repo.full_name == github.repository
 
     runs-on: ubuntu-latest
     permissions:
@@ -39,7 +42,11 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
-          prompt: '/code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
+          # The plugin stops once Claude has commented. Only a new push or a
+          # deep-review request should get past that, so a reopen does not repost.
+          prompt: >-
+            /code-review:code-review --comment ${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+            ${{ github.event.action == 'synchronize' && format('Existing Claude comments on this PR were left for earlier commits, so ignore the "Claude has already commented" stop condition and review the current head commit {0}.', github.event.pull_request.head.sha) || '' }}
           claude_args: '--allowedTools "mcp__github_inline_comment__create_inline_comment"'
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
