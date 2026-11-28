@@ -1,7 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { EventCoordinates, hasValidEventCoordinates } from "./locationMapUtils";
+import {
+  EventCoordinates,
+  getGoogleMapsLocationUrl,
+  hasValidEventCoordinates,
+} from "./locationMapUtils";
 
 const EventLocationMapCanvas = dynamic(() => import("./EventLocationMapCanvas"), {
   ssr: false,
@@ -19,6 +23,7 @@ export default function EventLocationMap({ location, locationLatLng }: EventLoca
   }
 
   const displayLocation = location.trim();
+  const googleMapsUrl = getGoogleMapsLocationUrl(displayLocation, locationLatLng);
 
   return (
     <div className="w-full flex justify-center mt-8">
@@ -28,6 +33,15 @@ export default function EventLocationMap({ location, locationLatLng }: EventLoca
             lat={locationLatLng.lat}
             lng={locationLatLng.lng}
             location={displayLocation}
+          />
+          <a
+            href={googleMapsUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={
+              displayLocation ? `Open ${displayLocation} in Google Maps` : "Open event location in Google Maps"
+            }
+            className="absolute inset-0 z-10 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-foreground"
           />
         </div>
       </div>

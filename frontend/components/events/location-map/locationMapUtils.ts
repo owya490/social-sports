@@ -43,3 +43,9 @@ export function hasValidEventCoordinates(locationLatLng?: EventCoordinates | nul
 export function toMapLibreLngLat(coordinates: EventCoordinates): [number, number] {
   return [coordinates.lng, coordinates.lat];
 }
+
+export function getGoogleMapsLocationUrl(location: string, coordinates: EventCoordinates): string {
+  const trimmedLocation = location.trim();
+  const query = trimmedLocation.length > 0 ? trimmedLocation : `${coordinates.lat},${coordinates.lng}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}

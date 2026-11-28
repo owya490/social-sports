@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { DATAVIZ_LIGHT_STYLE, OPENFREEMAP_GLYPHS_URL, OPENFREEMAP_VECTOR_SOURCE_URL } from "./datavizStyle";
 import EventLocationMap from "./EventLocationMap";
 import {
+  getGoogleMapsLocationUrl,
   hasValidEventCoordinates,
   LOCKED_MAPLIBRE_OPTIONS,
   toMapLibreLngLat,
@@ -21,6 +22,15 @@ describe("locationMapUtils", () => {
 
   it("converts lat/lng coordinates to MapLibre [lng, lat] order", () => {
     expect(toMapLibreLngLat({ lat: -33.8474, lng: 151.0631 })).toEqual([151.0631, -33.8474]);
+  });
+
+  it("builds a Google Maps link from the location text or falls back to coordinates", () => {
+    expect(getGoogleMapsLocationUrl("Sydney Olympic Park", { lat: -33.8474, lng: 151.0631 })).toBe(
+      "https://www.google.com/maps/search/?api=1&query=Sydney%20Olympic%20Park"
+    );
+    expect(getGoogleMapsLocationUrl("  ", { lat: -33.8474, lng: 151.0631 })).toBe(
+      "https://www.google.com/maps/search/?api=1&query=-33.8474%2C151.0631"
+    );
   });
 
   it("disables all zoom, pan, rotate, and keyboard interactions", () => {
@@ -72,7 +82,7 @@ describe("DATAVIZ_LIGHT_STYLE", () => {
 });
 
 describe("EventLocationMap", () => {
-  it("renders a flat map container without card chrome or a Google Maps button", () => {
+  it("renders a flat clickable map linking to Google Maps in a new tab", () => {
     const markup = renderToStaticMarkup(
       <EventLocationMap
         location="Sydney Olympic Park"
@@ -81,7 +91,10 @@ describe("EventLocationMap", () => {
     );
 
     expect(markup).toContain("rounded-xl");
-    expect(markup).not.toContain("Open in Google Maps");
+    expect(markup).toContain("cursor-pointer");
+    expect(markup).toContain('target="_blank"');
+    expect(markup).toContain('rel="noopener noreferrer"');
+    expect(markup).toContain('href="https://www.google.com/maps/search/?api=1&amp;query=Sydney%20Olympic%20Park"');
     expect(markup).not.toContain("shadow-sm");
   });
 
