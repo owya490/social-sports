@@ -3,6 +3,7 @@
 import EventBanner from "@/components/events/EventBanner";
 import { EventDetails } from "@/components/events/EventDetails";
 import EventImage from "@/components/events/EventImage";
+import { EventLocationMap } from "@/components/events/location-map";
 import RecommendedEvents from "@/components/events/RecommendedEvents";
 import Loading from "@/components/loading/Loading";
 import { EmptyEventData, EventData, EventId } from "@/interfaces/EventTypes";
@@ -117,6 +118,7 @@ export default function EventPage({ eventId }: EventPageProps) {
           setLoading={setLoading}
           onEffectiveVacancyChange={setBannerVacancy}
         />
+        <EventLocationMap location={eventData.location} locationLatLng={eventData.locationLatLng} />
         {/* Stub for Orgnaiser on Event Page
         <div className="w-full flex justify-center">
           <div className="md:screen-width-primary">Owen</div>

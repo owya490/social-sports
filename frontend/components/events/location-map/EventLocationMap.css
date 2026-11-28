@@ -1,0 +1,44 @@
+.event-location-map .maplibregl-map,
+.event-location-map .maplibregl-canvas-container,
+.event-location-map .maplibregl-canvas {
+  width: 100%;
+  height: 100%;
+  background: #f1f3f4;
+  cursor: pointer !important;
+  touch-action: pan-y !important;
+  font-family: var(--font-satoshi), system-ui, -apple-system, sans-serif;
+}
+
+.event-location-map-pin {
+  width: 26px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+}
+
+.event-location-map .maplibregl-ctrl-bottom-right {
+  z-index: 20;
+}
+
+.event-location-map .maplibregl-ctrl-attrib {
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--color-foreground-muted);
+  font-size: 10px;
+  line-height: 1.3;
+  padding: 2px 6px;
+  margin: 0;
+  border-top-left-radius: 0.375rem;
+}
+
+.event-location-map .maplibregl-ctrl-attrib a {
+  color: var(--color-foreground-secondary);
+  text-decoration: none;
+}
+
+.event-location-map .maplibregl-ctrl-attrib a:hover {
+  color: var(--color-foreground);
+  text-decoration: underline;
+}
