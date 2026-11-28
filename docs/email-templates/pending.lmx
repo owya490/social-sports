@@ -1,0 +1,30 @@
+<Style backgroundColor="" backgroundXPadding="0" backgroundYPadding="0" bodyColor="" bodyXPadding="0" bodyYPadding="0" bodyFontFamily="Default" bodyFontCategory="sans-serif" borderColor="" borderWidth="0" borderRadius="4" buttonBodyColor="" buttonBodyXPadding="16" buttonBodyYPadding="12" buttonBorderColor="" buttonBorderWidth="0" buttonBorderRadius="4" buttonTextColor="" buttonTextFormat="0" buttonTextFontSize="16" dividerColor="" dividerBorderWidth="1" textBaseColor="" textBaseFontSize="14" textBaseLineHeight="150" textBaseLetterSpacing="0" textLinkColor="" heading1Color="" heading1FontSize="28" heading1LineHeight="125" heading1LetterSpacing="0" heading2Color="" heading2FontSize="24" heading2LineHeight="125" heading2LetterSpacing="0" heading3Color="" heading3FontSize="20" heading3LineHeight="125" heading3LetterSpacing="0" />
+<Paragraph fontSize="16"><Strong>Hi {data.name}!</Strong></Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>Your have successfully requested registeration for <Link href="{data.eventUrl}">{data.eventName}</Link>. Please wait for the <Link href="https://www.sportshub.net.au/user/{data.organiserId}"><Underline>organiser</Underline></Link> to <Strong>review and approve</Strong> your registration.</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph><Strong>Order ID</Strong>: <Link href="https://www.sportshub.net.au/order/{data.orderId}"><Underline>{data.orderId}</Underline></Link></Paragraph>
+<Paragraph><Strong>Date Requested</Strong>: {data.datePurchased}</Paragraph>
+<Paragraph></Paragraph>
+<Columns gap="12" stackOnMobile="false">
+  <ColumnItem>
+    <Paragraph><Strong>Quantity</Strong></Paragraph>
+    <Paragraph>x{data.quantity}</Paragraph>
+  </ColumnItem>
+  <ColumnItem>
+    <Paragraph><Strong>Price</Strong></Paragraph>
+    <Paragraph>${data.price}</Paragraph>
+  </ColumnItem>
+</Columns>
+<Paragraph></Paragraph>
+<Paragraph fontSize="20"><Strong>Event Information</Strong></Paragraph>
+<Paragraph><Link href="https://emojipedia.org/calendar"></Link></Paragraph>
+<H3 fontSize="14">📅 <Strong>Start Date</Strong>: {data.startDate}</H3>
+<Paragraph fontSize="14"><Link href="https://emojipedia.org/calendar"></Link></Paragraph>
+<H3 fontSize="14">📅 <Strong>End Date</Strong>: {data.endDate}</H3>
+<Paragraph><Link href="https://emojipedia.org/round-pushpin"></Link></Paragraph>
+<H3 fontSize="14">📍 <Strong>Location</Strong>: {data.location}</H3>
+<Paragraph></Paragraph>
+<Image src="https://images.vialoops.com/cmr27lkym060u0i24u4jzvgns/cmr27ll1t060v0i24er945vx2.jpg" width="600" />
+<Paragraph></Paragraph>
+<Paragraph>Thank you for booking with SPORTSHUB!</Paragraph>

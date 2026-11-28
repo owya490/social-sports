@@ -1,0 +1,19 @@
+<Style backgroundColor="" backgroundXPadding="0" backgroundYPadding="0" bodyColor="" bodyXPadding="0" bodyYPadding="0" bodyFontFamily="Default" bodyFontCategory="sans-serif" borderColor="" borderWidth="0" borderRadius="4" buttonBodyColor="" buttonBodyXPadding="16" buttonBodyYPadding="12" buttonBorderColor="" buttonBorderWidth="0" buttonBorderRadius="4" buttonTextColor="" buttonTextFormat="0" buttonTextFontSize="16" dividerColor="" dividerBorderWidth="1" textBaseColor="" textBaseFontSize="14" textBaseLineHeight="150" textBaseLetterSpacing="0" textLinkColor="" heading1Color="" heading1FontSize="28" heading1LineHeight="125" heading1LetterSpacing="0" heading2Color="" heading2FontSize="24" heading2LineHeight="125" heading2LetterSpacing="0" heading3Color="" heading3FontSize="20" heading3LineHeight="125" heading3LetterSpacing="0" />
+<Paragraph>Hello {data.name},</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>Your registration for <Link href="{data.eventUrl}">{data.eventName}</Link> is approved! Your payment provider will be charged. Any questions, please contact the respective organiser of the event.</Paragraph>
+<Paragraph></Paragraph>
+<Columns gap="12" stackOnMobile="false">
+  <ColumnItem>
+    <Paragraph><Strong>O</Strong>rderId</Paragraph>
+    <Paragraph><Link href="https://www.sportshub.net.au/order/{data.orderId}"><Underline>{data.orderId}</Underline></Link></Paragraph>
+  </ColumnItem>
+  <ColumnItem>
+    <Paragraph><Strong>Quantity</Strong></Paragraph>
+    <Paragraph>x{data.ticketCount}</Paragraph>
+  </ColumnItem>
+</Columns>
+<Paragraph></Paragraph>
+<Paragraph><Br /><Br />Thank you,</Paragraph>
+<Paragraph>SPORTSHUB </Paragraph>
+<Paragraph></Paragraph>

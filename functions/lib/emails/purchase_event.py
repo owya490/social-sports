@@ -35,6 +35,7 @@ def send_email_with_loop(
     event_name,
     order_id,
     order_link,
+    event_url,
     date_purchased,
     quantity,
     price,
@@ -51,6 +52,7 @@ def send_email_with_loop(
             "eventName": event_name,
             "orderId": order_id,
             "orderLink": order_link,
+            "eventUrl": event_url,
             "datePurchased": date_purchased,
             "quantity": quantity,
             "price": price,
@@ -154,6 +156,7 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
         )
 
         order_link = f"https://www.sportshub.net.au/order/{request_data.orderId}"
+        event_url = f"https://www.sportshub.net.au/event/{request_data.eventId}"
 
         # send email to attendee first
         send_email_with_loop(
@@ -163,6 +166,7 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
             event_data.get("name"),
             request_data.orderId,
             order_link,
+            event_url,
             date_purchased_string,
             str(len(order_data.get("tickets"))),
             str(centsToDollars(event_data.get("price"))),
@@ -183,6 +187,7 @@ def send_email_on_purchase_event(request_data: PurchaseEventRequest):
                 event_data.get("name"),
                 request_data.orderId,
                 order_link,
+                event_url,
                 date_purchased_string,
                 str(len(order_data.get("tickets"))),
                 str(centsToDollars(event_data.get("price"))),
