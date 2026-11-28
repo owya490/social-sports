@@ -9,7 +9,6 @@ from google.cloud import firestore
 from google.cloud.firestore import DocumentReference, Transaction
 from lib.constants import db
 from lib.logging import Logger
-from lib.move_inactive_events import ACTIVE_PRIVATE, INACTIVE_PRIVATE
 from lib.stripe.commons import ERROR_URL
 
 
