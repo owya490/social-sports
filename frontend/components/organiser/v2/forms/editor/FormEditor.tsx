@@ -24,6 +24,7 @@ import {
   SectionId,
 } from "@/interfaces/FormTypes";
 import { ImageType } from "@/interfaces/ImageTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { createForm, getForm, updateActiveForm } from "@/services/src/forms/formsServices";
 import { getUsersFormImagesUrls, uploadFormImage } from "@/services/src/images/imageService";
 import { ArrowDownIcon, ArrowUpIcon, Bars2Icon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -182,6 +183,8 @@ export function FormEditor({ formId }: FormEditorProps) {
       if (isCreate) {
         if (form.userId === "") return false;
         const newFormId = await createForm(formToSave);
+        trackEvent(AnalyticsEvent.ORGANISER_FORM_CREATE);
+        trackEvent(AnalyticsEvent.ORGANISER_FORM_SAVE, { section_count: formToSave.sectionsOrder.length });
         setSavedFingerprint(formEditFingerprint(formToSave));
         if (redirectOnCreate) {
           router.push(`/organiser/v2/forms/${newFormId}/editor`);
@@ -189,6 +192,7 @@ export function FormEditor({ formId }: FormEditorProps) {
         return true;
       }
       await updateActiveForm(formToSave, formId);
+      trackEvent(AnalyticsEvent.ORGANISER_FORM_SAVE, { section_count: formToSave.sectionsOrder.length });
       setForm(formToSave);
       setSavedFingerprint(formEditFingerprint(formToSave));
       return true;
@@ -223,6 +227,7 @@ export function FormEditor({ formId }: FormEditorProps) {
     const dest = pendingHrefRef.current;
     setShowLeaveModal(false);
     setSavedFingerprint(formEditFingerprint(form));
+    trackEvent(AnalyticsEvent.ORGANISER_FORM_SAVE_DISCARD);
     router.push(dest);
   };
 
@@ -235,6 +240,7 @@ export function FormEditor({ formId }: FormEditorProps) {
   };
 
   const duplicateSection = (section: FormSection) => {
+    trackEvent(AnalyticsEvent.ORGANISER_FORM_SECTION_ADD, { section_type: section.type });
     const newSectionId = uuidv4() as SectionId;
     setForm((prevForm) => ({
       ...prevForm,
@@ -247,6 +253,9 @@ export function FormEditor({ formId }: FormEditorProps) {
   };
 
   const deleteSection = (sectionId: SectionId) => {
+    trackEvent(AnalyticsEvent.ORGANISER_FORM_SECTION_REMOVE, {
+      section_type: form.sectionsMap[sectionId]?.type ?? "unknown",
+    });
     setForm((prevForm) => {
       const newMap = { ...prevForm.sectionsMap };
       delete newMap[sectionId];
@@ -259,6 +268,7 @@ export function FormEditor({ formId }: FormEditorProps) {
   };
 
   const addSection = (section: FormSection) => {
+    trackEvent(AnalyticsEvent.ORGANISER_FORM_SECTION_ADD, { section_type: section.type });
     const newSectionId = uuidv4() as SectionId;
     setForm((prevForm) => ({
       ...prevForm,
@@ -302,6 +312,7 @@ export function FormEditor({ formId }: FormEditorProps) {
     .filter((item) => item.section);
 
   const handleSort = (newOrder: { id: SectionId }[]) => {
+    trackEvent(AnalyticsEvent.ORGANISER_FORM_SECTION_REORDER);
     setForm((prevForm) => ({
       ...prevForm,
       sectionsOrder: newOrder.map((item) => item.id),

@@ -22,7 +22,10 @@ import {
   type RegistrationUpdateIssue,
 } from "@/components/organiser/v2/event-hub/registrationLiveUpdates";
 import { DASHBOARD_PATH } from "@/components/organiser/v2/welcome/welcomeOnboarding";
+import { useTrackScreen } from "@/components/analytics/useTrackScreen";
 import { useUser } from "@/components/utility/UserContext";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
+import { tabScreenTemplate } from "@/services/src/analytics/pageTemplates";
 import {
   EmptyEventData,
   EmptyEventMetadata,
@@ -65,6 +68,7 @@ export function OrganiserEventHubView() {
 
   const [section, setSection] = useState<EventHubSection>("Details");
   const [sectionReady, setSectionReady] = useState(true);
+  useTrackScreen(tabScreenTemplate("/organiser/v2/event/[id]", section), "organiser");
   const hasAppliedPendingLandingRef = useRef(false);
   const [eventData, setEventData] = useState<EventData>(EmptyEventData);
   const [loading, setLoading] = useState(true);
@@ -248,6 +252,7 @@ export function OrganiserEventHubView() {
     setEventPaused(next);
     try {
       await updateEventById(eventId, { paused: next });
+      trackEvent(AnalyticsEvent.ORGANISER_EVENT_SETTING_CHANGE, { event_id: eventId, setting: "paused" });
       bustEventsLocalStorageCache();
       bustOrganiserEventsCache();
     } catch (error) {
@@ -323,6 +328,14 @@ export function OrganiserEventHubView() {
             }}
             updateData={async (id, data) => {
               await updateEventById(id, data);
+              const fields = Object.keys(data);
+              const imageChange =
+                fields.length > 0 && fields.every((field) => field === "image" || field === "thumbnail");
+              if (imageChange) {
+                trackEvent(AnalyticsEvent.ORGANISER_EVENT_IMAGE_CHANGE, { event_id: id });
+              } else if (fields.length > 0) {
+                trackEvent(AnalyticsEvent.ORGANISER_EVENT_EDIT, { event_id: id, field: fields[0] });
+              }
               bustEventsLocalStorageCache();
               bustOrganiserEventsCache();
               if (data.name !== undefined) setEventName(data.name);

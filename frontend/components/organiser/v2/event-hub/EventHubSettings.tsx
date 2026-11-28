@@ -7,6 +7,7 @@ import { EventData, EventId } from "@/interfaces/EventTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
 import { Logger } from "@/observability/logger";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { archiveAndDeleteEvent, updateEventById } from "@/services/src/events/eventsService";
 import { bustEventsLocalStorageCache } from "@/services/src/events/eventsUtils/getEventsUtils";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
@@ -133,6 +134,8 @@ export function EventHubSettings({
       rollback,
       persist: async () => {
         await updateEventById(eventId, data);
+        const setting = Object.keys(data)[0] ?? "settings";
+        trackEvent(AnalyticsEvent.ORGANISER_EVENT_SETTING_CHANGE, { event_id: eventId, setting });
         bustOrganiserEventsCache();
       },
     });
@@ -161,6 +164,7 @@ export function EventHubSettings({
     try {
       setDeleteLoading(true);
       await archiveAndDeleteEvent(eventId, user.userId, auth.currentUser?.email || "");
+      trackEvent(AnalyticsEvent.ORGANISER_EVENT_DELETE, { event_id: eventId });
       await sendEmailOnDeleteEventV2(eventId);
       bustEventsLocalStorageCache();
       bustOrganiserEventsCache();

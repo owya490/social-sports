@@ -10,6 +10,7 @@ import { EventId } from "@/interfaces/EventTypes";
 import { FormId } from "@/interfaces/FormTypes";
 import { Order } from "@/interfaces/OrderTypes";
 import { Ticket } from "@/interfaces/TicketTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { updateEventById } from "@/services/src/events/eventsService";
 import { bustOrganiserEventsCache } from "@/services/src/organiser/organiserEventsService";
 import {
@@ -69,6 +70,7 @@ export function EventHubTicketTypesEditor({
           eventTicketTypes: nextTypes,
           ...(options?.syncEventFormId ? { formId: options.formId ?? null } : {}),
         });
+        trackEvent(AnalyticsEvent.ORGANISER_EVENT_EDIT, { event_id: eventId, field: "ticket_types" });
         bustOrganiserEventsCache();
       }
       setEventTicketTypes(nextTypes);

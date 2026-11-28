@@ -17,6 +17,7 @@ import {
   getOrganiserMaxTicketsPerTransactionLimit,
   getTicketCountOptions,
 } from "@/services/src/events/eventsUtils/ticketLimits";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { updateRecurrenceTemplateEventData } from "@/services/src/recurringEvents/recurringEventsService";
 import { isStripeAccountActive } from "@/services/src/stripe/stripeUtils";
 import { WAITLIST_ENABLED } from "@/services/src/waitlist/waitlistService";
@@ -131,6 +132,9 @@ export function RecurringHubSettings({
         if (!success) {
           throw new Error("Failed to update recurrence template settings");
         }
+        trackEvent(AnalyticsEvent.ORGANISER_RECURRING_TEMPLATE_UPDATE, {
+          field: Object.keys(data)[0] ?? "settings",
+        });
       },
     });
   };

@@ -1,3 +1,4 @@
+import PageViewTracker from "@/components/analytics/PageViewTracker";
 import AccessibilitySkipNavigation from "@/components/accessibility/SkipNavigation";
 import { AppMain } from "@/components/layout/AppMain";
 import MobileNavbar from "@/components/mobile/MobileNavbar";
@@ -116,7 +117,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </body>
         </UserContext>
       </GrafanaFaro>
-      {/* Google Analytics only in production */}
+      <PageViewTracker />
+      {/* Google Analytics only in production. screen_view is tracked separately so client navigations are counted. */}
       {getEnvironment() === Environment.PRODUCTION && <GoogleAnalytics gaId="G-MQB86E2KJM" />}
     </html>
   );

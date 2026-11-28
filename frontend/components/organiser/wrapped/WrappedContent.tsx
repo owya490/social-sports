@@ -1,6 +1,7 @@
 "use client";
 
 import { SportshubWrapped } from "@/interfaces/WrappedTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { EventsCreatedSection } from "./sections/EventsCreatedSection";
 import { EventViewsSection } from "./sections/EventViewsSection";
 import { FeesSavedSection } from "./sections/FeesSavedSection";
@@ -10,6 +11,7 @@ import { TicketsSoldSection } from "./sections/TicketsSoldSection";
 import { TimeSavedSection } from "./sections/TimeSavedSection";
 import { TopAttendeesSection } from "./sections/TopAttendeesSection";
 import { TotalSalesSection } from "./sections/TotalSalesSection";
+import { useEffect } from "react";
 
 const WRAPPED_YEAR = 2025;
 
@@ -25,15 +27,40 @@ interface WrappedContentProps {
   footerSection: React.ReactNode;
   headerElements?: React.ReactNode;
   className?: string;
+  trackViews?: boolean;
 }
 
 /**
  * Shared component for rendering wrapped content sections.
  * Used by both the organiser's private view and the public share view.
  */
-export function WrappedContent({ data, footerSection, headerElements, className = "" }: WrappedContentProps) {
+export function WrappedContent({
+  data,
+  footerSection,
+  headerElements,
+  className = "",
+  trackViews = false,
+}: WrappedContentProps) {
   const hasTopAttendees = data.topRegularAttendees && data.topRegularAttendees.length > 0;
   const hasMostPopularEvent = data.mostPopularEvent && data.mostPopularEvent.eventId;
+
+  useEffect(() => {
+    if (!trackViews) {
+      return;
+    }
+    const sections = ["hero"];
+    if (hasValue(data.eventsCreated)) sections.push("events_created");
+    if (hasValue(data.ticketsSold)) sections.push("tickets_sold");
+    if (hasValue(data.totalSales)) sections.push("total_sales");
+    if (hasValue(data.totalEventViews)) sections.push("event_views");
+    if (hasTopAttendees) sections.push("top_attendees");
+    if (hasMostPopularEvent) sections.push("most_popular_event");
+    if (hasValue(data.minutesSavedBookkeeping)) sections.push("time_saved");
+    if (hasValue(data.feesSavedVsEventbrite)) sections.push("fees_saved");
+    sections.forEach((section) => {
+      trackEvent(AnalyticsEvent.ORGANISER_WRAPPED_SECTION, { section, year: data.year || WRAPPED_YEAR });
+    });
+  }, [trackViews, data, hasTopAttendees, hasMostPopularEvent]);
 
   return (
     <main id="wrapped-container" className={`bg-white ${className}`}>

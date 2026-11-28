@@ -13,6 +13,7 @@ import { EntityRowThumbnail } from "@/components/organiser/v2/shared/EntityRowTh
 import { EntityRowStatuses } from "@/components/organiser/v2/shared/EntityRowStatuses";
 import { welcomeAwareEventHref } from "@/components/organiser/v2/welcome/welcomeOnboarding";
 import { EventData } from "@/interfaces/EventTypes";
+import { AnalyticsEvent, trackEvent } from "@/services/src/analytics/analyticsService";
 import { timestampToEventCardDateString } from "@/services/src/datetimeUtils";
 import { resolveEventInventory } from "@/services/src/events/eventsUtils/eventTicketTypesUtils";
 import { getEventPriceDisplay, isFreeEvent } from "@/utilities/priceUtils";
@@ -74,6 +75,7 @@ export function OrganiserEventRow({ event, className = "" }: OrganiserEventRowPr
       <Link
         href={href}
         data-event-id={event.eventId}
+        onClick={() => trackEvent(AnalyticsEvent.ORGANISER_EVENT_CARD_OPEN, { event_id: event.eventId, source: "event_list" })}
         className={`group flex w-full items-center gap-3 p-2.5 sm:p-3 hover:bg-surface-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-focus ${className}`}
       >
         <EntityRowThumbnail
